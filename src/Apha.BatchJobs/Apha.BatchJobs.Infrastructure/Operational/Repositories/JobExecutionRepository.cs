@@ -54,16 +54,16 @@ public class JobExecutionRepository : IJobExecutionRepository
             var expectedStatusId = await EnsureStatusAsync(existingRow.JobId, expectedPickupStatus.ToString(), cancellationToken);
             var runningStatusId = await EnsureStatusAsync(existingRow.JobId, JobStatus.Running.ToString(), cancellationToken);
 
+            // record.FpsYear is the target/planned year from job parameters, already cross-checked
+            // against target_fpsyear above — it is not this row's current fpsyear and must not
+            // overwrite it on pickup.
             var updateRows = await _context.TblJobQueue
                 .Where(q => q.JobExecutionId == record.JobExecutionId && q.StatusId == expectedStatusId)
                 .ExecuteUpdateAsync(updates => updates
                     .SetProperty(q => q.StatusId, _ => runningStatusId)
                     .SetProperty(q => q.StartDateTime, _ => record.StartedAt)
                     .SetProperty(q => q.RequestedBy, _ => record.UserId)
-                    .SetProperty(q => q.UpdatedAt, _ => now)
-                    .SetProperty(
-                        q => q.FpsYear,
-                        q => record.FpsYear.HasValue ? record.FpsYear.Value : q.FpsYear),
+                    .SetProperty(q => q.UpdatedAt, _ => now),
                     cancellationToken);
 
             if (updateRows == 0)

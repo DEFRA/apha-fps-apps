@@ -5,8 +5,10 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
 /// <summary>
-/// Materializes the Approve-frozen Year End staging (fps.yearend_settings_staging /
-/// fps.yearend_monthhours_staging) into the real fps.tblsettings / fps.tlkpmonthhours target-year rows.
+/// Materializes the Approve-frozen Year End staging (fps.tblsettings_staging /
+/// fps.tlkpmonthhours_staging) into the real fps.tblsettings / fps.tlkpmonthhours target-year rows.
+/// Staging is a singleton, not scoped by jobqueueid — the API/UI side guarantees at most one
+/// non-terminal Year End DataSetup request exists at a time.
 /// </summary>
 public sealed class MaterializeYearEndConfigurationStep : IYearEndDataSetupStep
 {
@@ -75,16 +77,16 @@ public sealed class MaterializeYearEndConfigurationStep : IYearEndDataSetupStep
             throw new InvalidOperationException($"fps.{MonthHoursTable} already contains {existingMonthHours} rows for target year {targetFpsYear}. Cleanup is required before Year End configuration materialization.");
         }
 
-        var settingsInserted = await _repository.MaterializeStagedSettingsAsync(jobQueueId, targetFpsYear, cancellationToken);
+        var settingsInserted = await _repository.MaterializeStagedSettingsAsync(targetFpsYear, cancellationToken);
         if (settingsInserted == 0)
         {
-            throw new InvalidOperationException($"No staged settings found for jobqueueid {jobQueueId} — Approve should have required complete staging before triggering the Worker.");
+            throw new InvalidOperationException("No staged settings found — Approve should have required complete staging before triggering the Worker.");
         }
 
-        var monthHoursInserted = await _repository.MaterializeStagedMonthHoursAsync(jobQueueId, targetFpsYear, cancellationToken);
+        var monthHoursInserted = await _repository.MaterializeStagedMonthHoursAsync(targetFpsYear, cancellationToken);
         if (monthHoursInserted == 0)
         {
-            throw new InvalidOperationException($"No staged month hours found for jobqueueid {jobQueueId} — Approve should have required complete staging before triggering the Worker.");
+            throw new InvalidOperationException("No staged month hours found — Approve should have required complete staging before triggering the Worker.");
         }
 
         _logger.LogInformation(

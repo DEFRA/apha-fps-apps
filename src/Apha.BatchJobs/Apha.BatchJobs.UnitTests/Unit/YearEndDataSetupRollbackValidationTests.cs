@@ -48,13 +48,25 @@ namespace Apha.BatchJobs.UnitTests;
 /// restore baseline afterward, since a fully successful run is a real, intentional commit, not a
 /// failure.
 /// </para>
+/// <para>
+/// Since the 2026-09-07 staging simplification, <c>fps.tblsettings_staging</c>/
+/// <c>fps.tlkpmonthhours_staging</c> are singletons (no <c>jobqueueid</c> scoping) and
+/// <c>MaterializeYearEndConfigurationStep</c> both materializes AND clears them inside this same
+/// transaction. That makes staging itself a rollback proof point: for a failure injected after that
+/// step has run (Midway/Late), the clear must roll back along with everything else, so the originally
+/// seeded staging row must still be present afterward — verified explicitly below, not assumed.
+/// </para>
 /// </remarks>
 [Trait("Category", "Integration")]
+[Collection("YearEndStaging")]
 public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
 {
     private const string RequiredDatabaseName = "batchjobs";
     private const string OptInEnvVar = "RUN_YEAR_END_ROLLBACK_VALIDATION";
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batchjobs_unconfigured;Username=postgres;Timeout=5";
+    private const string StagingSettingId = "rollback-validation-setting";
+    private const short StagingMonth = 1;
+    private const short StagingFmonth = 1;
 
     private readonly ITestOutputHelper _output;
     private readonly string _connectionString;
@@ -184,6 +196,11 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
 
             var targetYearRowExists = await TargetYearMasterRowExistsAsync();
             Assert.True(targetYearRowExists, "Expected fps.tblyearmaster to have a committed row for the target year after a fully successful run.");
+
+            // Staging is a singleton, cleared by MaterializeYearEndConfigurationStep itself as part of
+            // this same successful commit — not by this test's own cleanup, which runs after this point.
+            var stagingRemaining = await CountStagingRowsAsync();
+            Assert.Equal(0, stagingRemaining);
         }
         finally
         {
@@ -273,7 +290,17 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
                 $"Expected fps.tblyearmaster to have no row for target year {_targetFpsYear} after rollback ({scenarioLabel}) — " +
                 "CreatePlannedYearStep's insert must not survive a later step's failure.");
 
-            _output.WriteLine($"[{scenarioLabel}] Rollback verified: zero residual mutations, source year unchanged, target year row absent.");
+            // Whether or not MaterializeYearEndConfigurationStep ran before the injected failure (it
+            // hasn't, for "Early"), the originally seeded staging row(s) must still be present: for
+            // Midway/Late, this step's own materialize-then-clear ran for real inside this same
+            // transaction, so the clear rolling back is what this proves — not just that staging was
+            // left alone.
+            var settingsStagingCount = await CountSettingsStagingRowAsync();
+            var monthHoursStagingCount = await CountMonthHoursStagingRowAsync();
+            Assert.Equal(1, settingsStagingCount);
+            Assert.Equal(1, monthHoursStagingCount);
+
+            _output.WriteLine($"[{scenarioLabel}] Rollback verified: zero residual mutations, source year unchanged, target year row absent, staging row(s) intact.");
         }
         finally
         {
@@ -361,7 +388,7 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
 
     /// <summary>
     /// Seeds a real <c>fps.job_queue</c> row (job type <c>YearEnd-DataSetup</c>) plus one
-    /// <c>yearend_settings_staging</c> row and one <c>yearend_monthhours_staging</c> row, so
+    /// <c>tblsettings_staging</c> row and one <c>tlkpmonthhours_staging</c> row, so
     /// <c>MaterializeYearEndConfigurationStep</c>'s <c>JobExecutionId</c> resolution and staging reads
     /// have something real to find. Inserted via a separate connection, outside the pipeline's own
     /// transaction — it never rolls back with the business-data mutations and must be cleaned up
@@ -406,37 +433,41 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
             await command.ExecuteNonQueryAsync();
         }
 
+        // Staging is a singleton as of the 2026-09-07 simplification — no jobqueueid column any more.
+        // fpsyear is set to targetFpsYear, matching what a real Confirm write always stamps on a staged
+        // row (see the companion UI/API spec).
         await using (var command = connection.CreateCommand())
         {
             command.CommandText = @"
-                INSERT INTO fps.yearend_settings_staging (jobqueueid, id, setting, notes)
-                VALUES (@jobqueueid, @id, @setting, @notes);";
-            AddParameter(command, "jobqueueid", jobQueueId);
-            AddParameter(command, "id", "rollback-validation-setting");
+                INSERT INTO fps.tblsettings_staging (id, setting, notes, fpsyear)
+                VALUES (@id, @setting, @notes, @fpsyear);";
+            AddParameter(command, "id", StagingSettingId);
             AddParameter(command, "setting", "1");
             AddParameter(command, "notes", "Seeded by YearEndDataSetupRollbackValidationTests.");
+            AddParameter(command, "fpsyear", targetFpsYear);
             await command.ExecuteNonQueryAsync();
         }
 
         await using (var command = connection.CreateCommand())
         {
             command.CommandText = @"
-                INSERT INTO fps.yearend_monthhours_staging (jobqueueid, month_year, month, fmonth, days, cvlhours, vidhours)
-                VALUES (@jobqueueid, @month_year, @month, @fmonth, @days, @cvlhours, @vidhours);";
-            AddParameter(command, "jobqueueid", jobQueueId);
-            AddParameter(command, "month_year", (short)targetFpsYear);
-            AddParameter(command, "month", (short)1);
-            AddParameter(command, "fmonth", (short)1);
+                INSERT INTO fps.tlkpmonthhours_staging (year, month, fmonth, days, cvlhours, vidhours, fpsyear)
+                VALUES (@year, @month, @fmonth, @days, @cvlhours, @vidhours, @fpsyear);";
+            AddParameter(command, "year", (short)targetFpsYear);
+            AddParameter(command, "month", StagingMonth);
+            AddParameter(command, "fmonth", StagingFmonth);
             AddParameter(command, "days", 1.0m);
             AddParameter(command, "cvlhours", 1.0m);
             AddParameter(command, "vidhours", 1.0m);
+            AddParameter(command, "fpsyear", targetFpsYear);
             await command.ExecuteNonQueryAsync();
         }
     }
 
     /// <summary>
-    /// Deletes the row(s) seeded by <see cref="SeedJobQueueAndStagingAsync"/>, staging first for the FK
-    /// to <c>job_queue</c>.
+    /// Deletes the row(s) seeded by <see cref="SeedJobQueueAndStagingAsync"/>. Staging is now a singleton
+    /// (no jobqueueid to scope by), so both staging tables are cleared unconditionally — safe and
+    /// idempotent whether or not the pipeline's own materialize-then-clear already ran and committed.
     /// </summary>
     private async Task CleanupJobQueueAndStagingAsync(Guid jobQueueId)
     {
@@ -446,15 +477,13 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
 
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = "DELETE FROM fps.yearend_settings_staging WHERE jobqueueid = @jobqueueid;";
-            AddParameter(command, "jobqueueid", jobQueueId);
+            command.CommandText = "DELETE FROM fps.tblsettings_staging;";
             await command.ExecuteNonQueryAsync();
         }
 
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = "DELETE FROM fps.yearend_monthhours_staging WHERE jobqueueid = @jobqueueid;";
-            AddParameter(command, "jobqueueid", jobQueueId);
+            command.CommandText = "DELETE FROM fps.tlkpmonthhours_staging;";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -464,6 +493,34 @@ public sealed class YearEndDataSetupRollbackValidationTests : IAsyncLifetime
             AddParameter(command, "jobqueueid", jobQueueId);
             await command.ExecuteNonQueryAsync();
         }
+    }
+
+    private async Task<int> CountStagingRowsAsync()
+    {
+        await using var context = CreateDbContext();
+        var settingsCount = await context.Database
+            .SqlQuery<int>($@"SELECT COUNT(*)::int AS ""Value"" FROM fps.tblsettings_staging")
+            .SingleAsync();
+        var monthHoursCount = await context.Database
+            .SqlQuery<int>($@"SELECT COUNT(*)::int AS ""Value"" FROM fps.tlkpmonthhours_staging")
+            .SingleAsync();
+        return settingsCount + monthHoursCount;
+    }
+
+    private async Task<int> CountSettingsStagingRowAsync()
+    {
+        await using var context = CreateDbContext();
+        return await context.Database
+            .SqlQuery<int>($@"SELECT COUNT(*)::int AS ""Value"" FROM fps.tblsettings_staging WHERE id = {StagingSettingId} AND fpsyear = {_targetFpsYear}")
+            .SingleAsync();
+    }
+
+    private async Task<int> CountMonthHoursStagingRowAsync()
+    {
+        await using var context = CreateDbContext();
+        return await context.Database
+            .SqlQuery<int>($@"SELECT COUNT(*)::int AS ""Value"" FROM fps.tlkpmonthhours_staging WHERE year = {_targetFpsYear} AND month = {StagingMonth} AND fpsyear = {_targetFpsYear}")
+            .SingleAsync();
     }
 
     private async Task<TelemetrySnapshot> CaptureTelemetryAsync(string phase)

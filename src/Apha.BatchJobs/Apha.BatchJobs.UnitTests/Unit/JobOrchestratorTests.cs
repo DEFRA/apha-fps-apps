@@ -10,6 +10,7 @@ using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using NSubstitute;
 
 namespace Apha.BatchJobs.UnitTests;
@@ -1261,6 +1262,27 @@ public sealed class JobOrchestratorTests
         Assert.False(JobOrchestrator.IsRetryable(new NotImplementedException()));
         Assert.False(JobOrchestrator.IsRetryable(new Exception("generic transient")));
         Assert.True(JobOrchestrator.IsRetryable(new TimeoutException()));
+    }
+
+    [Fact]
+    public void IsRetryable_UndefinedTablePostgresException_ReturnsFalse()
+    {
+        // 42P01: a missing relation is a schema/SQL mismatch, not a transient failure — retrying
+        // re-runs the same broken query against the same missing table every time.
+        var undefinedTable = new PostgresException(
+            "relation \"fps.tblsettings_staging\" does not exist", "ERROR", "ERROR", PostgresErrorCodes.UndefinedTable);
+
+        Assert.False(JobOrchestrator.IsRetryable(undefinedTable));
+    }
+
+    [Fact]
+    public void IsRetryable_OtherPostgresException_StillReturnsTrue()
+    {
+        // The undefined_table carve-out must not become a blanket PostgresException rule — other
+        // SQLSTATEs (e.g. connection failures) remain retryable via the general NpgsqlException case.
+        var connectionFailure = new PostgresException("connection failure", "ERROR", "ERROR", "08006");
+
+        Assert.True(JobOrchestrator.IsRetryable(connectionFailure));
     }
 
     [Fact]

@@ -655,6 +655,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
         NotSupportedException => false,
         NotImplementedException => false,
 
+        // undefined_table: a schema/SQL mismatch, not transient infrastructure — retrying re-runs
+        // the same broken query and can never succeed.
+        PostgresException pg when pg.SqlState == PostgresErrorCodes.UndefinedTable => false,
+
         TimeoutException => true,
         NpgsqlException => true,
         DbUpdateException => true,

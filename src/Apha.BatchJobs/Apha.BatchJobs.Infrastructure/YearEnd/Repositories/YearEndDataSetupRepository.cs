@@ -491,37 +491,88 @@ public sealed class YearEndDataSetupRepository : IYearEndDataSetupRepository
         return (jobQueueId, targetFpsYear);
     }
 
-    public async Task<int> MaterializeStagedSettingsAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default)
+    public async Task<int> MaterializeStagedSettingsAsync(int targetFpsYear, CancellationToken cancellationToken = default)
     {
         var connection = await GetOpenConnectionAsync(cancellationToken);
 
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            INSERT INTO fps.tblsettings (id, setting, notes, fpsyear, updated_by, updated_at)
-            SELECT id, setting, notes, @target_fpsyear, @updated_by, NOW()
-            FROM fps.yearend_settings_staging
-            WHERE jobqueueid = @jobqueueid;";
-        AddParameter(command, "jobqueueid", jobQueueId);
-        AddParameter(command, "target_fpsyear", targetFpsYear);
-        AddParameter(command, "updated_by", BatchCreatedBy);
+        await using (var validateCommand = connection.CreateCommand())
+        {
+            validateCommand.CommandText = @"
+                SELECT COUNT(*)::int
+                FROM fps.tblsettings_staging
+                WHERE fpsyear <> @target_fpsyear;";
+            AddParameter(validateCommand, "target_fpsyear", targetFpsYear);
 
-        return await command.ExecuteNonQueryAsync(cancellationToken);
+            var mismatchCount = (int)(await validateCommand.ExecuteScalarAsync(cancellationToken))!;
+            if (mismatchCount > 0)
+            {
+                throw new InvalidOperationException(
+                    $"fps.tblsettings_staging has {mismatchCount} row(s) with fpsyear != {targetFpsYear}. " +
+                    "Staging must hold only the current Year End request's rows before materialization.");
+            }
+        }
+
+        int inserted;
+        await using (var insertCommand = connection.CreateCommand())
+        {
+            insertCommand.CommandText = @"
+                INSERT INTO fps.tblsettings (id, setting, notes, fpsyear, updated_by, updated_at)
+                SELECT id, setting, notes, @target_fpsyear, updated_by, updated_at
+                FROM fps.tblsettings_staging;";
+            AddParameter(insertCommand, "target_fpsyear", targetFpsYear);
+
+            inserted = await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var deleteCommand = connection.CreateCommand())
+        {
+            deleteCommand.CommandText = "DELETE FROM fps.tblsettings_staging;";
+            await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        return inserted;
     }
 
-    public async Task<int> MaterializeStagedMonthHoursAsync(Guid jobQueueId, int targetFpsYear, CancellationToken cancellationToken = default)
+    public async Task<int> MaterializeStagedMonthHoursAsync(int targetFpsYear, CancellationToken cancellationToken = default)
     {
         var connection = await GetOpenConnectionAsync(cancellationToken);
 
-        await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            INSERT INTO fps.tlkpmonthhours (year, month, fmonth, days, cvlhours, vidhours, fpsyear)
-            SELECT month_year, month, fmonth, days, cvlhours, vidhours, @target_fpsyear
-            FROM fps.yearend_monthhours_staging
-            WHERE jobqueueid = @jobqueueid;";
-        AddParameter(command, "jobqueueid", jobQueueId);
-        AddParameter(command, "target_fpsyear", targetFpsYear);
+        await using (var validateCommand = connection.CreateCommand())
+        {
+            validateCommand.CommandText = @"
+                SELECT COUNT(*)::int
+                FROM fps.tlkpmonthhours_staging
+                WHERE fpsyear <> @target_fpsyear;";
+            AddParameter(validateCommand, "target_fpsyear", targetFpsYear);
 
-        return await command.ExecuteNonQueryAsync(cancellationToken);
+            var mismatchCount = (int)(await validateCommand.ExecuteScalarAsync(cancellationToken))!;
+            if (mismatchCount > 0)
+            {
+                throw new InvalidOperationException(
+                    $"fps.tlkpmonthhours_staging has {mismatchCount} row(s) with fpsyear != {targetFpsYear}. " +
+                    "Staging must hold only the current Year End request's rows before materialization.");
+            }
+        }
+
+        int inserted;
+        await using (var insertCommand = connection.CreateCommand())
+        {
+            insertCommand.CommandText = @"
+                INSERT INTO fps.tlkpmonthhours (year, month, fmonth, days, cvlhours, vidhours, fpsyear)
+                SELECT year, month, fmonth, days, cvlhours, vidhours, @target_fpsyear
+                FROM fps.tlkpmonthhours_staging;";
+            AddParameter(insertCommand, "target_fpsyear", targetFpsYear);
+
+            inserted = await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var deleteCommand = connection.CreateCommand())
+        {
+            deleteCommand.CommandText = "DELETE FROM fps.tlkpmonthhours_staging;";
+            await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        return inserted;
     }
 
     public async Task<string?> GetCapApprovalReceivedForResetSettingAsync(int targetFpsYear, CancellationToken cancellationToken = default)

@@ -58,8 +58,8 @@ public sealed class MaterializeYearEndConfigurationStepTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
 
         Assert.Contains("No fps.job_queue row found", ex.Message, StringComparison.Ordinal);
-        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
-        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -76,8 +76,8 @@ public sealed class MaterializeYearEndConfigurationStepTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
 
         Assert.Contains("has no target_fpsyear set", ex.Message, StringComparison.Ordinal);
-        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
-        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -96,8 +96,8 @@ public sealed class MaterializeYearEndConfigurationStepTests
         Assert.Contains("Target year mismatch", ex.Message, StringComparison.Ordinal);
         Assert.Contains("target_fpsyear=2026", ex.Message, StringComparison.Ordinal);
         Assert.Contains("TargetFpsYear=2027", ex.Message, StringComparison.Ordinal);
-        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
-        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -116,8 +116,8 @@ public sealed class MaterializeYearEndConfigurationStepTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
 
         Assert.Contains(SettingsTable, ex.Message, StringComparison.Ordinal);
-        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
-        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -138,8 +138,8 @@ public sealed class MaterializeYearEndConfigurationStepTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
 
         Assert.Contains(MonthHoursTable, ex.Message, StringComparison.Ordinal);
-        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
-        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public sealed class MaterializeYearEndConfigurationStepTests
             .Returns(((Guid JobQueueId, int? TargetFpsYear)?)(jobQueueId, TargetFpsYear));
         repository.CountRowsByYearAsync(Arg.Any<string>(), Arg.Any<string>(), "fpsyear", TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(0L);
-        repository.MaterializeStagedSettingsAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>())
+        repository.MaterializeStagedSettingsAsync(TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(0);
 
         var step = CreateStep(repository);
@@ -160,7 +160,7 @@ public sealed class MaterializeYearEndConfigurationStepTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
 
         Assert.Contains("No staged settings found", ex.Message, StringComparison.Ordinal);
-        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -172,9 +172,9 @@ public sealed class MaterializeYearEndConfigurationStepTests
             .Returns(((Guid JobQueueId, int? TargetFpsYear)?)(jobQueueId, TargetFpsYear));
         repository.CountRowsByYearAsync(Arg.Any<string>(), Arg.Any<string>(), "fpsyear", TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(0L);
-        repository.MaterializeStagedSettingsAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>())
+        repository.MaterializeStagedSettingsAsync(TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(1);
-        repository.MaterializeStagedMonthHoursAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>())
+        repository.MaterializeStagedMonthHoursAsync(TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(0);
 
         var step = CreateStep(repository);
@@ -194,9 +194,9 @@ public sealed class MaterializeYearEndConfigurationStepTests
             .Returns(((Guid JobQueueId, int? TargetFpsYear)?)(jobQueueId, TargetFpsYear));
         repository.CountRowsByYearAsync(Arg.Any<string>(), Arg.Any<string>(), "fpsyear", TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(0L);
-        repository.MaterializeStagedSettingsAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>())
+        repository.MaterializeStagedSettingsAsync(TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(1);
-        repository.MaterializeStagedMonthHoursAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>())
+        repository.MaterializeStagedMonthHoursAsync(TargetFpsYear, Arg.Any<CancellationToken>())
             .Returns(15);
 
         var step = CreateStep(repository);
@@ -208,8 +208,8 @@ public sealed class MaterializeYearEndConfigurationStepTests
         // agree in the happy path) — pins down that MaterializeYearEndConfigurationStep uses the
         // persisted value as the source of truth, per design decision 6, not context.TargetFpsYear
         // independently.
-        await repository.Received(1).MaterializeStagedSettingsAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>());
-        await repository.Received(1).MaterializeStagedMonthHoursAsync(jobQueueId, TargetFpsYear, Arg.Any<CancellationToken>());
+        await repository.Received(1).MaterializeStagedSettingsAsync(TargetFpsYear, Arg.Any<CancellationToken>());
+        await repository.Received(1).MaterializeStagedMonthHoursAsync(TargetFpsYear, Arg.Any<CancellationToken>());
     }
 
     private static YearEndExecutionContext CreateContext() =>
