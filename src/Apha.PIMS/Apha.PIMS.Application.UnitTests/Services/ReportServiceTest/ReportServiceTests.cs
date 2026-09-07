@@ -192,6 +192,25 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             Assert.Equal("REPORT_NAME_REQUIRED", ex.Errors[0].Code);
         }
 
+        [Fact]
+        public async Task CreateAsync_DuplicateNameIgnoringCaseAndTrim_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = new ReportDto { ReportName = "  Monthly Report  ", Type = "R" };
+            _repository.GetAllReportsAsync().Returns(
+            [
+                new Report { Id = 10, ReportName = "monthly report", Type = "R" }
+            ]);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateReportAsync(dto));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_DUPLICATE_NAME", ex.Errors[0].Code);
+            await _repository.DidNotReceive().AddReportAsync(Arg.Any<Report>());
+        }
+
         #endregion
 
         // ── UpdateAsync ───────────────────────────────────────────────────────────
@@ -254,6 +273,56 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportServiceTest
             // Assert
             Assert.Single(ex.Errors);
             Assert.Equal("REPORT_NAME_REQUIRED", ex.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_DuplicateNameInAnotherRecord_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var dto = new ReportDto { Id = 5, ReportName = "  Quarterly Review ", Type = "R" };
+            _repository.ReportExistsAsync(dto.Id).Returns(true);
+            _repository.GetAllReportsAsync().Returns(
+            [
+                new Report { Id = 5, ReportName = "Quarterly Review", Type = "R" },
+                new Report { Id = 8, ReportName = "quarterly review", Type = "R" }
+            ]);
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateReportAsync(dto));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("REPORT_DUPLICATE_NAME", ex.Errors[0].Code);
+            await _repository.DidNotReceive().UpdateReportAsync(Arg.Any<Report>());
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ValidDtoWithWhitespaceName_TrimsBeforePersisting()
+        {
+            // Arrange
+            var dto = new ReportDto { Id = 6, ReportName = "  New Name  ", Type = "R" };
+            var trimmedEntity = new Report { Id = 6, ReportName = "New Name", Type = "R" };
+            var updatedEntity = new Report { Id = 6, ReportName = "New Name", Type = "R" };
+            var updatedDto = new ReportDto { Id = 6, ReportName = "New Name", Type = "R" };
+
+            _repository.ReportExistsAsync(6).Returns(true);
+            _repository.GetAllReportsAsync().Returns(
+            [
+                new Report { Id = 6, ReportName = "Old Name", Type = "R" },
+                new Report { Id = 12, ReportName = "Another Name", Type = "R" }
+            ]);
+
+            _mapper.Map<Report>(Arg.Any<ReportDto>()).Returns(trimmedEntity);
+            _repository.UpdateReportAsync(trimmedEntity).Returns(updatedEntity);
+            _mapper.Map<ReportDto>(updatedEntity).Returns(updatedDto);
+
+            // Act
+            var result = await _service.UpdateReportAsync(dto);
+
+            // Assert
+            Assert.Equal("New Name", dto.ReportName);
+            Assert.Equal("New Name", result.ReportName);
+            _mapper.Received(1).Map<Report>(Arg.Is<ReportDto>(d => d.ReportName == "New Name"));
         }
 
         #endregion

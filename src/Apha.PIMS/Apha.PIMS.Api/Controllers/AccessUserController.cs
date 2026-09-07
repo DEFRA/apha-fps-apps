@@ -56,7 +56,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             AccessUserDto? result = await _service.GetByIdAsync(systemid, decodedLogin);
-            return result is null ? NotFound() : Ok(_mapper.Map<AccessUserRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<AccessUserRes>();
+            }
+
+            return Ok(_mapper.Map<AccessUserRes>(result));
         }
 
         /// <summary>Create a new access user.</summary>
@@ -88,6 +93,20 @@ namespace Apha.PIMS.Api.Controllers
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             bool deleted = await _service.DeleteAsync(systemid, decodedLogin);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
@@ -14,10 +15,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        
+
         private const string InternalCodeError = "INTERNAL_ERROR";
-        
-        private const string BaseUrl = "api/v1/projectmanager";
 
         public PimsProjectManagerApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -31,7 +30,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 query ??= new QueryParameters<string>();
-                string url = QueryStringHelper.AddQueryString(BaseUrl, query);
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetAllProjectManagers, query);
                 var response = await _http.GetAsync<List<ProjectManagerRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ProjectManagerDto>>>(response);
@@ -52,7 +51,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<string>>($"{BaseUrl}/names");
+                var response = await _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectManagerNames);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<string>>>(response);
 
@@ -72,7 +71,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                string url = QueryStringHelper.AddQueryString(BaseUrl, query);
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetPagedProjectManagers, query);
                 var response = await _http.GetAsync<List<ProjectManagerRes>>(url);
                 if (response.Success)
                 {
@@ -101,7 +100,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectManagerName)}";
+                var url = string.Format(PimsApiEndpoints.GetProjectManagerByName, Uri.EscapeDataString(projectManagerName));
                 var response = await _http.GetAsync<ProjectManagerRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectManagerDto>>(response);
@@ -122,7 +121,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<ProjectManagerReq>(dto);
-                var response = await _http.PostAsync<ProjectManagerReq, ProjectManagerRes>(BaseUrl, request);
+                var response = await _http.PostAsync<ProjectManagerReq, ProjectManagerRes>(PimsApiEndpoints.CreateProjectManager, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectManagerDto>>(response);
 
@@ -143,7 +142,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<ProjectManagerReq>(dto);
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectManagerName)}";
+                var url = string.Format(PimsApiEndpoints.UpdateProjectManager, Uri.EscapeDataString(projectManagerName));
                 var response = await _http.PutAsync<ProjectManagerReq, ProjectManagerRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ProjectManagerDto>>(response);
@@ -164,7 +163,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(projectManagerName)}";
+                var url = string.Format(PimsApiEndpoints.DeleteProjectManager, Uri.EscapeDataString(projectManagerName));
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

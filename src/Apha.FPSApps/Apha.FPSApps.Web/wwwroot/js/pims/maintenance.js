@@ -7,6 +7,7 @@ var _currentManagerName = '';
 var _currentReportId = null;
 var _programManagerLinkDropdown = null;
 var _profitCentreManagerLinkDropdown = null;
+var _pimsAccessUserReferenceMessage = 'This user has User Access references. Delete related records from the User Access grid first, then delete the user.';
 
 function initializeTimeTabState() {
     var hwEl = document.getElementById('timeWorkingHours');
@@ -1333,7 +1334,11 @@ function deleteAccessUser(btn) {
                     showAlertMessage('User deleted successfully.', AlertType.SUCCESS)
                         .then(function () { reloadAccessUsersGrid(); });
                 } else {
-                    showAlertMessage(response.message || 'Delete failed.', AlertType.ERROR);
+                    var message = response.message || 'Delete failed.';
+                    var alertType = (message === _pimsAccessUserReferenceMessage)
+                        ? (AlertType.INFORMATION || AlertType.INFO)
+                        : AlertType.ERROR;
+                    showAlertMessage(message, alertType);
                 }
             },
             error: function (xhr) {

@@ -47,7 +47,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetFrequencyById(int frequencyId)
         {
             FrequencyDto? result = await _service.GetFrequencyByIdAsync(frequencyId);
-            return result is null ? NotFound() : Ok(_mapper.Map<FrequencyRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<FrequencyRes>();
+            }
+
+            return Ok(_mapper.Map<FrequencyRes>(result));
         }
 
         /// <summary>Create a new frequency.</summary>
@@ -76,6 +81,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeleteFrequencyAsync(frequencyId);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Apha.PIMS.Application.Services
             if (duplicateReportNameExists)
                 throw new BusinessValidationErrorException(
                 [
-                    new BusinessValidationError("Report name already exists. Please enter a unique Report name.", "REPORT_DUPLICATE_NAME")
+                    new BusinessValidationError($"Report name '{dto.ReportName}' already exists. Please enter a unique Report name.", "REPORT_DUPLICATE_NAME")
                 ]);
 
             Report entity = _mapper.Map<Report>(dto);
@@ -102,7 +102,7 @@ namespace Apha.PIMS.Application.Services
             if (duplicateReportNameExists)
                 throw new BusinessValidationErrorException(
                 [
-                    new BusinessValidationError("Report name already exists. Please enter a unique Report name.", "REPORT_DUPLICATE_NAME")
+                    new BusinessValidationError($"Report name '{dto.ReportName}' already exists. Please enter a unique Report name.", "REPORT_DUPLICATE_NAME")
                 ]);
 
             Report entity = _mapper.Map<Report>(dto);
