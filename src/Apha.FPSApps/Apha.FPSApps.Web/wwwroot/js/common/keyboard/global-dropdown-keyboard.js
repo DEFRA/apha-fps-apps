@@ -378,21 +378,29 @@
     }
 })();
 
-// ── Shared modal popup (#modalPopup) focus management ─────────────────────
-
+// ── Shared modal popup focus management ────────────────────────────────────
+// Covers both the legacy #modalPopup (toggles a "show" class) and every
+// GOV.UK edit-record dialog using class="govuk-edit-modal" (toggles an
+// "open" class, e.g. #editRecordModal, #editFormDatesModal,
+// #editInvoiceModal, #importEditModal, #editYFDModal, #timeRecordModal).
+// Many of the .govuk-edit-modal dialogs are loaded/replaced dynamically via
+// AJAX into a container (e.g. $('#milestoneModalContainer').html(html)), so
+// this also watches the DOM for ones added after page load.
 (function () {
     'use strict';
 
-    function init() {
-        var modal = document.getElementById('modalPopup');
-        if (!modal) return;
+    var trackedModals = new WeakSet();
 
-        var modalBody = document.getElementById('modaPopupBody');
+    function attachModal(modal, openClass, focusScopeSelector, toggleDisplay) {
+        if (!modal || trackedModals.has(modal)) return;
+        trackedModals.add(modal);
+
+        var focusScope = focusScopeSelector ? modal.querySelector(focusScopeSelector) : null;
         var previouslyFocused = null;
-        var isOpen = false;
+        var isOpen = modal.classList.contains(openClass);
 
         function getFocusableElements() {
-            var scope = modalBody || modal;
+            var scope = focusScope || modal;
             return Array.prototype.slice.call(
                 scope.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
             ).filter(function (el) {
@@ -442,12 +450,15 @@
         });
 
         var observer = new MutationObserver(function () {
-            if (modal.classList.contains('show')) {
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
+            var nowOpen = modal.classList.contains(openClass);
+            if (nowOpen && !isOpen) {
+                if (toggleDisplay) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
 
-                previouslyFocused = document.activeElement;
                 isOpen = true;
+                previouslyFocused = document.activeElement;
 
                 setTimeout(function () {
                     var focusable = getFocusableElements();
@@ -457,10 +468,13 @@
                         modal.focus();
                     }
                 }, 0);
-            } else {
+            } else if (!nowOpen && isOpen) {
                 isOpen = false;
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
+
+                if (toggleDisplay) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
 
                 if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
                     previouslyFocused.focus();
@@ -469,6 +483,66 @@
             }
         });
         observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+        // Handle the case where the modal is already "open" the moment we
+        // first attach to it. This happens for dynamically-injected dialogs
+        // (e.g. container.html(html) followed synchronously by
+        // modal.classList.add('open')): by the time the MutationObserver
+        // above starts observing, the "open" class is already present, so
+        // the false->true transition it looks for never fires and focus is
+        // never moved into the modal (it stays wherever it was - e.g. the
+        // "Add"/"Edit" button - which looks like "focus stuck in the
+        // background"). Detect that up front and move focus in immediately.
+        if (isOpen) {
+            previouslyFocused = document.activeElement;
+
+            setTimeout(function () {
+                var focusable = getFocusableElements();
+                if (focusable.length) {
+                    focusable[0].focus();
+                } else {
+                    modal.focus();
+                }
+            }, 0);
+        }
+    }
+
+    function scanEditModals(root) {
+        var scope = root || document;
+        if (!scope.querySelectorAll) return;
+        Array.prototype.forEach.call(scope.querySelectorAll('.govuk-edit-modal'), function (modal) {
+            attachModal(modal, 'open', '.govuk-edit-modal-dialog', false);
+        });
+    }
+
+    function init() {
+        var modalPopup = document.getElementById('modalPopup');
+        if (modalPopup) {
+            attachModal(modalPopup, 'show', '#modaPopupBody', true);
+        }
+
+        scanEditModals(document);
+
+        // Watch for .govuk-edit-modal dialogs injected/replaced dynamically
+        // (AJAX-loaded partials such as _AddEditMilestone.cshtml,
+        // _AddEditInvoice.cshtml, etc. are typically inserted via
+        // container.html(html)).
+        var bodyObserver = new MutationObserver(function (mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+                var added = mutations[i].addedNodes;
+                for (var j = 0; j < added.length; j++) {
+                    var node = added[j];
+                    if (node.nodeType !== 1) continue;
+                    if (node.classList && node.classList.contains('govuk-edit-modal')) {
+                        attachModal(node, 'open', '.govuk-edit-modal-dialog', false);
+                    }
+                    if (node.querySelectorAll) {
+                        scanEditModals(node);
+                    }
+                }
+            }
+        });
+        bodyObserver.observe(document.body, { childList: true, subtree: true });
     }
 
     if (document.readyState === 'loading') {
@@ -537,20 +611,47 @@
 })();
 
 // ── Global "Enter toggles checkbox" support ────────────────────────────────
+// Also enforces consistency with mouse behaviour: if a checkbox is visually
+// non-interactive because it (or an ancestor) has `pointer-events:none` —
+// as used by the datagrid GridColumnType.Checkbox cells — then Enter and
+// Space must NOT toggle it either, so keyboard and mouse behave the same.
 (function () {
     'use strict';
 
+    // Returns true if this element (or any ancestor) has a computed
+    // pointer-events value of "none", meaning mouse clicks can't reach it.
+    function isPointerEventsBlocked(el) {
+        for (var node = el; node && node.nodeType === 1; node = node.parentElement) {
+            var pe = window.getComputedStyle(node).pointerEvents;
+            if (pe === 'none') return true;
+        }
+        return false;
+    }
+
     document.addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') return;
+        if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
 
         var target = e.target;
         if (!target || target.tagName !== 'INPUT' || target.type !== 'checkbox') return;
         if (target.disabled || target.readOnly) return;
 
-        e.preventDefault();
-        target.checked = !target.checked;
-        target.dispatchEvent(new Event('input', { bubbles: true }));
-        target.dispatchEvent(new Event('change', { bubbles: true }));
+        // Match mouse behaviour: if the checkbox isn't clickable via mouse
+        // (pointer-events:none on it or an ancestor), don't let keyboard
+        // toggle it either. Block both Enter and Space (Space is the native
+        // browser toggle key for checkboxes, so it must be prevented too).
+        if (isPointerEventsBlocked(target)) {
+            e.preventDefault();
+            return;
+        }
+
+        // Only Enter needs a manual toggle; Space is handled natively by
+        // the browser for checkbox inputs.
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            target.checked = !target.checked;
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+            target.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     });
 })();
 
@@ -1019,4 +1120,51 @@
     } else {
         initMenuRoles();
     }
+})();
+
+// ── Focus trap for the GOV.UK alert/confirm dialog (govuk-modal-dialog.js) ──
+// Separate, additive module - does not modify govuk-modal-dialog.js or any
+// other existing code. showAlertMessage()/showGovukConfirm() build a dialog
+// on the fly (a <div data-govuk-modal="backdrop"> containing the actual
+// dialog with role="dialog"/aria-modal="true") and already trap Tab/Escape,
+// but other global listeners in this app (e.g. rememberFocus() above, or
+// scripts on the page reacting to an AJAX response) can still call .focus()
+// on an element in the page "background" while the dialog is open, moving
+// real focus out from under it. This watches for that and pulls focus back
+// into the dialog immediately, until OK/Cancel/Escape closes it.
+(function () {
+    'use strict';
+
+    var DIALOG_BACKDROP_SELECTOR = '[data-govuk-modal="backdrop"]';
+
+    function getOpenDialog() {
+        // openDialog() always appends the backdrop as the last matching node;
+        // querySelector returns the first in document order, but there is
+        // normally only ever one open at a time (a "pending" promise chain
+        // serialises them in govuk-modal-dialog.js).
+        return document.querySelector(DIALOG_BACKDROP_SELECTOR + ' [role="dialog"]');
+    }
+
+    function getFocusable(dialog) {
+        return Array.prototype.slice.call(
+            dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        ).filter(function (el) {
+            return !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true';
+        });
+    }
+
+    document.addEventListener('focusin', function (e) {
+        var dialog = getOpenDialog();
+        if (!dialog) return;
+        if (dialog.contains(e.target)) return;
+
+        // Focus escaped the open GOV.UK dialog to the background - pull it
+        // back in without touching the dialog's own open/close logic.
+        var focusable = getFocusable(dialog);
+        if (focusable.length) {
+            focusable[0].focus();
+        } else {
+            dialog.focus();
+        }
+    });
 })();
