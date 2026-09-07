@@ -259,8 +259,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
 
         #region LoadStaffGrid Tests
 
+        // The grid component injects the response directly into the grid container as HTML,
+        // so every LoadStaffGrid path must return the _DataGrid partial (with no rows when
+        // there is nothing to show) rather than JSON, otherwise the table structure is lost.
         [Fact]
-        public async Task LoadStaffGrid_WithInvalidModelState_ReturnsJsonWithSuccessFalse()
+        public async Task LoadStaffGrid_WithInvalidModelState_ReturnsPartialViewWithEmptyData()
         {
             // Arrange
             _controller.ModelState.AddModelError("wgGrade", "Required");
@@ -269,21 +272,36 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             var result = await _controller.LoadStaffGrid(new PaginationFilter<string>(), DefaultWgGrade);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value      = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
+            AssertEmptyStaffGrid(result);
+            await _workGroupEmployeeService.DidNotReceive()
+                .GetAllActiveWorkGroupEmployeesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
-        [Fact]
-        public async Task LoadStaffGrid_WithEmptyWgGrade_ReturnsJsonWithSuccessFalse()
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task LoadStaffGrid_WithEmptyWgGrade_ReturnsPartialViewWithEmptyData(string? wgGrade)
         {
             // Act
-            var result = await _controller.LoadStaffGrid(new PaginationFilter<string>(), "");
+            var result = await _controller.LoadStaffGrid(new PaginationFilter<string>(), wgGrade!);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value      = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
+            AssertEmptyStaffGrid(result);
+            await _workGroupEmployeeService.DidNotReceive()
+                .GetAllActiveWorkGroupEmployeesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        // Verifies the response keeps the grid structure with no rows.
+        private static void AssertEmptyStaffGrid(IActionResult result)
+        {
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<SetUpStaffResourcesItem>>(partialResult.Model);
+            Assert.Equal("ssrStaffGrid", gridConfig.GridId);
+            Assert.NotNull(gridConfig.Columns);
+            Assert.NotEmpty(gridConfig.Columns);
+            Assert.Empty(gridConfig.Data);
         }
 
         [Fact]
@@ -342,7 +360,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         }
 
         [Fact]
-        public async Task LoadStaffGrid_WhenServiceFails_ReturnsJsonWithSuccessFalse()
+        public async Task LoadStaffGrid_WhenServiceFails_ReturnsPartialViewWithEmptyData()
         {
             // Arrange
             var request         = new PaginationFilter<string> { Page = 1, PageSize = 10 };
@@ -357,9 +375,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             var result = await _controller.LoadStaffGrid(request, DefaultWgGrade);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var value      = GetJsonResultElement(jsonResult);
-            Assert.False(value.GetProperty("success").GetBoolean());
+            AssertEmptyStaffGrid(result);
         }
 
         #endregion
