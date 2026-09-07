@@ -290,10 +290,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<object>> ClearStagingAsync(string project)
+        public async Task<ApiResponseDto<object>> ClearStagingAsync()
         {
             var response = await _http.DeleteAsync<object>(
-                string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project)));
+                string.Format(PimsApiEndpoints.ClearStagingMilestones));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<object>>(response);
             var dto = _mapper.Map<ApiResponseDto<object>>(response);

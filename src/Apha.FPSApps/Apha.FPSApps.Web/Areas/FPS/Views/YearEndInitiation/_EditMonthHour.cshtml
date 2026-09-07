@@ -24,25 +24,25 @@
             <div class="govuk-grid-column-one-third">
                 <div class="govuk-form-group govuk-!-margin-bottom-3">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="monthModalDays">Days</label>
-                    <input class="govuk-input govuk-input--width-5 govuk-!-font-size-16"
-                           id="monthModalDays" name="Days" type="number"
-                           min="0" step="1" value="@Model.Days" autocomplete="off" />
+                    <input class="govuk-input govuk-input--width-5 govuk-!-font-size-16 js-numeric-decimal"
+                           id="monthModalDays" name="Days" type="text"
+                           maxlength="20" value="@Model.Days" autocomplete="off" />
                 </div>
             </div>
             <div class="govuk-grid-column-one-third">
                 <div class="govuk-form-group govuk-!-margin-bottom-3">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="monthModalCvlHours">CVL Hours</label>
-                    <input class="govuk-input govuk-input--width-5 govuk-!-font-size-16"
-                           id="monthModalCvlHours" name="CvlHours" type="number"
-                           min="0" step="0.1" value="@Model.CvlHours" autocomplete="off" />
+                    <input class="govuk-input govuk-input--width-5 govuk-!-font-size-16 js-numeric-decimal"
+                           id="monthModalCvlHours" name="CvlHours" type="text"
+                           maxlength="20" value="@Model.CvlHours" autocomplete="off" />
                 </div>
             </div>
             <div class="govuk-grid-column-one-third">
                 <div class="govuk-form-group govuk-!-margin-bottom-3">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="monthModalVidHours">VID Hours</label>
-                    <input class="govuk-input govuk-input--width-5 govuk-!-font-size-16"
-                           id="monthModalVidHours" name="VidHours" type="number"
-                           min="0" step="0.1" value="@Model.VidHours" autocomplete="off" />
+                    <input class="govuk-input govuk-input--width-5 govuk-!-font-size-16 js-numeric-decimal"
+                           id="monthModalVidHours" name="VidHours" type="text"
+                           maxlength="20" value="@Model.VidHours" autocomplete="off" />
                 </div>
             </div>
         </div>

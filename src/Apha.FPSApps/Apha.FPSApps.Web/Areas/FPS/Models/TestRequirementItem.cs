@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -14,6 +15,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // Maps to DTO NoRequired (double? in DTO — using decimal? for grid rendering)
         [Required(ErrorMessage = "No Tests is required.")]
         [Display(Name = "No Tests")]
+        [NonFinancialRange]
         [GridColumn(Order = 2, Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double? NoRequired { get; set; }
 

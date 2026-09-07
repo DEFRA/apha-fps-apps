@@ -3,6 +3,12 @@
 
 @{
     ViewData["Title"] = "FPS : Project Profitability for VLA";
+
+    // Negative totals are displayed as -(1,234.00); the JS summary refresh mirrors this.
+    Func<decimal?, string> formatTotal = v =>
+        !v.HasValue ? "0.00"
+            : v.Value < 0 ? "-(" + Math.Abs(v.Value).ToString("N2") + ")"
+            : v.Value.ToString("N2");
 }
 
 <main class="govuk-main-wrapper govuk-!-padding-top-0 asu-main-content" id="main-content" role="main">
@@ -138,10 +144,10 @@
                            for="ppf-total-staff-costs">Staff Costs</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalStaffCosts < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-staff-costs"
                                type="text"
-                               value="@(Model.TotalStaffCosts.HasValue ? Model.TotalStaffCosts.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalStaffCosts)"
                                readonly />
                     </div>
                 </div>
@@ -152,10 +158,10 @@
                            for="ppf-total-test-cost">Test Cost</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalTestCost < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-test-cost"
                                type="text"
-                               value="@(Model.TotalTestCost.HasValue ? Model.TotalTestCost.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalTestCost)"
                                readonly />
                     </div>
                 </div>
@@ -166,10 +172,10 @@
                            for="ppf-total-animal">Animal</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalAnimalCosts < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-animal"
                                type="text"
-                               value="@(Model.TotalAnimalCosts.HasValue ? Model.TotalAnimalCosts.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalAnimalCosts)"
                                readonly />
                     </div>
                 </div>
@@ -180,10 +186,10 @@
                            for="ppf-total-add-costs">Add Costs</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalAdditionalCosts < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-add-costs"
                                type="text"
-                               value="@(Model.TotalAdditionalCosts.HasValue ? Model.TotalAdditionalCosts.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalAdditionalCosts)"
                                readonly />
                     </div>
                 </div>
@@ -194,10 +200,10 @@
                            for="ppf-total-total-costs">Total Costs</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalTotalCosts < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-total-costs"
                                type="text"
-                               value="@(Model.TotalTotalCosts.HasValue ? Model.TotalTotalCosts.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalTotalCosts)"
                                readonly />
                     </div>
                 </div>
@@ -208,10 +214,10 @@
                            for="ppf-total-budget">Budget</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalBudget < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-budget"
                                type="text"
-                               value="@(Model.TotalBudget.HasValue ? Model.TotalBudget.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalBudget)"
                                readonly />
                     </div>
                 </div>
@@ -222,10 +228,10 @@
                            for="ppf-total-profit">Profit</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalProfit < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-profit"
                                type="text"
-                               value="@(Model.TotalProfit.HasValue ? Model.TotalProfit.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalProfit)"
                                readonly />
                     </div>
                 </div>
@@ -236,10 +242,10 @@
                            for="ppf-total-target-profit">Target Profit</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        <input class="govuk-input text-AlignRight pva-input-185"
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalTargetProfit < 0 ? "fps-profit-offtarget" : "")"
                                id="ppf-total-target-profit"
                                type="text"
-                               value="@(Model.TotalTargetProfit.HasValue ? Model.TotalTargetProfit.Value.ToString("N2") : "0.00")"
+                               value="@formatTotal(Model.TotalTargetProfit)"
                                readonly />
                     </div>
                 </div>
@@ -250,22 +256,11 @@
                            for="ppf-total-off-target">Off-Target</label>
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                        @if (Model.TotalOffTarget.HasValue && Model.TotalOffTarget.Value < 0)
-                        {
-                            <input class="govuk-input text-AlignRight pva-input-185 fps-profit-offtarget"
-                                   id="ppf-total-off-target"
-                                   type="text"
-                                   value="@Model.TotalOffTarget.Value.ToString("N2")"
-                                   readonly />
-                        }
-                        else
-                        {
-                            <input class="govuk-input text-AlignRight pva-input-185"
-                                   id="ppf-total-off-target"
-                                   type="text"
-                                   value="@(Model.TotalOffTarget.HasValue ? Model.TotalOffTarget.Value.ToString("N2") : "0.00")"
-                                   readonly />
-                        }
+                        <input class="govuk-input text-AlignRight pva-input-185 @(Model.TotalOffTarget.HasValue && Model.TotalOffTarget.Value < 0 ? "fps-profit-offtarget" : "")"
+                               id="ppf-total-off-target"
+                               type="text"
+                               value="@formatTotal(Model.TotalOffTarget)"
+                               readonly />
                     </div>
                 </div>
 
@@ -316,7 +311,15 @@
         function formatSummaryValue(value) {
             var numeric = Number(value) || 0;
             var absolute = Math.abs(numeric).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return numeric < 0 ? '-' + absolute : absolute;
+            return numeric < 0 ? '-(' + absolute + ')' : absolute;
+        }
+
+        // Negative totals are shown in red, matching the grid's accounting presentation.
+        function setSummaryValue(elementId, value) {
+            var el = document.getElementById(elementId);
+            if (!el) { return; }
+            el.value = formatSummaryValue(value);
+            el.classList.toggle('fps-profit-offtarget', (Number(value) || 0) < 0);
         }
 
         function updateProjectProfitabilityVlaSummary() {
@@ -328,21 +331,15 @@
             }).toString();
 
             $.getJSON('/FPS/ProjectProfitabilityVla/GetProjectProfitabilityVlaSummary?' + qs, function (data) {
-                document.getElementById('ppf-total-staff-costs').value   = formatSummaryValue(data.totalStaffCosts);
-                document.getElementById('ppf-total-test-cost').value     = formatSummaryValue(data.totalTestCost);
-                document.getElementById('ppf-total-animal').value        = formatSummaryValue(data.totalAnimalCosts);
-                document.getElementById('ppf-total-add-costs').value     = formatSummaryValue(data.totalAdditionalCosts);
-                document.getElementById('ppf-total-total-costs').value   = formatSummaryValue(data.totalTotalCosts);
-                document.getElementById('ppf-total-budget').value        = formatSummaryValue(data.totalBudget);
-                document.getElementById('ppf-total-profit').value        = formatSummaryValue(data.totalProfit);
-                document.getElementById('ppf-total-target-profit').value = formatSummaryValue(data.totalTargetProfit);
-                document.getElementById('ppf-total-off-target').value    = formatSummaryValue(data.totalOffTarget);
-
-                //   mirrors: classList.toggle('fps-profit-offtarget', totals.offTarget < 0)
-                var offTargetEl = document.getElementById('ppf-total-off-target');
-                if (offTargetEl) {
-                    offTargetEl.classList.toggle('fps-profit-offtarget', (Number(data.totalOffTarget) || 0) < 0);
-                }
+                setSummaryValue('ppf-total-staff-costs', data.totalStaffCosts);
+                setSummaryValue('ppf-total-test-cost', data.totalTestCost);
+                setSummaryValue('ppf-total-animal', data.totalAnimalCosts);
+                setSummaryValue('ppf-total-add-costs', data.totalAdditionalCosts);
+                setSummaryValue('ppf-total-total-costs', data.totalTotalCosts);
+                setSummaryValue('ppf-total-budget', data.totalBudget);
+                setSummaryValue('ppf-total-profit', data.totalProfit);
+                setSummaryValue('ppf-total-target-profit', data.totalTargetProfit);
+                setSummaryValue('ppf-total-off-target', data.totalOffTarget);
             });
         }
 

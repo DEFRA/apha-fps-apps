@@ -130,7 +130,7 @@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label for="NoRequired" class="govuk-label" asp-for="NoRequired">No Required</label>
-                <input type="number" step="0.01" min="0" asp-for="NoRequired" class="govuk-input" id="NoRequired"
+                <input type="text" maxlength="20" asp-for="NoRequired" class="govuk-input js-numeric-decimal" id="NoRequired"
                        onchange="calculateTestCost()">
                     <span asp-validation-for="NoRequired" class="govuk-error-message" style="display:none;"></span>
                 </div>

@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         // JS column field=name, header=Name, width=240
         [Display(Name = "Name")]
-        [GridColumn(Width = 240, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        [GridColumn(Width = 240, Type = GridColumnType.ReadOnly, IsFilterable = false)]
         public string? Name { get; set; }
 
         [Display(Name = "Jobcode")]

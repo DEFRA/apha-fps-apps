@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -26,6 +27,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? UnitPrice { get; set; }
 
         [Display(Name = "NoRequired")]
+        [NonFinancialRange]
         [GridColumn(Width = 120, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double? NoRequired { get; set; }
 

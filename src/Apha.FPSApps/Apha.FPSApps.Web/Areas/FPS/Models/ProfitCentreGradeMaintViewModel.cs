@@ -48,7 +48,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [CurrencyRange]
         public decimal? OHR { get; set; }
 
-        [GridColumn(Width = 120, Type = GridColumnType.Number, IsFilterable = false)]
+        [NonFinancialRange]
+        [GridColumn(Width = 120, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double? HrsAvailable { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
-using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -112,20 +111,8 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
 
-            var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(pactId);
-            if (existing == null)
-            {
-                return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
-            }
-            else
-            {
-                throw new BusinessValidationErrorException(
-                [
-                    new BusinessValidationError(
-                        "Selected record cannot be deleted because it is currently assigned to a employee. Please remove the assignment first.",
-                        "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS")
-                ]);
-            }
+            // Deleting the WorkGroupEmployee record unlinks it from the WorkGroupGrade.
+            return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
         }
     }
 }
