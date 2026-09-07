@@ -122,19 +122,22 @@
                             </div>
                         </div>
                     </div>
-                    <span class="govuk-error-message" style="display:none;"></span>
+                    <span class="govuk-error-message" data-valmsg-for="Account" style="display:none;"></span>
                 }
             </div>
             <div class="govuk-form-group sup_margin_bottom_10">
-                <label for="GenBid" class="govuk-label govuk-!-font-weight-bold">Gen Bid <span class="sup_error_text_color">*</span></label>
-                <input type="hidden" id="GenBid" name="GenBid" value="@bid.GenBid" required />
+                <label for="GenBidDisplay" class="govuk-label govuk-!-font-weight-bold">Gen Bid <span class="sup_error_text_color">*</span></label>
+                <input type="hidden" id="GenBid" name="GenBid" value="@(isEditMode ? bid.GenBid.ToString() : string.Empty)" />
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                    <input type="text" maxlength="20" id="GenBidDisplay"
-                           value="@bid.GenBid" class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
+                    <input type="text" maxlength="20" id="GenBidDisplay" name="GenBidDisplay"
+                           value="@(isEditMode ? bid.GenBid.ToString() : string.Empty)"
+                           class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
+                           data-msg-required="Gen Bid is required"
+                           required
                            oninput="syncGenBid(this.value)" />
                 </div>
-                <span class="govuk-error-message" style="display:none;"></span>
+                <span class="govuk-error-message" data-valmsg-for="GenBidDisplay" style="display:none;"></span>
             </div>
         </form>
 
@@ -217,8 +220,10 @@
                 {
                     <input type="text" name="ItemDescription" id="ItemDescription"
                            value="@purchase.ItemDescription"
-                           class="govuk-input govuk-!-font-size-16" maxlength="50" required />
-                    <span class="govuk-error-message" style="display:none;"></span>
+                           class="govuk-input govuk-!-font-size-16" maxlength="50"
+                           data-msg-required="Item Description is required"
+                           required />
+                    <span class="govuk-error-message" data-valmsg-for="ItemDescription" style="display:none;"></span>
                 }
             </div>
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
@@ -226,9 +231,12 @@
                 <div class="govuk-input__wrapper">
                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
                     <input type="text" maxlength="20" name="Amount" id="Amount"
-                           value="@purchase.Amount" class="govuk-input govuk-!-font-size-16 js-numeric-decimal" required />
+                           value="@(isEditMode ? purchase.Amount.ToString() : string.Empty)"
+                           class="govuk-input govuk-!-font-size-16 js-numeric-decimal"
+                           data-msg-required="Amount is required"
+                           required />
                 </div>
-                <span class="govuk-error-message" style="display:none;"></span>
+                <span class="govuk-error-message" data-valmsg-for="Amount" style="display:none;"></span>
             </div>
         </form>
     }

@@ -344,9 +344,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var dto = new BidDto { WorkGroupName = WorkGroupName, Account = account };
             var result = await _budgetBidsService.DeleteBidAsync(dto);
 
-            return result.Success
-                ? Json(new { success = true, message = "Budget bid deleted successfully." })
-                : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete budget bid." });
+            if (result.Success)
+                return Json(new { success = true, message = "Budget bid deleted successfully." });
+
+            var firstError = result.Errors?.FirstOrDefault();
+            var errorMessage = firstError?.Code is "BUSINESS_RULE_VIOLATION" or "DB_POSTGRES_ERROR"
+                ? "The record cannot be deleted because it is being used elsewhere."
+                : firstError?.Message ?? "Failed to delete budget bid.";
+
+            return Json(new { success = false, message = errorMessage });
         }
 
         // ─────────────── PURCHASES CRUD ───────────────

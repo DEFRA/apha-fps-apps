@@ -456,6 +456,10 @@
             showLoader();
         }, true);
 
+        window.addEventListener("beforeunload", function () {
+            showLoader();
+        });
+
         // Hide the loader when the page is restored from the back/forward cache.
         window.addEventListener("pageshow", function (event) {
             if (event.persisted) {
