@@ -17,10 +17,6 @@
     <form id="testReqmtForm" class="govuk-grid-column-full">
 
         <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
-        @if (isEdit)
-        {
-            <input type="hidden" name="TestCode" value="@Model.TestCode" />
-        }
 
         <!-- Validation error summary -->
         <div class="govuk-error-summary" role="alert"
@@ -35,21 +31,16 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="TestCode">Test Code <span class="sup_color_red">*</span></label>
+                    <label class="govuk-label govuk-!-font-weight-bold" for="testReqmtTestCodeDropdown_input">Test Code <span class="sup_color_red">*</span></label>
                     @if (isEdit)
                     {
-                        <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode" disabled
-                                asp-items="testorProductOptions" style="width:100%;" aria-label="Test Code">
-                            <option value="">-- Select Test Code --</option>
-                        </select>
+                        <input type="hidden" id="TestCode" name="TestCode" value="@Model.TestCode" />
+                        <input class="govuk-input govuk-!-font-size-16" aria-label="Test Code" value="@Model.TestCode" disabled />
                     }
                     else
                     {
-                        <select class="govuk-select govuk-!-font-size-16" asp-for="TestCode"
-                                asp-items="testorProductOptions" style="width:100%;" required
-                                onchange="fetchTestReqmtPricing()" aria-label="Test Code">
-                            <option value="">-- Select Test Code --</option>
-                        </select>
+                        <input type="hidden" id="TestCode" name="TestCode" value="@Model.TestCode" required />
+                        <div id="testReqmtTestCodeSelectMultiDropdown"></div>
                         <span data-valmsg-for="TestCode"
                               class="govuk-error-message field-validation-valid" style="display:none;"></span>
                     }
@@ -159,10 +150,46 @@
 
 <script>
     var testReqmtProjectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(projects));
+    var testReqmtTestCodeOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(testorProductOptions.Select(x => new { x.Value, x.Text })));
     var testReqmtProjectSelectDropdown = null;
+    var testReqmtTestCodeSelectDropdown = null;
 
-    (function initializeTestReqmtProjectMultiColumnDropdown() {
+    (function initializeTestReqmtMultiColumnDropdowns() {
         const isEditMode = @isEdit.ToString().ToLower();
+
+        if (!isEditMode) {
+            testReqmtTestCodeSelectDropdown = new MultiColumnDropdownComponent({
+                dropdownId: 'testReqmtTestCodeDropdown',
+                containerSelector: '#testReqmtTestCodeSelectMultiDropdown',
+                placeholder: 'Select Test Code',
+                showSerialNumber: false,
+                searchPlaceholder: 'Search by Test Code',
+                labelText: '',
+                columns: [
+                    { field: 'Text', header: 'Test Code', width: '100%' }
+                ],
+                data: testReqmtTestCodeOptionsListData,
+                displayField: 'Text',
+                valueField: 'Value',
+                clearButtonClearsSelection: true,
+                callbacks: {
+                    onSelect: function (selectedItem) {
+                        const selectedTestCode = selectedItem && selectedItem.Value ? selectedItem.Value : '';
+                        $('#TestCode').val(selectedTestCode).trigger('change');
+                        fetchTestReqmtPricing();
+                    },
+                    onClear: function () {
+                        $('#TestCode').val('').trigger('change');
+                        fetchTestReqmtPricing();
+                    }
+                }
+            });
+
+            const initialTestCode = $('#TestCode').val();
+            if (initialTestCode) {
+                testReqmtTestCodeSelectDropdown.setValue(initialTestCode);
+            }
+        }
 
         testReqmtProjectSelectDropdown = new MultiColumnDropdownComponent({
             dropdownId: 'testReqmtProjectBuyerCodeDropdown',
