@@ -287,6 +287,7 @@ function addConstituentTest() {
             $('#modaPopupBody').data('submitFn', 'saveConstituentTest');
 
             initializeTestCodeMultiColumnDropdown();
+            initializeWorkGroupMultiColumnDropdown();
         },
         error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -297,7 +298,7 @@ function saveConstituentTest() {
     var form = $('#formAddTest');
     var payload = {
         testCode: form.find('#txtmodal-testcode').val(),
-        workGroup: form.find('#txtmodal-workgroup').val(),
+        workGroup: form.find('#WorkGroup').val(),
         planPortfolio: currentParentProject
     };
 
@@ -584,6 +585,45 @@ function initializeTestCodeMultiColumnDropdown() {
                 testCodeSelectDropdown = null;
                 $('#txtmodal-testcode').val('');
                 $('#txtmodal-description').val('');
+            }
+        }
+    });
+}
+
+function initializeWorkGroupMultiColumnDropdown() {
+    // Get workGroup options from the embedded JSON in the partial view
+    var workGroupOptions = [];
+    var optionsScript = document.getElementById('workGroupOptionsData');
+
+    if (optionsScript) {
+        try {
+            workGroupOptions = JSON.parse(optionsScript.textContent);
+        } catch (e) {
+            console.error('Failed to parse WorkGroup options:', e);
+        }
+    }
+
+    var workGroupDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'portfolioMaintenanceWorkGroupDropdown',
+        containerSelector: '#workGroupSelectMultiDropdown',
+        placeholder: 'Select Work Group',
+        searchPlaceholder: 'Search by Work Group',
+        searchLabelText: 'Search by Work Group',
+        showSerialNumber: false,
+        columns: [
+            { field: 'Text', header: 'Work Group', width: '100%' }
+        ],
+        data: workGroupOptions,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        showClearButton: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#WorkGroup').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function () {
+                $('#WorkGroup').val('').trigger('change');
             }
         }
     });
