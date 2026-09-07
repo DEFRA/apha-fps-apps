@@ -252,27 +252,35 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespaceWorkGroupGrade_ThrowsArgumentException(string wgGrade)
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespaceWorkGroupGrade_ThrowsBusinessValidationErrorException(string wgGrade)
         {
             // Arrange
             var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = wgGrade };
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() =>
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _sut.CreateWorkGroupEmployeeForStaffAsync(dto));
+
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_GRADE_REQUIRED", error.Code);
+            Assert.Equal("Work Group Grade is required.", error.Message);
 
             await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
         }
 
         [Fact]
-        public async Task CreateWorkGroupEmployeeForStaffAsync_WhenEmployeeAlreadyExists_ThrowsArgumentException()
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WhenEmployeeAlreadyExists_ThrowsBusinessValidationErrorException()
         {
             var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
             _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId)
                 .Returns(new WorkGroupEmployeeView { PactId = DefaultPactId });
 
-            await Assert.ThrowsAsync<ArgumentException>(() =>
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _sut.CreateWorkGroupEmployeeForStaffAsync(dto));
+
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("PACTID_ALREADY_EXISTS", error.Code);
+            Assert.Equal($"WorkGroupEmployee with PACT Id '{DefaultPactId}' already exists.", error.Message);
 
             await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
         }

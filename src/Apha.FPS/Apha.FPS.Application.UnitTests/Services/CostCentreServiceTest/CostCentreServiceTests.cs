@@ -175,19 +175,22 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         }
 
         [Fact]
-        public async Task CreateCostCentreAsync_ThrowsInvalidOperationException_WhenCompositeKeyAlreadyExists()
+        public async Task CreateCostCentreAsync_ThrowsBusinessValidationErrorException_WhenCompositeKeyAlreadyExists()
         {
             // Arrange
             var dto = BuildDto(100.0, "PC01", 2024);
             _mockRepository.ExistsAsync(100.0, 2024).Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateCostCentreAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateCostCentreAsync(dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("COST_CENTRE_ALREADY_EXISTS", error.Code);
+            Assert.Contains("already exists", error.Message);
             await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<CostCentre>());
         }
 
         [Fact]
-        public async Task CreateCostCentreAsync_ThrowsInvalidOperationException_WhenProfitCentreDoesNotExist()
+        public async Task CreateCostCentreAsync_ThrowsBusinessValidationErrorException_WhenProfitCentreDoesNotExist()
         {
             // Arrange
             var dto = BuildDto(100.0, "PC_INVALID", 2024);
@@ -195,7 +198,10 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
             _mockProfitCentreRepository.ProfitCentreExistsAsync("PC_INVALID").Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateCostCentreAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateCostCentreAsync(dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("PROFIT_CENTRE_NOT_FOUND", error.Code);
+            Assert.Contains("does not exist", error.Message);
             await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<CostCentre>());
         }
 
@@ -253,7 +259,7 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
         }
 
         [Fact]
-        public async Task UpdateCostCentreAsync_ThrowsInvalidOperationException_WhenProfitCentreDoesNotExist()
+        public async Task UpdateCostCentreAsync_ThrowsBusinessValidationErrorException_WhenProfitCentreDoesNotExist()
         {
             // Arrange
             var dto = BuildDto(100.0, "PC_INVALID", 2024);
@@ -261,7 +267,10 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
             _mockProfitCentreRepository.ProfitCentreExistsAsync("PC_INVALID").Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateCostCentreAsync(100.0, 2024, dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateCostCentreAsync(100.0, 2024, dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("PROFIT_CENTRE_NOT_FOUND", error.Code);
+            Assert.Contains("does not exist", error.Message);
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<double>(), Arg.Any<int>(), Arg.Any<CostCentre>());
         }
 
