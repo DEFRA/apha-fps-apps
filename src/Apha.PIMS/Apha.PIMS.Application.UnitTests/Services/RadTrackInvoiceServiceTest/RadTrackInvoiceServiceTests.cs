@@ -107,11 +107,11 @@ namespace Apha.PIMS.Application.UnitTests.Services.RadTrackInvoiceServiceTest
         }
 
         [Fact]
-        public async Task GetAllAsync_WithNullParameters_ThrowsArgumentException()
+        public async Task GetAllAsync_WithNullParameters_ThrowsBusinessValidationErrorException()
         {
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetAllAsync(null!));
-            exception.Message.Should().Contain("Query parameters must not be null.");
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.GetAllAsync(null!));
+            exception.Errors.Should().ContainSingle(e => e.Code == "QUERY_PARAMETERS_REQUIRED");
             await _mockRepository.DidNotReceive().GetAllAsync(Arg.Any<PaginationParameters<RadTrackInvoiceFilter>>());
         }
 
@@ -218,11 +218,11 @@ namespace Apha.PIMS.Application.UnitTests.Services.RadTrackInvoiceServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_WithNullDto_ThrowsArgumentException()
+        public async Task CreateAsync_WithNullDto_ThrowsBusinessValidationErrorException()
         {
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateAsync(null!));
-            exception.Message.Should().Contain("Invoice DTO must not be null.");
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(null!));
+            exception.Errors.Should().ContainSingle(e => e.Code == "INVOICE_REQUIRED");
             await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<RadTrackInvoice>());
         }
 
@@ -431,11 +431,11 @@ namespace Apha.PIMS.Application.UnitTests.Services.RadTrackInvoiceServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WithNullDto_ThrowsArgumentException()
+        public async Task UpdateAsync_WithNullDto_ThrowsBusinessValidationErrorException()
         {
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _sut.UpdateAsync(null!));
-            exception.Message.Should().Contain("Invoice DTO must not be null.");
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(null!));
+            exception.Errors.Should().ContainSingle(e => e.Code == "INVOICE_REQUIRED");
             await _mockRepository.DidNotReceive().GetByIdAsync(Arg.Any<int>());
         }
 
@@ -539,15 +539,15 @@ namespace Apha.PIMS.Application.UnitTests.Services.RadTrackInvoiceServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenInvoiceNotFound_ThrowsKeyNotFoundException()
+        public async Task UpdateAsync_WhenInvoiceNotFound_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = ValidUpdateDto(id: 99);
             _mockRepository.GetByIdAsync(dto.InvoiceCounter).Returns((RadTrackInvoice?)null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.UpdateAsync(dto));
-            exception.Message.Should().Contain("99");
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
+            exception.Errors.Should().ContainSingle(e => e.Code == "INVOICE_NOT_FOUND");
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<RadTrackInvoice>());
         }
 

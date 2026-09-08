@@ -14,5 +14,11 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<ProjectInvoiceDto>> UpdateAsync(int invoiceCounter, ProjectInvoiceDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(int invoiceCounter);
         Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<InvoiceImportRowDto>>> GetFailedInvoiceImportAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<InvoiceImportRowDto>> GetFailedInvoiceImportByIdAsync(int id);
+        Task<ApiResponseDto<bool>> SaveFailedInvoiceImportAsync(int id, InvoiceImportRowDto dto);
+        Task<ApiResponseDto<bool>> DeleteFailedInvoiceImportByIdAsync(int id);
+        Task<ApiResponseDto<bool>> DeleteFailedInvoiceImportByUserAsync();
+        Task<ApiResponseDto<InvoiceImportResultDto>> ImportInvoiceAsync(InvoiceImportReqDto request);
     }
 }

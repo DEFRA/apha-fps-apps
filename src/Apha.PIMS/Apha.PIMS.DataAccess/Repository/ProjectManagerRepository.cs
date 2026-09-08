@@ -103,7 +103,7 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             return await _dbContext.ProjectManagers
                 .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Projectmanager == projectManagerName);
+                .FirstOrDefaultAsync(m => EF.Functions.ILike(m.Projectmanager, projectManagerName));
         }
 
         public async Task<ProjectManager> AddProjectManagerAsync(ProjectManager entity)
@@ -123,7 +123,7 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<bool> DeleteProjectManagerAsync(string projectManagerName)
         {
             var rows = await _dbContext.ProjectManagers
-                .Where(m => m.Projectmanager == projectManagerName)
+                .Where(m => EF.Functions.ILike(m.Projectmanager, projectManagerName))
                 .ExecuteDeleteAsync();
 
             return rows > 0;
@@ -132,7 +132,7 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<bool> ProjectManagerExistsAsync(string projectManagerName)
         {
             return await _dbContext.ProjectManagers
-                .AnyAsync(m => m.Projectmanager == projectManagerName);
+                .AnyAsync(m => EF.Functions.ILike(m.Projectmanager, projectManagerName));
         }
     }
 }

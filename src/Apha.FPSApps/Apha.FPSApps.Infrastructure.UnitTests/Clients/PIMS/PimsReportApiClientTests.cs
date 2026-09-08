@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -17,7 +18,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         private readonly IMapper _mapper;
         private readonly PimsReportApiClient _client;
 
-        private const string BaseUrl = "api/v1/report";
+        private const string BaseUrl = PimsApiEndpoints.GetAllReports;
 
         public PimsReportApiClientTests()
         {
@@ -134,7 +135,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         public async Task GetByIdAsync_HttpReturnsSuccess_ReturnsMappedResponse()
         {
             // Arrange
-            var expectedUrl = $"{BaseUrl}/5";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetReportById, 5);
             var apiResp = SuccessApiResponse(MakeRes(5));
             var dto     = SuccessDto(MakeDto(5));
             _http.GetAsync<ReportRes>(expectedUrl).Returns(apiResp);
@@ -154,7 +155,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         public async Task GetByIdAsync_HttpReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var expectedUrl = $"{BaseUrl}/99";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetReportById, 99);
             var apiResp = FailureApiResponse<ReportRes>();
             var dto     = FailureDto<ReportDto>();
             _http.GetAsync<ReportRes>(expectedUrl).Returns(apiResp);
@@ -186,7 +187,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         {
             // Arrange
             const int id = 7;
-            var expectedUrl = $"{BaseUrl}/{id}";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetReportById, id);
             var apiResp = SuccessApiResponse(MakeRes(id));
             var dto     = SuccessDto(MakeDto(id));
             _http.GetAsync<ReportRes>(expectedUrl).Returns(apiResp);
@@ -196,7 +197,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             await _client.GetReportByIdAsync(id);
 
             // Assert
-            await _http.Received(1).GetAsync<ReportRes>(Arg.Is<string>(s => s == $"{BaseUrl}/{id}"));
+            await _http.Received(1).GetAsync<ReportRes>(Arg.Is<string>(s => s == string.Format(PimsApiEndpoints.GetReportById, id)));
         }
 
         #endregion
@@ -275,7 +276,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             const int id    = 5;
             var inputDto    = MakeDto(id);
             var req         = new ReportReq { ReportName = "Updated", Type = "R" };
-            var expectedUrl = $"{BaseUrl}/{id}";
+            var expectedUrl = string.Format(PimsApiEndpoints.UpdateReport, id);
             var apiResp     = SuccessApiResponse(MakeRes(id));
             var dto         = SuccessDto(MakeDto(id));
             _mapper.Map<ReportReq>(inputDto).Returns(req);
@@ -312,7 +313,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         {
             // Arrange
             const int id    = 3;
-            var expectedUrl = $"{BaseUrl}/{id}";
+            var expectedUrl = string.Format(PimsApiEndpoints.UpdateReport, id);
             _mapper.Map<ReportReq>(Arg.Any<ReportDto>()).Returns(new ReportReq());
             var apiResp = SuccessApiResponse(MakeRes(id));
             var dto     = SuccessDto(MakeDto(id));
@@ -339,7 +340,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         {
             // Arrange
             const int id    = 8;
-            var expectedUrl = $"{BaseUrl}/{id}";
+            var expectedUrl = string.Format(PimsApiEndpoints.DeleteReport, id);
             var apiResp     = SuccessApiResponse(true);
             var dto         = SuccessDto(true);
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);
@@ -359,7 +360,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         {
             // Arrange
             const int id    = 99;
-            var expectedUrl = $"{BaseUrl}/{id}";
+            var expectedUrl = string.Format(PimsApiEndpoints.DeleteReport, id);
             var apiResp     = FailureApiResponse<bool>();
             var dto         = FailureDto<bool>();
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);
@@ -391,7 +392,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         {
             // Arrange
             const int id    = 4;
-            var expectedUrl = $"{BaseUrl}/{id}";
+            var expectedUrl = string.Format(PimsApiEndpoints.DeleteReport, id);
             var apiResp     = SuccessApiResponse(true);
             var dto         = SuccessDto(true);
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);
