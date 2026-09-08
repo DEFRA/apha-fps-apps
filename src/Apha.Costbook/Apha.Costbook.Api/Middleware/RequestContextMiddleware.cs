@@ -25,6 +25,7 @@ namespace Apha.Costbook.Api.Middleware
             if (path != null &&
                 (path.StartsWith("/swagger")
                  || path.StartsWith("/health")
+                 || path.StartsWith("/query-logs")
                  || path.StartsWith("/favicon")))
             {
                 await _next(context);

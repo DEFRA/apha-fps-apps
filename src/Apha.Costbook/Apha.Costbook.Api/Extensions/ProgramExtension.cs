@@ -3,6 +3,7 @@ using Apha.Costbook.Api.Mappings;
 using Apha.Costbook.Api.Middleware;
 using Apha.Costbook.Application.Mappings;
 using Apha.Costbook.DataAccess.Data;
+using Apha.Costbook.DataAccess.Interceptors;
 using Asp.Versioning;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -35,6 +36,26 @@ namespace Apha.Costbook.Api.Extensions
 
                     npgsqlOptions.CommandTimeout(60);
                 });
+
+                // Centralised query profiling: captures SQL, parameters and execution time to a CSV file.
+                if (configuration.GetValue("QueryProfiling:Enabled", false))
+                {
+                    var csvPath = configuration["QueryProfiling:CsvFilePath"];
+                    if (string.IsNullOrWhiteSpace(csvPath))
+                    {
+                        csvPath = Path.Combine("Logs", "query-profiling.csv");
+                    }
+
+                    // Anchor a relative path to the content root so the file location is
+                    // deterministic regardless of the process working directory.
+                    if (!Path.IsPathRooted(csvPath))
+                    {
+                        csvPath = Path.Combine(builder.Environment.ContentRootPath, csvPath);
+                    }
+
+                    var thresholdMs = configuration.GetValue("QueryProfiling:SlowQueryThresholdMs", 0L);
+                    options.AddInterceptors(new QueryProfilingInterceptor(csvPath, thresholdMs));
+                }
             });
 
             if (builder.Environment.IsEnvironment("local"))

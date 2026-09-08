@@ -10,6 +10,7 @@ using Apha.FPS.Api.Middleware;
 using Apha.FPS.Application.Email;
 using Apha.FPS.Application.Mappings;
 using Apha.FPS.DataAccess.Data;
+using Apha.FPS.DataAccess.Interceptors;
 using Asp.Versioning;
 using Azure.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -30,6 +31,7 @@ namespace Apha.FPS.Api.Extensions
             var configuration = builder.Configuration;
 
             services.AddDbContext<FpsDbContext>(options =>
+                {
                     options.UseNpgsql(
                         configuration.GetConnectionString("FPSConnectionString")
                         ,npgsqlOptions =>
@@ -41,7 +43,28 @@ namespace Apha.FPS.Api.Extensions
                             // Structural safeguard: avoid hanging commands under load
                             npgsqlOptions.CommandTimeout(30);
                         }
-                        ), ServiceLifetime.Scoped);
+                        );
+
+                    // Centralised query profiling: captures SQL, parameters and execution time to a CSV file.
+                    if (configuration.GetValue("QueryProfiling:Enabled", false))
+                    {
+                        var csvPath = configuration["QueryProfiling:CsvFilePath"];
+                        if (string.IsNullOrWhiteSpace(csvPath))
+                        {
+                            csvPath = Path.Combine("Logs", "query-profiling.csv");
+                        }
+
+                        // Anchor a relative path to the content root so the file location is
+                        // deterministic regardless of the process working directory.
+                        if (!Path.IsPathRooted(csvPath))
+                        {
+                            csvPath = Path.Combine(builder.Environment.ContentRootPath, csvPath);
+                        }
+
+                        var thresholdMs = configuration.GetValue("QueryProfiling:SlowQueryThresholdMs", 0L);
+                        options.AddInterceptors(new QueryProfilingInterceptor(csvPath, thresholdMs));
+                    }
+                }, ServiceLifetime.Scoped);
                        
             if (builder.Environment.IsEnvironment("local"))
             {
