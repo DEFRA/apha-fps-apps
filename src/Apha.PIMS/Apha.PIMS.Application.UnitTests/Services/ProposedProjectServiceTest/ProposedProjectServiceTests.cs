@@ -270,7 +270,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProposedProjectServiceTest
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddProposedProjectAsync(dto));
 
             exception.Errors.Should().ContainSingle(e => e.Code == "PROJECT_EXISTS_IN_FPS");
-            exception.Errors.First().Message.Should().Be("This project already exists in FPS. Only use this form for projects NOT on FPS.");
+            exception.Errors.First().Message.Should().Be("This project already exists in FPS.");
             await _mockRepository.DidNotReceive().AddProposedProjectAsync(Arg.Any<ProposedProject>());
         }
 
