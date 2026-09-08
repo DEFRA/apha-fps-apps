@@ -127,19 +127,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> LoadStaffGrid(PaginationFilter<string> request, string wgGrade)
         {
-            if (!ModelState.IsValid)
+            // The grid component injects this response directly into the grid container as
+            // HTML, so every path must return the _DataGrid partial. Returning JSON here
+            // would wipe out the table structure instead of showing "No records found.".
+            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(wgGrade))
             {
-                return Json(new
-                {
-                    success = false,
-                    message = "Invalid request data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
-            }
-
-            if (string.IsNullOrWhiteSpace(wgGrade))
-            {
-                return Json(new { success = false, message = "WG Grade is required." });
+                return EmptyStaffGrid();
             }
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
@@ -147,7 +140,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!response.Success)
             {
-                return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff data." });
+                return EmptyStaffGrid();
             }
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
@@ -283,6 +276,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
             });
         }
+
+        // Renders the staff grid with no rows, preserving the table structure and showing
+        // the component's "No records found." placeholder.
+        private PartialViewResult EmptyStaffGrid() =>
+            PartialView("_DataGrid", BuildStaffGridConfig(new List<SetUpStaffResourcesItem>(), new PaginationModel()));
 
         private static DataGridConfig<SetUpStaffResourcesItem> BuildStaffGridConfig(
             List<SetUpStaffResourcesItem> data,

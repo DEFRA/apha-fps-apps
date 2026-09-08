@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using Amazon.S3;
 using Apha.FPSApps.Infrastructure.Mappings;
+using Apha.FPSApps.Web.Filters;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -58,7 +59,11 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddHttpContextAccessor();
 
             // MVC
-            services.AddControllersWithViews();
+            services.AddControllersWithViews(options =>
+            {
+                // Centralised DataGrid Excel export — controllers only set AllowExcelExport = true.
+                options.Filters.Add<DataGridExcelExportFilter>();
+            });
 
             // Authentication
             services.AddAuthenticationServices(configuration, builder.Environment);
