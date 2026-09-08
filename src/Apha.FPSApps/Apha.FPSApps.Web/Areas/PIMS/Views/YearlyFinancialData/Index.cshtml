@@ -419,7 +419,6 @@
             $('#yfdModalYear').attr('aria-invalid', 'true');
             $('#yfdModalYear-error-msg').text(message);
             $('#yfdModalYear-error').removeClass('govuk-!-display-none');
-            showYfdFormError(message);
         }
 
         function clearYfdAdjustmentCommentValidation() {
@@ -435,7 +434,6 @@
             $('#yfdModalAdjComment').attr('aria-invalid', 'true');
             $('#yfdModalAdjComment-error-msg').text(message);
             $('#yfdModalAdjComment-error').removeClass('govuk-!-display-none');
-            showYfdFormError(message);
         }
 
         function getYfdAdjustmentCommentValidationMessage(response) {
@@ -716,6 +714,8 @@
             var isEdit = $('#hdnYfdIsEdit').val() === 'true';
             var project = getCurrentYfdProject();
 
+            clearYfdFormError();
+
             if (!isEdit) {
                 var yearText = ($('#yfdModalYear').val() || '').trim();
                 if (!yearText) {
@@ -812,8 +812,8 @@
                             return;
                         }
 
-                        var msg = formatApiErrors(data.errors) || data.message || 'Save failed.';
-                        showAlertMessage('Save failed: ' + msg, AlertType.ERROR);
+                        var msg = formatApiErrors(data.errors) || data.message || 'Failed to save yearly financial data record. Please check the form and try again.';
+                        showYfdFormError(msg);
                     }
                 },
                 error: function (xhr) {
@@ -824,7 +824,10 @@
                         return;
                     }
 
-                    showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+                    var msg = formatApiErrors(response && response.errors ? response.errors : null)
+                        || (response && response.message)
+                        || 'An error occurred while saving.';
+                    showYfdFormError(msg);
                 }
             });
         }

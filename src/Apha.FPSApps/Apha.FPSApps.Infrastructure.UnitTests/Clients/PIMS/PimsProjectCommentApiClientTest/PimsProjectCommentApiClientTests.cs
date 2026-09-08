@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task GetCommentsByProjectAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetCommentsByProjectAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var project = "PP001";
@@ -112,21 +112,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             url = QueryStringHelper.AddQueryString(url, new { project, year });
             _http.GetAsync<List<CommentRes>>(url).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetCommentsByProjectAsync(project, year, null, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve comments", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetCommentsByProjectAsync(project, year, null, query));
+            Assert.Equal("Network error", ex.Message);
         }
 
         [Fact]
-        public async Task GetCommentsByProjectAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetCommentsByProjectAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
         {
             // Arrange
             var project = "PP001";
@@ -143,17 +135,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _http.GetAsync<List<CommentRes>>(url).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetCommentsByProjectAsync(project, year, null, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve comments", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetCommentsByProjectAsync(project, year, null, query));
         }
 
         [Fact]
@@ -267,28 +250,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task GetByIdAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetByIdAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var CommentNo = 1;
             var url = string.Format(PimsApiEndpoints.GetCommentById, CommentNo);
             _http.GetAsync<CommentRes>(url).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetByIdAsync(CommentNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetByIdAsync(CommentNo));
+            Assert.Equal("Network error", ex.Message);
         }
 
         [Fact]
-        public async Task GetByIdAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetByIdAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
         {
             // Arrange
             var CommentNo = 1;
@@ -298,17 +273,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _http.GetAsync<CommentRes>(url).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetByIdAsync(CommentNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetByIdAsync(CommentNo));
         }
 
         [Fact]
@@ -398,7 +364,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task CreateCommentAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task CreateCommentAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var dto = new CommentDto { Project = "PP001" };
@@ -408,37 +374,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _http.PostAsync<CommentReq, CommentRes>(PimsApiEndpoints.CreateComment, request)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.CreateCommentAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to create comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.CreateCommentAsync(dto));
+            Assert.Equal("Network error", ex.Message);
         }
 
         [Fact]
-        public async Task CreateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ReturnsInternalError()
+        public async Task CreateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsAutoMapperMappingException()
         {
             // Arrange
             var dto = new CommentDto { Project = "PP001" };
             _mapper.Map<CommentReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.CreateCommentAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to create comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.CreateCommentAsync(dto));
         }
 
         [Fact]
@@ -534,7 +483,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task UpdateCommentAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task UpdateCommentAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var CommentNo = 1;
@@ -545,38 +494,21 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _http.PutAsync<CommentReq, CommentRes>(string.Format(PimsApiEndpoints.UpdateComment, CommentNo), request)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.UpdateCommentAsync(CommentNo, dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to update comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.UpdateCommentAsync(CommentNo, dto));
+            Assert.Equal("Network error", ex.Message);
         }
 
         [Fact]
-        public async Task UpdateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ReturnsInternalError()
+        public async Task UpdateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsAutoMapperMappingException()
         {
             // Arrange
             var CommentNo = 1;
             var dto = new CommentDto { CommentNo = CommentNo, Project = "PP001" };
             _mapper.Map<CommentReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.UpdateCommentAsync(CommentNo, dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to update comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.UpdateCommentAsync(CommentNo, dto));
         }
 
         [Fact]
@@ -667,28 +599,20 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task DeleteCommentAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task DeleteCommentAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var CommentNo = 1;
             var url = string.Format(PimsApiEndpoints.DeleteComment, CommentNo);
             _http.DeleteAsync<bool>(url).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.DeleteCommentAsync(CommentNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.False(result.Data);  // bool defaults to false, not null
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to delete comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.DeleteCommentAsync(CommentNo));
+            Assert.Equal("Network error", ex.Message);
         }
 
         [Fact]
-        public async Task DeleteCommentAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task DeleteCommentAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
         {
             // Arrange
             var CommentNo = 1;
@@ -698,17 +622,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             _http.DeleteAsync<bool>(url).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.DeleteCommentAsync(CommentNo);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.False(result.Data);  // bool defaults to false, not null
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to delete comment", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.DeleteCommentAsync(CommentNo));
         }
 
         [Fact]
@@ -769,22 +684,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task GetCommentTopicsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetCommentTopicsAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             _http.GetAsync<List<CommentTopicRes>>(PimsApiEndpoints.GetCommentTopics).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetCommentTopicsAsync();
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve comment topics", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetCommentTopicsAsync());
+            Assert.Equal("Network error", ex.Message);
         }
 
         #endregion
@@ -821,24 +728,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task GetForecastSpendByProjectAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetForecastSpendByProjectAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var project = "PP001";
             var url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetCommentForecastSpend, new { project });
             _http.GetAsync<ProjectCommentForecastSpendRes>(url).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetForecastSpendByProjectAsync(project);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve forecast spend", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetForecastSpendByProjectAsync(project));
+            Assert.Equal("Network error", ex.Message);
         }
 
         #endregion
@@ -881,7 +780,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task UpdateForecastSpendByProjectAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task UpdateForecastSpendByProjectAsync_WhenHttpExecutorThrowsException_ThrowsException()
         {
             // Arrange
             var project = "PP001";
@@ -892,17 +791,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
                 Arg.Any<ProjectCommentForecastSpendRes>())
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.UpdateForecastSpendByProjectAsync(project, forecastSpend);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to update forecast spend", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.UpdateForecastSpendByProjectAsync(project, forecastSpend));
+            Assert.Equal("Network error", ex.Message);
         }
 
         #endregion
