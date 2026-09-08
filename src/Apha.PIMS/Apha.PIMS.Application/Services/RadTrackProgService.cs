@@ -1,6 +1,7 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -34,12 +35,14 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<RadTrackProgDto?> GetRadTrackProgByProgramAsync(string program)
         {
-            if (string.IsNullOrWhiteSpace(program)) throw new ArgumentException("program must not be empty.", nameof(program));
+            if (string.IsNullOrWhiteSpace(program)) return null;
 
             // Trim the program name to normalize it (remove leading/trailing spaces)
             program = program.Trim();
 
-            RadtrackProg? entity = await _repository.GetRadTrackProgByProgramAsync(program);
+            // Load all programs and find the one matching case-insensitively
+            var allPrograms = await _repository.GetAllRadTrackProgsAsync();
+            var entity = allPrograms.FirstOrDefault(p => StringEqualsTrimmedIgnoreCase(p.Program, program));
             return entity is null ? null : _mapper.Map<RadTrackProgDto>(entity);
         }
 
@@ -47,15 +50,24 @@ namespace Apha.PIMS.Application.Services
         public async Task<RadTrackProgDto> CreateRadTrackProgAsync(RadTrackProgDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
-            if (string.IsNullOrWhiteSpace(dto.Program)) throw new ArgumentException("Program must not be empty.", nameof(dto));
 
-            // Trim the program name to normalize it (remove leading/trailing spaces)
-            dto.Program = dto.Program.Trim();
+            string? normalizedProgram = dto.Program?.Trim();
 
-            // Check if program already exists to prevent duplicate key constraint violation
-            bool exists = await _repository.RadTrackProgExistsAsync(dto.Program);
-            if (exists)
-                throw new InvalidOperationException($"Program '{dto.Program}' already exists. Please use a different program name or update the existing record.");
+            if (string.IsNullOrWhiteSpace(normalizedProgram))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Program is required.", "PROGRAM_REQUIRED")
+                ]);
+
+            dto.Program = normalizedProgram;
+
+            // Check if program already exists (case-insensitive, trimmed comparison)
+            var existingPrograms = await _repository.GetAllRadTrackProgsAsync();
+            if (existingPrograms.Any(p => StringEqualsTrimmedIgnoreCase(p.Program, dto.Program)))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Program '{dto.Program}' already exists. Please enter a unique program name.", "PROGRAM_DUPLICATE")
+                ]);
 
             RadtrackProg entity = _mapper.Map<RadtrackProg>(dto);
             RadtrackProg created = await _repository.AddRadTrackProgAsync(entity);
@@ -66,14 +78,6 @@ namespace Apha.PIMS.Application.Services
         public async Task<RadTrackProgDto> UpdateRadTrackProgAsync(RadTrackProgDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
-            if (string.IsNullOrWhiteSpace(dto.Program)) throw new ArgumentException("Program must not be empty.", nameof(dto));
-
-            // Trim the program name to normalize it (remove leading/trailing spaces)
-            dto.Program = dto.Program.Trim();
-
-            bool exists = await _repository.RadTrackProgExistsAsync(dto.Program);
-            if (!exists)
-                throw new KeyNotFoundException($"RadTrackProg with program '{dto.Program}' was not found.");
 
             RadtrackProg entity = _mapper.Map<RadtrackProg>(dto);
             RadtrackProg updated = await _repository.UpdateRadTrackProgAsync(entity);
@@ -83,14 +87,21 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<bool> DeleteRadTrackProgAsync(string program)
         {
-            if (string.IsNullOrWhiteSpace(program)) throw new ArgumentException("program must not be empty.", nameof(program));
+            if (string.IsNullOrWhiteSpace(program))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Program is required.", "PROGRAM_REQUIRED")
+                ]);
 
             // Trim the program name to normalize it (remove leading/trailing spaces)
             program = program.Trim();
 
-            bool exists = await _repository.RadTrackProgExistsAsync(program);
-            if (!exists)
-                throw new KeyNotFoundException($"RadTrackProg with program '{program}' was not found.");
+            var existingPrograms = await _repository.GetAllRadTrackProgsAsync();
+            if (!existingPrograms.Any(p => StringEqualsTrimmedIgnoreCase(p.Program, program)))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"RadTrackProg with program '{program}' was not found.", "PROGRAM_NOT_FOUND")
+                ]);
 
             return await _repository.DeleteRadTrackProgAsync(program);
         }
@@ -98,7 +109,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> RadTrackProgExistsAsync(string program)
         {
             if (string.IsNullOrWhiteSpace(program)) return false;
-            return await _repository.RadTrackProgExistsAsync(program);
+
+            program = program.Trim();
+            var allPrograms = await _repository.GetAllRadTrackProgsAsync();
+            return allPrograms.Any(p => StringEqualsTrimmedIgnoreCase(p.Program, program));
         }
 
         // Returns distinct non-null Program values from MY_tlkpProject for populating the Programme dropdown
@@ -106,5 +120,11 @@ namespace Apha.PIMS.Application.Services
         {
             return await _repository.GetAllProgramNamesAsync();
         }
+
+        /// <summary>
+        /// Case-insensitive comparison of trimmed program names.
+        /// </summary>
+        private static bool StringEqualsTrimmedIgnoreCase(string? left, string? right) =>
+            left is not null && right is not null && string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }

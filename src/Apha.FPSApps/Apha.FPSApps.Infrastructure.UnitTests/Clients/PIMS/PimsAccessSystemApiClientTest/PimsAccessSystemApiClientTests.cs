@@ -83,14 +83,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessSystemApi
         }
 
         [Fact]
-        public async Task GetAllAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task GetAllAsync_HttpThrowsException_PropagatesException()
         {
-            _http.GetAsync<List<AccessSystemRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+            _http.GetAsync<List<AccessSystemRes>>(Arg.Any<string>())
+                .Returns(Task.FromException<ApiResponse<List<AccessSystemRes>>>(new Exception("Network error")));
 
-            var result = await _client.GetAllAsync();
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetAllAsync());
 
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("Network error", ex.Message);
         }
 
         #endregion
@@ -129,14 +129,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessSystemApi
         }
 
         [Fact]
-        public async Task GetByIdAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task GetByIdAsync_HttpThrowsException_PropagatesException()
         {
-            _http.GetAsync<AccessSystemRes>(Arg.Any<string>()).ThrowsAsync(new Exception("timeout"));
+            _http.GetAsync<AccessSystemRes>(Arg.Any<string>())
+                .Returns(Task.FromException<ApiResponse<AccessSystemRes>>(new Exception("timeout")));
 
-            var result = await _client.GetByIdAsync(1);
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetByIdAsync(1));
 
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("timeout", ex.Message);
         }
 
         #endregion

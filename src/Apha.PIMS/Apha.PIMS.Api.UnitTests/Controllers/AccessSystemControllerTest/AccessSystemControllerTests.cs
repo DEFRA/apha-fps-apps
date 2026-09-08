@@ -99,7 +99,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.AccessSystemControllerTest
         }
 
         [Fact]
-        public async Task GetById_ServiceReturnsNull_ReturnsNotFound()
+        public async Task GetById_ServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
         {
             // Arrange
             _service.GetByIdAsync(Arg.Any<int>()).Returns((AccessSystemDto?)null);
@@ -108,7 +108,12 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.AccessSystemControllerTest
             var result = await _controller.GetById(99);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<AccessSystemRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            _mapper.DidNotReceive().Map<AccessSystemRes>(Arg.Any<AccessSystemDto>());
         }
 
         #endregion

@@ -1,6 +1,7 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -42,34 +43,83 @@ namespace Apha.PIMS.Application.Services
         public async Task<ProjectManagerDto?> GetProjectManagerByNameAsync(string projectManagerName)
         {
             if (string.IsNullOrWhiteSpace(projectManagerName))
-                throw new ArgumentException("Project manager name is required.", nameof(projectManagerName));
+                return null;
 
-            ProjectManager? entity = await _repository.GetProjectManagerByNameAsync(projectManagerName);
-            return entity is null ? null : _mapper.Map<ProjectManagerDto>(entity);
+            string normalizedName = projectManagerName.Trim();
+            var allManagers = await _repository.GetAllProjectManagersAsync();
+            var manager = allManagers.FirstOrDefault(m => StringEqualsTrimmedIgnoreCase(m.Projectmanager, normalizedName));
+            return manager is null ? null : _mapper.Map<ProjectManagerDto>(manager);
         }
 
         public async Task<ProjectManagerDto> CreateProjectManagerAsync(ProjectManagerDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.ProjectManager))
-                throw new ArgumentException("Project manager name is required.", nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
 
+            string? normalizedProjectManager = dto.ProjectManager?.Trim();
             dto.LoginEmail = string.IsNullOrWhiteSpace(dto.LoginEmail) ? null : dto.LoginEmail.Trim();
+            dto.Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim();
+            dto.MNumber = string.IsNullOrWhiteSpace(dto.MNumber) ? null : dto.MNumber.Trim();
 
-            bool alreadyExists = await _repository.ProjectManagerExistsAsync(dto.ProjectManager);
-            if (alreadyExists)
-                throw new InvalidOperationException(
-                    $"ProjectManager '{dto.ProjectManager}' already exists.");
+            if (string.IsNullOrWhiteSpace(normalizedProjectManager))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Project manager name is required.", "PROJECT_MANAGER_NAME_REQUIRED")
+                ]);
 
+            dto.ProjectManager = normalizedProjectManager;
+
+            var existingManagers = await _repository.GetAllProjectManagersAsync();
+
+            // Check for duplicate ProjectManager name
+            bool duplicateProjectManagerExists = existingManagers.Any(m =>
+                StringEqualsTrimmedIgnoreCase(m.Projectmanager, dto.ProjectManager));
+
+            if (duplicateProjectManagerExists)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Project manager '{dto.ProjectManager}' already exists. Please enter a unique manager name.", "PROJECT_MANAGER_DUPLICATE_NAME")
+                ]);
+
+            // Check for duplicate LoginEmail
             if (!string.IsNullOrWhiteSpace(dto.LoginEmail))
             {
-                var existingManagers = await _repository.GetAllProjectManagersAsync();
                 bool duplicateLoginEmailExists = existingManagers.Any(m =>
                     !string.IsNullOrWhiteSpace(m.LoginEmail)
-                    && string.Equals(m.LoginEmail.Trim(), dto.LoginEmail, StringComparison.OrdinalIgnoreCase));
+                    && StringEqualsTrimmedIgnoreCase(m.LoginEmail, dto.LoginEmail));
 
                 if (duplicateLoginEmailExists)
-                    throw new InvalidOperationException("Manager's login email already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError("Manager's login email already exists. Please enter a unique login email.", "PROJECT_MANAGER_DUPLICATE_LOGIN_EMAIL")
+                    ]);
+            }
+
+            // Check for duplicate Email
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                bool duplicateEmailExists = existingManagers.Any(m =>
+                    !string.IsNullOrWhiteSpace(m.Email)
+                    && StringEqualsTrimmedIgnoreCase(m.Email, dto.Email));
+
+                if (duplicateEmailExists)
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError("Manager's email already exists. Please enter a unique email.", "PROJECT_MANAGER_DUPLICATE_EMAIL")
+                    ]);
+            }
+
+            // Check for duplicate MNumber
+            if (!string.IsNullOrWhiteSpace(dto.MNumber))
+            {
+                bool duplicateMNumberExists = existingManagers.Any(m =>
+                    !string.IsNullOrWhiteSpace(m.Mnumber)
+                    && StringEqualsTrimmedIgnoreCase(m.Mnumber, dto.MNumber));
+
+                if (duplicateMNumberExists)
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError("MNumber already exists. Please enter a unique MNumber.", "PROJECT_MANAGER_DUPLICATE_MNUMBER")
+                    ]);
             }
 
             ProjectManager entity = _mapper.Map<ProjectManager>(dto);
@@ -79,26 +129,73 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<ProjectManagerDto> UpdateProjectManagerAsync(ProjectManagerDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
-            if (string.IsNullOrWhiteSpace(dto.ProjectManager))
-                throw new ArgumentException("Project manager name is required.", nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
 
+            string? normalizedProjectManager = dto.ProjectManager?.Trim();
             dto.LoginEmail = string.IsNullOrWhiteSpace(dto.LoginEmail) ? null : dto.LoginEmail.Trim();
+            dto.Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim();
+            dto.MNumber = string.IsNullOrWhiteSpace(dto.MNumber) ? null : dto.MNumber.Trim();
 
-            bool exists = await _repository.ProjectManagerExistsAsync(dto.ProjectManager);
-            if (!exists)
-                throw new KeyNotFoundException($"ProjectManager '{dto.ProjectManager}' was not found.");
+            if (string.IsNullOrWhiteSpace(normalizedProjectManager))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Project manager name is required.", "PROJECT_MANAGER_NAME_REQUIRED")
+                ]);
 
+            dto.ProjectManager = normalizedProjectManager;
+
+            var existingManagers = await _repository.GetAllProjectManagersAsync();
+
+            // Check if project manager exists
+            if (!existingManagers.Any(m => StringEqualsTrimmedIgnoreCase(m.Projectmanager, dto.ProjectManager)))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Project manager '{dto.ProjectManager}' was not found.", "PROJECT_MANAGER_NOT_FOUND")
+                ]);
+
+            // Check for duplicate LoginEmail (excluding current manager)
             if (!string.IsNullOrWhiteSpace(dto.LoginEmail))
             {
-                var existingManagers = await _repository.GetAllProjectManagersAsync();
                 bool duplicateLoginEmailExists = existingManagers.Any(m =>
                     !string.IsNullOrWhiteSpace(m.LoginEmail)
-                    && string.Equals(m.LoginEmail.Trim(), dto.LoginEmail, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(m.Projectmanager, dto.ProjectManager, StringComparison.OrdinalIgnoreCase));
+                    && StringEqualsTrimmedIgnoreCase(m.LoginEmail, dto.LoginEmail)
+                    && !StringEqualsTrimmedIgnoreCase(m.Projectmanager, dto.ProjectManager));
 
                 if (duplicateLoginEmailExists)
-                    throw new InvalidOperationException("Manager's login email already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError("Manager's login email already exists. Please enter a unique login email.", "PROJECT_MANAGER_DUPLICATE_LOGIN_EMAIL")
+                    ]);
+            }
+
+            // Check for duplicate Email (excluding current manager)
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                bool duplicateEmailExists = existingManagers.Any(m =>
+                    !string.IsNullOrWhiteSpace(m.Email)
+                    && StringEqualsTrimmedIgnoreCase(m.Email, dto.Email)
+                    && !StringEqualsTrimmedIgnoreCase(m.Projectmanager, dto.ProjectManager));
+
+                if (duplicateEmailExists)
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError("Manager's email already exists. Please enter a unique email.", "PROJECT_MANAGER_DUPLICATE_EMAIL")
+                    ]);
+            }
+
+            // Check for duplicate MNumber (excluding current manager)
+            if (!string.IsNullOrWhiteSpace(dto.MNumber))
+            {
+                bool duplicateMNumberExists = existingManagers.Any(m =>
+                    !string.IsNullOrWhiteSpace(m.Mnumber)
+                    && StringEqualsTrimmedIgnoreCase(m.Mnumber, dto.MNumber)
+                    && !StringEqualsTrimmedIgnoreCase(m.Projectmanager, dto.ProjectManager));
+
+                if (duplicateMNumberExists)
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError("MNumber already exists. Please enter a unique MNumber.", "PROJECT_MANAGER_DUPLICATE_MNUMBER")
+                    ]);
             }
 
             ProjectManager entity = _mapper.Map<ProjectManager>(dto);
@@ -109,15 +206,26 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> DeleteProjectManagerAsync(string projectManagerName)
         {
             if (string.IsNullOrWhiteSpace(projectManagerName))
-                throw new ArgumentException("Project manager name is required.", nameof(projectManagerName));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Project manager name is required.", "PROJECT_MANAGER_NAME_REQUIRED")
+                ]);
 
-            bool exists = await _repository.ProjectManagerExistsAsync(projectManagerName);
-            if (!exists)
-                throw new KeyNotFoundException($"ProjectManager '{projectManagerName}' was not found.");
+            string normalizedName = projectManagerName.Trim();
+            var existingManagers = await _repository.GetAllProjectManagersAsync();
 
-            var deleted = await _repository.DeleteProjectManagerAsync(projectManagerName);
+            if (!existingManagers.Any(m => StringEqualsTrimmedIgnoreCase(m.Projectmanager, normalizedName)))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Project manager '{normalizedName}' was not found.", "PROJECT_MANAGER_NOT_FOUND")
+                ]);
+
+            var deleted = await _repository.DeleteProjectManagerAsync(normalizedName);
             if (!deleted)
-                throw new KeyNotFoundException($"ProjectManager '{projectManagerName}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError($"Project manager '{normalizedName}' was not found.", "PROJECT_MANAGER_NOT_FOUND")
+                ]);
 
             return true;
         }
@@ -125,9 +233,17 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> ProjectManagerExistsAsync(string projectManagerName)
         {
             if (string.IsNullOrWhiteSpace(projectManagerName))
-                throw new ArgumentException("Project manager name is required.", nameof(projectManagerName));
+                return false;
 
-            return await _repository.ProjectManagerExistsAsync(projectManagerName);
+            string normalizedName = projectManagerName.Trim();
+            var allManagers = await _repository.GetAllProjectManagersAsync();
+            return allManagers.Any(m => StringEqualsTrimmedIgnoreCase(m.Projectmanager, normalizedName));
         }
+
+        /// <summary>
+        /// Case-insensitive comparison of trimmed strings.
+        /// </summary>
+        private static bool StringEqualsTrimmedIgnoreCase(string? left, string? right) =>
+            left is not null && right is not null && string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }
