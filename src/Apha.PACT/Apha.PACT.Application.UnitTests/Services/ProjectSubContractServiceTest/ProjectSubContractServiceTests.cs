@@ -788,6 +788,647 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectSubContractServiceTest
                 Arg.Is<List<ProjectSubcontractStaging>>(f => f.Count == 1 && f[0].Project == "UNKNOWN" && f[0].ImportedBy == "user8" && f[0].Filename == "rms-import.xlsx"));
         }
 
+        [Fact]
+        public async Task ImportSubContractRmsAsync_AllRowsValid_AllPassed()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Project = "PRJ1", Month = "1", Amount = "100" },
+                    new SubContractRmsImportRowDto { Project = "PRJ1", Month = "2", Amount = "200" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 2, FailedCount = 0 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.PassedCount.Should().Be(2);
+            result.FailedCount.Should().Be(0);
+            result.Message.Should().Contain("2 out of 2");
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_AllRowsInvalid_AllFailed()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Project = "UNKNOWN", Month = "99", Amount = "abc" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 0, FailedCount = 1 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.PassedCount.Should().Be(0);
+            result.FailedCount.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_NullFileName_UsesDefault()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = null,
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Project = "UNKNOWN", Month = "99", Amount = "abc" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 0, FailedCount = 1 });
+
+            await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            await _mockRepository.Received(1).ImportSubContractRmsAsync(
+                Arg.Any<List<ProjectSubContract>>(),
+                Arg.Is<List<ProjectSubcontractStaging>>(f => f[0].Filename == "SubContractRMS-Import.xlsx"));
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_ExistingIdPassesValidation_AddedToPassedAndStagingDeleted()
+        {
+            var existingStaging = new ProjectSubcontractStaging { Id = 10, Project = "PRJ1", ImportedBy = "user1" };
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 10, Project = "PRJ1", Month = "1", Amount = "100" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.GetFailedSubContractRmsByIdAsync(10, "user1").Returns(existingStaging);
+            _mockRepository.ImportSubContractRmsAsync(
+                Arg.Is<List<ProjectSubContract>>(l => l.Count == 1),
+                Arg.Is<List<ProjectSubcontractStaging>>(l => l.Count == 0))
+                .Returns(new SubContractRmsImportResult { PassedCount = 1, FailedCount = 0 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.PassedCount.Should().Be(1);
+            result.FailedCount.Should().Be(0);
+            await _mockRepository.Received(1).DeleteFailedSubContractRmsByIdsAsync(
+                Arg.Is<List<int>>(ids => ids.Count == 1 && ids[0] == 10), "user1");
+            await _mockRepository.DidNotReceive().UpdateFailedSubContractRmsRecordsAsync(Arg.Any<List<ProjectSubcontractStaging>>());
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_ExistingIdFailsValidation_UpdatesExistingStaging()
+        {
+            var existingStaging = new ProjectSubcontractStaging { Id = 10, Project = "OLD", ImportedBy = "user1" };
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 10, Project = "INVALID", Month = "1", Amount = "100" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.GetFailedSubContractRmsByIdAsync(10, "user1").Returns(existingStaging);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 0, FailedCount = 0 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.FailedCount.Should().Be(1);
+            await _mockRepository.Received(1).UpdateFailedSubContractRmsRecordsAsync(
+                Arg.Is<List<ProjectSubcontractStaging>>(l =>
+                    l.Count == 1 &&
+                    l[0].Project == "INVALID" &&
+                    l[0].IsPassed == false &&
+                    !string.IsNullOrEmpty(l[0].ValidationFailure)));
+            await _mockRepository.DidNotReceive().DeleteFailedSubContractRmsByIdsAsync(Arg.Any<List<int>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_ExistingIdFailsValidation_UpdatesAllFields()
+        {
+            var existingStaging = new ProjectSubcontractStaging { Id = 10, ImportedBy = "user1" };
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto
+                    {
+                        Id = 10, Project = "INVALID", TestJob = "TJ", Month = "3", Amount = "500",
+                        WorkGroup = "WG", AcctCode = "AC", Supplier = "S", Description = "D",
+                        SupplierNumber = "42", DailyRate = "10.5", AnimalDays = "5"
+                    }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.GetFailedSubContractRmsByIdAsync(10, "user1").Returns(existingStaging);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 0, FailedCount = 0 });
+
+            await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            await _mockRepository.Received(1).UpdateFailedSubContractRmsRecordsAsync(
+                Arg.Is<List<ProjectSubcontractStaging>>(l =>
+                    l[0].Project == "INVALID" &&
+                    l[0].TestJob == "TJ" &&
+                    l[0].Month == "3" &&
+                    l[0].Amount == "500" &&
+                    l[0].WorkGroup == "WG" &&
+                    l[0].AcctCode == "AC" &&
+                    l[0].Supplier == "S" &&
+                    l[0].Description == "D" &&
+                    l[0].SupplierNumber == "42" &&
+                    l[0].DailyRate == "10.5" &&
+                    l[0].AnimalDays == "5"));
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_ExistingIdNotFoundInStaging_FallsThroughToNormalPath()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 99, Project = "PRJ1", Month = "1", Amount = "100" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.GetFailedSubContractRmsByIdAsync(99, "user1").Returns((ProjectSubcontractStaging?)null);
+            _mockRepository.ImportSubContractRmsAsync(
+                Arg.Is<List<ProjectSubContract>>(l => l.Count == 1),
+                Arg.Is<List<ProjectSubcontractStaging>>(l => l.Count == 0))
+                .Returns(new SubContractRmsImportResult { PassedCount = 1, FailedCount = 0 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.PassedCount.Should().Be(1);
+            await _mockRepository.DidNotReceive().UpdateFailedSubContractRmsRecordsAsync(Arg.Any<List<ProjectSubcontractStaging>>());
+            await _mockRepository.DidNotReceive().DeleteFailedSubContractRmsByIdsAsync(Arg.Any<List<int>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_ZeroId_SkipsExistingLookup()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 0, Project = "PRJ1", Month = "1", Amount = "100" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 1, FailedCount = 0 });
+
+            await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            await _mockRepository.DidNotReceive().GetFailedSubContractRmsByIdAsync(Arg.Any<int>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_MixedExistingAndNewRows_CorrectCounts()
+        {
+            var existingStaging = new ProjectSubcontractStaging { Id = 10, ImportedBy = "user1" };
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 10, Project = "PRJ1", Month = "1", Amount = "100" },
+                    new SubContractRmsImportRowDto { Id = 0, Project = "INVALID", Month = "1", Amount = "200" },
+                    new SubContractRmsImportRowDto { Id = 0, Project = "PRJ1", Month = "2", Amount = "300" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.GetFailedSubContractRmsByIdAsync(10, "user1").Returns(existingStaging);
+            _mockRepository.ImportSubContractRmsAsync(
+                Arg.Is<List<ProjectSubContract>>(l => l.Count == 2),
+                Arg.Is<List<ProjectSubcontractStaging>>(l => l.Count == 1))
+                .Returns(new SubContractRmsImportResult { PassedCount = 2, FailedCount = 1 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.PassedCount.Should().Be(2);
+            result.FailedCount.Should().Be(1);
+            await _mockRepository.Received(1).DeleteFailedSubContractRmsByIdsAsync(
+                Arg.Is<List<int>>(ids => ids.Count == 1 && ids[0] == 10), "user1");
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_ExistingRowFailsValidation_CountsInTotalFailed()
+        {
+            var existingStaging = new ProjectSubcontractStaging { Id = 10, ImportedBy = "user1" };
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 10, Project = "INVALID", Month = "1", Amount = "100" },
+                    new SubContractRmsImportRowDto { Id = 0, Project = "INVALID2", Month = "1", Amount = "50" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.GetFailedSubContractRmsByIdAsync(10, "user1").Returns(existingStaging);
+            _mockRepository.ImportSubContractRmsAsync(
+                Arg.Is<List<ProjectSubContract>>(l => l.Count == 0),
+                Arg.Is<List<ProjectSubcontractStaging>>(l => l.Count == 1))
+                .Returns(new SubContractRmsImportResult { PassedCount = 0, FailedCount = 1 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            // 1 from failedRows + 1 from rowsToUpdate
+            result.FailedCount.Should().Be(2);
+            result.PassedCount.Should().Be(0);
+            result.Message.Should().Contain("0 out of 2");
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_NoUpdatesNoDeletes_DoesNotCallUpdateOrDelete()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Id = 0, Project = "PRJ1", Month = "1", Amount = "100" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 1, FailedCount = 0 });
+
+            await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            await _mockRepository.DidNotReceive().UpdateFailedSubContractRmsRecordsAsync(Arg.Any<List<ProjectSubcontractStaging>>());
+            await _mockRepository.DidNotReceive().DeleteFailedSubContractRmsByIdsAsync(Arg.Any<List<int>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_PassedRow_SetsFpsYearAndParsedFields()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto
+                    {
+                        Project = "PRJ1", TestJob = "TJ", Month = "3", Amount = "500.50",
+                        WorkGroup = "WG", AcctCode = "AC", Supplier = "S", Description = "D",
+                        SupplierNumber = "42", DailyRate = "10.25", AnimalDays = "5"
+                    }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(
+                Arg.Is<List<ProjectSubContract>>(l =>
+                    l.Count == 1 &&
+                    l[0].Project == "PRJ1" &&
+                    l[0].FpsYear == 2024 &&
+                    l[0].TestJob == "TJ" &&
+                    l[0].WorkGroup == "WG" &&
+                    l[0].AcctCode == "AC" &&
+                    l[0].Supplier == "S" &&
+                    l[0].Description == "D"),
+                Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 1, FailedCount = 0 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.PassedCount.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task ImportSubContractRmsAsync_MessageFormat_IncludesCountsAndTotal()
+        {
+            var request = new SubContractRmsImportDto
+            {
+                FileName = "test.xlsx",
+                Rows =
+                [
+                    new SubContractRmsImportRowDto { Project = "PRJ1", Month = "1", Amount = "100" },
+                    new SubContractRmsImportRowDto { Project = "PRJ1", Month = "2", Amount = "200" }
+                ]
+            };
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2024);
+            _mockRepository.ImportSubContractRmsAsync(Arg.Any<List<ProjectSubContract>>(), Arg.Any<List<ProjectSubcontractStaging>>())
+                .Returns(new SubContractRmsImportResult { PassedCount = 2, FailedCount = 0 });
+
+            var result = await _sut.ImportSubContractRmsAsync(request, "user1");
+
+            result.Message.Should().Be("Import completed successfully. 2 out of 2 records successfully validated and is now live.");
+        }
+
+        #endregion
+
+        #region Additional CreateAsync/UpdateAsync validation
+
+        [Fact]
+        public async Task CreateAsync_MissingAllFields_ThrowsWithMultipleErrors()
+        {
+            var dto = new ProjectSubContractDto { Project = "", Month = null, Amount = null };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(dto));
+
+            ex.Errors.Should().HaveCount(3);
+            ex.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "MONTH_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "AMOUNT_REQUIRED");
+        }
+
+        [Fact]
+        public async Task UpdateAsync_MissingAllFields_ThrowsWithMultipleErrors()
+        {
+            var dto = new ProjectSubContractDto { SubContCounter = 1, Project = "", Month = null, Amount = null };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
+
+            ex.Errors.Should().HaveCount(3);
+            ex.Errors.Should().Contain(e => e.Code == "PROJECT_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "MONTH_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "AMOUNT_REQUIRED");
+        }
+
+        #endregion
+
+        #region Additional SortPivotRows coverage
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByMonthColumnDesc_SortsByMonthAmountDesc()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "M1", Descending = true };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AH", 1, 100m),
+                MakeSummary("ZETA",  "ZZ", 1, 500m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].MonthlyAmounts[1].Should().Be(500m);
+            result.Rows[1].MonthlyAmounts[1].Should().Be(100m);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByProgramAsc_SortsByProgramAscending()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "program", Descending = false };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ZETA",  "ZZ", 1, 200m),
+                MakeSummary("ADMIN", "AH", 1, 100m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].Program.Should().Be("ADMIN");
+            result.Rows[1].Program.Should().Be("ZETA");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByParentProjectAsc_SortsByParentProjectAscending()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "parentproject", Descending = false };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "ZZ", 1, 200m),
+                MakeSummary("ADMIN", "AA", 1, 100m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].ParentProject.Should().Be("AA");
+            result.Rows[1].ParentProject.Should().Be("ZZ");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByParentProjectDesc_SortsByParentProjectDescending()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "parentproject", Descending = true };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ADMIN", "AA", 1, 100m),
+                MakeSummary("ADMIN", "ZZ", 1, 200m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].ParentProject.Should().Be("ZZ");
+            result.Rows[1].ParentProject.Should().Be("AA");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByUnknownColumn_FallsBackToDefault()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "unknowncolumn", Descending = false };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ZETA",  "ZZ", 1, 200m),
+                MakeSummary("ADMIN", "AH", 1, 100m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].Program.Should().Be("ADMIN");
+            result.Rows[1].Program.Should().Be("ZETA");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByM0_FallsBackToDefault()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "M0", Descending = false };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ZETA",  "ZZ", 1, 200m),
+                MakeSummary("ADMIN", "AH", 1, 100m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            // M0 is out of 1-12 range so falls to switch default
+            result.Rows[0].Program.Should().Be("ADMIN");
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_SortByM13_FallsBackToDefault()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "M13", Descending = false };
+            var mappedParams = new PaginationParameters<string>();
+            var data = new List<MonthlySubContractsSummary>
+            {
+                MakeSummary("ZETA",  "ZZ", 1, 200m),
+                MakeSummary("ADMIN", "AH", 1, 100m)
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetMonthlySubContractsSummaryAsync(mappedParams).Returns(data);
+
+            var result = await _sut.GetMonthlySubContractsSummaryAsync(query);
+
+            result.Rows[0].Program.Should().Be("ADMIN");
+        }
+
+        #endregion
+
+        #region Additional SaveFailedSubContractRmsAsync coverage
+
+        [Fact]
+        public async Task SaveFailedSubContractRmsAsync_ValidationFails_MapsFieldNameToPropertyName()
+        {
+            var dto = new SubContractRmsImportRowDto
+            {
+                Project = "PRJ1",
+                Month = "1",
+                Amount = "100",
+                SupplierNumber = "-1",
+                DailyRate = "abc",
+                AnimalDays = "-2"
+            };
+
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2025);
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveFailedSubContractRmsAsync(1, dto, "user1"));
+
+            ex.Errors.Should().Contain(e => e.Code == "SupplierNumber");
+            ex.Errors.Should().Contain(e => e.Code == "DailyRate");
+            ex.Errors.Should().Contain(e => e.Code == "AnimalDays");
+        }
+
+        [Fact]
+        public async Task SaveFailedSubContractRmsAsync_DoesNotExistError_ReturnsEmptyCode()
+        {
+            var dto = new SubContractRmsImportRowDto
+            {
+                Project = "UNKNOWN",
+                Month = "1",
+                Amount = "100"
+            };
+
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2025);
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveFailedSubContractRmsAsync(1, dto, "user1"));
+
+            ex.Errors.Should().Contain(e => e.Code == string.Empty);
+        }
+
+        [Fact]
+        public async Task SaveFailedSubContractRmsAsync_MultipleValidationErrors_ThrowsWithAllErrors()
+        {
+            var dto = new SubContractRmsImportRowDto
+            {
+                Project = "UNKNOWN",
+                Month = "99",
+                Amount = "abc"
+            };
+
+            _mockRepository.GetValidProjectsAsync().Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PRJ1" });
+            _mockRepository.GetCurrentFpsYear().Returns(2025);
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveFailedSubContractRmsAsync(1, dto, "user1"));
+
+            ex.Errors.Count.Should().BeGreaterThanOrEqualTo(3);
+        }
+
+        #endregion
+
+        #region DeleteFailedSubContractRmsByIdAsync additional
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByIdAsync_RepositoryReturnsFalse_ReturnsFalse()
+        {
+            _mockRepository.DeleteFailedSubContractRmsByIdAsync(99, "user1").Returns(false);
+
+            var result = await _sut.DeleteFailedSubContractRmsByIdAsync(99, "user1");
+
+            result.Should().BeFalse();
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContractsAsync with filterByAnimalAcctCodes
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_WithAnimalFilter_PassesFilterToRepository()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<ProjectSubContract>(new List<ProjectSubContract>(), new PaginationData());
+            var pagedResult = new PaginatedResult<ProjectSubContractDto>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetFpsProjectSubContractsAsync(mappedParams, "PRJ1", true).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProjectSubContractDto>>(pagedData).Returns(pagedResult);
+
+            var result = await _sut.GetFpsProjectSubContractsAsync(query, "PRJ1", filterByAnimalAcctCodes: true);
+
+            result.Should().Be(pagedResult);
+            await _mockRepository.Received(1).GetFpsProjectSubContractsAsync(mappedParams, "PRJ1", true);
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContractTotalAmountAsync with filterByAnimalAcctCodes
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WithAnimalFilter_PassesFilterToRepository()
+        {
+            _mockRepository.GetFpsProjectSubContractTotalAmountAsync("PRJ1", true).Returns(1000m);
+
+            var result = await _sut.GetFpsProjectSubContractTotalAmountAsync("PRJ1", filterByAnimalAcctCodes: true);
+
+            result.Should().Be(1000m);
+            await _mockRepository.Received(1).GetFpsProjectSubContractTotalAmountAsync("PRJ1", true);
+        }
+
         #endregion
     }
 }

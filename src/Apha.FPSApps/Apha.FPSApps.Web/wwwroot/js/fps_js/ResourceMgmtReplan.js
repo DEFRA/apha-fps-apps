@@ -95,9 +95,38 @@
         });
         list.appendChild(frag);
 
+        rraApplyWorkGroupSort();
+
         // Auto-select the first workgroup so the grid loads immediately.
         const firstItem = list.querySelector('.ssr-grade-item');
         if (firstItem) rraOnGroupSelect(firstItem);
+    }
+
+    /* ── WorkGroup list sorting ─────────────────────────────────────────── */
+    let _workGroupSortAsc = true;
+
+    // Reorders the existing workgroup <li> nodes; keeps the active selection intact.
+    function rraApplyWorkGroupSort() {
+        const list = el('ssrWorkGroupList');
+        if (!list) return;
+
+        const items = Array.prototype.slice.call(list.querySelectorAll('.ssr-grade-item'));
+        items.sort(function (a, b) {
+            const result = a.textContent.trim().localeCompare(b.textContent.trim(), undefined, { numeric: true, sensitivity: 'base' });
+            return _workGroupSortAsc ? result : -result;
+        });
+        items.forEach(function (li) { list.appendChild(li); });
+
+        const indicator = el('ssrWorkGroupSortIndicator');
+        if (indicator) indicator.textContent = _workGroupSortAsc ? '▲' : '▼';
+
+        const button = el('ssrWorkGroupSortButton');
+        if (button) button.setAttribute('aria-sort', _workGroupSortAsc ? 'ascending' : 'descending');
+    }
+
+    function rraToggleWorkGroupSort() {
+        _workGroupSortAsc = !_workGroupSortAsc;
+        rraApplyWorkGroupSort();
     }
 
     /* ── 2. Workgroup grade selected from list ──────────────────────────── */
@@ -432,6 +461,7 @@
 
     /* ── Expose public API (called by Razor inline handlers) ────────────── */
     window.rraUpdateResourceCentre = rraUpdateResourceCentre;
+    window.rraToggleWorkGroupSort = rraToggleWorkGroupSort;
     window.rraOnStaffRowSelect = rraOnStaffRowSelect;
     window.rraRePlanGeneralGrades = rraLoadStagedRows;
     window.rraConfirmRePlan = rraConfirmRePlan;

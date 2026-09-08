@@ -76,7 +76,12 @@ namespace Apha.PIMS.Api.Controllers
             var decodedProgram = HttpUtility.UrlDecode(program);
             var decodedManager = HttpUtility.UrlDecode(manager);
             ProgramManagerLinkDto? result = await _service.GetProgramManagerLinkByIdAsync(decodedProgram, decodedManager);
-            return result is null ? NotFound() : Ok(_mapper.Map<ProgramManagerLinkRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProgramManagerLinkRes>();
+            }
+
+            return Ok(_mapper.Map<ProgramManagerLinkRes>(result));
         }
 
         /// <summary>Create a new program manager link.</summary>
@@ -97,6 +102,20 @@ namespace Apha.PIMS.Api.Controllers
             var decodedManager = HttpUtility.UrlDecode(manager);
             bool deleted = await _service.DeleteProgramManagerLinkAsync(decodedProgram, decodedManager);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

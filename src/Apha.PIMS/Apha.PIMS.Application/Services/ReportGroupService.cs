@@ -55,7 +55,10 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Description))
-                throw new ArgumentException("Group description is required.", nameof(dto));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Group description is required.", "REPORT_GROUP_DESCRIPTION_REQUIRED")
+                ]);
 
             bool duplicate = await _repository.ReportGroupExistsAsync(dto.GroupId);
             if (duplicate)
@@ -76,7 +79,10 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Description))
-                throw new ArgumentException("Group description is required.", nameof(dto));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Group description is required.", "REPORT_GROUP_DESCRIPTION_REQUIRED")
+                ]);
 
             bool exists = await _repository.ReportGroupExistsAsync(dto.GroupId);
             if (!exists)

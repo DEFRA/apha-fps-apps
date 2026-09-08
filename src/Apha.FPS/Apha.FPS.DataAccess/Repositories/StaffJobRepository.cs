@@ -133,11 +133,11 @@ namespace Apha.FPS.DataAccess.Repositories
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
             var record = await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
 
-            var lookupStaffList = await GetStaffWorkgroupLookup();
-            var staffName = lookupStaffList
-                .Where(p => p.StaffID == staffId).Select(s => new { s.StaffID, s.Name }).FirstOrDefault();
+            // Do not use GetStaffWorkgroupLookup() here: it is scoped to the current user's
+            // email and MakeAvailable rows, so staff outside that scope resolve to a null name.
+            var staffSummary = await GetStaffSummaryByIdAsync(staffId);
 
-            record?.Name = staffName?.Name;
+            record?.Name = staffSummary?.Name;
 
             return record != null ? ComputeStaffCost(record) : null;
         }

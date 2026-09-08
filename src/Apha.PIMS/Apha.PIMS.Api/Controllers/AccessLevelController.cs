@@ -46,7 +46,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetById(int systemid, int accesslevelid)
         {
             AccessLevelDto? result = await _service.GetByIdAsync(systemid, accesslevelid);
-            return result is null ? NotFound() : Ok(_mapper.Map<AccessLevelRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<AccessLevelRes>();
+            }
+
+            return Ok(_mapper.Map<AccessLevelRes>(result));
         }
 
         /// <summary>Create a new access level.</summary>
@@ -77,6 +82,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             await _service.DeleteAsync(systemid, accesslevelid);
             return Ok(true);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }
