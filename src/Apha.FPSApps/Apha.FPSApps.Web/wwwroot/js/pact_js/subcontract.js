@@ -9,6 +9,53 @@ function getSubContractsGridManager() {
     return window['gridManager_' + subContractsGridId];
 }
 
+// ── Project filter multi-column dropdown ───────────────────────────────────
+let projectFilterDropdown = null;
+// Guard to prevent the project dropdown callbacks from resetting the month
+// selection while we programmatically clear it during a month change.
+let isSyncingFilters = false;
+
+$(document).ready(function () {
+    initializeProjectFilterMultiColumnDropdown();
+
+    var preselected = (typeof preselectedProject !== 'undefined' && preselectedProject)
+        ? String(preselectedProject)
+        : '';
+    if (preselected && projectFilterDropdown) {
+        projectFilterDropdown.setValue(preselected);
+    }
+});
+
+function initializeProjectFilterMultiColumnDropdown() {
+    projectFilterDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'projectFilterDropdown',
+        containerSelector: '#projectFilterMultiDropdown',
+        placeholder: '-- All Projects --',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by code or title',
+        labelText: '',
+        columns: [
+            { field: 'Text', header: 'Project', width: '300px' }
+        ],
+        data: (typeof projectOptionsListData !== 'undefined' ? projectOptionsListData : []),
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                if (isSyncingFilters) return;
+                $('#projectPick').val(selectedItem.Value);
+                onProjectPickChange(selectedItem.Value);
+            },
+            onClear: function (dropdown) {
+                if (isSyncingFilters) return;
+                $('#projectPick').val('');
+                onProjectPickChange('');
+            }
+        }
+    });
+}
+
 // ── Project dropdown change ────────────────────────────────────────
 function onProjectPickChange(value) {
     document.getElementById('monthPick').value = '';
@@ -19,7 +66,12 @@ function onProjectPickChange(value) {
 
 // ── Month dropdown change ──────────────────────────────────────────
 function onMonthPickChange(value) {
-    document.getElementById('projectPick').value = '';
+    isSyncingFilters = true;
+    $('#projectPick').val('');
+    if (projectFilterDropdown && typeof projectFilterDropdown.clear === 'function') {
+        projectFilterDropdown.clear();
+    }
+    isSyncingFilters = false;
     currentMonth = value ? parseInt(value) : null;
     currentParentProject = null;
     reloadSubContractsGrid();
@@ -193,8 +245,7 @@ function initializeSubContractProjectDropdown(config) {
             labelText: '',
             required: true,
             columns: [
-                { field: 'Text', header: 'Project Code', width: '120px' },
-                { field: 'Value', header: 'Project Title', width: '300px' }
+                { field: 'Text', header: 'Project', width: '300px' }
             ],
             data: config.projectsData || [],
             displayField: 'Text',

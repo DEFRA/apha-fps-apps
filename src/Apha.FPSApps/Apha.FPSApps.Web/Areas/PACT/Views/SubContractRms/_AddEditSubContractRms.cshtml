@@ -3,8 +3,9 @@
 
 @{
     var isEdit = Model.SubContCounter != 0;
-    var projects = ViewBag.Projects as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
     var months = ViewBag.Months as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var projectOptionsListData = Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Projects ?? new List<object>());
+    var preselectedProject = Model.Project ?? "";
 }
 
 <div class="modal-header flex-space-center">
@@ -26,10 +27,11 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label for="dpSelectproject" class="govuk-label govuk-!-font-weight-bold">Project:<span class="sup_color_red">*</span></label>
-                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100" asp-for="Project" id="dpSelectproject" asp-items="@projects" required>
-                        <option value="">--select project--</option>
-                    </select>
+                    <label for="rmsProjectMultiDropdown_input" class="govuk-label govuk-!-font-weight-bold">Project:<span class="sup_color_red">*</span></label>
+                    <div id="rmsProjectMultiDropdown"
+                         data-projects="@projectOptionsListData"
+                         data-selected="@preselectedProject"></div>
+                    <input type="hidden" asp-for="Project" id="Project" required />
                     <span asp-validation-for="Project" class="govuk-error-message"></span>
                 </div>
             </div>

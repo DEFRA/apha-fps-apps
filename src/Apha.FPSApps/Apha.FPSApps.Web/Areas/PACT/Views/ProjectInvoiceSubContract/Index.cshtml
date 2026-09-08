@@ -84,12 +84,89 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
+
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
         var invoicesGridId = '@Model.InvoicesGrid.GridId';
         var subContractsGridId = '@Model.SubContractsGrid.GridId';
         var parentProject = '@Uri.EscapeDataString(Model.ParentProject ?? string.Empty)';
+
+        // Multi-column project dropdown initialisation for the AJAX-loaded modals.
+        // Project data and current selection are read from data-* attributes on the
+        // dropdown container so the modal partials stay free of inline script.
+        function initProjectMultiColumnDropdown(options) {
+            var container = document.querySelector(options.containerSelector);
+            if (!container || typeof MultiColumnDropdownComponent === 'undefined') {
+                return;
+            }
+
+            var projectsData = [];
+            var raw = container.getAttribute('data-projects');
+            if (raw) {
+                try { projectsData = JSON.parse(raw); } catch (e) { projectsData = []; }
+            }
+
+            var selectedProject = container.getAttribute('data-selected') || '';
+            var hiddenSelector = options.hiddenSelector;
+
+            setTimeout(function () {
+                var projectDropdown = new MultiColumnDropdownComponent({
+                    dropdownId: options.dropdownId,
+                    containerSelector: options.containerSelector,
+                    placeholder: 'Select Project',
+                    showSerialNumber: false,
+                    searchPlaceholder: 'Search by code or title',
+                    labelText: '',
+                    required: true,
+                    columns: [
+                        { field: 'Text', header: 'Project', width: '300px' }
+                    ],
+                    data: projectsData || [],
+                    displayField: 'Text',
+                    valueField: 'Value',
+                    clearButtonClearsSelection: true,
+                    callbacks: {
+                        onSelect: function (selectedItem, dropdown) {
+                            $(hiddenSelector).val(selectedItem.Value).trigger('change');
+                            setTimeout(function () {
+                                if (dropdown && typeof dropdown.closeDropdown === 'function') {
+                                    dropdown.closeDropdown();
+                                }
+                            }, 50);
+                        },
+                        onClear: function (dropdown) {
+                            $(hiddenSelector).val('').trigger('change');
+                        }
+                    }
+                });
+
+                var initialProject = selectedProject || $(hiddenSelector).val();
+                if (initialProject) {
+                    projectDropdown.setValue(initialProject);
+                }
+            }, 100);
+        }
+
+        function initInvoiceProjectDropdown() {
+            initProjectMultiColumnDropdown({
+                dropdownId: 'projectInvoiceDropdown',
+                containerSelector: '#projectInvoiceMultiDropdown',
+                hiddenSelector: '#ProjectParent'
+            });
+        }
+
+        function initSubContractProjectDropdown() {
+            initProjectMultiColumnDropdown({
+                dropdownId: 'projectSubContractDropdown',
+                containerSelector: '#projectSubContractMultiDropdown',
+                hiddenSelector: '#Project'
+            });
+        }
 
         function navigateToProjectCode(code) {
             code = (code || '').trim();
@@ -120,6 +197,7 @@
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#invoiceForm');
+                    initInvoiceProjectDropdown();
                 },
                 error: function () { showAlertMessage('An error occurred while loading the invoice.', AlertType.ERROR); }
             });
@@ -136,6 +214,7 @@
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#invoiceForm');
+                    initInvoiceProjectDropdown();
                 },
                 error: function () { showAlertMessage('An error occurred while loading the invoice.', AlertType.ERROR); }
             });
@@ -214,6 +293,7 @@
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#subContractForm');
+                    initSubContractProjectDropdown();
                 },
                 error: function () { showAlertMessage('An error occurred while loading the sub-contract.', AlertType.ERROR); }
             });
@@ -230,6 +310,7 @@
                     $('#modalPopup').addClass('show');
                     // Initialize form validation (unobtrusive + numeric)
                     initializeFormValidation('#subContractForm');
+                    initSubContractProjectDropdown();
                 },
                 error: function () { showAlertMessage('An error occurred while loading the sub-contract.', AlertType.ERROR); }
             });

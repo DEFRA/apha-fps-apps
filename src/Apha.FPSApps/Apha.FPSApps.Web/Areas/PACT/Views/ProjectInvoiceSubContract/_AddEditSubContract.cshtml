@@ -2,6 +2,8 @@
 
 @{
     var isEdit = Model.SubContCounter != 0;
+    var projectOptionsListData = Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Projects ?? new List<object>());
+    var preselectedProject = Model.Project ?? "";
 }
 
 <div class="modal-header flex-space-center">
@@ -41,15 +43,13 @@
         <div class="govuk-grid-row sup_margin_top_10">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label sup_font_weight_700" asp-for="Project">
+                    <label class="govuk-label sup_font_weight_700" for="projectSubContractMultiDropdown_input">
                         Project<span class="sup_color_red">*</span>
                     </label>
-                    <select class="govuk-select sup_select_option_width_100 govuk-!-font-size-16"
-                            asp-for="Project"
-                            asp-items="@(ViewBag.Projects as IEnumerable<SelectListItem>)"
-                            required>
-                        <option value="">-- select project --</option>
-                    </select>
+                    <div id="projectSubContractMultiDropdown"
+                         data-projects="@projectOptionsListData"
+                         data-selected="@preselectedProject"></div>
+                    <input type="hidden" asp-for="Project" id="Project" required />
                     <span asp-validation-for="Project" class="govuk-error-message"></span>
                 </div>
             </div>
@@ -116,3 +116,4 @@
         @(isEdit ? "Update" : "Save")
     </button>
 </div>
+

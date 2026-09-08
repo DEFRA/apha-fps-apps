@@ -9,6 +9,52 @@ function getInvoicesGridManager() {
     return window['gridManager_' + invoicesGridId];
 }
 
+let projectSelectDropdown = null;
+// Guard to prevent the project dropdown callbacks from resetting the month
+// selection while we are programmatically clearing it during a month change.
+let isSyncingFilters = false;
+
+$(document).ready(function () {
+    initializeProjectMultiColumnDropdown();
+
+    var preselected = (typeof preselectedProject !== 'undefined' && preselectedProject)
+        ? String(preselectedProject)
+        : '';
+    if (preselected && projectSelectDropdown) {
+        projectSelectDropdown.setValue(preselected);
+    }
+});
+
+function initializeProjectMultiColumnDropdown() {
+    projectSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'projectSelectDropdown',
+        containerSelector: '#projectMultiDropdown',
+        placeholder: '-- All Projects --',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by code or title',
+        labelText: '',
+        columns: [
+            { field: 'Text', header: 'Project', width: '300px' }
+        ],
+        data: (typeof projectOptionsListData !== 'undefined' ? projectOptionsListData : []),
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                if (isSyncingFilters) return;
+                $('#projectPick').val(selectedItem.Value);
+                onProjectPickChange(selectedItem.Value);
+            },
+            onClear: function (dropdown) {
+                if (isSyncingFilters) return;
+                $('#projectPick').val('');
+                onProjectPickChange('');
+            }
+        }
+    });
+}
+
 // ── Project dropdown change ────────────────────────────────────────
 function onProjectPickChange(value) {
     document.getElementById('monthPick').value = '';
@@ -19,7 +65,12 @@ function onProjectPickChange(value) {
 
 // ── Month dropdown change ──────────────────────────────────────────
 function onMonthPickChange(value) {
-    document.getElementById('projectPick').value = '';
+    isSyncingFilters = true;
+    $('#projectPick').val('');
+    if (projectSelectDropdown && typeof projectSelectDropdown.clear === 'function') {
+        projectSelectDropdown.clear();
+    }
+    isSyncingFilters = false;
     currentMonth = value || null;
     currentParentProject = null;
     reloadInvoicesGrid();
@@ -67,6 +118,7 @@ function addInvoice() {
             $('#modalPopup').addClass('show');
             // Initialize form validation (unobtrusive + numeric)
             initializeFormValidation('#invoiceForm');
+            initializeInvoiceProjectDropdown();
         },
         error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -83,6 +135,7 @@ function editInvoice(btn) {
             $('#modalPopup').addClass('show');
             // Initialize form validation (unobtrusive + numeric)
             initializeFormValidation('#invoiceForm');
+            initializeInvoiceProjectDropdown();
         },
         error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -161,3 +214,58 @@ function filterInvoicesGrid(input) {
     var gm = getInvoicesGridManager();
     if (gm) gm.reloadGrid({ page: 1, search: input.value });
 }
+
+// ========================================
+// Multi-Column Dropdown for Invoice Modal
+// ========================================
+function initializeInvoiceProjectDropdown() {
+    var container = document.querySelector('#invoiceProjectMultiDropdown');
+    if (!container || typeof MultiColumnDropdownComponent === 'undefined') {
+        return;
+    }
+
+    var projectsData = [];
+    var raw = container.getAttribute('data-projects');
+    if (raw) {
+        try { projectsData = JSON.parse(raw); } catch (e) { projectsData = []; }
+    }
+    var selectedProject = container.getAttribute('data-selected') || '';
+
+    setTimeout(function () {
+        var projectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'invoiceProjectDropdown',
+            containerSelector: '#invoiceProjectMultiDropdown',
+            placeholder: 'Select Project',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by code or title',
+            labelText: '',
+            required: true,
+            columns: [
+                { field: 'Text', header: 'Project', width: '300px' }
+            ],
+            data: projectsData || [],
+            displayField: 'Text',
+            valueField: 'Value',
+            clearButtonClearsSelection: true,
+            callbacks: {
+                onSelect: function (selectedItem, dropdown) {
+                    $('#ProjectParent').val(selectedItem.Value).trigger('change');
+                    setTimeout(function () {
+                        if (dropdown && typeof dropdown.closeDropdown === 'function') {
+                            dropdown.closeDropdown();
+                        }
+                    }, 50);
+                },
+                onClear: function (dropdown) {
+                    $('#ProjectParent').val('').trigger('change');
+                }
+            }
+        });
+
+        var initialProject = selectedProject || $('#ProjectParent').val();
+        if (initialProject) {
+            projectDropdown.setValue(initialProject);
+        }
+    }, 100);
+}
+window.initializeInvoiceProjectDropdown = initializeInvoiceProjectDropdown;
