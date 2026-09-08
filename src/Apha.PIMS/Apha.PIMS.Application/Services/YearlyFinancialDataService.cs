@@ -235,10 +235,10 @@ namespace Apha.PIMS.Application.Services
 
             if (!currentValue.HasValue || !pactValue.HasValue)
             {
-                return 1;
+                return -1;
             }
 
-            return currentValue.Value == pactValue.Value ? (short)0 : (short)1;
+            return currentValue.Value == pactValue.Value ? (short)0 : (short)-1;
         }
 
         private static short GetChangedFlag(double? currentValue, double? pactValue)
@@ -250,10 +250,10 @@ namespace Apha.PIMS.Application.Services
 
             if (!currentValue.HasValue || !pactValue.HasValue)
             {
-                return 1;
+                return -1;
             }
 
-            return Math.Abs(currentValue.Value - pactValue.Value) < 0.000001d ? (short)0 : (short)1;
+            return Math.Abs(currentValue.Value - pactValue.Value) < 0.000001d ? (short)0 : (short)-1;
         }
 
         private sealed record PactYearSnapshot(

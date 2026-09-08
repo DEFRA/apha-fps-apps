@@ -417,7 +417,7 @@ body {
     display: inline-flex;
     width: 100%;
     visibility: hidden;
-    color: #fff";
+    color: #fff;
 
 }
 
@@ -433,7 +433,7 @@ body {
     /* border-bottom: 1px solid #25257e;*/
     color: #ffffff;
     background: rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+/*    overflow: hidden;*/
 }
 
     .sidebar-link-two:hover {
@@ -3378,7 +3378,20 @@ Manager Tab Panel Styles
         }
 
     #qryExportQueriesBox input[type="radio"] {
-        display: none;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    #qryExportQueriesBox label:has(input:focus-visible) {
+        outline: 3px solid #fd0;
+        outline-offset: 0;
     }
 
     #qryExportQueriesBox label:hover {

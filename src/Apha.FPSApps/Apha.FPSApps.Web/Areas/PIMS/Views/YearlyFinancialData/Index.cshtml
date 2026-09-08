@@ -1019,9 +1019,9 @@
                 return 0;
             }
             if (isNaN(current) !== isNaN(pact)) {
-                return 1;
+                return -1;
             }
-            return Math.abs(current - pact) < 0.000001 ? 0 : 1;
+            return Math.abs(current - pact) < 0.000001 ? 0 : -1;
         }
         function setVal(id, val) {
             var el = document.getElementById(id);

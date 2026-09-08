@@ -16,10 +16,10 @@
             <table class="govuk-table govuk-!-margin-bottom-2 govuk-!-margin-top-2 govuk-!-margin-right-2 isFloatRight isHalfGrid isPlanAllAdditionalCosts">
                 <tbody class="govuk-table__body">
                     <tr class="govuk-table__row">
-                        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
                             @if (Model.IsProjectGroupMode)
                             {
-                                <label class="fw-bold me-2 govuk-!-padding-right-1" for="projectGroup">Project Group:</label>
+                                <label class="fw-bold me-2 " for="projectGroup">Project Group:</label>
                                 <select id="projectGroup" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
                                         class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
                                     <option value="">-- Select Project Group --</option>
