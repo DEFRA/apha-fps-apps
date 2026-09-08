@@ -140,12 +140,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.InvoiceControl
         }
 
         [Fact]
-        public async Task Index_WithNoProjectParam_SetsFilterProjectToFirstInList()
+        public async Task Index_WithNoProjectParam_SetsFilterProjectToNull()
         {
             SetupIndexMocks(projects: ["PP001", "PP002"]);
             var result = await _controller.Index();
             var model = Assert.IsType<InvoiceViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal("PP001", model.FilterProject);
+            Assert.Null(model.FilterProject);
         }
 
         [Fact]
@@ -158,12 +158,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.InvoiceControl
         }
 
         [Fact]
-        public async Task Index_WithProjectNotInList_FallsBackToFirstProject()
+        public async Task Index_WithProjectNotInList_SetsFilterProjectToNull()
         {
             SetupIndexMocks(projects: ["PP001", "PP002"]);
             var result = await _controller.Index(project: "PP999");
             var model = Assert.IsType<InvoiceViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal("PP001", model.FilterProject);
+            Assert.Null(model.FilterProject);
         }
 
         [Fact]
