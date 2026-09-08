@@ -31,7 +31,7 @@ function initializeProjectMultiColumnDropdown() {
         containerSelector: '#projectMultiDropdown',
         placeholder: '-- All Projects --',
         showSerialNumber: false,
-        searchPlaceholder: 'Search by code or title',
+        searchPlaceholder: 'Search by project',
         labelText: '',
         columns: [
             { field: 'Text', header: 'Project', width: '300px' }
@@ -237,7 +237,7 @@ function initializeInvoiceProjectDropdown() {
             containerSelector: '#invoiceProjectMultiDropdown',
             placeholder: 'Select Project',
             showSerialNumber: false,
-            searchPlaceholder: 'Search by code or title',
+            searchPlaceholder: 'Search by project',
             labelText: '',
             required: true,
             columns: [

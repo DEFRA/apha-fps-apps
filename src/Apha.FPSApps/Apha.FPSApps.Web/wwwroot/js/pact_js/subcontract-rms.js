@@ -462,7 +462,7 @@ function initializeProjectCostDropdown() {
             containerSelector: '#rmsProjectMultiDropdown',
             placeholder: 'Select Project',
             showSerialNumber: false,
-            searchPlaceholder: 'Search by code or title',
+            searchPlaceholder: 'Search by project',
             labelText: '',
             required: true,
             columns: [
