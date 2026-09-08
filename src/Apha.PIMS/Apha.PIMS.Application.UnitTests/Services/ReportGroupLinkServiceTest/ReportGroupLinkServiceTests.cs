@@ -1,5 +1,6 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
@@ -34,11 +35,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportGroupLinkServiceTest
             _reportGroupRepository.GetReportGroupByIdAsync(20).Returns(new ReportGroup { GroupId = 20, Description = "Finance" });
 
             // Act
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateReportGroupLinkAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateReportGroupLinkAsync(dto));
 
             // Assert
-            Assert.Contains("Annual Report", ex.Message);
-            Assert.Contains("Finance", ex.Message);
+            Assert.Equal("REPORT_GROUP_LINK_DUPLICATE", ex.Errors[0].Code);
+            Assert.Contains("Annual Report", ex.Errors[0].Message);
+            Assert.Contains("Finance", ex.Errors[0].Message);
             await _repository.DidNotReceive().AddReportGroupLinkAsync(Arg.Any<ReportGroupLink>());
         }
 
@@ -51,11 +53,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.ReportGroupLinkServiceTest
             _reportGroupRepository.GetReportGroupByIdAsync(20).Returns(new ReportGroup { GroupId = 20, Description = "Finance" });
 
             // Act
-            var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteReportGroupLinkAsync(10, 20));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.DeleteReportGroupLinkAsync(10, 20));
 
             // Assert
-            Assert.Contains("Annual Report", ex.Message);
-            Assert.Contains("Finance", ex.Message);
+            Assert.Equal("REPORT_GROUP_LINK_NOT_FOUND", ex.Errors[0].Code);
+            Assert.Contains("Annual Report", ex.Errors[0].Message);
+            Assert.Contains("Finance", ex.Errors[0].Message);
         }
     }
 }

@@ -40,6 +40,11 @@ function reloadFailedGrid() {
     }
 }
 
+function getSubContractRmsAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+}
+
 function addSubContractRms() {
     if (!currentRmsMonth) {
         showAlertMessage('Please select a period first.', AlertType.INFO);
@@ -196,12 +201,15 @@ function importSubContractRms(file) {
         return;
     }
 
+    const antiForgeryToken = getSubContractRmsAntiForgeryToken();
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/SubContractRms/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,
@@ -289,10 +297,18 @@ function deleteFailedSubContractRms(btn) {
 }
 
 function saveFailedSubContractRms() {
-    clearValidationErrors('#modaPopupBody');
     const form = $('#formEditFailedSubContractRms');
 
-    // Check basic form validity (required fields)
+    initializeFormValidation('#formEditFailedSubContractRms');
+    clearValidationErrors('#modaPopupBody');
+
+    // Run unobtrusive validation rules first (regex/range/custom)
+    if (typeof form.valid === 'function' && !form.valid()) {
+        displayClientValidationErrors(form, '#modaPopupBody');
+        return;
+    }
+
+    // Fallback required-fields check
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;

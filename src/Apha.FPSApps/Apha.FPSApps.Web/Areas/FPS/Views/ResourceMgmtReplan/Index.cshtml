@@ -53,7 +53,14 @@
                                                 @*── Left: workgroup list ──*@
                                                 <div class="ssr-grade-panel">
                                                     <div class="ssr-grade-header">
-                                                        <span class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0" style="color: #ffffff;">1. Choose WorkGroup</span>
+                                                        <button type="button"
+                                                                id="ssrWorkGroupSortButton"
+                                                                class="ssr-grade-sort-button govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0"
+                                                                aria-sort="ascending"
+                                                                onclick="rraToggleWorkGroupSort()">
+                                                            1. Choose WorkGroup
+                                                            <span class="ssr-grade-sort-indicator" id="ssrWorkGroupSortIndicator" aria-hidden="true">&#9650;</span>
+                                                        </button>
                                                     </div>
                                                     <ul class="ssr-grade-list"
                                                         id="ssrWorkGroupList"

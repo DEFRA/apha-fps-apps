@@ -20,6 +20,9 @@
         public bool AllowView { get; set; }
         public bool AllowConfirm { get; set; }
         public bool AllowExport { get; set; }
+        public bool AllowExcelExport { get; set; }
+        public string ExcelExportUrl { get; set; } = string.Empty;
+        public string ExcelExportFileName { get; set; } = string.Empty;
         public string BulkCopyButtonText { get; set; } = "Copy";
         public string BulkCopyFunction { get; set; } = string.Empty;
         public string BulkDeleteFunction { get; set; } = string.Empty;
@@ -37,11 +40,6 @@
         public string? CurrentSearch { get; set; }
         public Dictionary<string, string>? CurrentFilters { get; set; } = null;
 
-        /// <summary>
-        /// Optional column-group header row rendered above the main header.
-        /// Each entry spans the given number of visible columns (left to right).
-        /// Use an empty Label for ungrouped filler columns.
-        /// </summary>
         public List<DataGridColumnGroup>? ColumnGroups { get; set; }
 
         public DataGridConfig()
@@ -59,6 +57,7 @@
             AllowBulkDelete = false;
             AllowView = false;
             AllowExport = false;
+            AllowExcelExport = true;
             AllowConfirm = false;
         }
     }

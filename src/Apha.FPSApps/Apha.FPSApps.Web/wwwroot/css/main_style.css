@@ -1887,6 +1887,37 @@ textarea {
     font-weight: bold !important;
 }
 
+/* Excel export icon button for datagrid header */
+.grid-excel-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    vertical-align: middle;
+    line-height: 0;
+}
+
+.grid-excel-export-btn:hover,
+.grid-excel-export-btn:focus {
+    background: rgba(29, 112, 184, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
+.grid-excel-export-btn:focus {
+    box-shadow: 0 0 0 3px #ffdd00;
+}
+
+.grid-excel-export-btn .excel-icon {
+    width: 28px;
+    height: 28px;
+    display: block;
+}
+
 .modal-dialog {
     .modal-header {
         cursor: move;
@@ -1904,4 +1935,79 @@ textarea {
             cursor: pointer;
         }
     }
+}
+/*
+ * -----------------------------------------------------------------------
+ * Global keyboard-accessibility fix.
+
+ * ----------------------------------------------------------------------- */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible,
+[role="option"]:focus-visible,
+[role="tab"]:focus-visible,
+.govuk-select:focus-visible,
+.govuk-input:focus-visible,
+.govuk-tabs:focus-visible,
+.govuk-button:focus-visible,
+.app-log:focus-visible,
+select.app-log:focus-visible,
+.custom-table :focus-visible,
+.editable-grid-table :focus-visible,
+/* Forces the visible focus ring for elements focused programmatically via
+   JavaScript (e.g. re-focusing a dropdown trigger after selection), since
+   some browsers don't apply :focus-visible to script-driven .focus() calls. */
+.js-force-focus-visible {
+    outline: 3px solid #fd0 !important;
+    outline-offset: 0 !important;
+}
+
+/* Fallback for browsers that don't support :focus-visible */
+.js-focus-visible a:focus:not(.focus-visible),
+.js-focus-visible button:focus:not(.focus-visible),
+.js-focus-visible input:focus:not(.focus-visible),
+.js-focus-visible select:focus:not(.focus-visible) {
+    outline: none;
+}
+
+/* -----------------------------------------------------------------------
+ * Sidebar item highlight
+ * ----------------------------------------------------------------------- */
+
+.sidebar-item-highlight,
+.sidebar-link-two active {
+    outline: 3px solid #fd0 !important;
+    outline-offset: 2px !important;
+    background-color: red !important;
+    color: white !important;
+}
+
+/* -----------------------------------------------------------------------
+ * Main (top) navigation menu + side navigation focus highlight
+ * ----------------------------------------------------------------------- */
+
+
+.sidenav a:focus-visible,
+#shortnav a:focus-visible {
+    border-radius: 0 8px 8px 0;
+    outline: 3px solid #fd0 !important;
+    outline-offset: 0 !important;
+    background-color: #1d70b8 !important;
+    color: white !important;
+}
+.main-nav .nav-button:focus-visible,
+.main-nav .dropdown-item:focus-visible,
+.main-nav .sub-dropdown-toggle:focus-visible,
+#shortnav button:focus-visible,
+.sidenav button:focus-visible {
+    outline: 3px solid #fd0 !important;
+    outline-offset: 0 !important;
+    background-color: #1d70b8 !important;
+    color: white !important;
 }

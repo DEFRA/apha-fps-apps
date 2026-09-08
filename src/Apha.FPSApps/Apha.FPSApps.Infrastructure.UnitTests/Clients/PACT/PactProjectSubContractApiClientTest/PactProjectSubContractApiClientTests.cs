@@ -274,6 +274,180 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
 
         #endregion
 
+        #region GetFpsProjectSubContractsAsync Tests
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_WithProjectAndAnimalFilter_IncludesQueryValuesInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>>
+            {
+                Success = true,
+                Data = [new ProjectSubContractRes { SubContCounter = 1, Project = "PP001" }]
+            };
+            var expectedDto = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(
+                [new ProjectSubContractDto { SubContCounter = 1, Project = "PP001" }]);
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url =>
+                url.Contains("filterByAnimalAcctCodes=True") || url.Contains("filterByAnimalAcctCodes=true")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractsAsync(query, "PP001", true);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _http.Received(1).GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url =>
+                (url.Contains("filterByAnimalAcctCodes=True") || url.Contains("filterByAnimalAcctCodes=true"))
+                && url.Contains("project=PP001")));
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_WithoutProject_DoesNotAddProjectToUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractsAsync(query, null, false);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url =>
+                (url.Contains("filterByAnimalAcctCodes=False") || url.Contains("filterByAnimalAcctCodes=false"))
+                && !url.Contains("project=")));
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>>
+            {
+                Success = false,
+                Errors = [new ApiError { Code = "API_ERROR", Message = "Failed" }]
+            };
+            var mappedFailure = new ApiResponseDto<List<ProjectSubContractDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Code = "API_ERROR", Message = "Failed" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractsAsync(query, "PP001", false);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors!);
+        }
+
+        #endregion
+
+        #region GetFpsProjectSubContractTotalAmountAsync Tests
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WithProjectAndFilter_ReturnsMappedSuccess()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 123.45m };
+            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(123.45m);
+
+            _http.GetAsync<decimal?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractTotalAmountAsync("PP001", true);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(123.45m, result.Data);
+            await _http.Received(1).GetAsync<decimal?>(Arg.Is<string>(url =>
+                (url.Contains("filterByAnimalAcctCodes=True") || url.Contains("filterByAnimalAcctCodes=true"))
+                && url.Contains("project=PP001")));
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WithoutProject_DoesNotAddProjectToUrl()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 10m };
+            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(10m);
+
+            _http.GetAsync<decimal?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractTotalAmountAsync(null, false);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<decimal?>(Arg.Is<string>(url =>
+                (url.Contains("filterByAnimalAcctCodes=False") || url.Contains("filterByAnimalAcctCodes=false"))
+                && !url.Contains("project=")));
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<decimal?>
+            {
+                Success = false,
+                Errors = [new ApiError { Code = "API_ERROR", Message = "Failed" }]
+            };
+            var mappedFailure = new ApiResponseDto<decimal>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Code = "API_ERROR", Message = "Failed" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<decimal?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractTotalAmountAsync("PP001", false);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors!);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectSubContractTotalAmountAsync_WhenInvalidOperationThrown_ReturnsInternalErrorFailure()
+        {
+            // Arrange
+            _http.GetAsync<decimal?>(Arg.Any<string>())
+                .Returns(_ => Task.FromException<ApiResponse<decimal?>>(new InvalidOperationException("boom")));
+
+            // Act
+            var result = await _client.GetFpsProjectSubContractTotalAmountAsync("PP001", false);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors!);
+            Assert.Equal("INTERNAL_ERROR", result.Errors![0].Code);
+            Assert.Equal("boom", result.Errors[0].Message);
+        }
+
+        #endregion
+
         #region GetByIdAsync Tests
 
         [Fact]
@@ -546,6 +720,30 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsFailureAndMappedMetaNull_ThrowsNullReferenceException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "API Error", Code = "API_ERROR" }]
+            };
+            var mappedFailure = new ApiResponseDto<MonthlySubContractsPivotDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }],
+                Meta = null!
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<NullReferenceException>(() => _client.GetMonthlySubContractsSummaryAsync(query));
         }
 
         [Fact]
@@ -864,6 +1062,27 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.True(result.Success);
             Assert.True(result.Data);
             await _http.Received(1).DeleteAsync<bool?>(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteFailedSubContractRmsByUserAsync_SuccessWithDataFalse_AddsNoRecordsMessage()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = false };
+            var mappedSuccess = ApiResponseDto<bool>.SuccessResponse(false);
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedSuccess);
+
+            // Act
+            var result = await _client.DeleteFailedSubContractRmsByUserAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors!);
+            Assert.Equal("No failed imported records found to delete.", result.Errors[0].Message);
         }
 
         [Fact]

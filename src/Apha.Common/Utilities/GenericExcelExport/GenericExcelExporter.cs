@@ -8,10 +8,12 @@ namespace Apha.Common.Utilities.GenericExcelExport
     /// <inheritdoc cref="IGenericExcelExporter"/>
     public sealed class GenericExcelExporter : IGenericExcelExporter
     {
-        public byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1")
+        public byte[] Export<T>(IEnumerable<T> data, string sheetName = "Sheet1", IReadOnlyList<string>? includeProperties = null, IReadOnlyDictionary<string, string>? columnHeaders = null)
         {
             var rows = data ?? Enumerable.Empty<T>();
-            var columns = GetColumns(typeof(T));
+            var columns = IsDictionaryRowType(typeof(T))
+                ? GetDictionaryColumns(includeProperties, columnHeaders)
+                : GetColumns(typeof(T), includeProperties, columnHeaders);
 
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add(SanitiseSheetName(sheetName));
@@ -40,7 +42,7 @@ namespace Apha.Common.Utilities.GenericExcelExport
             {
                 for (int col = 0; col < columns.Count; col++)
                 {
-                    var rawValue = ConvertExcelValue(columns[col].Property.GetValue(item));
+                    var rawValue = ConvertExcelValue(columns[col].GetValue(item));
                     worksheet.Cell(row, col + 1).Value = XLCellValue.FromObject(rawValue);
                 }
                 row++;
@@ -79,16 +81,103 @@ namespace Apha.Common.Utilities.GenericExcelExport
             }
         }
 
-        private static IReadOnlyList<ExportColumn> GetColumns(Type type)
+        private static IReadOnlyList<ExportColumn> GetColumns(Type type, IReadOnlyList<string>? includeProperties, IReadOnlyDictionary<string, string>? columnHeaders = null)
         {
-            return type
+            var candidates = type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
                 .Where(p => p.GetCustomAttribute<ExcelIgnoreAttribute>() is null)
-                .Select((p, index) => new ExportColumn(p, index))
+                .Where(IsExportableType);
+
+            if (includeProperties != null && includeProperties.Count > 0)
+            {
+                var lookup = candidates.ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+                return includeProperties
+                    .Where(lookup.ContainsKey)
+                    .Select((name, index) => new ExportColumn(lookup[name], index, ResolveHeaderOverride(columnHeaders, name)))
+                    .ToList();
+            }
+
+            return candidates
+                .Select((p, index) => new ExportColumn(p, index, ResolveHeaderOverride(columnHeaders, p.Name)))
                 .OrderBy(c => c.Order)
                 .ThenBy(c => c.DeclarationIndex)
                 .ToList();
+        }
+
+        // Returns the caller-supplied header (e.g. the grid column's DisplayName) for a property
+        // name when one is provided; otherwise null so the property's own metadata is used.
+        private static string? ResolveHeaderOverride(IReadOnlyDictionary<string, string>? columnHeaders, string propertyName)
+        {
+            if (columnHeaders != null
+                && columnHeaders.TryGetValue(propertyName, out var header)
+                && !string.IsNullOrWhiteSpace(header))
+            {
+                return header;
+            }
+
+            return null;
+        }
+
+        // True for row types that are string-keyed dictionaries (e.g. cross-tab grids whose
+        // columns are dynamic and therefore modelled as Dictionary<string, string?> rows).
+        private static bool IsDictionaryRowType(Type type)
+        {
+            return type
+                .GetInterfaces()
+                .Append(type)
+                .Any(i => i.IsGenericType
+                    && i.GetGenericTypeDefinition() == typeof(IDictionary<,>)
+                    && i.GetGenericArguments()[0] == typeof(string));
+        }
+
+        // Builds columns for dictionary-backed rows. The keys are supplied via includeProperties
+        // (the grid's visible column names, in order); values are read by key at write time.
+        // Header text is taken from columnHeaders when available, otherwise falls back to the key.
+        private static IReadOnlyList<ExportColumn> GetDictionaryColumns(IReadOnlyList<string>? includeProperties, IReadOnlyDictionary<string, string>? columnHeaders)
+        {
+            if (includeProperties == null || includeProperties.Count == 0)
+            {
+                return Array.Empty<ExportColumn>();
+            }
+
+            return includeProperties
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select((name, index) =>
+                {
+                    var header = columnHeaders != null && columnHeaders.TryGetValue(name, out var display) && !string.IsNullOrWhiteSpace(display)
+                        ? display
+                        : name;
+                    return new ExportColumn(name, header, index);
+                })
+                .ToList();
+        }
+
+        // Excludes complex/collection members (e.g. List<SelectListItem>) that are not meaningful in a flat sheet.
+        private static bool IsExportableType(PropertyInfo property)
+        {
+            var type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+            if (type == typeof(string))
+            {
+                return true;
+            }
+
+            if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
+            {
+                return false;
+            }
+
+            return type.IsPrimitive
+                || type.IsEnum
+                || type == typeof(decimal)
+                || type == typeof(DateTime)
+                || type == typeof(DateOnly)
+                || type == typeof(TimeOnly)
+                || type == typeof(DateTimeOffset)
+                || type == typeof(TimeSpan)
+                || type == typeof(Guid);
         }
 
         private static string SanitiseSheetName(string sheetName)
@@ -108,6 +197,8 @@ namespace Apha.Common.Utilities.GenericExcelExport
             return value switch
             {
                 null => null,
+                short a => a == 0 ? "No" : "Yes",
+                bool b => b ? "Yes" : "No",
                 DateOnly d => d.ToDateTime(TimeOnly.MinValue),
                 TimeOnly t => t.ToTimeSpan(),
                 _ => value
@@ -116,16 +207,19 @@ namespace Apha.Common.Utilities.GenericExcelExport
 
         private sealed class ExportColumn
         {
-            public ExportColumn(PropertyInfo property, int declarationIndex)
+            private readonly PropertyInfo? _property;
+            private readonly string? _dictionaryKey;
+
+            public ExportColumn(PropertyInfo property, int declarationIndex, string? headerOverride = null)
             {
-                Property = property;
+                _property = property;
                 DeclarationIndex = declarationIndex;
 
                 var excelColumn = property.GetCustomAttribute<ExcelColumnAttribute>();
                 var display = property.GetCustomAttribute<DisplayAttribute>();
                 var displayFormat = property.GetCustomAttribute<DisplayFormatAttribute>();
 
-                Header = FirstNonEmpty(excelColumn?.Name, display?.GetName(), property.Name);
+                Header = FirstNonEmpty(headerOverride, excelColumn?.Name, display?.GetName(), property.Name);
                 Order = excelColumn?.Order ?? int.MaxValue;
                 Width = excelColumn?.Width ?? 0;
                 Format = !string.IsNullOrWhiteSpace(excelColumn?.Format)
@@ -133,12 +227,42 @@ namespace Apha.Common.Utilities.GenericExcelExport
                     : ExtractNumberFormat(displayFormat?.DataFormatString);
             }
 
-            public PropertyInfo Property { get; }
+            // Column backed by a dictionary key rather than a CLR property.
+            public ExportColumn(string dictionaryKey, string header, int declarationIndex)
+            {
+                _dictionaryKey = dictionaryKey;
+                DeclarationIndex = declarationIndex;
+                Header = header;
+                Order = int.MaxValue;
+                Width = 0;
+                Format = null;
+            }
+
             public int DeclarationIndex { get; }
             public string Header { get; }
             public int Order { get; }
             public double Width { get; }
             public string? Format { get; }
+
+            public object? GetValue(object? item)
+            {
+                if (item == null)
+                {
+                    return null;
+                }
+
+                if (_property != null)
+                {
+                    return _property.GetValue(item);
+                }
+
+                if (_dictionaryKey != null && item is IDictionary<string, string?> stringDictionary)
+                {
+                    return stringDictionary.TryGetValue(_dictionaryKey, out var value) ? value : null;
+                }
+
+                return null;
+            }
 
             private static string FirstNonEmpty(params string?[] candidates)
             {
@@ -179,8 +303,31 @@ namespace Apha.Common.Utilities.GenericExcelExport
                     "P" or "p" or "P2" or "p2" => "0.00%",
                     "P0" or "p0" => "0%",
                     "D" or "d" => "dd/MM/yyyy",
-                    _ => token
+                    _ => ConvertFixedPointFormat(token) ?? token
                 };
+            }
+
+            // Maps a .NET fixed-point specifier such as "F", "F2" or "F4" to the equivalent
+            // Excel numeric format ("0", "0.00", "0.0000"). Returns null when the token is not
+            // a fixed-point specifier so the caller can fall back to the raw token.
+            private static string? ConvertFixedPointFormat(string token)
+            {
+                if (string.IsNullOrEmpty(token) || (token[0] != 'F' && token[0] != 'f'))
+                {
+                    return null;
+                }
+
+                if (token.Length == 1)
+                {
+                    return "0.00";
+                }
+
+                if (int.TryParse(token.AsSpan(1), out var decimals) && decimals >= 0)
+                {
+                    return decimals == 0 ? "0" : "0." + new string('0', decimals);
+                }
+
+                return null;
             }
         }
     }

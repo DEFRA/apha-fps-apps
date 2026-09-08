@@ -44,7 +44,10 @@ namespace Apha.PIMS.Api.Controllers
         {
             CommentDto? result = await _service.GetByIdAsync(commentno);
             if (result is null)
-                throw new KeyNotFoundException($"Comment {commentno} not found.");
+            {
+                return CreateNullSuccessResponse<CommentRes>();
+            }
+
             return Ok(_mapper.Map<CommentRes>(result));
         }
 
@@ -101,6 +104,20 @@ namespace Apha.PIMS.Api.Controllers
 
             double? forecastSpend = await _service.UpdateForecastSpendByProjectAsync(project, request.ForecastSpend);
             return Ok(new ProjectCommentForecastSpendRes { ForecastSpend = forecastSpend });
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -211,7 +211,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.AccessUserControllerTest
         }
 
         [Fact]
-        public async Task GetById_ServiceReturnsNull_ReturnsNotFound()
+        public async Task GetById_ServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
         {
             // Arrange
             _service.GetByIdAsync(Arg.Any<int>(), Arg.Any<string>()).Returns((AccessUserDto?)null);
@@ -220,7 +220,12 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.AccessUserControllerTest
             var result = await _controller.GetById(99, "unknown");
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<AccessUserRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            _mapper.DidNotReceive().Map<AccessUserRes>(Arg.Any<AccessUserDto>());
         }
 
         [Fact]
