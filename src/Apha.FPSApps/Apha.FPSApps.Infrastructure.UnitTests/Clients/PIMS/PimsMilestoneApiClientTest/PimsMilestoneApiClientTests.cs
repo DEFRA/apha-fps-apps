@@ -1015,7 +1015,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             var dto       = new MilestoneFormDatesDto { Year = 2024, ParentProject = parent, Jan = new DateTime(2024, 1, 31) };
             var request   = new MilestoneFormDatesReq { Year = 2024, ParentProject = parent };
             var res       = new MilestoneFormDatesRes { Year = 2024, ParentProject = parent };
-            var url        = string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent));
+            var url        = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent))}?isAddingNew=false";
             var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = true, Data = res };
             var mappedDto   = ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(new MilestoneFormDatesDto { Year = 2024, ParentProject = parent });
 
@@ -1043,7 +1043,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             const string parent = "PP001";
             var dto       = new MilestoneFormDatesDto { Year = 2024, ParentProject = parent };
             var request   = new MilestoneFormDatesReq { Year = 2024, ParentProject = parent };
-            var url        = string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent));
+            var url        = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent))}?isAddingNew=false";
             var errors     = new List<ApiError> { new() { Message = "Validation error", Code = "VALIDATION_ERROR" } };
             var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = false, Errors = errors };
             var mappedDto   = new ApiResponseDto<MilestoneFormDatesDto>
@@ -1070,7 +1070,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             const string parent     = "PP001";
-            var expectedUrl = string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent));
+            var expectedUrl = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent))}?isAddingNew=false";
             var dto       = new MilestoneFormDatesDto { Year = 2024, ParentProject = parent };
             var request   = new MilestoneFormDatesReq { Year = 2024 };
             var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = true, Data = new MilestoneFormDatesRes() };
