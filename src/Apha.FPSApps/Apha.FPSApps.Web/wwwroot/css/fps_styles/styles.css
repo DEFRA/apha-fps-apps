@@ -5629,7 +5629,7 @@ input.govuk-input.ssr-total-input[readonly] {
 
 #gridContainer_wgGradeGrid table thead th,
 #gridContainer_wgGradeGrid table tbody td {
-    text-align: left !important;
+    text-align: center !important;
 }
 
 /* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
@@ -5641,7 +5641,7 @@ input.govuk-input.ssr-total-input[readonly] {
 #gridContainer_wgStaffGrid table tbody td:nth-child(4),
 #gridContainer_wgStaffGrid table tbody td:nth-child(5),
 #gridContainer_wgStaffGrid table tbody td:nth-child(6) {
-    text-align: right !important;
+    text-align: center !important;
 }
 
 /* Border on the 4 numeric total cells */

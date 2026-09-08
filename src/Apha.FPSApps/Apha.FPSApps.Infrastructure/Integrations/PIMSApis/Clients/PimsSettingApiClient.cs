@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
@@ -12,8 +13,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;       
         private const string InternalCodeError = "INTERNAL_ERROR";
-        
-        private const string BaseUrl = "api/v1/setting";
 
         public PimsSettingApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -25,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<SettingRes>>(BaseUrl);
+                var response = await _http.GetAsync<List<SettingRes>>(PimsApiEndpoints.GetAllSettings);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<SettingDto>>>(response);
 
@@ -45,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/userupdateable";
+                var url = PimsApiEndpoints.GetAllUserUpdateableSettings;
                 var response = await _http.GetAsync<List<SettingRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<SettingDto>>>(response);
@@ -66,7 +65,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(id)}";
+                var url = string.Format(PimsApiEndpoints.GetSettingById, Uri.EscapeDataString(id));
                 var response = await _http.GetAsync<SettingRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<SettingDto>>(response);
@@ -88,7 +87,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<SettingReq>(dto);
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(id)}";
+                var url = string.Format(PimsApiEndpoints.UpdateSetting, Uri.EscapeDataString(id));
                 var response = await _http.PutAsync<SettingReq, SettingRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<SettingDto>>(response);

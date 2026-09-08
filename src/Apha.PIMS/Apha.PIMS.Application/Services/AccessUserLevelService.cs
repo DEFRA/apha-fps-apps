@@ -1,6 +1,7 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
@@ -39,7 +40,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<List<AccessUserLevelDto>> GetByUserAsync(int systemid, string ntlogin)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))
-                throw new ArgumentException("NT login is required.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED")
+                ]);
 
             List<AccessUserLevel> entities = await _repository.GetByUserAsync(systemid, ntlogin);
             return _mapper.Map<List<AccessUserLevelDto>>(entities);
@@ -49,7 +53,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<AccessUserLevelDto?> GetByIdAsync(int systemid, string ntlogin, int accesslevelid)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))
-                throw new ArgumentException("NT login is required.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED")
+                ]);
 
             AccessUserLevel? entity = await _repository.GetByIdAsync(systemid, ntlogin, accesslevelid);
             return entity is null ? null : _mapper.Map<AccessUserLevelDto>(entity);
@@ -59,16 +66,24 @@ namespace Apha.PIMS.Application.Services
         public async Task<AccessUserLevelDto> CreateAsync(AccessUserLevelDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
+            var errors = new List<BusinessValidationError>();
             if (dto.SystemId <= 0)
-                throw new ArgumentException("A valid SystemId is required.");
+                errors.Add(new BusinessValidationError("A valid SystemId is required.", "SYSTEMID_REQUIRED"));
             if (dto.AccessLevelId <= 0)
-                throw new ArgumentException("A valid AccessLevelId is required.");
+                errors.Add(new BusinessValidationError("A valid AccessLevelId is required.", "ACCESSLEVELID_REQUIRED"));
             if (string.IsNullOrWhiteSpace(dto.NtLogin))
-                throw new ArgumentException("NT login is required.");
+                errors.Add(new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED"));
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
 
             bool alreadyExists = await _repository.ExistsAsync(dto.SystemId, dto.NtLogin, dto.AccessLevelId);
             if (alreadyExists)
-                throw new InvalidOperationException("User already exists. Please enter a unique User.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("User already exists. Please enter a unique User.", "ACCESS_USER_LEVEL_DUPLICATE")
+                ]);
 
             AccessUserLevel entity = _mapper.Map<AccessUserLevel>(dto);
             AccessUserLevel created = await _repository.AddAsync(entity);
@@ -79,12 +94,19 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> DeleteAsync(int systemid, string ntlogin, int accesslevelid)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))
-                throw new ArgumentException("NT login is required.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED")
+                ]);
 
             bool exists = await _repository.ExistsAsync(systemid, ntlogin, accesslevelid);
             if (!exists)
-                throw new KeyNotFoundException(
-                    $"AccessUserLevel (systemid={systemid}, ntlogin='{ntlogin}', accesslevelid={accesslevelid}) was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"AccessUserLevel (systemid={systemid}, ntlogin='{ntlogin}', accesslevelid={accesslevelid}) was not found.",
+                        "ACCESS_USER_LEVEL_NOT_FOUND")
+                ]);
 
             return await _repository.DeleteAsync(systemid, ntlogin, accesslevelid);
         }
@@ -92,7 +114,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> ExistsAsync(int systemid, string ntlogin, int accesslevelid)
         {
             if (string.IsNullOrWhiteSpace(ntlogin))
-                throw new ArgumentException("NT login is required.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("NT login is required.", "NTLOGIN_REQUIRED")
+                ]);
 
             return await _repository.ExistsAsync(systemid, ntlogin, accesslevelid);
         }
