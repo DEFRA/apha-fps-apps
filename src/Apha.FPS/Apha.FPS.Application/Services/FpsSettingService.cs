@@ -66,6 +66,13 @@ namespace Apha.FPS.Application.Services
 
         public async Task<FpsSettingDto> SaveSettingAsync(FpsSettingDto dto)
         {
+            var entity = _mapper.Map<FpsSetting>(dto);
+            var result = await _repository.SaveAsync(entity);
+            return _mapper.Map<FpsSettingDto>(result);
+        }
+
+        public async Task<FpsSettingDto> SaveYearEndSettingAsync(FpsSettingDto dto)
+        {
             var errors = new List<BusinessValidationError>();
 
             if (dto?.Id == "HoursInDay")
@@ -96,7 +103,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(errors);
 
             var entity = _mapper.Map<FpsSetting>(dto);
-            var result = await _repository.SaveAsync(entity);
+            var result = await _repository.SaveYearEndSettingAsync(entity);
             return _mapper.Map<FpsSettingDto>(result);
         }
     }

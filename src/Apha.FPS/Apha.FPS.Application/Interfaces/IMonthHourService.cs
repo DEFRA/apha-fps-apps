@@ -10,5 +10,6 @@ namespace Apha.FPS.Application.Interfaces
         Task<IEnumerable<short>> GetDistinctYearsAsync();
         Task<List<YearEndMonthHourDto>> GetYearEndMonthHoursAsync();
         Task<MonthHourDto> SaveMonthHourAsync(MonthHourDto dto);
+        Task<MonthHourDto> SaveYearEndMonthHourAsync(MonthHourDto dto);
     }
 }

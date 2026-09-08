@@ -131,6 +131,7 @@ namespace Apha.Common.Constants
         public const string CreateSetting = "api/v1/setting";
         public const string UpdateSetting = "api/v1/setting/{0}";
         public const string SaveSetting = "api/v1/setting/save";
+        public const string SaveYearEndSetting = "api/v1/setting/save-yearend";
 
         // Month Hour
         public const string GetPagedMonthHours = "api/v1/monthhour";
@@ -138,6 +139,7 @@ namespace Apha.Common.Constants
         public const string GetDistinctMonthHourYears = "api/v1/monthhour/years";
         public const string GetYearEndMonthHours = "api/v1/monthhour/yearend";
         public const string SaveMonthHour = "api/v1/monthhour/save";
+        public const string SaveYearEndMonthHour = "api/v1/monthhour/save-yearend";
 
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";

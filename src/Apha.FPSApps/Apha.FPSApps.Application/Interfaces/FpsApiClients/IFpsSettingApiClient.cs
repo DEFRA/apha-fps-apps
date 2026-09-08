@@ -11,5 +11,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<SettingDto>> AddSettingAsync(SettingDto dto);
         Task<ApiResponseDto<SettingDto>> UpdateSettingAsync(string id, SettingDto dto);
         Task<ApiResponseDto<SettingDto>> SaveSettingAsync(SettingDto dto);
+        Task<ApiResponseDto<SettingDto>> SaveYearEndSettingAsync(SettingDto dto);
     }
 }

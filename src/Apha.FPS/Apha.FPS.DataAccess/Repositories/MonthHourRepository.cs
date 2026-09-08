@@ -57,8 +57,6 @@ namespace Apha.FPS.DataAccess.Repositories
         [ExcludeFromCodeCoverage]
         public async Task<MonthHour> SaveAsync(MonthHour monthHour)
         {
-            await SavePlannedYearFmonthHoursAsync();
-
             var existing = await _context.MonthHours.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m =>
                     m.Year == monthHour.Year &&
@@ -82,31 +80,70 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? monthHour;
         }
 
+        public async Task<MonthHour> SaveYearEndMonthHourAsync(MonthHour monthHour)
+        {
+            int? plannedYear = await GetPlannedYear();
+
+            if (plannedYear is null)
+            {
+                return await SaveStagingAsync(monthHour);
+            }
+            else
+            {
+
+                return await SaveAsync(monthHour);
+            }
+        }
+
         [ExcludeFromCodeCoverage]
         public async Task<List<YearEndMonthHour>> GetYearEndMonthHoursAsync()
         {
             int openYear = await GetOpenYear();
 
             int? plannedYear = await GetPlannedYear();
+    
+            List<MonthHour> monthHours;
 
-            var openmonthHours = await _context.MonthHours.IgnoreQueryFilters()
+            if (plannedYear is null)
+            {
+                plannedYear = openYear + 1;
+
+                var openmonthHours = await _context.MonthHours
                 .AsNoTracking()
                 .Where(m => m.FpsYear == openYear && m.Fmonth > 0).ToListAsync();
 
-            openmonthHours
-                .Where(m => m.Fmonth == 10 || m.Fmonth == 11 || m.Fmonth == 12)
-                .ToList()
-                .ForEach(m => m.Fmonth = 0);
+                openmonthHours
+                    .Where(m => m.Fmonth == 10 || m.Fmonth == 11 || m.Fmonth == 12)
+                    .ToList()
+                    .ForEach(m => m.Fmonth = 0);
 
-            var plannedHours = await _context.MonthHours.IgnoreQueryFilters()
+                var stagingHours = await _context.MonthHourStagings
+                    .AsNoTracking()
+                    .Where(m => m.FpsYear == plannedYear).ToListAsync();
+
+                var plannedHours = stagingHours.Select(s => new MonthHour
+                {
+                    Year = s.Year,
+                    Month = s.Month,
+                    Days = s.Days,
+                    CvlHours = s.CvlHours,
+                    VidHours = s.VidHours,
+                    Fmonth = s.Fmonth,
+                    FpsYear = s.FpsYear,
+                }).ToList();
+
+                monthHours = openmonthHours.Concat(plannedHours).ToList();
+            }
+            else
+            {
+                monthHours = await _context.MonthHours
                 .AsNoTracking()
                 .Where(m => m.FpsYear == plannedYear).ToListAsync();
+            }
 
-            var monthHours = openmonthHours.Concat(plannedHours).ToList();
-
-            // Remove duplicates: prefer the plannedYear record for each (Year, Month, Fmonth) slot.
-            // Only keep the openYear record when no plannedYear record exists for that slot.
-            monthHours = monthHours
+                // Remove duplicates: prefer the plannedYear record for each (Year, Month, Fmonth) slot.
+                // Only keep the openYear record when no plannedYear record exists for that slot.
+                monthHours = monthHours
                 .GroupBy(m => new { m.Month, m.Fmonth })
                 .Select(g =>
                 {
@@ -122,7 +159,81 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return result;
         }
- 
+
+        private async Task<MonthHour> SaveStagingAsync(MonthHour monthHour)
+        {
+            var stagingMonthHour = new MonthHourStaging
+            {
+                Year = monthHour.Year,
+                Month = monthHour.Month,
+                Days = monthHour.Days,
+                CvlHours = monthHour.CvlHours,
+                VidHours = monthHour.VidHours,
+                Fmonth = monthHour.Fmonth,
+                FpsYear = monthHour.FpsYear,
+            };
+
+            //auto save fmonth 0 entries to staging table
+            await SavePlannedYearFmonthHoursAsync();
+
+            var existing = await _context.MonthHourStagings
+                .FirstOrDefaultAsync(m =>
+                    m.Year == monthHour.Year &&
+                    m.Month == monthHour.Month &&
+                    m.FpsYear == monthHour.FpsYear);
+
+            if (existing is null)
+            {
+                _context.MonthHourStagings.Add(stagingMonthHour);
+            }
+            else
+            {
+                existing.Days = monthHour.Days;
+                existing.CvlHours = monthHour.CvlHours;
+                existing.VidHours = monthHour.VidHours;
+                existing.Fmonth = monthHour.Fmonth;
+                _context.MonthHourStagings.Update(existing);
+            }
+
+            await _context.SaveChangesAsync();
+            return monthHour;
+        }
+
+        [ExcludeFromCodeCoverage]
+        private async Task SavePlannedYearFmonthHoursAsync()
+        {
+            var entity = new MonthHourStaging();
+            var result = await GetYearEndMonthHoursAsync();
+
+            var filteredList = result.Where(x => x.Fmonth == 0
+            && string.Equals(x.ExistsForPlannedYear, "no", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (filteredList.Count > 0)
+            {
+                foreach (var item in filteredList)
+                {
+                    var existing = await _context.MonthHourStagings
+                        .FirstOrDefaultAsync(m => m.Year == item.Year
+                        && m.Month == item.Month
+                        && m.FpsYear == item.FpsYear);
+
+                    if (existing == null)
+                    {
+                        entity.Year = item.Year;
+                        entity.Month = item.Month;
+                        entity.Days = item.Days;
+                        entity.CvlHours = item.CvlHours;
+                        entity.VidHours = item.VidHours;
+                        entity.Fmonth = item.Fmonth;
+                        entity.FpsYear = item.FpsYear;
+                        _context.MonthHourStagings.Add(entity);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+        }
+
         private static List<YearEndMonthHour> GetYearEndMonthHour(int openYear, int? plannedYear, List<MonthHour> monthHours)
         {
             var result = new List<YearEndMonthHour>();
@@ -246,41 +357,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var plannedYear = plannedFpsYears.FirstOrDefault()?.FpsYear;
             return plannedYear;
-        }
-
-        [ExcludeFromCodeCoverage]
-        private async Task SavePlannedYearFmonthHoursAsync()
-        {
-            var entity = new MonthHour();
-            var result = await GetYearEndMonthHoursAsync();
-
-            var filteredList = result.Where(x => x.Fmonth == 0
-            && string.Equals(x.ExistsForPlannedYear, "no", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (filteredList.Count > 0)
-            {
-                foreach (var item in filteredList)
-                {
-                    var existing = await _context.MonthHours.IgnoreQueryFilters()
-                        .FirstOrDefaultAsync(m => m.Year == item.Year
-                        && m.Month == item.Month
-                        && m.FpsYear == item.FpsYear);
-
-                    if (existing == null)
-                    {
-                        entity.Year = item.Year;
-                        entity.Month = item.Month;
-                        entity.Days = item.Days;
-                        entity.CvlHours = item.CvlHours;
-                        entity.VidHours = item.VidHours;
-                        entity.Fmonth = item.Fmonth;
-                        entity.FpsYear = item.FpsYear;
-                        _context.MonthHours.Add(entity);
-                        await _context.SaveChangesAsync();
-                    }
-                }
-            }
         }
 
         private static IQueryable<MonthHour> ApplyMonthHourFilter(

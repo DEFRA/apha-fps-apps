@@ -79,5 +79,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var dto = _mapper.Map<ApiResponseDto<MonthHourDto>>(response);
             return ApiResponseDto<MonthHourDto>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<MonthHourDto>> SaveYearEndMonthHourAsync(MonthHourDto monthHourDto)
+        {
+            var request = _mapper.Map<MonthHourReq>(monthHourDto);
+            var response = await _http.PostAsync<MonthHourReq, MonthHourRes>(FpsApiEndpoints.SaveYearEndMonthHour, request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<MonthHourDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<MonthHourDto>>(response);
+            return ApiResponseDto<MonthHourDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

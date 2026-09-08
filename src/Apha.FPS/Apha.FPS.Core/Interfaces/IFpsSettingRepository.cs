@@ -10,5 +10,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<FpsSetting> AddAsync(FpsSetting setting);
         Task<FpsSetting> UpdateAsync(FpsSetting setting);
         Task<FpsSetting> SaveAsync(FpsSetting setting);
+        Task<FpsSetting> SaveYearEndSettingAsync(FpsSetting setting);
     }
 }
