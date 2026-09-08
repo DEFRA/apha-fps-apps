@@ -519,7 +519,8 @@ namespace Apha.PACT.DataAccess.Repository
                 DateTime      = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
                 UserId        = _fpsRequestContext.UserEmailId,
                 InsertDelete  = insertDelete,
-                FpsYear       = _fpsRequestContext.FpsYear
+                FpsYear       = _fpsRequestContext.FpsYear,
+                JobCode       = entity.ProjectBuyerCode
             };
 
             // UITrig also captures ProjectBuyerCode, TestBuyerCode and Active

@@ -21,5 +21,7 @@ namespace Apha.PACT.Core.Interfaces
         Task<bool> DeleteFailedSubContractRmsByIdAsync(int id, string importedBy);
         Task<int> DeleteFailedSubContractRmsByUserAsync(string importedBy);
         Task<SubContractRmsImportResult> ImportSubContractRmsAsync(List<ProjectSubContract> passedRows, List<ProjectSubcontractStaging> failedRows);
+        Task UpdateFailedSubContractRmsRecordsAsync(List<ProjectSubcontractStaging> records);
+        Task DeleteFailedSubContractRmsByIdsAsync(List<int> ids, string importedBy);
     }
 }
