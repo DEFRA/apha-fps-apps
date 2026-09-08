@@ -401,6 +401,7 @@ function addPortfolioTimeCode() {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'savePortfolioTimeCode');
+            initializePortfolioTimeCodeDropdowns();
         },
         error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -445,7 +446,7 @@ function editPortfolioTimeCode(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             $('#modaPopupBody').data('submitFn', 'updatePortfolioTimeCode');
-
+            initializePortfolioTimeCodeDropdowns();
         },
         error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -627,4 +628,108 @@ function initializeWorkGroupMultiColumnDropdown() {
             }
         }
     });
+}
+
+function initializeWorkGroupTimeCodeDropdown() {
+    // Get workGroup options from the embedded JSON in the partial view
+    var workGroupOptions = [];
+    var optionsScript = document.getElementById('timeCodeWorkGroupOptionsData');
+
+    if (optionsScript) {
+        try {
+            workGroupOptions = JSON.parse(optionsScript.textContent);
+        } catch (e) {
+            console.error('Failed to parse Work Group options:', e);
+        }
+    }
+
+    var isEdit = $('#timeCodeForm').find('[name=isEdit]').val() === 'true';
+
+    var workGroupDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'timeCodeWorkGroupDropdown',
+        containerSelector: '#timeCodeWorkGroupDropdown',
+        placeholder: 'Select Work Group',
+        searchPlaceholder: 'Search by Work Group',
+        searchLabelText: 'Search by Work Group',
+        showSerialNumber: false,
+        disabled: isEdit,
+        columns: [
+            { field: 'Text', header: 'Work Group', width: '100%' }
+        ],
+        data: workGroupOptions,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        showClearButton: !isEdit,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#timeCodeWorkGroup').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function () {
+                $('#timeCodeWorkGroup').val('').trigger('change');
+            }
+        }
+    });
+
+    // Set initial value if present
+    var existingValue = $('#timeCodeWorkGroup').val();
+    if (existingValue) {
+        workGroupDropdown.setValue(existingValue);
+    }
+}
+
+function initializeProjectTimeCodeDropdown() {
+    // Get project options from the embedded JSON in the partial view
+    var projectOptions = [];
+    var optionsScript = document.getElementById('timeCodeProjectOptionsData');
+
+    if (optionsScript) {
+        try {
+            projectOptions = JSON.parse(optionsScript.textContent);
+        } catch (e) {
+            console.error('Failed to parse Project options:', e);
+        }
+    }
+
+    var isEdit = $('#timeCodeForm').find('[name=isEdit]').val() === 'true';
+
+    var projectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'timeCodeProjectDropdown',
+        containerSelector: '#timeCodeProjectDropdown',
+        placeholder: 'Select Project',
+        searchPlaceholder: 'Search by Project',
+        searchLabelText: 'Search by Project',
+        showSerialNumber: false,
+        disabled: isEdit,
+        columns: [
+            { field: 'Value', header: 'Project', width: '100%' }
+        ],
+        data: projectOptions,
+        displayField: 'Value',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        showClearButton: !isEdit,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#timeCodeProject').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function () {
+                $('#timeCodeProject').val('').trigger('change');
+            }
+        }
+    });
+
+    // Set initial value if present
+    var existingValue = $('#timeCodeProject').val();
+    if (existingValue) {
+        projectDropdown.setValue(existingValue);
+    }
+}
+
+function initializePortfolioTimeCodeDropdowns() {
+    // Initialize both Work Group and Project dropdowns
+    if (typeof MultiColumnDropdownComponent !== 'undefined') {
+        initializeWorkGroupTimeCodeDropdown();
+        initializeProjectTimeCodeDropdown();
+    }
 }
