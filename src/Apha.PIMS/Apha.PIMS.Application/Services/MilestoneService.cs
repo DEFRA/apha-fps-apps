@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Validation;
@@ -206,7 +206,7 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<MilestoneFormDatesDto>(entity);
         }
 
-        public async Task<MilestoneFormDatesDto> SaveMilestoneFormDatesAsync(MilestoneFormDatesDto dto)
+        public async Task<MilestoneFormDatesDto> SaveMilestoneFormDatesAsync(MilestoneFormDatesDto dto, bool isAddingNew = false)
         {
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(dto.ParentProject))
@@ -238,6 +238,15 @@ namespace Apha.PIMS.Application.Services
                 throw new BusinessValidationErrorException(errors);
 
             MilestoneFormDates? existing = await _repository.GetMilestoneFormDatesAsync(dto.Year, dto.ParentProject);
+
+            if (isAddingNew && existing is not null)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Financial year record already exists.", "YEAR_ALREADY_EXISTS")
+                ]);
+            }
+
             if (existing is null)
             {
                 MilestoneFormDates newEntity = _mapper.Map<MilestoneFormDates>(dto);
