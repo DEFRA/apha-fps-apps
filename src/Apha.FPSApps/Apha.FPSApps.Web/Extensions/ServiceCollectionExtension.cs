@@ -30,6 +30,7 @@ namespace Apha.FPSApps.Web.Extensions
         {
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddTransient<RequestHeadersHandler>();
+            services.AddTransient<ApiPerformanceLoggingHandler>();
             services.AddScoped<IFpsYearContext, FpsYearContext>();
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<IEmployeeService, EmployeeService>();

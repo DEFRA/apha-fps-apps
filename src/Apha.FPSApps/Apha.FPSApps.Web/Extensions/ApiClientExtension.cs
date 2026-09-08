@@ -37,7 +37,8 @@ namespace Apha.FPSApps.Web.Extensions
                     sp.GetRequiredService<IHttpContextAccessor>(),
                     scopes);
             })
-            .AddHttpMessageHandler<RequestHeadersHandler>();
+            .AddHttpMessageHandler<RequestHeadersHandler>()
+            .AddHttpMessageHandler<ApiPerformanceLoggingHandler>();
 
             services.AddScoped<IFpsHttpExecutor>(sp =>
             {
@@ -65,7 +66,8 @@ namespace Apha.FPSApps.Web.Extensions
                     sp.GetRequiredService<IHttpContextAccessor>(),
                     scopes);
             })
-            .AddHttpMessageHandler<RequestHeadersHandler>();
+            .AddHttpMessageHandler<RequestHeadersHandler>()
+            .AddHttpMessageHandler<ApiPerformanceLoggingHandler>();
 
             services.AddScoped<IPactHttpExecutor>(sp =>
             {
@@ -91,8 +93,9 @@ namespace Apha.FPSApps.Web.Extensions
                     sp.GetRequiredService<IHttpContextAccessor>(),
                     scopes);
             })
-            .AddHttpMessageHandler<RequestHeadersHandler>();
-                
+            .AddHttpMessageHandler<RequestHeadersHandler>()
+            .AddHttpMessageHandler<ApiPerformanceLoggingHandler>();
+
 
             services.AddScoped<IPimsHttpExecutor>(sp =>
             {
@@ -117,7 +120,8 @@ namespace Apha.FPSApps.Web.Extensions
                     sp.GetRequiredService<ITokenAcquisition>(),
                     sp.GetRequiredService<IHttpContextAccessor>(),
                     scopes);
-            }).AddHttpMessageHandler<RequestHeadersHandler>();
+            }).AddHttpMessageHandler<RequestHeadersHandler>()
+            .AddHttpMessageHandler<ApiPerformanceLoggingHandler>();
 
             services.AddScoped<ICostBookHttpExecutor>(sp =>
             {
