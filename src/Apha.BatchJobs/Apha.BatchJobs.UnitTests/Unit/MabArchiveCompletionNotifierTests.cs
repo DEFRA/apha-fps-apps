@@ -39,10 +39,14 @@ public sealed class MabArchiveCompletionNotifierTests
 
     private static MabArchiveEmailSettings DefaultSettings(
         string recipients = "dl@test.com",
+        string subject = "Completed",
+        string body = "Done",
         string failureSubject = "Failed",
         string failureBody = "Failed body") => new()
     {
         Recipients = recipients,
+        CompletionSubject = subject,
+        CompletionBody = body,
         FailureSubject = failureSubject,
         FailureBody = failureBody
     };
@@ -61,15 +65,16 @@ public sealed class MabArchiveCompletionNotifierTests
     }
 
     [Fact]
-    public async Task NotifyAsync_WhenMabArchiveSucceeded_DoesNotSendEmail()
+    public async Task NotifyAsync_WhenMabArchiveSucceeded_SendsEmail()
     {
-        // Deliberately failure-only — mirrors the legacy MABArchive alert this replaces.
         var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
 
         await CreateNotifier(email)
             .NotifyAsync(MakeContext(BatchJobNames.MabArchive, JobStatus.Completed), CancellationToken.None);
 
-        await email.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
+        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Theory]
@@ -101,7 +106,7 @@ public sealed class MabArchiveCompletionNotifierTests
     }
 
     [Fact]
-    public async Task NotifyAsync_ReplacesErrorMessageToken()
+    public async Task NotifyAsync_WhenFailed_UsesFailureTemplatesAndErrorMessageToken()
     {
         var email = Substitute.For<IEmailService>();
         email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
@@ -112,7 +117,10 @@ public sealed class MabArchiveCompletionNotifierTests
             Arg.Do<EmailMessage>(m => captured = m),
             Arg.Any<CancellationToken>());
 
-        var settings = DefaultSettings(failureSubject: "MABArchive FAILED", failureBody: "Reason: {ErrorMessage}");
+        var settings = DefaultSettings(
+            subject: "should not appear",
+            failureSubject: "MABArchive FAILED",
+            failureBody: "Reason: {ErrorMessage}");
 
         await CreateNotifier(email, settings)
             .NotifyAsync(
@@ -122,6 +130,33 @@ public sealed class MabArchiveCompletionNotifierTests
         Assert.NotNull(captured);
         Assert.Equal("MABArchive FAILED", captured!.Subject);
         Assert.Contains("Loader timed out", captured.HtmlBody);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_WhenSucceeded_UsesCompletionTemplates()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        var settings = DefaultSettings(
+            subject: "MABArchive Completed",
+            body: "Requested By: {RequestedBy}",
+            failureSubject: "should not appear");
+
+        await CreateNotifier(email, settings)
+            .NotifyAsync(
+                MakeContext(BatchJobNames.MabArchive, JobStatus.Completed, requestedBy: "alice@test"),
+                CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Equal("MABArchive Completed", captured!.Subject);
+        Assert.Contains("alice@test", captured.HtmlBody);
     }
 
     [Fact]

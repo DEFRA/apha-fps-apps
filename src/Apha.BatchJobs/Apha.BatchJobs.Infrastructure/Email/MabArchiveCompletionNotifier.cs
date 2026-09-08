@@ -9,11 +9,9 @@ using Microsoft.Extensions.Options;
 namespace Apha.BatchJobs.Infrastructure.Email;
 
 /// <summary>
-/// Sends a failure email to the MABArchive process owner when the job durably reaches Failed.
-/// Deliberately failure-only, mirroring the scope of the legacy MABArchive-only alert this
-/// worker-wide notification model replaced — a success channel for this process owner is a
-/// separate decision, not yet in scope. A no-op for any other job name. Email failures are
-/// logged and swallowed — never alters the job's own durable outcome.
+/// Sends a completion email to the MABArchive process owner after the job durably reaches
+/// Completed or Failed. A no-op for any other job name. Email failures are logged and swallowed
+/// — never alters the job's own durable outcome.
 /// </summary>
 public sealed class MabArchiveCompletionNotifier : IPostCompletionNotifier
 {
@@ -36,13 +34,11 @@ public sealed class MabArchiveCompletionNotifier : IPostCompletionNotifier
         if (context.JobName != BatchJobNames.MabArchive)
             return;
 
-        if (context.Status != JobStatus.Failed)
-            return;
-
         if (string.IsNullOrWhiteSpace(_settings.Recipients))
         {
             _logger.LogInformation(
-                "MABArchive failure notification suppressed: Recipients not configured | JobQueueId={JobQueueId}",
+                "MABArchive {Status} notification suppressed: Recipients not configured | JobQueueId={JobQueueId}",
+                context.Status,
                 context.JobQueueId);
             return;
         }
@@ -50,22 +46,25 @@ public sealed class MabArchiveCompletionNotifier : IPostCompletionNotifier
         var recipients = _settings.Recipients
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var subject = ReplacePlaceholders(_settings.FailureSubject, context);
-        var body = ReplacePlaceholders(_settings.FailureBody, context);
+        var isSuccess = context.Status == JobStatus.Completed;
+        var subject = ReplacePlaceholders(isSuccess ? _settings.CompletionSubject : _settings.FailureSubject, context);
+        var body = ReplacePlaceholders(isSuccess ? _settings.CompletionBody : _settings.FailureBody, context);
 
         try
         {
             await _emailService.SendAsync(new EmailMessage(recipients, subject, body), cancellationToken);
 
             _logger.LogInformation(
-                "MABArchive failure notification sent | JobQueueId={JobQueueId}",
+                "MABArchive {Status} notification sent | JobQueueId={JobQueueId}",
+                context.Status,
                 context.JobQueueId);
         }
         catch (Exception ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to send MABArchive failure notification | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
+                "Failed to send MABArchive {Status} notification | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
+                context.Status,
                 context.JobQueueId,
                 context.JobExecutionId,
                 context.RequestedBy);
