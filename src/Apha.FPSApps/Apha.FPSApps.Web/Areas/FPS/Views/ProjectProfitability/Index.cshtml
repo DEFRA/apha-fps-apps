@@ -302,10 +302,7 @@
                     document.getElementById('ppf-total-budget').value = formatGbp(data.totalBudget ?? 0);
                     document.getElementById('ppf-total-profit').value = formatGbp(data.totalProfit ?? 0);
                     document.getElementById('ppf-total-target-profit').value = formatGbp(data.totalTargetProfit ?? 0);
-                    var offTargetValue = data.totalOffTarget ?? '0.00';
-                    var offTargetEl = document.getElementById('ppf-total-off-target');
-                    offTargetEl.value = formatGbp(offTargetValue);
-                    offTargetEl.style.color = String(offTargetValue).trim().charAt(0) === '-' ? 'red' : 'blue';
+                    document.getElementById('ppf-total-off-target').value = formatGbp(data.totalOffTarget ?? '0.00');
                 }
 
                 function formatGbp(value) {
