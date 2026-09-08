@@ -6,6 +6,7 @@ using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Graph;
 
 namespace Apha.BatchJobs.Infrastructure.DependencyInjection;
@@ -31,16 +32,26 @@ public static class GraphEmailServiceExtensions
     }
 
     /// <summary>
-    /// Registers <see cref="IEmailService"/> (Graph-backed) and its <see cref="Func{IEmailService}"/>
-    /// factory. Shared by all jobs — MABArchive resolves the factory lazily so Graph credentials
-    /// are never eagerly validated at startup.
+    /// Registers <see cref="IEmailService"/> (Graph-backed, wrapped by
+    /// <see cref="EmailRedirectDecorator"/>) and its <see cref="Func{IEmailService}"/> factory.
+    /// Shared by all jobs — MABArchive resolves the factory lazily so Graph credentials are
+    /// never eagerly validated at startup. Every send goes through the redirect decorator first;
+    /// whether it actually redirects is governed solely by
+    /// <see cref="EmailDeliverySettings.RedirectEnabled"/>, not by environment.
     /// </summary>
-    public static IServiceCollection AddEmailService(this IServiceCollection services)
+    public static IServiceCollection AddEmailService(this IServiceCollection services, IConfiguration configuration)
     {
-        // Graph credentials are validated only when IEmailService is first resolved.
-        services.AddScoped<IEmailService>(sp => new GraphBackedEmailService(
+        services.Configure<EmailDeliverySettings>(configuration.GetSection(EmailDeliverySettings.SectionName));
+
+        // Graph credentials are validated only when the inner service is first resolved.
+        services.AddScoped<GraphBackedEmailService>(sp => new GraphBackedEmailService(
             sp.GetRequiredService<IGraphEmailService>(),
             sp.GetRequiredService<ILogger<GraphBackedEmailService>>()));
+
+        services.AddScoped<IEmailService>(sp => new EmailRedirectDecorator(
+            sp.GetRequiredService<GraphBackedEmailService>(),
+            sp.GetRequiredService<IOptions<EmailDeliverySettings>>(),
+            sp.GetRequiredService<ILogger<EmailRedirectDecorator>>()));
 
         // Func<IEmailService> lets MABArchive resolve IEmailService lazily without triggering Graph.
         services.AddScoped<Func<IEmailService>>(sp => sp.GetRequiredService<IEmailService>);

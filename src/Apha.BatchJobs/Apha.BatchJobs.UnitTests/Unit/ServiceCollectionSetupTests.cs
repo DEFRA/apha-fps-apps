@@ -6,6 +6,7 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Ports;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Grouping;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Rendering;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
@@ -161,8 +162,21 @@ public sealed class ServiceCollectionSetupTests
         Assert.IsType<YearEndCutoverJobHandler>(jobFactory.Create(BatchJobNames.YearEndCutover));
     }
 
+    // Same gap class as the Year End regression above (unregistered job type), found live in DEV.
     [Fact]
-    public void AddBatchJobs_ShouldRegisterExactlyEightSupportedJobs()
+    public void AddBatchJobs_ShouldResolveMilestoneUpdateNotificationsJobThroughTheRealCompositionRoot()
+    {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{}");
+        var services = CreateServices(GetBatchJobsRoot());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
+
+        Assert.IsType<MilestoneUpdateNotificationsJob>(jobFactory.Create(BatchJobNames.MilestoneUpdateNotifications));
+    }
+
+    [Fact]
+    public void AddBatchJobs_ShouldRegisterExactlyNineSupportedJobs()
     {
         // Regression guard: adding, removing, or deferring a job must force a deliberate update here.
         using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
@@ -176,7 +190,7 @@ public sealed class ServiceCollectionSetupTests
 
         Assert.Equal(
             new[] { "BulkAnimalRatesUpdate", "BulkStaffRatesUpdate", "BulkTestRatesUpdate",
-                    "HealthCheck", "MABArchive", "RecreateSummary",
+                    "HealthCheck", "MABArchive", BatchJobNames.MilestoneUpdateNotifications, "RecreateSummary",
                     BatchJobNames.YearEndCutover, BatchJobNames.YearEndDataSetup },
             registeredNames);
     }

@@ -67,7 +67,7 @@ public sealed class NotificationDeliveryRepository : INotificationDeliveryReposi
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     NULL, NULL, true, 0, 0, 'Pending', now(), now()
                 )
-                ON CONFLICT (jobqueueid) DO NOTHING
+                ON CONFLICT (jobqueueid, fpsyear) DO NOTHING
                 RETURNING notificationrunsummaryid, fpsyear, monthnumber
             )
             SELECT notificationrunsummaryid, fpsyear, monthnumber, true AS wasinserted FROM ins

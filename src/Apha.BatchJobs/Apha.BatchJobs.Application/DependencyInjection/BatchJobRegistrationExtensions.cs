@@ -4,6 +4,7 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
@@ -17,8 +18,6 @@ public static class BatchJobRegistrationExtensions
     // during Phase 8 Gate C4b — the first real Worker invocation to reach this far. Every prior
     // phase's tests either constructed the handler directly or exercised the pipeline steps/services
     // below it, never through this composition root, so nothing caught the gap until now.
-    // MilestoneNotification remains excluded — MilestoneUpdateNotificationsJob is still unregistered
-    // here too, but that is out of this port's scope; flag separately if it matters.
     public static IServiceCollection RegisterBatchJobImplementations(
         this IServiceCollection services)
     {
@@ -27,6 +26,7 @@ public static class BatchJobRegistrationExtensions
         services.AddJob<BulkTestRatesUpdateJob>();
         services.AddJob<HealthCheckJobHandler>();
         services.AddJob<MabArchiveJob>();
+        services.AddJob<MilestoneUpdateNotificationsJob>();
         services.AddJob<RecreateSummaryJob>();
         services.AddJob<YearEndDataSetupJobHandler>();
         services.AddJob<YearEndCutoverJobHandler>();
