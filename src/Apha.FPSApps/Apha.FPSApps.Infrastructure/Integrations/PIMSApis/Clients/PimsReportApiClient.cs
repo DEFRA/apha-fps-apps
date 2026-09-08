@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -14,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
-        private const string BaseUrl = "api/v1/report";
 
         public PimsReportApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<ReportRes>>(BaseUrl);
+                var response = await _http.GetAsync<List<ReportRes>>(PimsApiEndpoints.GetAllReports);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<ReportDto>>>(response);
 
@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetPagedReports, query);
                 var response = await _http.GetAsync<List<ReportRes>>(url);
                 if (response.Success)
                 {
@@ -76,7 +76,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{id}";
+                var url = string.Format(PimsApiEndpoints.GetReportById, id);
                 var response = await _http.GetAsync<ReportRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReportDto>>(response);
@@ -98,7 +98,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<ReportReq>(dto);
-                var response = await _http.PostAsync<ReportReq, ReportRes>(BaseUrl, request);
+                var response = await _http.PostAsync<ReportReq, ReportRes>(PimsApiEndpoints.CreateReport, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReportDto>>(response);
 
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<ReportReq>(dto);
-                var url = $"{BaseUrl}/{id}";
+                var url = string.Format(PimsApiEndpoints.UpdateReport, id);
                 var response = await _http.PutAsync<ReportReq, ReportRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReportDto>>(response);
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{id}";
+                var url = string.Format(PimsApiEndpoints.DeleteReport, id);
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);

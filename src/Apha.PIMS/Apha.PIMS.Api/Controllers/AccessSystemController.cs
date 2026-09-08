@@ -36,7 +36,26 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetById(int systemid)
         {
             AccessSystemDto? result = await _service.GetByIdAsync(systemid);
-            return result is null ? NotFound() : Ok(_mapper.Map<AccessSystemRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<AccessSystemRes>();
+            }
+
+            return Ok(_mapper.Map<AccessSystemRes>(result));
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }
