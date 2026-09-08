@@ -34,7 +34,7 @@ public sealed class GraphBackedEmailService : IEmailService
             To = message.To.ToList(),
             Subject = message.Subject,
             Body = message.HtmlBody,
-            IsBodyHtml = true
+            IsBodyHtml = message.IsBodyHtml
         };
 
         try

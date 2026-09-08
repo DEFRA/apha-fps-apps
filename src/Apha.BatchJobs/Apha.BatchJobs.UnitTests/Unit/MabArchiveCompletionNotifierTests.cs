@@ -105,8 +105,19 @@ public sealed class MabArchiveCompletionNotifierTests
         await email.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
     }
 
+    // ── Canonical wording — exact Subject/Body render, no tokens ──────────────
+
+    private static MabArchiveEmailSettings CanonicalSettings(string recipients = "dl@test.com") => new()
+    {
+        Recipients = recipients,
+        CompletionSubject = "MABArchive Process Completed Successfully",
+        CompletionBody = "The MABArchive process has completed successfully.\n\nThank you for your support.",
+        FailureSubject = "MABArchive Process Failed",
+        FailureBody = "The MABArchive process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support."
+    };
+
     [Fact]
-    public async Task NotifyAsync_WhenFailed_UsesFailureTemplatesAndErrorMessageToken()
+    public async Task NotifyAsync_WhenSucceeded_SendsExactCanonicalSubjectAndBody()
     {
         var email = Substitute.For<IEmailService>();
         email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
@@ -117,23 +128,19 @@ public sealed class MabArchiveCompletionNotifierTests
             Arg.Do<EmailMessage>(m => captured = m),
             Arg.Any<CancellationToken>());
 
-        var settings = DefaultSettings(
-            subject: "should not appear",
-            failureSubject: "MABArchive FAILED",
-            failureBody: "Reason: {ErrorMessage}");
-
-        await CreateNotifier(email, settings)
-            .NotifyAsync(
-                MakeContext(BatchJobNames.MabArchive, JobStatus.Failed, errorMessage: "Loader timed out"),
-                CancellationToken.None);
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(BatchJobNames.MabArchive, JobStatus.Completed), CancellationToken.None);
 
         Assert.NotNull(captured);
-        Assert.Equal("MABArchive FAILED", captured!.Subject);
-        Assert.Contains("Loader timed out", captured.HtmlBody);
+        Assert.Equal("MABArchive Process Completed Successfully", captured!.Subject);
+        Assert.Equal(
+            "The MABArchive process has completed successfully.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
     }
 
     [Fact]
-    public async Task NotifyAsync_WhenSucceeded_UsesCompletionTemplates()
+    public async Task NotifyAsync_WhenFailed_SendsExactCanonicalSubjectAndBody()
     {
         var email = Substitute.For<IEmailService>();
         email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
@@ -144,19 +151,51 @@ public sealed class MabArchiveCompletionNotifierTests
             Arg.Do<EmailMessage>(m => captured = m),
             Arg.Any<CancellationToken>());
 
-        var settings = DefaultSettings(
-            subject: "MABArchive Completed",
-            body: "Requested By: {RequestedBy}",
-            failureSubject: "should not appear");
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(BatchJobNames.MabArchive, JobStatus.Failed), CancellationToken.None);
 
-        await CreateNotifier(email, settings)
+        Assert.NotNull(captured);
+        Assert.Equal("MABArchive Process Failed", captured!.Subject);
+        Assert.Equal(
+            "The MABArchive process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_ShouldNotLeakTechnicalDiagnosticsIntoSubjectOrBody()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+        const string distinctiveRequestedBy = "distinctive.requester@example.com";
+        const string distinctiveErrorMessage = "Distinctive simulated failure: loader connection reset";
+
+        await CreateNotifier(email, CanonicalSettings())
             .NotifyAsync(
-                MakeContext(BatchJobNames.MabArchive, JobStatus.Completed, requestedBy: "alice@test"),
+                MakeContext(
+                    BatchJobNames.MabArchive,
+                    JobStatus.Failed,
+                    requestedBy: distinctiveRequestedBy,
+                    errorMessage: distinctiveErrorMessage,
+                    jobQueueId: jobQueueId,
+                    jobExecutionId: jobExecutionId),
                 CancellationToken.None);
 
         Assert.NotNull(captured);
-        Assert.Equal("MABArchive Completed", captured!.Subject);
-        Assert.Contains("alice@test", captured.HtmlBody);
+        var combined = captured!.Subject + captured.HtmlBody;
+        Assert.DoesNotContain(jobQueueId.ToString(), combined);
+        Assert.DoesNotContain(jobExecutionId.ToString(), combined);
+        Assert.DoesNotContain(distinctiveRequestedBy, combined);
+        Assert.DoesNotContain(distinctiveErrorMessage, combined);
     }
 
     [Fact]

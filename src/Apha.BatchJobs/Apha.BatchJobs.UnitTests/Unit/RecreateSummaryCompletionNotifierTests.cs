@@ -105,8 +105,19 @@ public sealed class RecreateSummaryCompletionNotifierTests
         await email.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
     }
 
+    // ── Canonical wording — exact Subject/Body render, no tokens ──────────────
+
+    private static RecreateSummaryEmailSettings CanonicalSettings(string recipients = "dl@test.com") => new()
+    {
+        Recipients = recipients,
+        CompletionSubject = "Recreate Summary Process Completed Successfully",
+        CompletionBody = "The Recreate Summary process has completed successfully.\n\nThank you for your support.",
+        FailureSubject = "Recreate Summary Process Failed",
+        FailureBody = "The Recreate Summary process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support."
+    };
+
     [Fact]
-    public async Task NotifyAsync_WhenFailed_UsesFailureTemplatesAndErrorMessageToken()
+    public async Task NotifyAsync_WhenSucceeded_SendsExactCanonicalSubjectAndBody()
     {
         var email = Substitute.For<IEmailService>();
         email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
@@ -117,19 +128,74 @@ public sealed class RecreateSummaryCompletionNotifierTests
             Arg.Do<EmailMessage>(m => captured = m),
             Arg.Any<CancellationToken>());
 
-        var settings = DefaultSettings(
-            subject: "should not appear",
-            failureSubject: "{JobName} FAILED",
-            failureBody: "Reason: {ErrorMessage}");
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(BatchJobNames.RecreateSummary, JobStatus.Completed), CancellationToken.None);
 
-        await CreateNotifier(email, settings)
+        Assert.NotNull(captured);
+        Assert.Equal("Recreate Summary Process Completed Successfully", captured!.Subject);
+        Assert.Equal(
+            "The Recreate Summary process has completed successfully.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_WhenFailed_SendsExactCanonicalSubjectAndBody()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(BatchJobNames.RecreateSummary, JobStatus.Failed), CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Equal("Recreate Summary Process Failed", captured!.Subject);
+        Assert.Equal(
+            "The Recreate Summary process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_ShouldNotLeakTechnicalDiagnosticsIntoSubjectOrBody()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+        const string distinctiveRequestedBy = "distinctive.requester@example.com";
+        const string distinctiveErrorMessage = "Distinctive simulated failure: Postgres connection timeout";
+
+        await CreateNotifier(email, CanonicalSettings())
             .NotifyAsync(
-                MakeContext(BatchJobNames.RecreateSummary, JobStatus.Failed, errorMessage: "Postgres timeout"),
+                MakeContext(
+                    BatchJobNames.RecreateSummary,
+                    JobStatus.Failed,
+                    requestedBy: distinctiveRequestedBy,
+                    errorMessage: distinctiveErrorMessage,
+                    jobQueueId: jobQueueId,
+                    jobExecutionId: jobExecutionId),
                 CancellationToken.None);
 
         Assert.NotNull(captured);
-        Assert.Equal("RecreateSummary FAILED", captured!.Subject);
-        Assert.Contains("Postgres timeout", captured.HtmlBody);
+        var combined = captured!.Subject + captured.HtmlBody;
+        Assert.DoesNotContain(jobQueueId.ToString(), combined);
+        Assert.DoesNotContain(jobExecutionId.ToString(), combined);
+        Assert.DoesNotContain(distinctiveRequestedBy, combined);
+        Assert.DoesNotContain(distinctiveErrorMessage, combined);
     }
 
     [Fact]

@@ -1,10 +1,10 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Configuration;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 
@@ -45,16 +45,17 @@ public sealed class EmailNotificationService : IEmailNotificationService
         try
         {
             var isSuccess = notification.FinalStatus == JobStatus.Completed;
+            var displayName = BatchJobDisplayNames.GetDisplayName(notification.JobName);
             var subject = isSuccess
-                ? $"FPS Batch Job Completed Successfully - {notification.JobName}"
-                : $"FPS Batch Job Failed - {notification.JobName}";
-            var body = BuildExecutionNotificationBody(notification, isSuccess);
+                ? $"FPS Batch Job Completed Successfully – {displayName}"
+                : $"FPS Batch Job Failed – {displayName}";
+            var body = BuildExecutionNotificationBody(displayName, isSuccess);
 
             _logger.LogInformation(
                 "Sending execution notification | JobExecutionId={JobExecutionId} | Job={JobName} | FinalStatus={FinalStatus} | To={Email}",
                 notification.JobExecutionId, notification.JobName, notification.FinalStatus, _settings.AdminNotificationEmail);
 
-            var message = new EmailMessage([_settings.AdminNotificationEmail], subject, body);
+            var message = new EmailMessage([_settings.AdminNotificationEmail], subject, body, IsBodyHtml: false);
             var result = await _emailServiceFactory().SendAsync(message, cancellationToken);
 
             if (result.Succeeded)
@@ -76,53 +77,8 @@ public sealed class EmailNotificationService : IEmailNotificationService
         }
     }
 
-    private static string BuildExecutionNotificationBody(BatchExecutionNotification notification, bool isSuccess)
-    {
-        var body = new StringBuilder();
-
-        body.AppendLine(isSuccess
-            ? $"The FPS Batch Job '{notification.JobName}' completed successfully."
-            : $"The FPS Batch Job '{notification.JobName}' failed.");
-        body.AppendLine();
-        body.AppendLine($"Job Name: {notification.JobName}");
-        body.AppendLine($"Job Execution ID: {notification.JobExecutionId}");
-        body.AppendLine($"Job Queue ID: {notification.JobQueueId}");
-        body.AppendLine($"Run Mode: {notification.RunMode}");
-
-        if (!string.IsNullOrWhiteSpace(notification.RequestedBy))
-        {
-            body.AppendLine($"Requested By: {notification.RequestedBy}");
-        }
-
-        if (notification.RequestedAtUtc.HasValue)
-        {
-            body.AppendLine($"Requested At UTC: {notification.RequestedAtUtc:yyyy-MM-dd HH:mm:ss}");
-        }
-
-        body.AppendLine($"Final Status: {notification.FinalStatus}");
-        body.AppendLine(isSuccess
-            ? $"Completed At UTC: {notification.FinishedAtUtc:yyyy-MM-dd HH:mm:ss}"
-            : $"Failed At UTC: {notification.FinishedAtUtc:yyyy-MM-dd HH:mm:ss}");
-
-        if (notification.Duration.HasValue)
-        {
-            body.AppendLine($"Duration: {notification.Duration}");
-        }
-
-        if (!isSuccess)
-        {
-            body.AppendLine();
-            body.AppendLine("Failure:");
-            body.AppendLine(string.IsNullOrWhiteSpace(notification.FailureMessage)
-                ? "(no failure message provided)"
-                : notification.FailureMessage);
-        }
-
-        body.AppendLine();
-        body.AppendLine(isSuccess
-            ? "This is an automated notification. Please do not reply to this email."
-            : "This is an automated notification. Please review the BatchJobs logs for further details.");
-
-        return body.ToString();
-    }
+    private static string BuildExecutionNotificationBody(string displayName, bool isSuccess) =>
+        isSuccess
+            ? $"The {displayName} process has completed successfully.\n\nThank you for your support."
+            : $"The {displayName} process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.";
 }

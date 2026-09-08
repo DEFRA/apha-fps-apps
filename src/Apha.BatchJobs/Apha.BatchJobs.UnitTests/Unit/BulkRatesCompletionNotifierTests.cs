@@ -130,10 +130,27 @@ public sealed class BulkRatesCompletionNotifierTests
         Assert.Contains("c@test.com", capturedTo);
     }
 
-    // ── Token replacement in subject / body ──────────────────────────────────
+    // ── Canonical wording — exact Subject/Body render, {RateType} only ────────
 
-    [Fact]
-    public async Task NotifyAsync_ReplacesContextTokensInSubjectAndBody()
+    private static BulkRatesEmailSettings CanonicalSettings(string recipients = "dl@test.com") => new()
+    {
+        CompletionRecipients = recipients,
+        CompletionSubject = "Bulk {RateType} Rates Update Completed Successfully",
+        CompletionBody = "The Bulk {RateType} Rates Update has completed successfully.\n\nThank you for your support.",
+        FailureSubject = "Bulk {RateType} Rates Update Failed",
+        FailureBody = "The Bulk {RateType} Rates Update did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support."
+    };
+
+    public static IEnumerable<object[]> RateTypeJobs() =>
+    [
+        [BatchJobNames.BulkTestRatesUpdate, "Test"],
+        [BatchJobNames.BulkStaffRatesUpdate, "Staff"],
+        [BatchJobNames.BulkAnimalRatesUpdate, "Animal"],
+    ];
+
+    [Theory]
+    [MemberData(nameof(RateTypeJobs))]
+    public async Task NotifyAsync_WhenCompleted_SendsExactCanonicalSubjectAndBody(string jobName, string rateType)
     {
         var email = Substitute.For<IEmailService>();
         email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
@@ -144,23 +161,79 @@ public sealed class BulkRatesCompletionNotifierTests
             Arg.Do<EmailMessage>(m => captured = m),
             Arg.Any<CancellationToken>());
 
-        var jqid = Guid.NewGuid();
-        var settings = DefaultSettings(
-            subject: "{JobName} {FpsYear} completed",
-            body: "Job {JobName} / {JobQueueId} / by {RequestedBy}");
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(jobName, status: JobStatus.Completed), CancellationToken.None);
 
-        await CreateNotifier(email, settings)
+        Assert.NotNull(captured);
+        Assert.Equal($"Bulk {rateType} Rates Update Completed Successfully", captured!.Subject);
+        Assert.Equal(
+            $"The Bulk {rateType} Rates Update has completed successfully.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Theory]
+    [MemberData(nameof(RateTypeJobs))]
+    public async Task NotifyAsync_WhenFailed_SendsExactCanonicalSubjectAndBody(string jobName, string rateType)
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(jobName, status: JobStatus.Failed), CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Equal($"Bulk {rateType} Rates Update Failed", captured!.Subject);
+        Assert.Equal(
+            $"The Bulk {rateType} Rates Update did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_ShouldNotLeakTechnicalDiagnosticsIntoSubjectOrBody()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+        const int distinctiveFpsYear = 4242;
+        const string distinctiveRequestedBy = "distinctive.requester@example.com";
+        const string distinctiveErrorMessage = "Distinctive simulated failure: connection pool exhausted";
+
+        await CreateNotifier(email, CanonicalSettings())
             .NotifyAsync(
-                MakeContext(BatchJobNames.BulkStaffRatesUpdate, fpsYear: 2028,
-                    requestedBy: "user@test", jobQueueId: jqid),
+                MakeContext(
+                    BatchJobNames.BulkStaffRatesUpdate,
+                    fpsYear: distinctiveFpsYear,
+                    requestedBy: distinctiveRequestedBy,
+                    jobQueueId: jobQueueId,
+                    jobExecutionId: jobExecutionId,
+                    status: JobStatus.Failed,
+                    errorMessage: distinctiveErrorMessage),
                 CancellationToken.None);
 
-        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
         Assert.NotNull(captured);
-        Assert.Equal("BulkStaffRatesUpdate 2028 completed", captured!.Subject);
-        Assert.Contains("BulkStaffRatesUpdate", captured.HtmlBody);
-        Assert.Contains(jqid.ToString("D"), captured.HtmlBody);
-        Assert.Contains("user@test", captured.HtmlBody);
+        var combined = captured!.Subject + captured.HtmlBody;
+        Assert.DoesNotContain(distinctiveFpsYear.ToString(), combined);
+        Assert.DoesNotContain(jobQueueId.ToString(), combined);
+        Assert.DoesNotContain(jobExecutionId.ToString(), combined);
+        Assert.DoesNotContain(distinctiveRequestedBy, combined);
+        Assert.DoesNotContain(distinctiveErrorMessage, combined);
+        Assert.DoesNotContain(BatchJobNames.BulkStaffRatesUpdate, combined);
     }
 
     // ── Email exception is logged and swallowed ───────────────────────────────
@@ -212,35 +285,4 @@ public sealed class BulkRatesCompletionNotifierTests
         await email.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
     }
 
-    [Fact]
-    public async Task NotifyAsync_WhenFailed_UsesFailureTemplatesAndErrorMessageToken()
-    {
-        var email = Substitute.For<IEmailService>();
-        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-             .Returns(new EmailSendResult(true, null));
-
-        EmailMessage? captured = null;
-        await email.SendAsync(
-            Arg.Do<EmailMessage>(m => captured = m),
-            Arg.Any<CancellationToken>());
-
-        var settings = DefaultSettings(
-            subject: "{JobName} {FpsYear} completed",
-            body: "should not appear",
-            failureSubject: "{JobName} FAILED",
-            failureBody: "Reason: {ErrorMessage}");
-
-        await CreateNotifier(email, settings)
-            .NotifyAsync(
-                MakeContext(
-                    BatchJobNames.BulkAnimalRatesUpdate,
-                    status: JobStatus.Failed,
-                    errorMessage: "DB connection timed out"),
-                CancellationToken.None);
-
-        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
-        Assert.NotNull(captured);
-        Assert.Equal("BulkAnimalRatesUpdate FAILED", captured!.Subject);
-        Assert.Contains("DB connection timed out", captured.HtmlBody);
-    }
 }

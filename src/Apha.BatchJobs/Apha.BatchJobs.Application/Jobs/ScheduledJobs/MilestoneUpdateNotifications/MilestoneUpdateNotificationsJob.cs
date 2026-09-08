@@ -415,7 +415,8 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
         var message = new EmailMessage(
             To: [group.Email!],
             Subject: _templateRenderer.Subject,
-            HtmlBody: renderResult.HtmlBody);
+            HtmlBody: renderResult.HtmlBody,
+            IsBodyHtml: true);
 
         var sendResult = await _emailService.SendAsync(message, cancellationToken);
         counters.ManagerEmailAttemptCount++;

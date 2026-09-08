@@ -47,12 +47,12 @@ public sealed class MabArchiveCompletionNotifier : IPostCompletionNotifier
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         var isSuccess = context.Status == JobStatus.Completed;
-        var subject = ReplacePlaceholders(isSuccess ? _settings.CompletionSubject : _settings.FailureSubject, context);
-        var body = ReplacePlaceholders(isSuccess ? _settings.CompletionBody : _settings.FailureBody, context);
+        var subject = isSuccess ? _settings.CompletionSubject : _settings.FailureSubject;
+        var body = isSuccess ? _settings.CompletionBody : _settings.FailureBody;
 
         try
         {
-            await _emailService.SendAsync(new EmailMessage(recipients, subject, body), cancellationToken);
+            await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
 
             _logger.LogInformation(
                 "MABArchive {Status} notification sent | JobQueueId={JobQueueId}",
@@ -70,11 +70,4 @@ public sealed class MabArchiveCompletionNotifier : IPostCompletionNotifier
                 context.RequestedBy);
         }
     }
-
-    private static string ReplacePlaceholders(string template, BatchJobCompletionContext context) =>
-        template
-            .Replace("{JobName}", context.JobName, StringComparison.Ordinal)
-            .Replace("{JobQueueId}", context.JobQueueId.ToString("D"), StringComparison.Ordinal)
-            .Replace("{RequestedBy}", context.RequestedBy, StringComparison.Ordinal)
-            .Replace("{ErrorMessage}", context.ErrorMessage ?? string.Empty, StringComparison.Ordinal);
 }

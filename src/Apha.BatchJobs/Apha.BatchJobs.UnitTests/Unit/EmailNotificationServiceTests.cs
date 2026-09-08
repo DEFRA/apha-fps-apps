@@ -1,6 +1,7 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Application.Configuration;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -31,17 +32,18 @@ public sealed class EmailNotificationServiceTests
     }
 
     // ─────────────────────────────────────────────────────────────
-    // SendExecutionNotificationAsync — Completed/Failed execution notifications (Worker-Wide
-    // Batch Execution Notifications spec). The service does not decide whether to send: it
-    // never checks EnableEmailNotifications/NotifyOnSuccess/NotifyOnFailure — that policy
-    // decision belongs to the caller (JobOrchestrator). The service only handles delivery:
-    // missing-recipient check, subject/body construction, sending, and logging the outcome.
+    // SendExecutionNotificationAsync — Completed/Failed execution notifications, standardised
+    // per batchjobs-worker-email-notifications-final-spec-2026-09-09.md §2/§5. The service does
+    // not decide whether to send: it never checks
+    // EnableEmailNotifications/NotifyOnSuccess/NotifyOnFailure — that policy decision belongs to
+    // the caller (JobOrchestrator). The service only handles delivery: missing-recipient check,
+    // subject/body construction, sending, and logging the outcome.
     // ─────────────────────────────────────────────────────────────
 
     private static BatchExecutionNotification CreateNotification(
         JobStatus finalStatus,
         string? failureMessage = null,
-        string jobName = "SampleJob",
+        string jobName = BatchJobNames.MabArchive,
         Guid? jobExecutionId = null,
         Guid? jobQueueId = null,
         RunMode runMode = RunMode.Scheduled,
@@ -72,25 +74,42 @@ public sealed class EmailNotificationServiceTests
             () => service.SendExecutionNotificationAsync(null!, CancellationToken.None));
     }
 
-    [Fact]
-    public async Task SendExecutionNotificationAsync_WhenCompleted_SendsSuccessEmailWithExpectedSubjectAndRecipient()
+    public static IEnumerable<object[]> AllKnownJobs() =>
+    [
+        [BatchJobNames.BulkTestRatesUpdate, "Bulk Test Rates Update"],
+        [BatchJobNames.BulkStaffRatesUpdate, "Bulk Staff Rates Update"],
+        [BatchJobNames.BulkAnimalRatesUpdate, "Bulk Animal Rates Update"],
+        [BatchJobNames.MabArchive, "MABArchive"],
+        [BatchJobNames.RecreateSummary, "Recreate Summary"],
+        [BatchJobNames.YearEndDataSetup, "Year End DataSetup"],
+        [BatchJobNames.YearEndCutover, "Year End CutOver"],
+        [BatchJobNames.HealthCheck, "Health Check"],
+        [BatchJobNames.MilestoneUpdateNotifications, "Milestone Update Notifications"],
+    ];
+
+    [Theory]
+    [MemberData(nameof(AllKnownJobs))]
+    public async Task SendExecutionNotificationAsync_WhenCompleted_SendsExactCanonicalSubjectAndBody(string jobName, string displayName)
     {
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
         var emailService = Substitute.For<IEmailService>();
         emailService.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()).Returns(EmailSendResult.Sent());
         var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
 
-        await service.SendExecutionNotificationAsync(CreateNotification(JobStatus.Completed, jobName: "MABArchive"), CancellationToken.None);
+        await service.SendExecutionNotificationAsync(CreateNotification(JobStatus.Completed, jobName: jobName), CancellationToken.None);
 
         await emailService.Received(1).SendAsync(
             Arg.Is<EmailMessage>(m =>
                 m.To.Single() == "alerts@example.com" &&
-                m.Subject == "FPS Batch Job Completed Successfully - MABArchive"),
+                m.Subject == $"FPS Batch Job Completed Successfully – {displayName}" &&
+                m.HtmlBody == $"The {displayName} process has completed successfully.\n\nThank you for your support." &&
+                !m.IsBodyHtml),
             Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task SendExecutionNotificationAsync_WhenFailed_SendsFailureEmailWithExpectedSubjectAndRecipient()
+    [Theory]
+    [MemberData(nameof(AllKnownJobs))]
+    public async Task SendExecutionNotificationAsync_WhenFailed_SendsExactCanonicalSubjectAndBody(string jobName, string displayName)
     {
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
         var emailService = Substitute.For<IEmailService>();
@@ -98,91 +117,72 @@ public sealed class EmailNotificationServiceTests
         var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
 
         await service.SendExecutionNotificationAsync(
-            CreateNotification(JobStatus.Failed, failureMessage: "Simulated failure", jobName: "BulkStaffRatesUpdate"),
+            CreateNotification(JobStatus.Failed, failureMessage: "Simulated failure", jobName: jobName),
             CancellationToken.None);
 
         await emailService.Received(1).SendAsync(
             Arg.Is<EmailMessage>(m =>
                 m.To.Single() == "alerts@example.com" &&
-                m.Subject == "FPS Batch Job Failed - BulkStaffRatesUpdate"),
+                m.Subject == $"FPS Batch Job Failed – {displayName}" &&
+                m.HtmlBody == $"The {displayName} process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support." &&
+                !m.IsBodyHtml),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task SendExecutionNotificationAsync_BodyIncludesExecutionIdentifiers()
+    public async Task SendExecutionNotificationAsync_ShouldNotLeakTechnicalDiagnosticsIntoSubjectOrBody()
     {
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
+        string? capturedSubject = null;
+        string? capturedBody = null;
         var emailService = Substitute.For<IEmailService>();
-        emailService.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()).Returns(EmailSendResult.Sent());
+        emailService.SendAsync(Arg.Do<EmailMessage>(m => { capturedSubject = m.Subject; capturedBody = m.HtmlBody; }), Arg.Any<CancellationToken>())
+            .Returns(EmailSendResult.Sent());
         var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
 
         var jobExecutionId = Guid.NewGuid();
         var jobQueueId = Guid.NewGuid();
         var notification = CreateNotification(
-            JobStatus.Completed,
-            jobName: "YearEnd-DataSetup",
+            JobStatus.Failed,
+            failureMessage: "Database connection timed out",
+            jobName: BatchJobNames.YearEndDataSetup,
             jobExecutionId: jobExecutionId,
             jobQueueId: jobQueueId,
             runMode: RunMode.Manual,
-            requestedBy: "arihant.jain@atos.net");
+            requestedBy: "arihant.jain@atos.net",
+            requestedAtUtc: DateTime.UtcNow,
+            duration: TimeSpan.FromMinutes(3));
 
         await service.SendExecutionNotificationAsync(notification, CancellationToken.None);
 
-        await emailService.Received(1).SendAsync(
-            Arg.Is<EmailMessage>(m =>
-                m.HtmlBody.Contains("Job Name: YearEnd-DataSetup") &&
-                m.HtmlBody.Contains($"Job Execution ID: {jobExecutionId}") &&
-                m.HtmlBody.Contains($"Job Queue ID: {jobQueueId}") &&
-                m.HtmlBody.Contains("Run Mode: Manual") &&
-                m.HtmlBody.Contains("Requested By: arihant.jain@atos.net") &&
-                m.HtmlBody.Contains("Final Status: Completed")),
-            Arg.Any<CancellationToken>());
+        var combined = capturedSubject + capturedBody;
+        Assert.DoesNotContain(jobExecutionId.ToString(), combined);
+        Assert.DoesNotContain(jobQueueId.ToString(), combined);
+        Assert.DoesNotContain("Manual", combined);
+        Assert.DoesNotContain("arihant.jain@atos.net", combined);
+        Assert.DoesNotContain("Database connection timed out", combined);
+        Assert.DoesNotContain(BatchJobNames.YearEndDataSetup, combined);
+        Assert.DoesNotContain("Run Mode", combined);
+        Assert.DoesNotContain("Requested By", combined);
+        Assert.DoesNotContain("Duration", combined);
     }
 
     [Fact]
-    public async Task SendExecutionNotificationAsync_WhenFailed_BodyIncludesConciseFailureReason_ButNotWhenCompleted()
+    public async Task SendExecutionNotificationAsync_WhenJobNameIsUnrecognised_SwallowsAndDoesNotSend()
     {
+        // BatchAlerting applies to every job with no allow-list, so a genuinely new/unmapped job
+        // must not crash the caller — it just can't produce a business email until it's added to
+        // BatchJobDisplayNames. The lookup throws internally; this proves that's caught, not
+        // propagated, and no send is attempted.
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
         var emailService = Substitute.For<IEmailService>();
-        emailService.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()).Returns(EmailSendResult.Sent());
         var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
 
         await service.SendExecutionNotificationAsync(
-            CreateNotification(JobStatus.Failed, failureMessage: "Database connection timed out"),
+            CreateNotification(JobStatus.Completed, jobName: "SomeFutureJob"),
             CancellationToken.None);
-        await service.SendExecutionNotificationAsync(CreateNotification(JobStatus.Completed), CancellationToken.None);
 
-        await emailService.Received(1).SendAsync(
-            Arg.Is<EmailMessage>(m => m.HtmlBody.Contains("Failure:") && m.HtmlBody.Contains("Database connection timed out")),
-            Arg.Any<CancellationToken>());
-        await emailService.Received(1).SendAsync(
-            Arg.Is<EmailMessage>(m => !m.HtmlBody.Contains("Failure:")),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task SendExecutionNotificationAsync_WhenFailed_BodyContainsOnlyProvidedMessage_NoStackTraceOrExtraDetail()
-    {
-        var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
-        string? capturedBody = null;
-        var emailService = Substitute.For<IEmailService>();
-        emailService.SendAsync(Arg.Do<EmailMessage>(m => capturedBody = m.HtmlBody), Arg.Any<CancellationToken>())
-            .Returns(EmailSendResult.Sent());
-        var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
-
-        // A realistic .Message-only failure reason — the model has no Exception/StackTrace
-        // property at all, so there is structurally nothing else the service could append.
-        const string concise = "Simulated failure";
-        await service.SendExecutionNotificationAsync(CreateNotification(JobStatus.Failed, failureMessage: concise), CancellationToken.None);
-
-        Assert.NotNull(capturedBody);
-        Assert.DoesNotContain("at Apha.BatchJobs", capturedBody);
-        Assert.DoesNotContain("StackTrace", capturedBody);
-        var failureLine = capturedBody!.Split(Environment.NewLine)
-            .SkipWhile(line => line != "Failure:")
-            .Skip(1)
-            .First();
-        Assert.Equal(concise, failureLine);
+        await emailService.DidNotReceive().SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

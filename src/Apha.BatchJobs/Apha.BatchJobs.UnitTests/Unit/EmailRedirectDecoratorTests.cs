@@ -59,7 +59,7 @@ public sealed class EmailRedirectDecoratorTests
         // Default settings: RedirectEnabled is false with no other configuration at all —
         // must send to the real recipient regardless of anything else.
         var decorator = CreateDecorator(out var inner, new EmailDeliverySettings());
-        var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>");
+        var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>", IsBodyHtml: true);
 
         await decorator.SendAsync(message, CancellationToken.None);
 
@@ -70,7 +70,7 @@ public sealed class EmailRedirectDecoratorTests
     public async Task SendAsync_WhenRedirectEnabled_ShouldRedirectToConfiguredAddress()
     {
         var decorator = CreateDecorator(out var inner, RedirectSettings());
-        var message = new EmailMessage(["real.manager@example.com"], "Milestone and Deliverable Update Request", "<p>body</p>");
+        var message = new EmailMessage(["real.manager@example.com"], "Milestone and Deliverable Update Request", "<p>body</p>", IsBodyHtml: true);
 
         await decorator.SendAsync(message, CancellationToken.None);
 
@@ -82,12 +82,27 @@ public sealed class EmailRedirectDecoratorTests
             Arg.Any<CancellationToken>());
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SendAsync_WhenRedirectEnabled_ShouldPreserveIsBodyHtml(bool isBodyHtml)
+    {
+        var decorator = CreateDecorator(out var inner, RedirectSettings());
+        var message = new EmailMessage(["real.manager@example.com"], "Subject", "body", isBodyHtml);
+
+        await decorator.SendAsync(message, CancellationToken.None);
+
+        await inner.Received(1).SendAsync(
+            Arg.Is<EmailMessage>(m => m.IsBodyHtml == isBodyHtml),
+            Arg.Any<CancellationToken>());
+    }
+
     [Fact]
     public async Task SendAsync_WhenRedirectEnabled_ButRedirectToEmpty_ShouldThrow_AndNeverCallInner()
     {
         var settings = new EmailDeliverySettings { RedirectEnabled = true, RedirectTo = "" };
         var decorator = CreateDecorator(out var inner, settings);
-        var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>");
+        var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>", IsBodyHtml: true);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => decorator.SendAsync(message, CancellationToken.None));
 
@@ -99,7 +114,7 @@ public sealed class EmailRedirectDecoratorTests
     {
         var settings = new EmailDeliverySettings { RedirectEnabled = true, RedirectTo = "   " };
         var decorator = CreateDecorator(out var inner, settings);
-        var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>");
+        var message = new EmailMessage(["real.manager@example.com"], "Subject", "<p>body</p>", IsBodyHtml: true);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => decorator.SendAsync(message, CancellationToken.None));
 

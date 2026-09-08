@@ -54,7 +54,7 @@ public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
 
         try
         {
-            await _emailService.SendAsync(new EmailMessage(recipients, subject, body), cancellationToken);
+            await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
 
             _logger.LogInformation(
                 "Bulk Rates {Status} notification sent | JobName={JobName} | JobQueueId={JobQueueId} | FpsYear={FpsYear}",
@@ -84,10 +84,18 @@ public sealed class BulkRatesCompletionNotifier : IPostCompletionNotifier
             BatchJobNames.BulkAnimalRatesUpdate;
 
     private static string ReplacePlaceholders(string template, BatchJobCompletionContext context) =>
-        template
-            .Replace("{JobName}", context.JobName, StringComparison.Ordinal)
-            .Replace("{JobQueueId}", context.JobQueueId.ToString("D"), StringComparison.Ordinal)
-            .Replace("{FpsYear}", context.FpsYear?.ToString() ?? string.Empty, StringComparison.Ordinal)
-            .Replace("{RequestedBy}", context.RequestedBy, StringComparison.Ordinal)
-            .Replace("{ErrorMessage}", context.ErrorMessage ?? string.Empty, StringComparison.Ordinal);
+        template.Replace("{RateType}", GetRateType(context.JobName), StringComparison.Ordinal);
+
+    /// <summary>
+    /// Only ever called after <see cref="IsBulkRatesJob"/> has already confirmed one of the three
+    /// known job names — the default branch is unreachable in practice, kept defensive rather
+    /// than silently returning something.
+    /// </summary>
+    private static string GetRateType(string jobName) => jobName switch
+    {
+        BatchJobNames.BulkTestRatesUpdate => "Test",
+        BatchJobNames.BulkStaffRatesUpdate => "Staff",
+        BatchJobNames.BulkAnimalRatesUpdate => "Animal",
+        _ => throw new ArgumentOutOfRangeException(nameof(jobName), jobName, "Not a Bulk Rates job.")
+    };
 }

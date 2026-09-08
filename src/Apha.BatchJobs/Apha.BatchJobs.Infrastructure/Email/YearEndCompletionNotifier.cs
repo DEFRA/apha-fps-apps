@@ -56,7 +56,7 @@ public sealed class YearEndCompletionNotifier : IPostCompletionNotifier
 
         try
         {
-            await _emailService.SendAsync(new EmailMessage(recipients, subject, body), cancellationToken);
+            await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
 
             _logger.LogInformation(
                 "Year End {Status} notification sent | JobName={JobName} | JobQueueId={JobQueueId} | FpsYear={FpsYear}",
@@ -80,10 +80,17 @@ public sealed class YearEndCompletionNotifier : IPostCompletionNotifier
     }
 
     private static string ReplacePlaceholders(string template, BatchJobCompletionContext context) =>
-        template
-            .Replace("{JobName}", context.JobName, StringComparison.Ordinal)
-            .Replace("{JobQueueId}", context.JobQueueId.ToString("D"), StringComparison.Ordinal)
-            .Replace("{FpsYear}", context.FpsYear?.ToString() ?? string.Empty, StringComparison.Ordinal)
-            .Replace("{RequestedBy}", context.RequestedBy, StringComparison.Ordinal)
-            .Replace("{ErrorMessage}", context.ErrorMessage ?? string.Empty, StringComparison.Ordinal);
+        template.Replace("{YearEndStep}", GetYearEndStep(context.JobName), StringComparison.Ordinal);
+
+    /// <summary>
+    /// Only ever called after <see cref="YearEndJobNames"/> has already confirmed one of the two
+    /// known job names — the default branch is unreachable in practice, kept defensive rather
+    /// than falling back to the raw technical name.
+    /// </summary>
+    private static string GetYearEndStep(string jobName) => jobName switch
+    {
+        BatchJobNames.YearEndDataSetup => "DataSetup",
+        BatchJobNames.YearEndCutover => "CutOver",
+        _ => throw new ArgumentOutOfRangeException(nameof(jobName), jobName, "Not a Year End job.")
+    };
 }

@@ -110,8 +110,26 @@ public sealed class YearEndCompletionNotifierTests
         await email.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
     }
 
-    [Fact]
-    public async Task NotifyAsync_WhenFailed_UsesFailureTemplatesWithFpsYearAndErrorMessageTokens()
+    // ── Canonical wording — exact Subject/Body render, {YearEndStep} only ─────
+
+    private static YearEndEmailSettings CanonicalSettings(string recipients = "dl@test.com") => new()
+    {
+        Recipients = recipients,
+        CompletionSubject = "Year End {YearEndStep} Process Completed Successfully",
+        CompletionBody = "The Year End {YearEndStep} process has completed successfully.\n\nThank you for your support.",
+        FailureSubject = "Year End {YearEndStep} Process Failed",
+        FailureBody = "The Year End {YearEndStep} process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support."
+    };
+
+    public static IEnumerable<object[]> YearEndSteps() =>
+    [
+        [BatchJobNames.YearEndDataSetup, "DataSetup"],
+        [BatchJobNames.YearEndCutover, "CutOver"],
+    ];
+
+    [Theory]
+    [MemberData(nameof(YearEndSteps))]
+    public async Task NotifyAsync_WhenCompleted_SendsExactCanonicalSubjectAndBody(string jobName, string step)
     {
         var email = Substitute.For<IEmailService>();
         email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
@@ -122,19 +140,79 @@ public sealed class YearEndCompletionNotifierTests
             Arg.Do<EmailMessage>(m => captured = m),
             Arg.Any<CancellationToken>());
 
-        var settings = DefaultSettings(
-            subject: "should not appear",
-            failureSubject: "{JobName} FAILED - {FpsYear}",
-            failureBody: "Reason: {ErrorMessage}");
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(jobName, JobStatus.Completed), CancellationToken.None);
 
-        await CreateNotifier(email, settings)
+        Assert.NotNull(captured);
+        Assert.Equal($"Year End {step} Process Completed Successfully", captured!.Subject);
+        Assert.Equal(
+            $"The Year End {step} process has completed successfully.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Theory]
+    [MemberData(nameof(YearEndSteps))]
+    public async Task NotifyAsync_WhenFailed_SendsExactCanonicalSubjectAndBody(string jobName, string step)
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        await CreateNotifier(email, CanonicalSettings())
+            .NotifyAsync(MakeContext(jobName, JobStatus.Failed), CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Equal($"Year End {step} Process Failed", captured!.Subject);
+        Assert.Equal(
+            $"The Year End {step} process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.",
+            captured.HtmlBody);
+        Assert.False(captured.IsBodyHtml);
+    }
+
+    [Fact]
+    public async Task NotifyAsync_ShouldNotLeakTechnicalDiagnosticsIntoSubjectOrBody()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(new EmailSendResult(true, null));
+
+        EmailMessage? captured = null;
+        await email.SendAsync(
+            Arg.Do<EmailMessage>(m => captured = m),
+            Arg.Any<CancellationToken>());
+
+        var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
+        const int distinctiveFpsYear = 4242;
+        const string distinctiveRequestedBy = "distinctive.requester@example.com";
+        const string distinctiveErrorMessage = "Distinctive simulated failure: lock acquisition timed out";
+
+        await CreateNotifier(email, CanonicalSettings())
             .NotifyAsync(
-                MakeContext(BatchJobNames.YearEndCutover, JobStatus.Failed, fpsYear: 2028, errorMessage: "Lock timeout"),
+                MakeContext(
+                    BatchJobNames.YearEndCutover,
+                    JobStatus.Failed,
+                    fpsYear: distinctiveFpsYear,
+                    requestedBy: distinctiveRequestedBy,
+                    errorMessage: distinctiveErrorMessage,
+                    jobQueueId: jobQueueId,
+                    jobExecutionId: jobExecutionId),
                 CancellationToken.None);
 
         Assert.NotNull(captured);
-        Assert.Equal("YearEnd-CutOver FAILED - 2028", captured!.Subject);
-        Assert.Contains("Lock timeout", captured.HtmlBody);
+        var combined = captured!.Subject + captured.HtmlBody;
+        Assert.DoesNotContain(distinctiveFpsYear.ToString(), combined);
+        Assert.DoesNotContain(jobQueueId.ToString(), combined);
+        Assert.DoesNotContain(jobExecutionId.ToString(), combined);
+        Assert.DoesNotContain(distinctiveRequestedBy, combined);
+        Assert.DoesNotContain(distinctiveErrorMessage, combined);
+        Assert.DoesNotContain(BatchJobNames.YearEndCutover, combined);
     }
 
     [Fact]
