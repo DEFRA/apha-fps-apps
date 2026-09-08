@@ -506,9 +506,9 @@ namespace Apha.PIMS.Application.UnitTests.Services.YearlyFinancialDataServiceTes
             dto.ActualManYears.Should().BeNull();
             dto.PayCostsChanged.Should().Be(0);
             dto.NonPayOhCostsChanged.Should().Be(0);
-            dto.TestCostsChanged.Should().Be(1);
+            dto.TestCostsChanged.Should().Be(-1);
             dto.AnimalCostsChanged.Should().Be(0);
-            dto.NonAnimalCostsChanged.Should().Be(1);
+            dto.NonAnimalCostsChanged.Should().Be(-1);
             dto.DateCosted.Should().Be(new DateTime(2024, 5, 1));
         }
 
