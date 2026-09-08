@@ -114,7 +114,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        "There are associated worgroups, hence this cost centre cannot be updated.",
+                        "There are associated workgroups, hence this cost centre cannot be edited.",
                         "WORKGROUP_FK_VIOLATION")
                 });
             }
@@ -136,7 +136,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        "There are associated workgroup(s), hence this record cannot be deleted.",
+                        "There are associated workgroup(s) with this cost centre, hence this record cannot be deleted.",
                         "WORKGROUP_FK_VIOLATION")
                 });
             }
