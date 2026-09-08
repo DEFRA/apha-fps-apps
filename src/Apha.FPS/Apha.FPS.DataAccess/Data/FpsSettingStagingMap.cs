@@ -8,11 +8,9 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<FpsSettingStaging> entity)
         {
-            entity.HasKey(e => new { e.JobQueueId, e.Id }).HasName("pk_tblsettings_staging");
+            entity.HasKey(e => new { e.Id, e.FpsYear }).HasName("pk_tblsettings_staging");
 
             entity.ToTable("tblsettings_staging", "fps");
-
-            entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(50)
@@ -26,10 +24,13 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(255)
                 .HasColumnName("notes");
 
-            entity.HasOne<BatchJobQueue>()
-                .WithMany()
-                .HasForeignKey(e => e.JobQueueId)
-                .HasConstraintName("fk_tblsettings_staging_jobqueue");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+
+            entity.Property(e => e.UpdatedBy)
+                .HasMaxLength(100)
+                .HasColumnName("updated_by");
+
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         }
     }
 }

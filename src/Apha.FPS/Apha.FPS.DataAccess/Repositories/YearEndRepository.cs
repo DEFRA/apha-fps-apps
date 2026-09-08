@@ -203,11 +203,18 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private async Task<bool> CanInitiateRequest(string jobName)
         {
+            // IgnoreQueryFilters: same reasoning as GetInitiatedDataSetupJobExecutionIdAsync above - the
+            // "at most one non-terminal request, system-wide" invariant that comment (and the staging
+            // simplification design that now depends on it) assumes must not be undermined by scoping
+            // this check to the caller's ambient X-FPS-Year. Without this, a second Initiate whose
+            // ambient header happens to differ from an existing request's FpsYear would slip past this
+            // check entirely.
+            //
             // Returns true when no records exist for the job, OR every record is in a terminal status (rejected / failed / cancelled).
             // Returns false when at least one record exists that is NOT in a terminal status.
             return await (
                 from jm in _context.BatchJobs.AsNoTracking()
-                join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
+                join jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
                 where jm.JobName.ToLower() == jobName.ToLower()
@@ -220,9 +227,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private async Task<bool> CanApproveOrRejectRequest(string jobName)
         {
+            // IgnoreQueryFilters: same reasoning as CanInitiateRequest above.
             return await (
                 from jm in _context.BatchJobs.AsNoTracking()
-                join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
+                join jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
                 where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
@@ -232,9 +240,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private async Task<string> GetInitiator(string jobName)
         {
+            // IgnoreQueryFilters: same reasoning as CanInitiateRequest above.
             var initiator = await (
                 from jm in _context.BatchJobs.AsNoTracking()
-                join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
+                join jq in _context.BatchJobQueues.IgnoreQueryFilters().AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
                 where jm.JobName.ToLower() == jobName.ToLower() && (js.Status.ToLower() == "initiated")
@@ -420,12 +429,14 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     if (isReject)
                     {
-                        // Deletes this request's staged Config Value/Month Hours rows in the same
-                        // transaction as the status flip, so a Rejected request can never retain
-                        // editable workflow data. Relies on _yearEndStagingRepository resolving this same
-                        // scoped FpsDbContext instance (see constructor comment) - its SaveChangesAsync
-                        // joins this ambient transaction rather than committing separately.
-                        await _yearEndStagingRepository.DeleteStagingAsync(jobQueueId);
+                        // Deletes the staged Config Value/Month Hours rows in the same transaction as
+                        // the status flip, so a Rejected request can never retain editable workflow
+                        // data. Staging is a singleton (not jobqueueid-scoped) — there is only ever one
+                        // candidate row set, per CanInitiateRequest's invariant. Relies on
+                        // _yearEndStagingRepository resolving this same scoped FpsDbContext instance
+                        // (see constructor comment) - its SaveChangesAsync joins this ambient
+                        // transaction rather than committing separately.
+                        await _yearEndStagingRepository.DeleteStagingAsync();
                     }
 
                     await transaction.CommitAsync();
@@ -464,6 +475,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
+                    if (string.Equals(jobName, YearEndDataSetupJobName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Defensive: staging is a singleton now (no jobqueueid scoping), so a fresh
+                        // Initiate no longer starts with an empty staging state implicitly the way a
+                        // brand-new jobqueueid always did. If a previous cycle's staging was somehow
+                        // left non-empty (a Worker crash that skipped its own clear, a manual DB
+                        // intervention), this Initiate would otherwise silently inherit stale rows from
+                        // a completely unrelated prior request. Cheap, and a no-op in the common case.
+                        await _yearEndStagingRepository.DeleteStagingAsync();
+                    }
+
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, openYear.FpsYear, targetFpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 

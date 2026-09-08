@@ -24,7 +24,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
     ///
     /// Soft-skips (no assertions run, test still passes) when Postgres is unreachable — same
     /// convention as BulkRatesRepositoryYearFilterTests / YearEndStagingRepositoryIntegrationTests.
+    ///
+    /// [Collection("YearEndDataSetupIntegration")]: fps.tblsettings_staging/fps.tlkpmonthhours_staging
+    /// are singletons as of the 2026-09-07 staging simplification (no jobqueueid scoping). Joins the
+    /// same collection already shared by YearEndStagingRepositoryIntegrationTests/
+    /// YearEndRepositoryApprovalRejectIntegrationTests/etc. to force sequential execution against
+    /// those tables too — xUnit parallelizes different classes by default, and concurrent writers to a
+    /// singleton table would corrupt each other's rows.
     /// </summary>
+    [Collection("YearEndDataSetupIntegration")]
     public sealed class FpsSettingRepositoryYearEndGridIntegrationTests : IAsyncLifetime
     {
         private const int TargetYear = 9082;
@@ -72,25 +80,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
 
         public async Task DisposeAsync()
         {
-            if (!_dbAvailable || _createdJobQueueIds.Count == 0) return;
+            if (!_dbAvailable) return;
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
 
+            // Staging is a singleton (no jobqueueid scoping) — cleared unconditionally, not per
+            // created job_queue row, so a failed assertion never leaks rows into a later test.
+            await using (var delStaging = conn.CreateCommand())
+            {
+                delStaging.CommandText = "DELETE FROM fps.tblsettings_staging;";
+                await delStaging.ExecuteNonQueryAsync();
+            }
+
             foreach (var jobQueueId in _createdJobQueueIds)
             {
-                await using (var del1 = conn.CreateCommand())
-                {
-                    del1.CommandText = "DELETE FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
-                    del1.Parameters.AddWithValue("id", jobQueueId);
-                    await del1.ExecuteNonQueryAsync();
-                }
-                await using (var del2 = conn.CreateCommand())
-                {
-                    del2.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
-                    del2.Parameters.AddWithValue("id", jobQueueId);
-                    await del2.ExecuteNonQueryAsync();
-                }
+                await using var del2 = conn.CreateCommand();
+                del2.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
+                del2.Parameters.AddWithValue("id", jobQueueId);
+                await del2.ExecuteNonQueryAsync();
             }
         }
 
@@ -166,9 +174,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
             var stagingRepo = CreateStagingRepository(_currentYear);
             await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
-                JobQueueId = jobQueueId,
                 Id = SettingId,
-                Setting = "7.5"
+                Setting = "7.5",
+                FpsYear = TargetYear
             });
 
             var repo = CreateRepository(_currentYear);
@@ -181,29 +189,32 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         }
 
         [Fact]
-        public async Task GetYearEndSettingsAsync_AnotherRequestsStaging_NeverVisible()
+        public async Task GetYearEndSettingsAsync_StagingForADifferentTargetYear_NeverVisible()
         {
             if (!_dbAvailable) return;
 
-            var thisRequestJobQueueId = await CreateTestJobQueueRowAsync();
-            var otherRequestJobQueueId = await CreateTestJobQueueRowAsync();
+            // Staging is a singleton (no jobqueueid scoping) as of the 2026-09-07 simplification — the
+            // only isolation left is by fpsyear. A row staged for a different target year must never
+            // leak into a grid read scoped to this one, even though there's no longer a second
+            // request's jobqueueid to isolate from.
+            const int otherTargetYear = TargetYear + 1;
+            var jobQueueId = await CreateTestJobQueueRowAsync();
 
             var stagingRepo = CreateStagingRepository(_currentYear);
-            // Staged only against the OTHER request, never this one.
             await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
-                JobQueueId = otherRequestJobQueueId,
                 Id = SettingId,
-                Setting = "99"
+                Setting = "99",
+                FpsYear = otherTargetYear
             });
 
             var repo = CreateRepository(_currentYear);
-            var request = new YearEndRequestSummary(thisRequestJobQueueId, _currentYear, TargetYear, "Initiated");
+            var request = new YearEndRequestSummary(jobQueueId, _currentYear, TargetYear, "Initiated");
             var result = await repo.GetYearEndSettingsAsync(request);
 
             var hoursInDay = result.Single(s => s.Id == SettingId);
-            Assert.NotEqual("99", hoursInDay.Setting); // never the other request's staged value
-            Assert.Equal(_realCurrentYearValue, hoursInDay.Setting); // this request's own default instead
+            Assert.NotEqual("99", hoursInDay.Setting); // never the other target year's staged value
+            Assert.Equal(_realCurrentYearValue, hoursInDay.Setting); // this year's own default instead
             Assert.Equal("No", hoursInDay.ExistsForPlannedYear);
         }
     }

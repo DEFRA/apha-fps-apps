@@ -8,14 +8,14 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<MonthHourStaging> entity)
         {
-            entity.HasKey(e => new { e.JobQueueId, e.Month, e.Fmonth }).HasName("pk_tlkpmonthhours_staging");
+            entity.HasKey(e => new { e.Year, e.Month, e.FpsYear }).HasName("pk_tlkpmonthhours_staging");
 
             entity.ToTable("tlkpmonthhours_staging", "fps");
 
-            entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid");
-            entity.Property(e => e.MonthYear).HasColumnName("month_year");
+            entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.Fmonth).HasColumnName("fmonth");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
 
             entity.Property(e => e.Days)
                 .HasPrecision(5, 1)
@@ -26,11 +26,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.VidHours)
                 .HasPrecision(5, 1)
                 .HasColumnName("vidhours");
-
-            entity.HasOne<BatchJobQueue>()
-                .WithMany()
-                .HasForeignKey(e => e.JobQueueId)
-                .HasConstraintName("fk_tlkpmonthhours_staging_jobqueue");
         }
     }
 }

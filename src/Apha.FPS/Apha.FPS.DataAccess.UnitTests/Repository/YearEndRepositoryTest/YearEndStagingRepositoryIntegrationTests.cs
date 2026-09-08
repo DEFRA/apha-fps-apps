@@ -51,31 +51,30 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
         public async Task DisposeAsync()
         {
-            if (!_dbAvailable || _createdJobQueueIds.Count == 0) return;
+            if (!_dbAvailable) return;
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            // Staging is a singleton (no jobqueueid scoping) — cleared unconditionally, not per
+            // created job_queue row, so a failed assertion never leaks rows into a later test.
+            await using (var delSettings = conn.CreateCommand())
+            {
+                delSettings.CommandText = "DELETE FROM fps.tblsettings_staging;";
+                await delSettings.ExecuteNonQueryAsync();
+            }
+            await using (var delMonthHours = conn.CreateCommand())
+            {
+                delMonthHours.CommandText = "DELETE FROM fps.tlkpmonthhours_staging;";
+                await delMonthHours.ExecuteNonQueryAsync();
+            }
+
             foreach (var jobQueueId in _createdJobQueueIds)
             {
-                // Staging rows FK to job_queue -- delete children first.
-                await using (var del1 = conn.CreateCommand())
-                {
-                    del1.CommandText = "DELETE FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
-                    del1.Parameters.AddWithValue("id", jobQueueId);
-                    await del1.ExecuteNonQueryAsync();
-                }
-                await using (var del2 = conn.CreateCommand())
-                {
-                    del2.CommandText = "DELETE FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
-                    del2.Parameters.AddWithValue("id", jobQueueId);
-                    await del2.ExecuteNonQueryAsync();
-                }
-                await using (var del3 = conn.CreateCommand())
-                {
-                    del3.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
-                    del3.Parameters.AddWithValue("id", jobQueueId);
-                    await del3.ExecuteNonQueryAsync();
-                }
+                await using var del3 = conn.CreateCommand();
+                del3.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
+                del3.Parameters.AddWithValue("id", jobQueueId);
+                await del3.ExecuteNonQueryAsync();
             }
         }
 
@@ -174,73 +173,73 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             if (!_dbAvailable) return;
 
-            var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
+            await CreateTestJobQueueRowAsync(2025, 2026);
             var repo = CreateRepository(2025);
 
             await repo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
-                JobQueueId = jobQueueId,
                 Id = "HoursInDay",
                 Setting = "8",
-                Notes = "first confirm"
+                Notes = "first confirm",
+                FpsYear = 2026
             });
 
-            var afterFirst = await repo.GetStagedSettingsAsync(jobQueueId);
+            var afterFirst = await repo.GetStagedSettingsAsync();
             Assert.Single(afterFirst);
             Assert.Equal("8", afterFirst[0].Setting);
 
             // Re-Confirm the same setting with a different value -- must update in place, not duplicate.
             await repo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
-                JobQueueId = jobQueueId,
                 Id = "HoursInDay",
                 Setting = "7.5",
-                Notes = "re-confirmed"
+                Notes = "re-confirmed",
+                FpsYear = 2026
             });
 
-            var afterSecond = await repo.GetStagedSettingsAsync(jobQueueId);
+            var afterSecond = await repo.GetStagedSettingsAsync();
             Assert.Single(afterSecond);
             Assert.Equal("7.5", afterSecond[0].Setting);
             Assert.Equal("re-confirmed", afterSecond[0].Notes);
         }
 
         [Fact]
-        public async Task UpsertStagedMonthHour_ThenRead_RoundTrips_IncludingMonthYear_AndReConfirmDoesNotDuplicate()
+        public async Task UpsertStagedMonthHour_ThenRead_RoundTrips_IncludingYear_AndReConfirmDoesNotDuplicate()
         {
             if (!_dbAvailable) return;
 
-            var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
+            await CreateTestJobQueueRowAsync(2025, 2026);
             var repo = CreateRepository(2025);
 
             await repo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
-                JobQueueId = jobQueueId,
-                MonthYear = 2026,
+                Year = 2026,
                 Month = 1,
                 Fmonth = 0,
                 Days = 20.0m,
                 CvlHours = 5.5m,
-                VidHours = 3.0m
+                VidHours = 3.0m,
+                FpsYear = 2026
             });
 
-            var afterFirst = await repo.GetStagedMonthHoursAsync(jobQueueId);
+            var afterFirst = await repo.GetStagedMonthHoursAsync();
             Assert.Single(afterFirst);
-            Assert.Equal((short)2026, afterFirst[0].MonthYear);
+            Assert.Equal((short)2026, afterFirst[0].Year);
             Assert.Equal(20.0m, afterFirst[0].Days);
 
-            // Re-Confirm the same (Month, Fmonth) with different values -- must update in place.
+            // Re-Confirm the same (Year, Month, FpsYear) with different values -- must update in place.
             await repo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
-                JobQueueId = jobQueueId,
-                MonthYear = 2026,
+                Year = 2026,
                 Month = 1,
                 Fmonth = 0,
                 Days = 21.5m,
                 CvlHours = 6.0m,
-                VidHours = 3.5m
+                VidHours = 3.5m,
+                FpsYear = 2026
             });
 
-            var afterSecond = await repo.GetStagedMonthHoursAsync(jobQueueId);
+            var afterSecond = await repo.GetStagedMonthHoursAsync();
             Assert.Single(afterSecond);
             Assert.Equal(21.5m, afterSecond[0].Days);
             Assert.Equal(6.0m, afterSecond[0].CvlHours);
@@ -251,31 +250,31 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         {
             if (!_dbAvailable) return;
 
-            var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
+            await CreateTestJobQueueRowAsync(2025, 2026);
             var repo = CreateRepository(2025);
 
             await repo.UpsertStagedSettingAsync(new FpsSettingStaging
             {
-                JobQueueId = jobQueueId,
                 Id = "HoursInDay",
-                Setting = "8"
+                Setting = "8",
+                FpsYear = 2026
             });
             await repo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
-                JobQueueId = jobQueueId,
-                MonthYear = 2026,
+                Year = 2026,
                 Month = 1,
                 Fmonth = 0,
-                Days = 20.0m
+                Days = 20.0m,
+                FpsYear = 2026
             });
 
-            Assert.Single(await repo.GetStagedSettingsAsync(jobQueueId));
-            Assert.Single(await repo.GetStagedMonthHoursAsync(jobQueueId));
+            Assert.Single(await repo.GetStagedSettingsAsync());
+            Assert.Single(await repo.GetStagedMonthHoursAsync());
 
-            await repo.DeleteStagingAsync(jobQueueId);
+            await repo.DeleteStagingAsync();
 
-            Assert.Empty(await repo.GetStagedSettingsAsync(jobQueueId));
-            Assert.Empty(await repo.GetStagedMonthHoursAsync(jobQueueId));
+            Assert.Empty(await repo.GetStagedSettingsAsync());
+            Assert.Empty(await repo.GetStagedMonthHoursAsync());
         }
     }
 }

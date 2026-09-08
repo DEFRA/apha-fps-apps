@@ -442,7 +442,7 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
 
             await _mockYearEndStagingRepository.Received(1).UpsertStagedMonthHourAsync(
                 Arg.Is<MonthHourStaging>(s =>
-                    s.JobQueueId == jobQueueId && s.MonthYear == 2026 && s.Month == 3 && s.Fmonth == 1 &&
+                    s.FpsYear == 2026 && s.Year == 2026 && s.Month == 3 && s.Fmonth == 1 &&
                     s.Days == 20 && s.VidHours == 5 && s.CvlHours == 3));
 
             // The real table is never touched by Confirm under the staging design.

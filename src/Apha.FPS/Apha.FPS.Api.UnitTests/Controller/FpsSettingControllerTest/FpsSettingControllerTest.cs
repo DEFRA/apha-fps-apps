@@ -5,6 +5,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
+using Apha.FPS.Core.Interfaces;
 using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -15,15 +16,20 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
 {
     public class FpsSettingControllerTest
     {
+        private const string CurrentUserEmail = "current-user@example.com";
+
         private readonly IFpsSettingService _fpsSettingService;
+        private readonly IFpsRequestContext _fpsRequestContext;
         private readonly IMapper _mapper;
         private readonly FpsSettingController _sut;
 
         public FpsSettingControllerTest()
         {
             _fpsSettingService = Substitute.For<IFpsSettingService>();
+            _fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            _fpsRequestContext.UserEmailId.Returns(CurrentUserEmail);
             _mapper = Substitute.For<IMapper>();
-            _sut = new FpsSettingController(_fpsSettingService, _mapper);
+            _sut = new FpsSettingController(_fpsSettingService, _fpsRequestContext, _mapper);
         }
 
         [Fact]
@@ -361,7 +367,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
             var mappedRes = new FpsSettingRes { Id = "HoursInDay", Setting = "8" };
 
             _mapper.Map<FpsSettingDto>(request).Returns(dto);
-            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto).Returns(serviceResult);
+            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto, CurrentUserEmail).Returns(serviceResult);
             _mapper.Map<FpsSettingRes>(serviceResult).Returns(mappedRes);
 
             // Act
@@ -372,7 +378,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
             okResult.StatusCode.Should().Be(200);
             okResult.Value.Should().BeEquivalentTo(mappedRes);
 
-            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto);
+            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto, CurrentUserEmail);
             _mapper.Received(1).Map<FpsSettingDto>(request);
             _mapper.Received(1).Map<FpsSettingRes>(serviceResult);
         }
@@ -385,12 +391,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
             var request = new FpsSettingReq { Id = "HoursInDay", Setting = "invalid" };
             var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "invalid" };
             _mapper.Map<FpsSettingDto>(request).Returns(dto);
-            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto)
+            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto, CurrentUserEmail)
                 .Throws(new BusinessValidationErrorException([new BusinessValidationError("Invalid value", "Missing_HoursInDay")]));
 
             // Act & Assert
             await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveAsync(jobExecutionId, request));
-            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto);
+            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto, CurrentUserEmail);
         }
 
         [Fact]
@@ -401,12 +407,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
             var request = new FpsSettingReq { Id = "OtherKey", Setting = "value" };
             var dto = new FpsSettingDto { Id = "OtherKey", Setting = "value" };
             _mapper.Map<FpsSettingDto>(request).Returns(dto);
-            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto).Throws(new Exception("Save failed"));
+            _fpsSettingService.SaveSettingAsync(jobExecutionId, dto, CurrentUserEmail).Throws(new Exception("Save failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveAsync(jobExecutionId, request));
             exception.Message.Should().Be("Save failed");
-            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto);
+            await _fpsSettingService.Received(1).SaveSettingAsync(jobExecutionId, dto, CurrentUserEmail);
         }
 
         #endregion

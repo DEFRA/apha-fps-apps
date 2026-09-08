@@ -1473,7 +1473,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 queueId, DefaultUserEmail, "approve note");
 
             // Assert
-            await stagingRepo.DidNotReceive().DeleteStagingAsync(Arg.Any<Guid>());
+            await stagingRepo.DidNotReceive().DeleteStagingAsync();
         }
 
         [Fact]
@@ -1684,7 +1684,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
                 queueId, DefaultUserEmail, "reject note");
 
             // Assert
-            await stagingRepo.Received(1).DeleteStagingAsync(queueId);
+            await stagingRepo.Received(1).DeleteStagingAsync();
         }
 
         [Fact]
@@ -1725,7 +1725,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Assert — staging is never touched once SaveChangesAsync (the status flip) has already
             // failed and thrown.
-            await stagingRepo.DidNotReceive().DeleteStagingAsync(Arg.Any<Guid>());
+            await stagingRepo.DidNotReceive().DeleteStagingAsync();
         }
 
         #endregion

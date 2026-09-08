@@ -46,26 +46,24 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        public async Task<List<FpsSettingStaging>> GetStagedSettingsAsync(Guid jobQueueId)
+        public async Task<List<FpsSettingStaging>> GetStagedSettingsAsync()
         {
             return await _context.FpsSettingStagings
                 .AsNoTracking()
-                .Where(s => s.JobQueueId == jobQueueId)
                 .ToListAsync();
         }
 
-        public async Task<List<MonthHourStaging>> GetStagedMonthHoursAsync(Guid jobQueueId)
+        public async Task<List<MonthHourStaging>> GetStagedMonthHoursAsync()
         {
             return await _context.MonthHourStagings
                 .AsNoTracking()
-                .Where(m => m.JobQueueId == jobQueueId)
                 .ToListAsync();
         }
 
         public async Task UpsertStagedSettingAsync(FpsSettingStaging setting)
         {
             var existing = await _context.FpsSettingStagings
-                .FirstOrDefaultAsync(s => s.JobQueueId == setting.JobQueueId && s.Id == setting.Id);
+                .FirstOrDefaultAsync(s => s.Id == setting.Id && s.FpsYear == setting.FpsYear);
 
             if (existing is null)
             {
@@ -75,6 +73,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 existing.Setting = setting.Setting;
                 existing.Notes = setting.Notes;
+                existing.UpdatedBy = setting.UpdatedBy;
+                existing.UpdatedAt = setting.UpdatedAt;
                 _context.FpsSettingStagings.Update(existing);
             }
 
@@ -85,9 +85,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var existing = await _context.MonthHourStagings
                 .FirstOrDefaultAsync(m =>
-                    m.JobQueueId == monthHour.JobQueueId &&
+                    m.Year == monthHour.Year &&
                     m.Month == monthHour.Month &&
-                    m.Fmonth == monthHour.Fmonth);
+                    m.FpsYear == monthHour.FpsYear);
 
             if (existing is null)
             {
@@ -95,7 +95,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
             else
             {
-                existing.MonthYear = monthHour.MonthYear;
+                existing.Fmonth = monthHour.Fmonth;
                 existing.Days = monthHour.Days;
                 existing.CvlHours = monthHour.CvlHours;
                 existing.VidHours = monthHour.VidHours;
@@ -105,14 +105,10 @@ namespace Apha.FPS.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteStagingAsync(Guid jobQueueId)
+        public async Task DeleteStagingAsync()
         {
-            var settings = await _context.FpsSettingStagings
-                .Where(s => s.JobQueueId == jobQueueId)
-                .ToListAsync();
-            var monthHours = await _context.MonthHourStagings
-                .Where(m => m.JobQueueId == jobQueueId)
-                .ToListAsync();
+            var settings = await _context.FpsSettingStagings.ToListAsync();
+            var monthHours = await _context.MonthHourStagings.ToListAsync();
 
             if (settings.Count == 0 && monthHours.Count == 0)
                 return;

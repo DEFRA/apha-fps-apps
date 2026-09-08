@@ -84,15 +84,18 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
+            var targetFpsYear = request.TargetFpsYear
+                ?? throw new InvalidOperationException($"Year End Data Setup request '{jobExecutionId}' has no target_fpsyear set.");
+
             await _yearEndStagingRepository.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
-                JobQueueId = request.JobQueueId,
-                MonthYear = dto.Year,
+                Year = dto.Year,
                 Month = dto.Month,
                 Fmonth = dto.Fmonth ?? 0,
                 Days = dto.Days,
                 CvlHours = dto.CvlHours,
-                VidHours = dto.VidHours
+                VidHours = dto.VidHours,
+                FpsYear = targetFpsYear
             });
 
             return new MonthHourDto

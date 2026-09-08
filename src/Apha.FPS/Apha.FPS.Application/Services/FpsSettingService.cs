@@ -75,7 +75,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<FpsSettingDto>(result);
         }
 
-        public async Task<FpsSettingDto> SaveSettingAsync(Guid jobExecutionId, FpsSettingDto dto)
+        public async Task<FpsSettingDto> SaveSettingAsync(Guid jobExecutionId, FpsSettingDto dto, string updatedBy)
         {
             var errors = new List<BusinessValidationError>();
 
@@ -121,12 +121,17 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
+            var targetFpsYear = request.TargetFpsYear
+                ?? throw new InvalidOperationException($"Year End Data Setup request '{jobExecutionId}' has no target_fpsyear set.");
+
             await _yearEndStagingRepository.UpsertStagedSettingAsync(new FpsSettingStaging
             {
-                JobQueueId = request.JobQueueId,
                 Id = dto!.Id,
                 Setting = dto.Setting,
-                Notes = dto.Notes
+                Notes = dto.Notes,
+                FpsYear = targetFpsYear,
+                UpdatedBy = updatedBy,
+                UpdatedAt = DateTime.UtcNow
             });
 
             return new FpsSettingDto

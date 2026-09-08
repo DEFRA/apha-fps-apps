@@ -13,9 +13,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
     /// the actual methods (not mocked DbSets, which can't exercise the new by-jobQueueId
     /// <c>ExecuteUpdateAsync</c>-free conditional query at all): Reject transitions status AND deletes
     /// both staging sets atomically in the same transaction; Approve transitions status and leaves
-    /// staging untouched (retained/frozen, for Workstream 7's Worker to consume); a second request's
-    /// staging is never touched by the first's Reject; the new resolve-by-jobQueueId query re-checks
-    /// Initiated status, not just presence.
+    /// staging untouched (retained/frozen, for Workstream 7's Worker to consume); the new
+    /// resolve-by-jobQueueId query re-checks Initiated status, not just presence.
+    ///
+    /// Staging is a singleton as of the 2026-09-07 simplification (no jobqueueid scoping) — the
+    /// "a second request's staging is never touched by the first's Reject" guarantee this suite used to
+    /// prove no longer has a meaningful test: two independently-identifiable requests both staging
+    /// "HoursInDay" would upsert the same (Id, FpsYear) row, not create two separate ones, and
+    /// CanInitiateRequest (now IgnoreQueryFilters()'d) guarantees a second non-terminal request can't
+    /// exist in the first place. Removed rather than adjusted; that invariant is proven where it's
+    /// actually enforced, not here.
     ///
     /// Soft-skips (no assertions run, test still passes) when Postgres is unreachable — same convention
     /// as YearEndStagingRepositoryIntegrationTests / YearEndRepositoryInitiationIntegrationTests.
@@ -53,31 +60,30 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
         public async Task DisposeAsync()
         {
-            if (!_dbAvailable || _createdJobQueueIds.Count == 0) return;
+            if (!_dbAvailable) return;
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            // Staging is a singleton (no jobqueueid scoping) — cleared unconditionally, not per
+            // created job_queue row, so a failed assertion never leaks rows into a later test.
+            await using (var delSettings = conn.CreateCommand())
+            {
+                delSettings.CommandText = "DELETE FROM fps.tblsettings_staging;";
+                await delSettings.ExecuteNonQueryAsync();
+            }
+            await using (var delMonthHours = conn.CreateCommand())
+            {
+                delMonthHours.CommandText = "DELETE FROM fps.tlkpmonthhours_staging;";
+                await delMonthHours.ExecuteNonQueryAsync();
+            }
+
             foreach (var jobQueueId in _createdJobQueueIds)
             {
-                // Staging rows FK to job_queue -- delete children first.
-                await using (var del1 = conn.CreateCommand())
-                {
-                    del1.CommandText = "DELETE FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
-                    del1.Parameters.AddWithValue("id", jobQueueId);
-                    await del1.ExecuteNonQueryAsync();
-                }
-                await using (var del2 = conn.CreateCommand())
-                {
-                    del2.CommandText = "DELETE FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
-                    del2.Parameters.AddWithValue("id", jobQueueId);
-                    await del2.ExecuteNonQueryAsync();
-                }
-                await using (var del3 = conn.CreateCommand())
-                {
-                    del3.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
-                    del3.Parameters.AddWithValue("id", jobQueueId);
-                    await del3.ExecuteNonQueryAsync();
-                }
+                await using var del3 = conn.CreateCommand();
+                del3.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
+                del3.Parameters.AddWithValue("id", jobQueueId);
+                await del3.ExecuteNonQueryAsync();
             }
         }
 
@@ -128,8 +134,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             return jobQueueId;
         }
 
-        /// <summary>Reconnects with a fresh connection — proves committed state, not one EF change
-        /// tracker's in-memory view.</summary>
+        /// <summary>
+        /// Reconnects with a fresh connection — proves committed state, not one EF change tracker's
+        /// in-memory view. Staging counts are global (no jobqueueid scoping any more) — meaningful here
+        /// because each test seeds exactly one request's worth of staging.
+        /// </summary>
         private async Task<(string Status, int SettingsCount, int MonthHoursCount)> ReadStateAsync(Guid jobQueueId)
         {
             await using var conn = new NpgsqlConnection(_connectionString);
@@ -144,13 +153,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var status = (string)(await statusCmd.ExecuteScalarAsync())!;
 
             await using var settingsCmd = conn.CreateCommand();
-            settingsCmd.CommandText = "SELECT COUNT(*) FROM fps.tblsettings_staging WHERE jobqueueid = @id;";
-            settingsCmd.Parameters.AddWithValue("id", jobQueueId);
+            settingsCmd.CommandText = "SELECT COUNT(*) FROM fps.tblsettings_staging;";
             var settingsCount = Convert.ToInt32(await settingsCmd.ExecuteScalarAsync());
 
             await using var monthHoursCmd = conn.CreateCommand();
-            monthHoursCmd.CommandText = "SELECT COUNT(*) FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
-            monthHoursCmd.Parameters.AddWithValue("id", jobQueueId);
+            monthHoursCmd.CommandText = "SELECT COUNT(*) FROM fps.tlkpmonthhours_staging;";
             var monthHoursCount = Convert.ToInt32(await monthHoursCmd.ExecuteScalarAsync());
 
             return (status, settingsCount, monthHoursCount);
@@ -164,8 +171,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var (repo, stagingRepo) = CreateRepositories(2025);
 
-            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = jobQueueId, Id = "HoursInDay", Setting = "8" });
-            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging { JobQueueId = jobQueueId, MonthYear = 2026, Month = 1, Fmonth = 0, Days = 20m });
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { Id = "HoursInDay", Setting = "8", FpsYear = 2026 });
+            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging { Year = 2026, Month = 1, Fmonth = 0, Days = 20m, FpsYear = 2026 });
 
             await repo.EnqueueDataSetupRejectBatchJobAsync(jobQueueId, "rejector@example.com", "rejected in integration test");
 
@@ -185,8 +192,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var jobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
             var (repo, stagingRepo) = CreateRepositories(2025);
 
-            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = jobQueueId, Id = "HoursInDay", Setting = "8" });
-            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging { JobQueueId = jobQueueId, MonthYear = 2026, Month = 1, Fmonth = 0, Days = 20m });
+            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { Id = "HoursInDay", Setting = "8", FpsYear = 2026 });
+            await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging { Year = 2026, Month = 1, Fmonth = 0, Days = 20m, FpsYear = 2026 });
 
             await repo.EnqueueDataSetupApprovalBatchJobAsync(jobQueueId, "approver@example.com", "approved in integration test");
 
@@ -194,32 +201,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal("Approved", status);
             Assert.Equal(1, settingsCount);
             Assert.Equal(1, monthHoursCount);
-        }
-
-        [Fact]
-        public async Task EnqueueDataSetupRejectBatchJobAsync_NeverTouchesAnotherRequestsStaging()
-        {
-            if (!_dbAvailable) return;
-
-            // Two independently-seeded Initiated-shaped requests. Rejecting the first must leave the
-            // second completely untouched — proven by JobQueueId-scoped resolution itself, not just the
-            // app-level single-in-flight-request invariant enforced elsewhere.
-            var firstJobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
-            var secondJobQueueId = await CreateTestJobQueueRowAsync(2025, 2026);
-            var (repo, stagingRepo) = CreateRepositories(2025);
-
-            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = firstJobQueueId, Id = "HoursInDay", Setting = "8" });
-            await stagingRepo.UpsertStagedSettingAsync(new FpsSettingStaging { JobQueueId = secondJobQueueId, Id = "HoursInDay", Setting = "7.5" });
-
-            await repo.EnqueueDataSetupRejectBatchJobAsync(firstJobQueueId, "rejector@example.com", "reject first only");
-
-            var (firstStatus, firstSettingsCount, _) = await ReadStateAsync(firstJobQueueId);
-            var (secondStatus, secondSettingsCount, _) = await ReadStateAsync(secondJobQueueId);
-
-            Assert.Equal("Rejected", firstStatus);
-            Assert.Equal(0, firstSettingsCount);
-            Assert.Equal("Initiated", secondStatus);
-            Assert.Equal(1, secondSettingsCount);
         }
 
         [Fact]
@@ -234,6 +215,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             await Assert.ThrowsAsync<KeyNotFoundException>(
                 () => repo.EnqueueDataSetupApprovalBatchJobAsync(jobQueueId, "approver@example.com", "note"));
+        }
+
+        [Fact]
+        public async Task CanInitiateYearEndDataSetupRequestAsync_ReturnsFalse_EvenWhenAmbientYearDiffersFromExistingRequest()
+        {
+            if (!_dbAvailable) return;
+
+            // The bug this proves is fixed: CanInitiateRequest's BatchJobQueues query used to be
+            // implicitly scoped by BatchJobQueue's global HasQueryFilter(e => e.FpsYear ==
+            // FilterFpsYear) — the caller's ambient X-FPS-Year, not a true "anywhere" check. An existing
+            // non-terminal request with fpsyear=2025 must still block a second Initiate whose own
+            // ambient context happens to be some unrelated year (1999, deliberately far away so a real
+            // regression couldn't pass by coincidence) — this is exactly the singleton staging design's
+            // "at most one non-terminal request, ever" precondition.
+            await CreateTestJobQueueRowAsync(2025, 2026, status: "Initiated");
+            var (repo, _) = CreateRepositories(ambientFpsYear: 1999);
+
+            var canInitiate = await repo.CanInitiateYearEndDataSetupRequestAsync("YearEnd-DataSetup");
+
+            Assert.False(canInitiate);
         }
     }
 }

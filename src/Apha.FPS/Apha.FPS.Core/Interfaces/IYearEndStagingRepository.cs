@@ -3,10 +3,15 @@ using Apha.FPS.Core.Entities;
 namespace Apha.FPS.Core.Interfaces
 {
     /// <summary>
-    /// Request-scoped persistence for the Year End planned-year staging tables (CR067). Primitives
-    /// only — no Initiated/Approved status enforcement here. The service/application layer owns that
-    /// decision (Initiated -> writable, Approved+ -> immutable); this repository only gives it enough
-    /// request/status information (<see cref="YearEndRequestSummary"/>) to make it.
+    /// Persistence for the Year End planned-year staging tables (CR067, singleton shape per the
+    /// 2026-09-07 staging simplification). Primitives only — no Initiated/Approved status enforcement
+    /// here. The service/application layer owns that decision (Initiated -> writable, Approved+ ->
+    /// immutable); this repository only gives it enough request/status information
+    /// (<see cref="YearEndRequestSummary"/>) to make it.
+    ///
+    /// Staging is not scoped by jobqueueid any more — <c>YearEndRepository.CanInitiateRequest</c>
+    /// guarantees at most one non-terminal Year End DataSetup request exists at a time, so there is
+    /// only ever one candidate row set to read, upsert, or clear.
     /// </summary>
     public interface IYearEndStagingRepository
     {
@@ -16,17 +21,17 @@ namespace Apha.FPS.Core.Interfaces
         /// </summary>
         Task<YearEndRequestSummary?> ResolveRequestAsync(Guid jobExecutionId);
 
-        Task<List<FpsSettingStaging>> GetStagedSettingsAsync(Guid jobQueueId);
-        Task<List<MonthHourStaging>> GetStagedMonthHoursAsync(Guid jobQueueId);
+        Task<List<FpsSettingStaging>> GetStagedSettingsAsync();
+        Task<List<MonthHourStaging>> GetStagedMonthHoursAsync();
 
-        /// <summary>Upserts by (JobQueueId, Id) — re-Confirming the same setting updates in place.</summary>
+        /// <summary>Upserts by (Id, FpsYear) — re-Confirming the same setting updates in place.</summary>
         Task UpsertStagedSettingAsync(FpsSettingStaging setting);
 
-        /// <summary>Upserts by (JobQueueId, Month, Fmonth) — re-Confirming the same month updates in place.</summary>
+        /// <summary>Upserts by (Year, Month, FpsYear) — re-Confirming the same month updates in place.</summary>
         Task UpsertStagedMonthHourAsync(MonthHourStaging monthHour);
 
-        /// <summary>Deletes every staged setting and month-hour row for this request.</summary>
-        Task DeleteStagingAsync(Guid jobQueueId);
+        /// <summary>Deletes every staged setting and month-hour row.</summary>
+        Task DeleteStagingAsync();
     }
 
     /// <summary>

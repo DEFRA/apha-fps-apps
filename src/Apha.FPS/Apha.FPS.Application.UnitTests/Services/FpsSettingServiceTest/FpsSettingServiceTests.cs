@@ -405,7 +405,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             var dto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(Guid.NewGuid(), dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(Guid.NewGuid(), dto, "tester@example.com"));
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_HoursInDay");
 
             // Fails before even resolving the request — no staging touched.
@@ -422,7 +422,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(Guid.NewGuid(), dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(Guid.NewGuid(), dto, "tester@example.com"));
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_CapApprovalReceivedForReset");
 
             await _mockYearEndStagingRepository.DidNotReceive().ResolveRequestAsync(Arg.Any<Guid>());
@@ -444,7 +444,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             _mockYearEndStagingRepository.ResolveRequestAsync(jobExecutionId).Returns((YearEndRequestSummary?)null);
 
             // Act & Assert — never falls back to "whichever request is currently active".
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.SaveSettingAsync(jobExecutionId, dto));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.SaveSettingAsync(jobExecutionId, dto, "tester@example.com"));
 
             await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedSettingAsync(Arg.Any<FpsSettingStaging>());
         }
@@ -465,7 +465,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
                 .Returns(new YearEndRequestSummary(Guid.NewGuid(), 2025, 2026, status));
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(jobExecutionId, dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(jobExecutionId, dto, "tester@example.com"));
             ex.Errors.Should().ContainSingle(e => e.Code == "REQUEST_NOT_EDITABLE");
 
             await _mockYearEndStagingRepository.DidNotReceive().UpsertStagedSettingAsync(Arg.Any<FpsSettingStaging>());
@@ -482,7 +482,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
                 .Returns(InitiatedRequest(jobQueueId, targetFpsYear: 2026));
 
             // Act
-            var result = await _sut.SaveSettingAsync(jobExecutionId, dto);
+            var result = await _sut.SaveSettingAsync(jobExecutionId, dto, "confirmer@example.com");
 
             // Assert
             result.Should().NotBeNull();
@@ -492,7 +492,8 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
 
             await _mockYearEndStagingRepository.Received(1).UpsertStagedSettingAsync(
                 Arg.Is<FpsSettingStaging>(s =>
-                    s.JobQueueId == jobQueueId && s.Id == "HoursInDay" && s.Setting == "7.5" && s.Notes == "confirmed"));
+                    s.FpsYear == 2026 && s.Id == "HoursInDay" && s.Setting == "7.5" && s.Notes == "confirmed"
+                    && s.UpdatedBy == "confirmer@example.com"));
 
             // The real table is never touched by Confirm under the staging design.
             await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<FpsSetting>());

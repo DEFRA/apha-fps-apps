@@ -22,7 +22,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
     ///
     /// Soft-skips (no assertions run, test still passes) when Postgres is unreachable — same
     /// convention as BulkRatesRepositoryYearFilterTests / YearEndStagingRepositoryIntegrationTests.
+    ///
+    /// [Collection("YearEndDataSetupIntegration")]: fps.tblsettings_staging/fps.tlkpmonthhours_staging
+    /// are singletons as of the 2026-09-07 staging simplification (no jobqueueid scoping). Joins the
+    /// same collection already shared by YearEndStagingRepositoryIntegrationTests/
+    /// YearEndRepositoryApprovalRejectIntegrationTests/etc. to force sequential execution against
+    /// those tables too — xUnit parallelizes different classes by default, and concurrent writers to a
+    /// singleton table would corrupt each other's rows.
     /// </summary>
+    [Collection("YearEndDataSetupIntegration")]
     public sealed class MonthHourRepositoryYearEndGridIntegrationTests : IAsyncLifetime
     {
         private const int TargetYear = 9082;
@@ -80,25 +88,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
 
         public async Task DisposeAsync()
         {
-            if (!_dbAvailable || _createdJobQueueIds.Count == 0) return;
+            if (!_dbAvailable) return;
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
 
+            // Staging is a singleton (no jobqueueid scoping) — cleared unconditionally, not per
+            // created job_queue row, so a failed assertion never leaks rows into a later test.
+            await using (var delStaging = conn.CreateCommand())
+            {
+                delStaging.CommandText = "DELETE FROM fps.tlkpmonthhours_staging;";
+                await delStaging.ExecuteNonQueryAsync();
+            }
+
             foreach (var jobQueueId in _createdJobQueueIds)
             {
-                await using (var del1 = conn.CreateCommand())
-                {
-                    del1.CommandText = "DELETE FROM fps.tlkpmonthhours_staging WHERE jobqueueid = @id;";
-                    del1.Parameters.AddWithValue("id", jobQueueId);
-                    await del1.ExecuteNonQueryAsync();
-                }
-                await using (var del2 = conn.CreateCommand())
-                {
-                    del2.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
-                    del2.Parameters.AddWithValue("id", jobQueueId);
-                    await del2.ExecuteNonQueryAsync();
-                }
+                await using var del2 = conn.CreateCommand();
+                del2.CommandText = "DELETE FROM fps.job_queue WHERE jobqueueid = @id;";
+                del2.Parameters.AddWithValue("id", jobQueueId);
+                await del2.ExecuteNonQueryAsync();
             }
         }
 
@@ -169,13 +177,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
             var stagingRepo = CreateStagingRepository(_currentYear);
             await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
-                JobQueueId = jobQueueId,
-                MonthYear = (short)TargetYear,
+                Year = (short)TargetYear,
                 Month = TestMonth,
                 Fmonth = TestFmonth,
                 Days = 12.5m,
                 CvlHours = 3m,
-                VidHours = 2m
+                VidHours = 2m,
+                FpsYear = TargetYear
             });
 
             var repo = CreateRepository(_currentYear);
@@ -188,31 +196,34 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
         }
 
         [Fact]
-        public async Task GetYearEndMonthHoursAsync_AnotherRequestsStaging_NeverVisible()
+        public async Task GetYearEndMonthHoursAsync_StagingForADifferentTargetYear_NeverVisible()
         {
             if (!_dbAvailable) return;
 
-            var thisRequestJobQueueId = await CreateTestJobQueueRowAsync();
-            var otherRequestJobQueueId = await CreateTestJobQueueRowAsync();
+            // Staging is a singleton (no jobqueueid scoping) as of the 2026-09-07 simplification — the
+            // only isolation left is by fpsyear. A row staged for a different target year must never
+            // leak into a grid read scoped to this one, even though there's no longer a second
+            // request's jobqueueid to isolate from.
+            const int otherTargetYear = TargetYear + 1;
+            var jobQueueId = await CreateTestJobQueueRowAsync();
 
             var stagingRepo = CreateStagingRepository(_currentYear);
-            // Staged only against the OTHER request, never this one.
             await stagingRepo.UpsertStagedMonthHourAsync(new MonthHourStaging
             {
-                JobQueueId = otherRequestJobQueueId,
-                MonthYear = (short)TargetYear,
+                Year = (short)otherTargetYear,
                 Month = TestMonth,
                 Fmonth = TestFmonth,
-                Days = 99m
+                Days = 99m,
+                FpsYear = otherTargetYear
             });
 
             var repo = CreateRepository(_currentYear);
-            var request = new YearEndRequestSummary(thisRequestJobQueueId, _currentYear, TargetYear, "Initiated");
+            var request = new YearEndRequestSummary(jobQueueId, _currentYear, TargetYear, "Initiated");
             var result = await repo.GetYearEndMonthHoursAsync(request);
 
             var slot = result.Single(m => m.Month == TestMonth && m.Fmonth == TestFmonth);
-            Assert.NotEqual(99m, slot.Days); // never the other request's staged value
-            Assert.Equal(_realCurrentYearDays, slot.Days); // this request's own default instead
+            Assert.NotEqual(99m, slot.Days); // never the other target year's staged value
+            Assert.Equal(_realCurrentYearDays, slot.Days); // this year's own default instead
             Assert.Equal("No", slot.ExistsForPlannedYear);
         }
     }

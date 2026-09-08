@@ -30,7 +30,9 @@ namespace Apha.FPS.Application.Interfaces
         /// Approved/Running/Completed/Failed/Rejected), then upserts a staged row — never writes
         /// fps.tblsettings directly. JobExecutionId is required, not optional: a write with no
         /// resolvable request identity would undermine the whole staging design.
+        /// <paramref name="updatedBy"/> is carried through to fps.tblsettings.updated_by/updated_at on
+        /// materialization instead of the Worker regenerating them.
         /// </summary>
-        Task<FpsSettingDto> SaveSettingAsync(Guid jobExecutionId, FpsSettingDto dto);
+        Task<FpsSettingDto> SaveSettingAsync(Guid jobExecutionId, FpsSettingDto dto, string updatedBy);
     }
 }

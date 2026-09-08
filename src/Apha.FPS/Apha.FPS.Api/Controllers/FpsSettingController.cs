@@ -1,6 +1,7 @@
 ﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Core.Interfaces;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -18,18 +19,22 @@ namespace Apha.FPS.Api.Controllers
     public class FpsSettingController : ControllerBase
     {
         private readonly IFpsSettingService _fpsSettingService;
+        private readonly IFpsRequestContext _fpsRequestContext;
         private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FpsSettingController"/> class.
         /// </summary>
         /// <param name="fpsSettingService">The FPS setting service.</param>
+        /// <param name="fpsRequestContext">Ambient per-request context (current user, current FPS year).</param>
         /// <param name="mapper">The AutoMapper instance.</param>
         public FpsSettingController(
                         IFpsSettingService fpsSettingService,
+                        IFpsRequestContext fpsRequestContext,
                         IMapper mapper)
         {
             _fpsSettingService = fpsSettingService;
+            _fpsRequestContext = fpsRequestContext;
             _mapper = mapper;
         }
 
@@ -113,7 +118,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> SaveAsync([FromQuery] Guid jobExecutionId, [FromBody] FpsSettingReq request)
         {
             var dto = _mapper.Map<FpsSettingDto>(request);
-            var result = await _fpsSettingService.SaveSettingAsync(jobExecutionId, dto);
+            var result = await _fpsSettingService.SaveSettingAsync(jobExecutionId, dto, _fpsRequestContext.UserEmailId);
             return Ok(_mapper.Map<FpsSettingRes>(result));
         }
     }
