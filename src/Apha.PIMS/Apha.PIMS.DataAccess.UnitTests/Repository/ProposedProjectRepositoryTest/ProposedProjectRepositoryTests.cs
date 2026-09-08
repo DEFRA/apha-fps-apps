@@ -102,6 +102,24 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProposedProjectRepositoryTes
         }
 
         [Fact]
+        public async Task GetFpsProjectByIdAsync_ReturnsProject_WhenParentProjectCaseDiffers()
+        {
+            // Arrange
+            var fpsProjects = new List<Project>
+            {
+                new() { Parentproject = "PP001", Projecttitle = "FMD Survey" }
+            };
+            var repo = CreateRepository(fpsProjects: fpsProjects);
+
+            // Act
+            var result = await repo.GetFpsProjectByIdAsync("pp001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("PP001", result.Parentproject);
+        }
+
+        [Fact]
         public async Task GetFpsProjectByIdAsync_ReturnsNull_WhenProjectDoesNotExist()
         {
             // Arrange
@@ -174,6 +192,24 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProposedProjectRepositoryTes
             Assert.Equal("PP001",      result.Parentproject);
             Assert.Equal("TB Project", result.Projecttitle);
             Assert.Equal("Proposed",   result.Projectstatus);
+        }
+
+        [Fact]
+        public async Task GetProposedProjectByIdAsync_ReturnsProposedProject_WhenParentProjectCaseDiffers()
+        {
+            // Arrange
+            var proposedProjects = new List<ProposedProject>
+            {
+                new() { Id = 1, Parentproject = "PP001", Projecttitle = "TB Project" }
+            };
+            var repo = CreateRepository(proposedProjects: proposedProjects);
+
+            // Act
+            var result = await repo.GetProposedProjectByIdAsync("pp001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("PP001", result.Parentproject);
         }
 
         [Fact]
