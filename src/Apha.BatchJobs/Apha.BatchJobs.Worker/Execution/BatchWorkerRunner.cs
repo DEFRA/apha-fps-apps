@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.FailureHandling;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Worker.Lifecycle;
 using Apha.BatchJobs.Worker.Reporting;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +12,11 @@ using Apha.BatchJobs.Worker.Configuration;
 namespace Apha.BatchJobs.Worker.Execution;
 
 /// <summary>
-/// Coordinates one worker invocation: resolve the request, run the orchestrator, and write one
-/// final summary. HealthCheck never reaches this type — <c>Program.cs</c> short-circuits before it.
+/// Coordinates one worker invocation: resolve the request(s), run the orchestrator for each, and
+/// write one summary per job. Usually resolves to a single job; a shared category trigger (see
+/// <see cref="MonthlyScheduledNotificationJobs"/>) resolves to several, run in sequence within
+/// this one invocation. HealthCheck never reaches this type — <c>Program.cs</c> short-circuits
+/// before it.
 /// </summary>
 public sealed class BatchWorkerRunner : IBatchWorkerRunner
 {
@@ -44,11 +48,11 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
 
     public async Task<int> RunAsync()
     {
-        BatchExecutionRequest request;
+        IReadOnlyList<BatchExecutionRequest> requests;
 
         try
         {
-            request = _requestResolver.Resolve();
+            requests = _requestResolver.Resolve();
         }
         catch (Exception ex)
         {
@@ -61,47 +65,68 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
             return resolutionFailure.ExitCode;
         }
 
-        using var correlationScope = _logger.BeginScope(new Dictionary<string, object>
-        {
-            ["JobName"] = request.JobName,
-            ["JobExecutionId"] = request.JobExecutionId,
-            ["RunMode"] = request.RunMode.ToString(),
-            ["RequestedBy"] = request.RequestedBy
-        });
-
-        var startedAt = DateTime.UtcNow;
-
-        // Created before the execution scope so the whole invocation shares one cancellation boundary.
+        // Created before any execution scope so every job below — including each job of a
+        // fanned-out category trigger — shares one cancellation boundary for the invocation.
         using var cancellationContext = new ExecutionCancellationContext(_hostLifetime, _runtimeOptions.Value.WorkerOverallTimeoutSeconds);
 
-        BatchExecutionResult result;
-        try
-        {
-            await using var executionScope = _serviceProvider.CreateAsyncScope();
-            var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
+        var overallExitCode = BatchExitCodes.Success;
 
-            var jobResult = await orchestrator.RunAsync(
-                request.JobName,
-                request.RunMode,
-                request.JobExecutionId,
-                request.RequestedBy,
-                request.RequestedAtUtc,
-                request.ParametersJson,
-                cancellationContext.Token);
-
-            result = BatchExecutionResult.Success(request, jobResult);
-        }
-        catch (OperationCanceledException)
+        foreach (var request in requests)
         {
-            result = BatchExecutionResult.Cancelled(request, cancellationContext.ClassifyCancellation());
-        }
-        catch (Exception ex)
-        {
-            // Already logged by JobOrchestrator.ThrowWithStructuredLog before it re-threw — don't log again.
-            result = BatchExecutionResult.Failure(request, _failureClassifier.Classify(ex), ex);
+            using var correlationScope = _logger.BeginScope(new Dictionary<string, object>
+            {
+                ["JobName"] = request.JobName,
+                ["JobExecutionId"] = request.JobExecutionId,
+                ["RunMode"] = request.RunMode.ToString(),
+                ["RequestedBy"] = request.RequestedBy
+            });
+
+            var startedAt = DateTime.UtcNow;
+
+            BatchExecutionResult result;
+            try
+            {
+                await using var executionScope = _serviceProvider.CreateAsyncScope();
+                var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
+
+                var jobResult = await orchestrator.RunAsync(
+                    request.JobName,
+                    request.RunMode,
+                    request.JobExecutionId,
+                    request.RequestedBy,
+                    request.RequestedAtUtc,
+                    request.ParametersJson,
+                    cancellationContext.Token);
+
+                result = BatchExecutionResult.Success(request, jobResult);
+            }
+            catch (OperationCanceledException)
+            {
+                result = BatchExecutionResult.Cancelled(request, cancellationContext.ClassifyCancellation());
+            }
+            catch (Exception ex)
+            {
+                // Already logged by JobOrchestrator.ThrowWithStructuredLog before it re-threw — don't log again.
+                result = BatchExecutionResult.Failure(request, _failureClassifier.Classify(ex), ex);
+            }
+
+            _summaryWriter.WriteSummary(result, DateTime.UtcNow - startedAt);
+
+            if (result.ExitCode != BatchExitCodes.Success && overallExitCode == BatchExitCodes.Success)
+                overallExitCode = result.ExitCode;
+
+            // Host shutdown or the overall timeout fired — remaining fanned-out jobs would just
+            // cancel immediately too, so stop rather than attempt them. The invocation didn't run
+            // every resolved job, so it must not report success even if every job that did run
+            // (e.g. this one) succeeded.
+            if (cancellationContext.Token.IsCancellationRequested)
+            {
+                if (overallExitCode == BatchExitCodes.Success)
+                    overallExitCode = BatchExitCodes.Cancelled;
+                break;
+            }
         }
 
-        _summaryWriter.WriteSummary(result, DateTime.UtcNow - startedAt);
-        return result.ExitCode;
+        return overallExitCode;
     }
 }

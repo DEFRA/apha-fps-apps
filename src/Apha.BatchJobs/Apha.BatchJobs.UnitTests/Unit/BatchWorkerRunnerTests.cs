@@ -42,8 +42,16 @@ public sealed class BatchWorkerRunnerTests
         RecordingSummaryWriter summaryWriter,
         IHostApplicationLifetime? hostLifetime,
         int overallTimeoutSeconds) =>
+        CreateRunner(new BatchExecutionRequestResolver(), orchestrator, summaryWriter, hostLifetime, overallTimeoutSeconds);
+
+    private static BatchWorkerRunner CreateRunner(
+        BatchExecutionRequestResolver resolver,
+        IJobOrchestrator orchestrator,
+        RecordingSummaryWriter summaryWriter,
+        IHostApplicationLifetime? hostLifetime,
+        int overallTimeoutSeconds) =>
         new(
-            new BatchExecutionRequestResolver(),
+            resolver,
             hostLifetime ?? CreateLifetime(out _),
             Options.Create(new BatchRuntimeOptions { WorkerOverallTimeoutSeconds = overallTimeoutSeconds }),
             BuildServiceProvider(orchestrator),
@@ -160,15 +168,161 @@ public sealed class BatchWorkerRunnerTests
         Assert.Equal(Apha.BatchJobs.Worker.Lifecycle.ExecutionCancellationReason.Unclassified, summaryWriter.LastResult!.CancellationReason);
     }
 
+    private static EnvScopeSet FanOutEnvScope() =>
+        new("MonthlyBusinessNotifications", "Scheduled", null, "EventBridgeScheduler");
+
+    private static JobExecutionResult SucceededResult(string jobName) =>
+        new(Guid.NewGuid(), jobName, JobStatus.Completed, TimeSpan.FromSeconds(1), 1);
+
+    [Fact]
+    public async Task RunAsync_WhenCategoryFanOutBothChildrenSucceed_ReturnsSuccessAndWritesTwoSummaries()
+    {
+        using var scope = FanOutEnvScope();
+        var resolver = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]);
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => Task.FromResult(SucceededResult((string)callInfo[0])));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(resolver, orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        Assert.Equal(2, summaryWriter.CallCount);
+        Assert.All(summaryWriter.AllResults, r => Assert.Equal(BatchRunOutcome.Success, r.Outcome));
+        Assert.Equal(["TestJobA", "TestJobB"], summaryWriter.AllResults.Select(r => r.JobName));
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenFirstChildFailsAndSecondSucceeds_ReturnsFirstFailureExitCodeAndAttemptsBoth()
+    {
+        using var scope = FanOutEnvScope();
+        var resolver = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]);
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync("TestJobA", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<JobExecutionResult>(new JobLockException("already running")));
+        orchestrator.RunAsync("TestJobB", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(SucceededResult("TestJobB"));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(resolver, orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.LockFailure, exitCode);
+        Assert.Equal(2, summaryWriter.CallCount);
+        Assert.Equal(BatchRunOutcome.Failure, summaryWriter.AllResults[0].Outcome);
+        Assert.Equal(BatchRunOutcome.Success, summaryWriter.AllResults[1].Outcome);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenFirstChildSucceedsAndSecondFails_ReturnsSecondFailureExitCode()
+    {
+        using var scope = FanOutEnvScope();
+        var resolver = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]);
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync("TestJobA", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(SucceededResult("TestJobA"));
+        orchestrator.RunAsync("TestJobB", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<JobExecutionResult>(new JobLockException("already running")));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(resolver, orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.LockFailure, exitCode);
+        Assert.Equal(2, summaryWriter.CallCount);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenBothChildrenFailDifferently_ReturnsFirstFailureExitCode()
+    {
+        using var scope = FanOutEnvScope();
+        var resolver = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]);
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync("TestJobA", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<JobExecutionResult>(new JobLockException("already running")));
+        orchestrator.RunAsync("TestJobB", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<JobExecutionResult>(new JobValidationException("bad parameters")));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(resolver, orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.LockFailure, exitCode);
+        Assert.Equal(2, summaryWriter.CallCount);
+        Assert.Equal(BatchFailureCategory.Concurrency, summaryWriter.AllResults[0].FailureCategory);
+        Assert.Equal(BatchFailureCategory.Configuration, summaryWriter.AllResults[1].FailureCategory);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCancellationFiresAfterFirstChildSucceeds_StopsRemainingChildrenAndReportsNonSuccess()
+    {
+        using var scope = FanOutEnvScope();
+        var resolver = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]);
+        var hostLifetime = CreateLifetime(out var lifetimeCts);
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync("TestJobA", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                // Simulates the overall-timeout/host-shutdown token firing right as this child finishes.
+                lifetimeCts.Cancel();
+                return Task.FromResult(SucceededResult("TestJobA"));
+            });
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(resolver, orchestrator, summaryWriter, hostLifetime, overallTimeoutSeconds: 3600);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.NotEqual(BatchExitCodes.Success, exitCode);
+        Assert.Equal(BatchExitCodes.Cancelled, exitCode);
+        Assert.Equal(1, summaryWriter.CallCount);
+        Assert.Equal(BatchRunOutcome.Success, summaryWriter.LastResult!.Outcome);
+        await orchestrator.DidNotReceive().RunAsync("TestJobB", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCategoryFanOutWithTwoChildren_UsesSeparateDIScopePerChild()
+    {
+        using var scope = FanOutEnvScope();
+        var resolver = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]);
+        var resolvedOrchestrators = new List<IJobOrchestrator>();
+        var services = new ServiceCollection();
+        services.AddScoped<IJobOrchestrator>(_ =>
+        {
+            var fake = Substitute.For<IJobOrchestrator>();
+            fake.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo => Task.FromResult(SucceededResult((string)callInfo[0])));
+            resolvedOrchestrators.Add(fake);
+            return fake;
+        });
+
+        var runner = new BatchWorkerRunner(
+            resolver,
+            CreateLifetime(out _),
+            Options.Create(new BatchRuntimeOptions { WorkerOverallTimeoutSeconds = 3600 }),
+            services.BuildServiceProvider(),
+            new BatchFailureClassifier(new ConfigurationBuilder().Build()),
+            new RecordingSummaryWriter(),
+            NullLogger<BatchWorkerRunner>.Instance);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        Assert.Equal(2, resolvedOrchestrators.Count);
+        Assert.NotSame(resolvedOrchestrators[0], resolvedOrchestrators[1]);
+    }
+
     private sealed class RecordingSummaryWriter : IBatchRunSummaryWriter
     {
         public int CallCount { get; private set; }
         public BatchExecutionResult? LastResult { get; private set; }
+        public List<BatchExecutionResult> AllResults { get; } = [];
 
         public void WriteSummary(BatchExecutionResult result, TimeSpan duration)
         {
             CallCount++;
             LastResult = result;
+            AllResults.Add(result);
         }
     }
 

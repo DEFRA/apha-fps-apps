@@ -338,7 +338,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private static bool IsWorkerManagedScheduledRun(string jobName, RunMode runMode) =>
         runMode == RunMode.Scheduled &&
         (string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase) ||
-         string.Equals(jobName, BatchJobNames.MilestoneUpdateNotifications, StringComparison.OrdinalIgnoreCase));
+         MonthlyScheduledNotificationJobs.Contains(jobName));
 
     private async Task<JobExecutionRecord> AutoCreateInitiatedRecordAsync(
         string jobName, Guid jobExecutionId, string userId,
