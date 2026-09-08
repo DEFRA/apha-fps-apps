@@ -126,7 +126,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Item created successfully" });
             }
 
-            return Json(new { success = false, message = FirstError(result.Errors, "Failed to create item.") });
+            return FailureJson(result.Errors, "Failed to create item.");
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Item updated successfully" });
             }
 
-            return Json(new { success = false, message = FirstError(result.Errors, "Failed to update item.") });
+            return FailureJson(result.Errors, "Failed to update item.");
         }
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Item deleted successfully" });
             }
 
-            return Json(new { success = false, message = FirstError(result.Errors, "Failed to delete item.") });
+            return FailureJson(result.Errors, "Failed to delete item.");
         }
 
         /// <summary>
@@ -286,6 +286,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private static string FirstError(IEnumerable<Application.Dtos.ApiErrorDto>? errors, string fallback)
         {
             return errors?.FirstOrDefault()?.Message ?? fallback;
+        }
+
+        private JsonResult FailureJson(IReadOnlyCollection<Application.Dtos.ApiErrorDto>? errors, string fallback)
+        {
+            return Json(new
+            {
+                success = false,
+                message = FirstError(errors, fallback),
+                errors = (errors ?? new List<Application.Dtos.ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
     }
 }
