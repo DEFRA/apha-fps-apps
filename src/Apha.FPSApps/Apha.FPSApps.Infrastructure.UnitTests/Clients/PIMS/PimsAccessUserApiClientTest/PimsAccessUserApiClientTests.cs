@@ -122,18 +122,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task GetPagedAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task GetPagedAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             var request = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _http.GetAsync<List<AccessUserRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("timeout"));
 
             // Act
-            var result = await _client.GetPagedAsync(request);
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetPagedAsync(request));
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("timeout", ex.Message);
         }
 
         #endregion
@@ -160,17 +159,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task GetAllAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task GetAllAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<AccessUserRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
 
             // Act
-            var result = await _client.GetAllAsync();
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetAllAsync());
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("Network error", ex.Message);
         }
 
         [Fact]
@@ -234,17 +232,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task GetBySystemIdAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task GetBySystemIdAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<AccessUserRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("timeout"));
 
             // Act
-            var result = await _client.GetBySystemIdAsync(1);
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetBySystemIdAsync(1));
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("timeout", ex.Message);
         }
 
         #endregion
@@ -313,17 +310,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task GetByIdAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task GetByIdAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<AccessUserRes>(Arg.Any<string>()).ThrowsAsync(new Exception("timeout"));
 
             // Act
-            var result = await _client.GetByIdAsync(1, "DOM\\user");
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetByIdAsync(1, "DOM\\user"));
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("timeout", ex.Message);
         }
 
         #endregion
@@ -355,7 +351,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task CreateAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task CreateAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             _mapper.Map<AccessUserReq>(Arg.Any<AccessUserDto>()).Returns(new AccessUserReq());
@@ -363,11 +359,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
                  .ThrowsAsync(new Exception("POST failed"));
 
             // Act
-            var result = await _client.CreateAsync(MakeDto());
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.CreateAsync(MakeDto()));
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("POST failed", ex.Message);
         }
 
         #endregion
@@ -423,7 +418,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task UpdateAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task UpdateAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             _mapper.Map<AccessUserReq>(Arg.Any<AccessUserDto>()).Returns(new AccessUserReq());
@@ -431,11 +426,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
                  .ThrowsAsync(new Exception("PUT failed"));
 
             // Act
-            var result = await _client.UpdateAsync(1, "DOM\\user", MakeDto());
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.UpdateAsync(1, "DOM\\user", MakeDto()));
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("PUT failed", ex.Message);
         }
 
         #endregion
@@ -508,17 +502,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         }
 
         [Fact]
-        public async Task DeleteAsync_HttpThrowsException_ReturnsInternalErrorResponse()
+        public async Task DeleteAsync_HttpThrowsException_PropagatesException()
         {
             // Arrange
             _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("DELETE failed"));
 
             // Act
-            var result = await _client.DeleteAsync(1, "DOM\\user");
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.DeleteAsync(1, "DOM\\user"));
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("DELETE failed", ex.Message);
         }
 
         #endregion

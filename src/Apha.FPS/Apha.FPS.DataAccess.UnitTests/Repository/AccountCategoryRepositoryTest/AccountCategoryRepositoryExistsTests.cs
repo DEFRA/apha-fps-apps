@@ -35,12 +35,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repositories.AccountCategoryRepositoryTe
 
         private static AccountCategoryRepository CreateRepository(IEnumerable<AccountCategory> categories)
         {
+            return CreateRepository(categories, Enumerable.Empty<AdditionalCost>(), Enumerable.Empty<Bid>());
+        }
+
+        private static AccountCategoryRepository CreateRepository(
+            IEnumerable<AccountCategory> categories,
+            IEnumerable<AdditionalCost> additionalCosts,
+            IEnumerable<Bid> bids)
+        {
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
 
             var set = RepositoryTestHelper.CreateMockDbSet(categories);
             RepositoryTestHelper.SetupDbSetOperations(set);
             dbContext.Setup(x => x.AccountCategories).Returns(set.Object);
+
+            var additionalCostSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts);
+            RepositoryTestHelper.SetupDbSetOperations(additionalCostSet);
+            dbContext.Setup(x => x.Set<AdditionalCost>()).Returns(additionalCostSet.Object);
+
+            var bidSet = RepositoryTestHelper.CreateMockDbSet(bids);
+            RepositoryTestHelper.SetupDbSetOperations(bidSet);
+            dbContext.Setup(x => x.Bids).Returns(bidSet.Object);
 
             RepositoryTestHelper.SetupSaveChanges(dbContext);
             return new AccountCategoryRepository(dbContext.Object, requestCtx.Object);
@@ -112,6 +128,103 @@ namespace Apha.FPS.DataAccess.UnitTests.Repositories.AccountCategoryRepositoryTe
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task GetForeignKeyReferencesAsync_NullOrWhiteSpace_ReturnsEmptyList()
+        {
+            // Arrange
+            var repository = CreateRepository(Enumerable.Empty<AccountCategory>());
+
+            // Act
+            var result = await repository.GetForeignKeyReferencesAsync("   ");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetForeignKeyReferencesAsync_NoReferences_ReturnsEmptyList()
+        {
+            // Arrange
+            var repository = CreateRepository(
+                Enumerable.Empty<AccountCategory>(),
+                Enumerable.Empty<AdditionalCost>(),
+                Enumerable.Empty<Bid>());
+
+            // Act
+            var result = await repository.GetForeignKeyReferencesAsync("PAY");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetForeignKeyReferencesAsync_OnlyAdditionalCostReference_ReturnsAdditionalCostsTable()
+        {
+            // Arrange
+            var additionalCosts = new[]
+            {
+                new AdditionalCost { JobCode = "J1", Account = "PAY", Description = "Desc", FpsYear = DefaultFpsYear }
+            };
+            var repository = CreateRepository(
+                Enumerable.Empty<AccountCategory>(),
+                additionalCosts,
+                Enumerable.Empty<Bid>());
+
+            // Act
+            var result = await repository.GetForeignKeyReferencesAsync("PAY");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Contains("tbladditionalcosts", result);
+        }
+
+        [Fact]
+        public async Task GetForeignKeyReferencesAsync_OnlyBidReference_ReturnsBidTable()
+        {
+            // Arrange
+            var bids = new[]
+            {
+                new Bid { WorkGroupName = "WG1", Account = "PAY", FpsYear = DefaultFpsYear }
+            };
+            var repository = CreateRepository(
+                Enumerable.Empty<AccountCategory>(),
+                Enumerable.Empty<AdditionalCost>(),
+                bids);
+
+            // Act
+            var result = await repository.GetForeignKeyReferencesAsync("PAY");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Contains("tblbid", result);
+        }
+
+        [Fact]
+        public async Task GetForeignKeyReferencesAsync_BothReferences_ReturnsBothTables()
+        {
+            // Arrange
+            var additionalCosts = new[]
+            {
+                new AdditionalCost { JobCode = "J1", Account = "PAY", Description = "Desc", FpsYear = DefaultFpsYear }
+            };
+            var bids = new[]
+            {
+                new Bid { WorkGroupName = "WG1", Account = "PAY", FpsYear = DefaultFpsYear }
+            };
+            var repository = CreateRepository(
+                Enumerable.Empty<AccountCategory>(),
+                additionalCosts,
+                bids);
+
+            // Act
+            var result = await repository.GetForeignKeyReferencesAsync("PAY");
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains("tbladditionalcosts", result);
+            Assert.Contains("tblbid", result);
         }
     }
 }

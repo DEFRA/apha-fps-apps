@@ -3,7 +3,13 @@
 
 @{
     var testorProducts = ViewBag.TestorProductOptions as List<SelectListItem> ?? [];
+    var workGroupOptions = ViewBag.WorkGroupOptions as List<SelectListItem> ?? [];
 }
+
+<!-- Store WorkGroup options as data attribute for JS to access -->
+<script type="application/json" id="workGroupOptionsData">
+@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(workGroupOptions.Select(x => new { x.Value, x.Text })))
+</script>
 
 <div class="modal-header flex-space-center">
     <h3 class="govuk-heading-s" style="margin:0;">Add New Test</h3>
@@ -48,14 +54,11 @@
 
         <!-- Work Group -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup">
+            <label class="govuk-label govuk-!-font-weight-bold" for="portfolioMaintenanceWorkGroupDropdown_input">
                 Work Group <span class="sup_color_red">*</span>
             </label>
-            <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
-                    id="txtmodal-workgroup" style="width:100%;" required
-                    asp-items="@(ViewBag.WorkGroupOptions as List<SelectListItem>)">
-                <option value="">--Select Work Group--</option>
-            </select>
+            <input type="hidden" asp-for="WorkGroup" id="WorkGroup" required />
+            <div id="workGroupSelectMultiDropdown"></div>
             <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
         </div>
 

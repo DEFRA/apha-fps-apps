@@ -49,14 +49,14 @@
             <input type="hidden" name="WorkGroupName" id="WorkGroupName" value="@bid!.WorkGroupName" />
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.WorkGroupName" readonly />
+                <input type="text" class="govuk-input govuk-!-font-size-16" aria-label="bid-workgroup-name" value="@bid.WorkGroupName" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold">Account <span class="sup_error_text_color">*</span></label>
                 @if (isEditMode)
                 {
                     <input type="hidden" id="Account" name="Account" value="@bid.Account" />
-                    <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.Account" readonly />
+                    <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.Account" aria-label="bid-edit-account" readonly />
                 }
                 else
                 {
@@ -76,6 +76,7 @@
                             <div style="display:flex; align-items:center; padding:4px; border-bottom:1px solid #b1b4b6; background:#f3f2f1; gap:4px;">
                                 <input type="text" id="accountSearch" placeholder="Type to search account"
                                        class="select-search-box govuk-input govuk-!-font-size-16"
+                                       aria-label="bid-accountSearch"
                                        style="flex:1; font-size:13px; padding:2px 6px; height:32px;"
                                        oninput="filterAccountTable(this.value)" onclick="event.stopPropagation()" />
                                 <button type="button" class="govuk-button govuk-button--secondary clear-search-btn govuk-!-margin-bottom-0"
@@ -198,11 +199,11 @@
             }
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
                 <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkGroupName" readonly />
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkGroupName" aria-label="bid-purchase-workgroup-name" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
                 <label class="govuk-label govuk-!-font-weight-bold">Account</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.Account" readonly />
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.Account" aria-label="bid-purchase-account"  readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
                 <label for="ItemDescription" class="govuk-label govuk-!-font-weight-bold">

@@ -16,16 +16,20 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<Project?> GetFpsProjectByIdAsync(string parentproject)
         {
+            string normalizedParentProject = parentproject.ToUpper();
+
             return await _context.Projects
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
+                .FirstOrDefaultAsync(p => p.Parentproject != null && p.Parentproject.ToUpper() == normalizedParentProject);
         }
 
         public async Task<ProposedProject?> GetProposedProjectByIdAsync(string parentproject)
         {
+            string normalizedParentProject = parentproject.ToUpper();
+
             return await _context.ProposedProjects
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
+                .FirstOrDefaultAsync(p => p.Parentproject != null && p.Parentproject.ToUpper() == normalizedParentProject);
         }
 
         public async Task<ProposedProject> AddProposedProjectAsync(ProposedProject entity)

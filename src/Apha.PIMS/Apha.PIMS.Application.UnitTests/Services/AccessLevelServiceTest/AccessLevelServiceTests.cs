@@ -1,5 +1,6 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
@@ -171,20 +172,27 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessLevelServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicateLevelExists_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicateLevelExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = MakeDto(1, 7, "Editor");
             _repository.ExistsAsync(1, 7).Returns(true);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
+
+            // Assert
+            Assert.Single(ex.Errors);
+            Assert.Equal("ACCESS_LEVEL_ALREADY_EXISTS", ex.Errors[0].Code);
         }
 
         [Fact]
-        public async Task CreateAsync_NullDto_ThrowsArgumentNullException()
+        public async Task CreateAsync_NullDto_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.CreateAsync(null!));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(null!));
+            Assert.Single(ex.Errors);
+            Assert.Equal("ACCESS_LEVEL_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("Access level data is required.", ex.Errors[0].Message);
         }
 
         [Fact]
@@ -237,9 +245,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.AccessLevelServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_NullDto_ThrowsArgumentNullException()
+        public async Task UpdateAsync_NullDto_ThrowsBusinessValidationErrorException()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateAsync(null!));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.UpdateAsync(null!));
+            Assert.Single(ex.Errors);
+            Assert.Equal("ACCESS_LEVEL_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("Access level data is required.", ex.Errors[0].Message);
         }
 
         #endregion
