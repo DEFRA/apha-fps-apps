@@ -5586,11 +5586,7 @@ input.govuk-input.ssr-total-input[readonly] {
         overflow-y: auto;
     }
 }
-#gridContainer_compareStaff2Grid .grid-scroll-container,
-#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
-    height: 410px;
-    max-height: 410px;
-}
+sss
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
