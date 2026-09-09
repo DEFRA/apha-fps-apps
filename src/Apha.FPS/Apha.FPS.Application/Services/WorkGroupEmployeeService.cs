@@ -122,6 +122,17 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
 
+            // Check if the employee has associated monthly time records (foreign key check)
+            if (await _repository.HasAssociatedMonthlyTimeAsync(pactId))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot delete WorkGroupEmployee with PACT Id '{pactId}' because associated monthly time records exist.",
+                        "WORKGROUP_EMPLOYEE_HAS_MONTHLY_TIME")
+                ]);
+            }
+
             // Deleting the WorkGroupEmployee record unlinks it from the WorkGroupGrade.
             return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
         }

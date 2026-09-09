@@ -431,6 +431,18 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task DeleteWorkGroupEmployeeAsync_WhenAssociatedMonthlyTimeExists_ThrowsBusinessValidationErrorException()
+        {
+            _mockRepository.HasAssociatedMonthlyTimeAsync(DefaultPactId).Returns(true);
+
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
+                _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId));
+
+            exception.Errors.Should().ContainSingle(e => e.Code == "WORKGROUP_EMPLOYEE_HAS_MONTHLY_TIME");
+            await _mockRepository.DidNotReceive().DeleteWorkGroupEmployeeAsync(Arg.Any<string>());
+        }
+
         #endregion
     }
 }
