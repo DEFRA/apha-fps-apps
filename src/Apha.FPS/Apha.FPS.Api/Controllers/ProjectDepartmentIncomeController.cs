@@ -92,6 +92,78 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns snapshot time income using the period_timecostcalcs delta (equivalent to SQL Server fPeriodTime).
+        /// Computes end-period snapshot minus start-period snapshot; rows with net zero time are excluded.
+        /// </summary>
+        /// <param name="project">Optional project code filter. When null, all projects are returned.</param>
+        /// <param name="startPeriod">The start (from) period number.</param>
+        /// <param name="endPeriod">The end (to) period number.</param>
+        /// <returns>List of time-based snapshot income rows.</returns>
+        [HttpGet("snapshot/time")]
+        public async Task<IActionResult> GetSnapshotTimeAsync(
+            [FromQuery] string? project,
+            [FromQuery] int startPeriod,
+            [FromQuery] int endPeriod)
+        {
+            var dtos = await _service.GetTimeSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return Ok(_mapper.Map<List<DepartmentIncomeTimeRes>>(dtos));
+        }
+
+        /// <summary>
+        /// Returns snapshot animal income using the period_proj_subcontract delta (equivalent to SQL Server fPeriodAnimals).
+        /// Computes end-period snapshot minus start-period snapshot; rows with net zero amount are excluded.
+        /// </summary>
+        /// <param name="project">Optional project code filter. When null, all projects are returned.</param>
+        /// <param name="startPeriod">The start (from) period number.</param>
+        /// <param name="endPeriod">The end (to) period number.</param>
+        /// <returns>List of animal-based snapshot income rows.</returns>
+        [HttpGet("snapshot/animals")]
+        public async Task<IActionResult> GetSnapshotAnimalsAsync(
+            [FromQuery] string? project,
+            [FromQuery] int startPeriod,
+            [FromQuery] int endPeriod)
+        {
+            var dtos = await _service.GetAnimalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return Ok(_mapper.Map<List<DepartmentIncomeAnimalRes>>(dtos));
+        }
+
+        /// <summary>
+        /// Returns snapshot exceptional income using the period_proj_subcontract delta (equivalent to SQL Server fPeriodExceptional).
+        /// Computes end-period snapshot minus start-period snapshot; rows with net zero amount are excluded (negatives retained).
+        /// </summary>
+        /// <param name="project">Optional project code filter. When null, all projects are returned.</param>
+        /// <param name="startPeriod">The start (from) period number.</param>
+        /// <param name="endPeriod">The end (to) period number.</param>
+        /// <returns>List of exceptional/additional snapshot income rows.</returns>
+        [HttpGet("snapshot/additional")]
+        public async Task<IActionResult> GetSnapshotAdditionalAsync(
+            [FromQuery] string? project,
+            [FromQuery] int startPeriod,
+            [FromQuery] int endPeriod)
+        {
+            var dtos = await _service.GetExceptionalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return Ok(_mapper.Map<List<DepartmentIncomeAdditionalRes>>(dtos));
+        }
+
+        /// <summary>
+        /// Returns snapshot per-project pivot totals as the union of the four fPeriod* snapshot diffs
+        /// (equivalent to SQL Server fPeriodTotals).
+        /// </summary>
+        /// <param name="project">Optional project code filter. When null, all projects are returned.</param>
+        /// <param name="startPeriod">The start (from) period number.</param>
+        /// <param name="endPeriod">The end (to) period number.</param>
+        /// <returns>List of per-project snapshot totals.</returns>
+        [HttpGet("snapshot/totals")]
+        public async Task<IActionResult> GetSnapshotTotalsAsync(
+            [FromQuery] string? project,
+            [FromQuery] int startPeriod,
+            [FromQuery] int endPeriod)
+        {
+            var dtos = await _service.GetTotalsSnapshotAsync(project, startPeriod, endPeriod);
+            return Ok(_mapper.Map<List<DepartmentIncomeTotalsRes>>(dtos));
+        }
+
+        /// <summary>
         /// Returns animal-based department income rows for the specified project and period range.
         /// Month defaults: monthFrom defaults to 1, monthTo defaults to 12 (or monthFrom) when null.
         /// </summary>

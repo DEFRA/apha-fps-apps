@@ -80,6 +80,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<PeriodProjSubContract> PeriodProjSubContracts { get; set; }
         public virtual DbSet<PeriodMonthlyOutput> PeriodMonthlyOutputs { get; set; }
+        public virtual DbSet<PeriodTimeCostCalcs> PeriodTimeCostCalcs { get; set; }
 
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
@@ -244,6 +245,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AnimalRequestViewMap());
             modelBuilder.Entity<AnimalRequestView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new PeriodTimeCostCalcsMap());
+
             modelBuilder.ApplyConfiguration(new PactProjectViewMap());
             modelBuilder.Entity<PactProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -288,6 +291,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodProjSubContractMap());
+            modelBuilder.Entity<PeriodProjSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -397,6 +401,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
+            modelBuilder.Entity<PeriodMonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+
         }
     }
 }

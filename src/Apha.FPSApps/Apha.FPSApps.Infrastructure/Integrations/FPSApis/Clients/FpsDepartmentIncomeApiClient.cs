@@ -67,6 +67,66 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<DepartmentIncomeTestDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<DepartmentIncomeTimeDto>>> GetTimeSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+        {
+            var url = BuildSnapshotTestUrl(FpsApiEndpoints.GetDepartmentIncomeSnapshotTime, project, startPeriod, endPeriod);
+            var response = await _http.GetAsync<List<DepartmentIncomeTimeRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<DepartmentIncomeTimeDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<DepartmentIncomeTimeDto>>>(response);
+            return ApiResponseDto<List<DepartmentIncomeTimeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+        {
+            var url = BuildSnapshotTestUrl(FpsApiEndpoints.GetDepartmentIncomeSnapshotAnimals, project, startPeriod, endPeriod);
+            var response = await _http.GetAsync<List<DepartmentIncomeAnimalRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<DepartmentIncomeAnimalDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<DepartmentIncomeAnimalDto>>>(response);
+            return ApiResponseDto<List<DepartmentIncomeAnimalDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<DepartmentIncomeAdditionalDto>>> GetExceptionalSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+        {
+            var url = BuildSnapshotTestUrl(FpsApiEndpoints.GetDepartmentIncomeSnapshotAdditional, project, startPeriod, endPeriod);
+            var response = await _http.GetAsync<List<DepartmentIncomeAdditionalRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<DepartmentIncomeAdditionalDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<DepartmentIncomeAdditionalDto>>>(response);
+            return ApiResponseDto<List<DepartmentIncomeAdditionalDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<DepartmentIncomeTotalsDto>>> GetTotalsSnapshotAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+        {
+            var url = BuildSnapshotTestUrl(FpsApiEndpoints.GetDepartmentIncomeSnapshotTotals, project, startPeriod, endPeriod);
+            var response = await _http.GetAsync<List<DepartmentIncomeTotalsRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<DepartmentIncomeTotalsDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<DepartmentIncomeTotalsDto>>>(response);
+            return ApiResponseDto<List<DepartmentIncomeTotalsDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,

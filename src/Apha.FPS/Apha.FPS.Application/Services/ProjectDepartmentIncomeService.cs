@@ -49,6 +49,30 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<DepartmentIncomeTestDto>>(results);
         }
 
+        public async Task<List<DepartmentIncomeTimeDto>> GetTimeSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod)
+        {
+            var results = await _repository.GetTimeSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return _mapper.Map<List<DepartmentIncomeTimeDto>>(results);
+        }
+
+        public async Task<List<DepartmentIncomeAnimalDto>> GetAnimalSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod)
+        {
+            var results = await _repository.GetAnimalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return _mapper.Map<List<DepartmentIncomeAnimalDto>>(results);
+        }
+
+        public async Task<List<DepartmentIncomeAdditionalDto>> GetExceptionalSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod)
+        {
+            var results = await _repository.GetExceptionalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return _mapper.Map<List<DepartmentIncomeAdditionalDto>>(results);
+        }
+
+        public async Task<List<DepartmentIncomeTotalsDto>> GetTotalsSnapshotAsync(string? project, int startPeriod, int endPeriod)
+        {
+            var results = await _repository.GetTotalsSnapshotAsync(project, startPeriod, endPeriod);
+            return _mapper.Map<List<DepartmentIncomeTotalsDto>>(results);
+        }
+
         public async Task<PaginatedResult<DepartmentIncomeTestDto>> GetPagedTestIncomeAsync(
             QueryParameters<string> query, string? project, int? monthFrom, int? monthTo)
         {

@@ -336,6 +336,352 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         // ─────────────────────────────────────────────────────────────────────────────
+        // GetTimeSnapshotIncomeAsync — mirrors SQL Server fPeriodTime (Snapshot Data tab)
+        //
+        // fPeriodTime SQL:
+        //   SELECT ..., Pay, NonPay, Overhead, Time, TotalCost
+        //   FROM Period_TimeCostCalcs WHERE period = @endPeriod
+        //   UNION ALL
+        //   SELECT ..., -Pay, -NonPay, -Overhead, -Time, -TotalCost
+        //   FROM Period_TimeCostCalcs WHERE period = @startPeriod
+        //   GROUP BY Project, OracleProjectCode, SubAccountCode, Month, DefraProject,
+        //            OCC, OPC, SPC, SCC, Name, GradeCode, SPNumber, ChargeRate
+        //   HAVING abs(sum(Time)) > 0.001 AND Project NOT LIKE 'ZT%'
+        //     AND Project = Isnull(@project, Project)
+        //
+        // The end-period snapshot minus start-period snapshot produces the net change
+        // between the two period snapshots — negative values are expected when the
+        // earlier snapshot recorded more cost/time than the later one.
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<List<DepartmentIncomeTime>> GetTimeSnapshotIncomeAsync(
+            string? project, int startPeriod, int endPeriod)
+        {
+            var fpsYear = _requestContext.FpsYear;
+
+            // period_timecostcalcs.period stores the integer value of tblperiod.endperiod.
+            var validPeriodNumbers = (await _context.Periods
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .ToListAsync())
+                .Select(p => (int)p.EndPeriod)
+                .ToList();
+
+            var endRows = await _context.PeriodTimeCostCalcs
+                .AsNoTracking()
+                .Where(r => r.Period == endPeriod
+                         && validPeriodNumbers.Contains(r.Period)
+                         && (project == null || r.Project == project))
+                .ToListAsync();
+
+            var startRows = await _context.PeriodTimeCostCalcs
+                .AsNoTracking()
+                .Where(r => r.Period == startPeriod
+                         && validPeriodNumbers.Contains(r.Period)
+                         && (project == null || r.Project == project))
+                .ToListAsync();
+
+            // UNION ALL: end rows positive, start rows negated
+            var unionAll =
+                endRows.Select(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.Month,
+                    r.DefraProject,
+                    r.Occ,
+                    r.Opc,
+                    r.Spc,
+                    r.Scc,
+                    r.Name,
+                    r.GradeCode,
+                    r.SpNumber,
+                    ChargeRate = r.ChargeRate ?? 0m,
+                    Pay        = r.Pay      ?? 0m,
+                    NonPay     = r.NonPay   ?? 0m,
+                    Overhead   = r.Overhead ?? 0m,
+                    Time       = r.Time     ?? 0.0,
+                    TotalCost  = r.TotalCost ?? 0m,
+                })
+                .Concat(startRows.Select(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.Month,
+                    r.DefraProject,
+                    r.Occ,
+                    r.Opc,
+                    r.Spc,
+                    r.Scc,
+                    r.Name,
+                    r.GradeCode,
+                    r.SpNumber,
+                    ChargeRate = r.ChargeRate ?? 0m,
+                    Pay        = -(r.Pay      ?? 0m),
+                    NonPay     = -(r.NonPay   ?? 0m),
+                    Overhead   = -(r.Overhead ?? 0m),
+                    Time       = -(r.Time     ?? 0.0),
+                    TotalCost  = -(r.TotalCost ?? 0m),
+                }));
+
+            // GROUP BY key fields, SUM measures.
+            // HAVING abs(sum(Time)) > 0.001 AND Project NOT LIKE 'ZT%'
+            var grouped = unionAll
+                .GroupBy(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.Month,
+                    r.DefraProject,
+                    r.Occ,
+                    r.Opc,
+                    r.Spc,
+                    r.Scc,
+                    r.Name,
+                    r.GradeCode,
+                    r.SpNumber,
+                    r.ChargeRate,
+                })
+                .Select(g => new
+                {
+                    g.Key,
+                    Pay       = g.Sum(r => r.Pay),
+                    NonPay    = g.Sum(r => r.NonPay),
+                    Overhead  = g.Sum(r => r.Overhead),
+                    Time      = g.Sum(r => r.Time),
+                    TotalCost = g.Sum(r => r.TotalCost),
+                })
+                .Where(r => Math.Abs(r.Time) > 0.001
+                         && !(r.Key.Project?.StartsWith("ZT", StringComparison.OrdinalIgnoreCase) ?? false))
+                .OrderBy(r => r.Key.Project)
+                .ToList();
+
+            return grouped.Select(r => new DepartmentIncomeTime
+            {
+                Project           = r.Key.Project,
+                OracleProjectCode = r.Key.OracleProjectCode,
+                SubAccountCode    = r.Key.SubAccountCode,
+                Month             = (int)r.Key.Month,
+                DefraProject      = r.Key.DefraProject,
+                OCC               = FmtDouble(r.Key.Occ),
+                OPC               = r.Key.Opc,
+                SPC               = r.Key.Spc,
+                SCC               = FmtDouble(r.Key.Scc),
+                Name              = r.Key.Name,
+                GradeCode         = r.Key.GradeCode,
+                SpNumber          = r.Key.SpNumber,
+                ChargeRate        = r.Key.ChargeRate,
+                Pay               = r.Pay,
+                NonPay            = r.NonPay,
+                Overhead          = r.Overhead,
+                Time              = (decimal)r.Time,
+                TotalCost         = r.TotalCost,
+            }).ToList();
+        }
+
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // GetAnimalSnapshotIncomeAsync — mirrors SQL Server fPeriodAnimals (Snapshot Data tab)
+        //
+        // fPeriodAnimals SQL:
+        //   SELECT Project, OracleProjectCode, SubAccountCode, IsDefraProject, OPC, OCC, Month,
+        //          'SSSD' AS SPC, 35227 AS SCC, Sum(Amount) AS TotalCost
+        //   FROM (
+        //     SELECT ..., Amount  FROM Period_Proj_SubContract
+        //       WHERE AcctCode IN ('LargeAnimals','SmallAnimals','Mice') AND period = @endPeriod
+        //     UNION ALL
+        //     SELECT ..., -Amount FROM Period_Proj_SubContract
+        //       WHERE AcctCode IN ('LargeAnimals','SmallAnimals','Mice') AND period = @startPeriod
+        //   )
+        //   GROUP BY Project, OracleProjectCode, SubAccountCode, IsDefraProject, OPC, OCC, Month
+        //   HAVING abs(Sum(Amount)) > 0.001 AND Project = Isnull(@project, Project)
+        //
+        // SPC='SSSD' and SCC=35227 are fixed constants (same as qryDeptIncomeAnimals).
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<List<DepartmentIncomeAnimal>> GetAnimalSnapshotIncomeAsync(
+            string? project, int startPeriod, int endPeriod)
+            => await QueryPeriodSubContractSnapshotAsync(
+                   project, startPeriod, endPeriod, animals: true,
+                   map: g => new DepartmentIncomeAnimal
+                   {
+                       Project           = g.Project,
+                       OracleProjectCode = g.OracleProjectCode,
+                       SubAccountCode    = g.SubAccountCode,
+                       DefraProject      = g.IsDefraProject,
+                       OPC               = g.Opc,
+                       OCC               = FmtDouble(g.Occ),
+                       Month             = (int)g.Month,
+                       SPC               = "SSSD",
+                       SCC               = "35227",
+                       TotalCost         = g.TotalCost,
+                   });
+
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // GetExceptionalSnapshotIncomeAsync — mirrors SQL Server fPeriodExceptional (Snapshot Data tab)
+        //
+        // fPeriodExceptional SQL:
+        //   SELECT Project, OracleProjectCode, SubAccountCode, IsDefraProject, OPC, OCC, Month,
+        //          Sum(Amount) AS TotalCost
+        //   FROM (
+        //     SELECT ..., Amount  FROM Period_Proj_SubContract
+        //       WHERE AcctCode NOT IN ('LargeAnimals','SmallAnimals','Mice') AND period = @endPeriod
+        //     UNION ALL
+        //     SELECT ..., -Amount FROM Period_Proj_SubContract
+        //       WHERE AcctCode NOT IN ('LargeAnimals','SmallAnimals','Mice') AND period = @startPeriod
+        //   )
+        //   GROUP BY Project, OracleProjectCode, SubAccountCode, IsDefraProject, OPC, OCC, Month
+        //   HAVING abs(Sum(Amount)) > 0.001 AND Project = Isnull(@project, Project)
+        //
+        // NOTE: fPeriodExceptional uses abs(Sum(Amount)) > 0.001, so negative net rows are RETAINED
+        // (unlike the Current Data path which has no such diff). This differs from the earlier
+        // snapshot Exceptional stub that used Sum(Amount) > 0.
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<List<DepartmentIncomeAdditional>> GetExceptionalSnapshotIncomeAsync(
+            string? project, int startPeriod, int endPeriod)
+            => await QueryPeriodSubContractSnapshotAsync(
+                   project, startPeriod, endPeriod, animals: false,
+                   map: g => new DepartmentIncomeAdditional
+                   {
+                       Project           = g.Project,
+                       OracleProjectCode = g.OracleProjectCode,
+                       SubAccountCode    = g.SubAccountCode,
+                       DefraProject      = g.IsDefraProject,
+                       OPC               = g.Opc,
+                       OCC               = FmtDouble(g.Occ),
+                       Month             = (int)g.Month,
+                       TotalCost         = g.TotalCost,
+                   });
+
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // GetTotalsSnapshotAsync — mirrors SQL Server fPeriodTotals (Snapshot Data tab)
+        //
+        // fPeriodTotals SQL: UNION ALL of fPeriodAnimals + fPeriodExceptional + fPeriodTime
+        //   + fPeriodTests, then GROUP BY Project, OracleProjectCode summing TotalCost.
+        //   Uses the period-diff snapshot subs (NOT the live qryDeptIncome* views).
+        // ─────────────────────────────────────────────────────────────────────────────
+        public async Task<List<DepartmentIncomeTotals>> GetTotalsSnapshotAsync(
+            string? project, int startPeriod, int endPeriod)
+        {
+            var timeRows       = await GetTimeSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            var testRows       = await GetTestSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            var animalRows     = await GetAnimalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            var exceptionalRows = await GetExceptionalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+            return ComputeTotals(timeRows, testRows, animalRows, exceptionalRows);
+        }
+
+
+        // ── Shared period-diff over Period_Proj_SubContract (fPeriodAnimals / fPeriodExceptional) ──
+        //
+        // animals=true  → AcctCode IN  ('LargeAnimals','SmallAnimals','Mice')
+        // animals=false → AcctCode NOT IN ('LargeAnimals','SmallAnimals','Mice')
+        // End-period rows positive, start-period rows negated, group by key fields,
+        // HAVING abs(Sum(Amount)) > 0.001, optional project filter.
+        private async Task<List<T>> QueryPeriodSubContractSnapshotAsync<T>(
+            string? project, int startPeriod, int endPeriod, bool animals,
+            Func<PeriodSubContractGroup, T> map)
+        {
+            var fpsYear = _requestContext.FpsYear;
+
+            var validPeriodNumbers = (await _context.Periods
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .ToListAsync())
+                .Select(p => (int)p.EndPeriod)
+                .ToList();
+
+            bool AcctMatches(string? acct) =>
+                acct != null && (animals ? AnimalAcctCodes.Contains(acct) : !AnimalAcctCodes.Contains(acct));
+
+            var endRows = (await _context.PeriodProjSubContracts
+                .AsNoTracking()
+                .Where(r => r.Period == endPeriod
+                         && validPeriodNumbers.Contains((int)r.Period)
+                         && (project == null || r.Project == project))
+                .ToListAsync())
+                .Where(r => AcctMatches(r.AcctCode))
+                .ToList();
+
+            var startRows = (await _context.PeriodProjSubContracts
+                .AsNoTracking()
+                .Where(r => r.Period == startPeriod
+                         && validPeriodNumbers.Contains((int)r.Period)
+                         && (project == null || r.Project == project))
+                .ToListAsync())
+                .Where(r => AcctMatches(r.AcctCode))
+                .ToList();
+
+            // UNION ALL: end rows positive, start rows negated
+            var unionAll =
+                endRows.Select(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.IsDefraProject,
+                    r.Opc,
+                    r.Occ,
+                    Month  = r.Month ?? 0.0,
+                    Amount = r.Amount ?? 0m,
+                })
+                .Concat(startRows.Select(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.IsDefraProject,
+                    r.Opc,
+                    r.Occ,
+                    Month  = r.Month ?? 0.0,
+                    Amount = -(r.Amount ?? 0m),
+                }));
+
+            return unionAll
+                .GroupBy(r => new
+                {
+                    r.Project,
+                    r.OracleProjectCode,
+                    r.SubAccountCode,
+                    r.IsDefraProject,
+                    r.Opc,
+                    r.Occ,
+                    r.Month,
+                })
+                .Select(g => new PeriodSubContractGroup
+                {
+                    Project           = g.Key.Project,
+                    OracleProjectCode = g.Key.OracleProjectCode,
+                    SubAccountCode    = g.Key.SubAccountCode,
+                    IsDefraProject    = g.Key.IsDefraProject,
+                    Opc               = g.Key.Opc,
+                    Occ               = g.Key.Occ,
+                    Month             = g.Key.Month,
+                    TotalCost         = g.Sum(r => r.Amount),
+                })
+                .Where(g => Math.Abs(g.TotalCost) > 0.001m)
+                .OrderBy(g => g.Project)
+                .Select(map)
+                .ToList();
+        }
+
+        // Intermediate grouped shape for Period_Proj_SubContract snapshot diffs.
+        private sealed class PeriodSubContractGroup
+        {
+            public string? Project { get; init; }
+            public string? OracleProjectCode { get; init; }
+            public string? SubAccountCode { get; init; }
+            public string IsDefraProject { get; init; } = "No";
+            public string? Opc { get; init; }
+            public double? Occ { get; init; }
+            public double Month { get; init; }
+            public decimal TotalCost { get; init; }
+        }
+
+
+        // ─────────────────────────────────────────────────────────────────────────────
         // GetAnimalIncomeAsync — mirrors qryDeptIncomeAnimals SELECT
         //
         // Access SQL:

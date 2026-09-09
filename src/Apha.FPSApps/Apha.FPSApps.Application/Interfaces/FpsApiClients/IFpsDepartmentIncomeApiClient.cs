@@ -21,6 +21,30 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
             int? startPeriod = null,
             int? endPeriod = null);
 
+        // Snapshot time income — uses period_timecostcalcs delta (fPeriodTime equivalent)
+        Task<ApiResponseDto<List<DepartmentIncomeTimeDto>>> GetTimeSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null);
+
+        // Snapshot animal income — uses period_proj_subcontract delta (fPeriodAnimals equivalent)
+        Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null);
+
+        // Snapshot exceptional income — uses period_proj_subcontract delta (fPeriodExceptional equivalent)
+        Task<ApiResponseDto<List<DepartmentIncomeAdditionalDto>>> GetExceptionalSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null);
+
+        // Snapshot totals — union of the four fPeriod* snapshot diffs (fPeriodTotals equivalent)
+        Task<ApiResponseDto<List<DepartmentIncomeTotalsDto>>> GetTotalsSnapshotAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null);
+
         Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,

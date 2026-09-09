@@ -8,6 +8,18 @@ namespace Apha.FPS.Application.Interfaces
         Task<List<DepartmentIncomeTimeDto>> GetTimeIncomeAsync(string? project, int? monthFrom, int? monthTo);
         Task<PaginatedResult<DepartmentIncomeTimeDto>> GetPagedTimeIncomeAsync(QueryParameters<string> query, string? project, int? monthFrom, int? monthTo);
 
+        // Snapshot time income — uses period_timecostcalcs delta (equivalent to SQL Server fPeriodTime)
+        Task<List<DepartmentIncomeTimeDto>> GetTimeSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
+        // Snapshot animal income — uses period_proj_subcontract delta (equivalent to SQL Server fPeriodAnimals)
+        Task<List<DepartmentIncomeAnimalDto>> GetAnimalSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
+        // Snapshot exceptional income — uses period_proj_subcontract delta (equivalent to SQL Server fPeriodExceptional)
+        Task<List<DepartmentIncomeAdditionalDto>> GetExceptionalSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
+        // Snapshot totals — union of the four fPeriod* snapshot diffs (equivalent to SQL Server fPeriodTotals)
+        Task<List<DepartmentIncomeTotalsDto>> GetTotalsSnapshotAsync(string? project, int startPeriod, int endPeriod);
+
         Task<List<DepartmentIncomeTestDto>> GetTestIncomeAsync(string? project, int? monthFrom, int? monthTo);
         Task<PaginatedResult<DepartmentIncomeTestDto>> GetPagedTestIncomeAsync(QueryParameters<string> query, string? project, int? monthFrom, int? monthTo);
 

@@ -16,6 +16,21 @@ namespace Apha.FPS.Core.Interfaces
         // end-period snapshot minus start-period snapshot, HAVING abs(sum(volume)) > 0
         Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
 
+        // Snapshot time income using period_timecostcalcs delta (fPeriodTime equivalent):
+        // end-period snapshot minus start-period snapshot, HAVING abs(sum(time)) > 0.001 AND project NOT LIKE 'ZT%'
+        Task<List<DepartmentIncomeTime>> GetTimeSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
+        // Snapshot animal income using period_proj_subcontract delta (fPeriodAnimals equivalent):
+        // AcctCode IN ("LargeAnimals","SmallAnimals","Mice"), HAVING abs(sum(amount)) > 0.001
+        Task<List<DepartmentIncomeAnimal>> GetAnimalSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
+        // Snapshot exceptional income using period_proj_subcontract delta (fPeriodExceptional equivalent):
+        // AcctCode NOT IN ("LargeAnimals","SmallAnimals","Mice"), HAVING abs(sum(amount)) > 0.001 (negatives retained)
+        Task<List<DepartmentIncomeAdditional>> GetExceptionalSnapshotIncomeAsync(string? project, int startPeriod, int endPeriod);
+
+        // Snapshot totals — union of the four fPeriod* snapshot diffs (fPeriodTotals equivalent)
+        Task<List<DepartmentIncomeTotals>> GetTotalsSnapshotAsync(string? project, int startPeriod, int endPeriod);
+
         // AcctCode IN ("LargeAnimals","SmallAnimals","Mice") filter enforced in implementation
         Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeAsync(string? project, int monthFrom, int monthTo);
         Task<PagedData<DepartmentIncomeAnimal>> GetPagedAnimalIncomeAsync(PaginationParameters<string> query, string? project, int monthFrom, int monthTo);

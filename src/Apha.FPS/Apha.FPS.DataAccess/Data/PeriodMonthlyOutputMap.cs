@@ -28,6 +28,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Volume).HasColumnName("volume");
             entity.Property(e => e.TestPrice).HasColumnType("money").HasColumnName("testprice");
             entity.Property(e => e.TotalCost).HasColumnType("money").HasColumnName("totalcost");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }
