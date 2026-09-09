@@ -1,6 +1,7 @@
 var AdditionalCostConfig = {
     getJobCode: function () { return ''; },
     requireJobCodeForAdd: false,
+    fromProjectPlanning: false,
     onSaved: function () { },
     onUpdated: function () { },
     onDeleted: function () { }
@@ -13,8 +14,11 @@ function addAdditionalCost() {
         return;
     }
     showLoader();
+    var fromProjectPlanning = AdditionalCostConfig.fromProjectPlanning === true;
+    var createUrl = '/FPS/AdditionalCostJob/Create?jobCode=' + encodeURIComponent(jobCode)
+        + '&fromProjectPlanning=' + encodeURIComponent(fromProjectPlanning);
     $.ajax({
-        url: '/FPS/AdditionalCostJob/Create?jobCode=' + encodeURIComponent(jobCode),
+        url: createUrl,
         type: 'GET',
         success: function (html) {
             $('#modaPopupBody').html(html);
@@ -76,7 +80,12 @@ function editAdditionalCost(btn) {
     $.ajax({
         url: '/FPS/AdditionalCostJob/Edit',
         type: 'GET',
-        data: { jobCode: jobCode, account: account, description: description },
+        data: {
+            jobCode: jobCode,
+            account: account,
+            description: description,
+            fromProjectPlanning: AdditionalCostConfig.fromProjectPlanning === true
+        },
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
