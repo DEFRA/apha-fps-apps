@@ -1,8 +1,10 @@
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @using Apha.FPSApps.Web.Models.Components.DataGrid
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProgramProjectViewModel
 @{
     ViewData["Title"] = Model.IsProjectGroupMode ? "Plan Project Group Individually" : "Plan Projects Individually";
+    var allowEdit = !string.Equals(FyContext.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
 }
 
 <main id="main-content">
@@ -91,7 +93,7 @@
                                                            class="govuk-input govuk-!-font-size-16"
                                                            style="width:160px;">
                                                     <input type="hidden" id="hdnSelectedProject" value="@Model.SelectedProjectCode" />
-                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="@(string.IsNullOrWhiteSpace(Model.SelectedProjectCode) ? "display:none;" : "")" onclick="planThisProject()">
+                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="@(string.IsNullOrWhiteSpace(Model.SelectedProjectCode) ? "display:none;" : "")" allow-edit="@allowEdit" onclick="planThisProject()">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
                                                     </button>
                                                 </div>

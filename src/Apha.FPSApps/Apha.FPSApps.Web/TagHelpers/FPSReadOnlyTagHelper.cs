@@ -12,6 +12,38 @@ namespace Apha.FPSApps.Web.TagHelpers
     {
         // Controllers/pages on which the read-only disable logic should never apply
         private const string UserPermissionController = "UserPermission";
+        private const string ProjectPlanningController = "ProjectPlanning";
+
+        // Controllers whose grids/popups are only ever used from the Project Planning screen.
+        // Their buttons should follow the same Planning(enabled)/Closed(disabled) rule as ProjectPlanning itself.
+        private static readonly string[] ProjectPlanningGroupControllers =
+        {
+            "StaffJob",
+            "AnimalJob",
+            "TestPlanJob",
+            "AdditionalCostJob"
+        };
+
+        // BulkRates supports FEC (Open-year), Staff and Animal (Planned-year) requests, so its buttons
+        // must remain enabled during Planning, not just when the year is Open. Kept as its own group
+        // (rather than folded into ProjectPlanningGroupControllers) since it is functionally unrelated to
+        // Project Planning; BulkRatesController.CanCreateForYear already governs per-job-type eligibility
+        // server-side, so this tag helper only needs to avoid the default Closed-only carve-out.
+        private static readonly string[] BulkRatesGroupControllers =
+        {
+            "BulkRates"
+        };
+
+        // ProjectTestPlanActual hosts its own "Planned Time (FPS)" grid (Index / LoadTestPlanGrid actions)
+        // instead of delegating to TestPlanJobController. Only those specific actions should follow the
+        // Planning(enabled)/Closed(disabled) rule; its "Actual Tests (PACT)" grid (LoadCompareTests2Grid)
+        // must remain excluded and fall through to the default (always disabled in read-only) behavior.
+        private const string ProjectTestPlanActualController = "ProjectTestPlanActual";
+        private static readonly string[] ProjectTestPlanActualPlanningActions =
+        {
+            "Index",
+            "LoadTestPlanGrid"
+        };
 
         private readonly IFpsYearContext _fy;
 
@@ -31,8 +63,7 @@ namespace Apha.FPSApps.Web.TagHelpers
         {
             // Disable button only when year is read-only AND editing is not explicitly allowed
             // This allows specific buttons to remain enabled even in read-only mode.
-            // The UserPermission page is exempt: its buttons are never disabled by year read-only state.
-            if (_fy.IsReadOnly && !AllowEdit && !IsUserPermissionPage())
+            if (_fy.IsReadOnly && !AllowEdit && ShouldDisableForCurrentPage())
             {
                 output.Attributes.SetAttribute("disabled", "disabled");
             }
@@ -45,6 +76,87 @@ namespace Apha.FPSApps.Web.TagHelpers
         {
             var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
             return string.Equals(controller, UserPermissionController, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsProjectPlanningPage()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            return string.Equals(controller, ProjectPlanningController, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsProjectPlanningGroupController()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            if (controller is null)
+            {
+                return false;
+            }
+
+            foreach (var name in ProjectPlanningGroupControllers)
+            {
+                if (string.Equals(controller, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsBulkRatesGroupController()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            if (controller is null)
+            {
+                return false;
+            }
+
+            foreach (var name in BulkRatesGroupControllers)
+            {
+                if (string.Equals(controller, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsProjectTestPlanActualPlanningAction()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            if (!string.Equals(controller, ProjectTestPlanActualController, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var action = ViewContext?.RouteData.Values["action"]?.ToString();
+            foreach (var name in ProjectTestPlanActualPlanningActions)
+            {
+                if (string.Equals(action, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool ShouldDisableForCurrentPage()
+        {
+            if (IsUserPermissionPage())
+            {
+                return false;
+            }
+
+            if (IsProjectPlanningPage() || IsProjectPlanningGroupController() ||
+                IsBulkRatesGroupController() || IsProjectTestPlanActualPlanningAction())
+            {
+                return string.Equals(_fy.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
+            }
+
+            // default for all other pages
+            return true;
         }
     }
 }
