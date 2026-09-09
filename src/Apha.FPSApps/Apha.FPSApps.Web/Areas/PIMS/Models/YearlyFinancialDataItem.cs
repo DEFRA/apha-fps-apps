@@ -20,72 +20,72 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
        
         [Display(Name = "PP/Acc")]
         [CurrencyRange]
-        [GridColumn(Order = 2, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 2, Width = 90, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? BfBudget { get; set; }
 
       
         [Display(Name = "Customer Income")]
         [CurrencyRange]
-        [GridColumn(Order = 3, Width = 115, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 3, Width = 115, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? PyBudget { get; set; }
 
         
         [Display(Name = "VLA Budget")]
         [CurrencyRange]
-        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? VlaBudget { get; set; }
 
         
         [Display(Name = "Actual Exp")]
         [CurrencyRange]
-        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? ActualExpenditure { get; set; }
 
         
         [Display(Name = "Seedcorn")]
         [CurrencyRange]
-        [GridColumn(Order = 6, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 6, Width = 90, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? Seedcorn { get; set; }
 
         
         [Display(Name = "Man Hours")]
-        [GridColumn(Order = 7, Width = 90, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Order = 7, Width = 90, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public double? ManHours { get; set; }
 
         
         [Display(Name = "Pay Costs")]
         [CurrencyRange]
-        [GridColumn(Order = 8, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 8, Width = 90, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? PayCosts { get; set; }
 
         
         [Display(Name = "Non-Pay & OH")]
         [CurrencyRange]
-        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? NonPayOhCosts { get; set; }
 
         
         [Display(Name = "Test Costs")]
         [CurrencyRange]
-        [GridColumn(Order = 10, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 10, Width = 90, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? TestCosts { get; set; }
 
         
         [Display(Name = "Project Specific")]
         [CurrencyRange]
-        [GridColumn(Order = 11, Width = 100, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 11, Width = 100, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? NonAnimalCosts { get; set; }
 
         
         [Display(Name = "Animal Costs")]
         [CurrencyRange]
-        [GridColumn(Order = 12, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 12, Width = 90, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? AnimalCosts { get; set; }
 
         
         [Display(Name = "Exc/Adj")]
         [CurrencyRange]
-        [GridColumn(Order = 13, Width = 80, Type = GridColumnType.GbpValue, IsFilterable = false)]
+        [GridColumn(Order = 13, Width = 80, Type = GridColumnType.GbpValueRounded, IsFilterable = false)]
         public decimal? Adjustment { get; set; }
 
        

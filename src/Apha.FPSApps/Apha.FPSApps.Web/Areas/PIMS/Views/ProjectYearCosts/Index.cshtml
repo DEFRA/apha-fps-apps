@@ -948,8 +948,11 @@
             alert('Please select a project and year before exporting.');
             return;
         }
-        window.location.href = '/PIMS/ProjectYearCosts/ExportToExcel?project=' +
-            encodeURIComponent(project) + '&year=' + encodeURIComponent(year);
+       var projectCode = encodeURIComponent(project);
+    var year = encodeURIComponent(year);
+
+    var url = '/PIMS/ProjectYearCosts/ExportToExcel?project=' + projectCode + '&year=' + year;
+    window.downloadFile(url, 'projectyearcosts_' + project + '_' + year + '.xlsx', { method: 'get' });
     });
 </script>
 }
