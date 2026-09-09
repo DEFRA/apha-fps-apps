@@ -22,6 +22,7 @@ else
         .ReadFrom.Configuration(context.Configuration)  // load min levels from appsettings.json
         .UseStructuredConsoleLogging();
     });
+
 }
 
 // Extracted to methods for testability
