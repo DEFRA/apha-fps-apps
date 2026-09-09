@@ -196,7 +196,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
             Status = JobStatus.Running,
             StartedAt = startedAt,
             RequestedAtUtc = requestedAtUtc,
-            FpsYear = fpsYear
+            FpsYear = fpsYear,
+            TargetFpsYear = fpsYear
         };
 
         int executionId = 0;

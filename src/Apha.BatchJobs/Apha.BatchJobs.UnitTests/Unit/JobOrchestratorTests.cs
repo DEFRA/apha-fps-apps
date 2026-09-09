@@ -1627,6 +1627,20 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
+    public async Task RunAsync_WhenParametersHaveTargetYear_PassesItAsRecordTargetFpsYear()
+    {
+        SetupSuccessJobWithFpsYear("TargetFpsYearPropagationJob", fpsYear: 2027);
+
+        await _orchestrator.RunAsync(
+            "TargetFpsYearPropagationJob", RunMode.Manual, Guid.NewGuid(), "test-user",
+            parametersJson: "{\"plannedYear\":2027}");
+
+        await _execRepo.Received(1).CreateExecutionRecordAsync(
+            Arg.Is<JobExecutionRecord>(r => r.TargetFpsYear == 2027),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task RunAsync_WhenPlannedYearAndTargetFpsYearDisagree_ThrowsBeforeAnyClaim()
     {
         SetupInitiatedExecution("ConflictingYearFieldsJob");
