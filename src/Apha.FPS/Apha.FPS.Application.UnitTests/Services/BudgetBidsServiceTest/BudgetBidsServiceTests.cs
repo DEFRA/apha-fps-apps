@@ -60,7 +60,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
 
             Assert.Contains(ex.Errors, e =>
                 e.Code == "BID_HAS_RELATED_PURCHASES" &&
-                e.Message == "The record cannot be deleted because it is being used elsewhere.");
+                e.Message == "The record cannot be deleted because it has related purchases.");
         }
 
         [Fact]
