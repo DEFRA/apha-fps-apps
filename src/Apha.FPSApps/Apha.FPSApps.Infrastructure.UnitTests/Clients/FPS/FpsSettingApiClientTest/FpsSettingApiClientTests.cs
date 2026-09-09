@@ -536,5 +536,107 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsSettingApiClientT
         }
 
         #endregion
+
+        #region SaveYearEndSettingAsync
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenApiReturnsSuccess_ReturnsMappedSettingDto()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2025 };
+            var req = new FpsSettingReq { Id = "HoursInDay", Setting = "7.5", FpsYear = 2025 };
+            var apiResponse = new ApiResponse<FpsSettingRes>
+            {
+                Success = true,
+                Data = new FpsSettingRes { Id = "HoursInDay", Setting = "7.5", FpsYear = 2025 }
+            };
+            var expectedDto = ApiResponseDto<SettingDto>.SuccessResponse(
+                new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2025 });
+
+            _mapper.Map<FpsSettingReq>(dto).Returns(req);
+            _http.PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save-yearend", req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<SettingDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal("HoursInDay", result.Data?.Id);
+            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save-yearend", req);
+            _mapper.Received(1).Map<ApiResponseDto<SettingDto>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "BadKey" };
+            var req = new FpsSettingReq { Id = "BadKey" };
+            var errors = new List<ApiError> { new ApiError { Message = "Validation error", Code = "VALIDATION_ERROR" } };
+            var apiResponse = new ApiResponse<FpsSettingRes> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<SettingDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Validation error", Code = "VALIDATION_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _mapper.Map<FpsSettingReq>(dto).Returns(req);
+            _http.PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save-yearend", req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<SettingDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save-yearend", req);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_MapsInputDtoToRequestBeforePosting()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "Key" };
+            var req = new FpsSettingReq { Id = "Key" };
+            var apiResponse = new ApiResponse<FpsSettingRes> { Success = true, Data = new FpsSettingRes() };
+            var expectedDto = ApiResponseDto<SettingDto>.SuccessResponse(new SettingDto());
+
+            _mapper.Map<FpsSettingReq>(dto).Returns(req);
+            _http.PostAsync<FpsSettingReq, FpsSettingRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<SettingDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            _mapper.Received(1).Map<FpsSettingReq>(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_CallsCorrectEndpointUrl()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "Key" };
+            var req = new FpsSettingReq { Id = "Key" };
+            var apiResponse = new ApiResponse<FpsSettingRes> { Success = true, Data = new FpsSettingRes() };
+
+            _mapper.Map<FpsSettingReq>(dto).Returns(req);
+            _http.PostAsync<FpsSettingReq, FpsSettingRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<SettingDto>>(apiResponse)
+                   .Returns(ApiResponseDto<SettingDto>.SuccessResponse(new SettingDto()));
+
+            // Act
+            await _client.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            await _http.Received(1).PostAsync<FpsSettingReq, FpsSettingRes>("api/v1/setting/save-yearend", req);
+        }
+
+        #endregion
     }
 }

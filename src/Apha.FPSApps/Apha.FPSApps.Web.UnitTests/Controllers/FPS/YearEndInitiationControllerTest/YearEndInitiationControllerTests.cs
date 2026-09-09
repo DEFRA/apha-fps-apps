@@ -636,7 +636,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         {
             // Arrange
             var dto = new SettingDto { Id = "HoursInDay", Setting = "8", FpsYear = 2024 };
-            _settingService.SaveSettingAsync(dto)
+            _settingService.SaveYearEndSettingAsync(dto)
                 .Returns(ApiResponseDto<SettingDto>.SuccessResponse(dto));
 
             // Act
@@ -646,7 +646,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
-            await _settingService.Received(1).SaveSettingAsync(dto);
+            await _settingService.Received(1).SaveYearEndSettingAsync(dto);
         }
 
         [Fact]
@@ -658,7 +658,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             {
                 new ApiErrorDto { Message = "Invalid value", Code = "VALIDATION_ERROR" }
             };
-            _settingService.SaveSettingAsync(dto)
+            _settingService.SaveYearEndSettingAsync(dto)
                 .Returns(ApiResponseDto<SettingDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
@@ -678,7 +678,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         {
             // Arrange
             var dto = new SettingDto { Id = "Key" };
-            _settingService.SaveSettingAsync(dto)
+            _settingService.SaveYearEndSettingAsync(dto)
                 .Returns(new ApiResponseDto<SettingDto> { Success = false, Errors = null });
 
             // Act
@@ -698,7 +698,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         {
             // Arrange
             var dto = new SettingDto { Id = "Key" };
-            _settingService.SaveSettingAsync(dto).ThrowsAsync(new Exception("Save failed"));
+            _settingService.SaveYearEndSettingAsync(dto).ThrowsAsync(new Exception("Save failed"));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _controller.SaveSetting(dto));
@@ -714,7 +714,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         {
             // Arrange
             var dto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, FpsYear = 2024 };
-            _monthHourService.SaveMonthHourAsync(dto)
+            _monthHourService.SaveYearEndMonthHourAsync(dto)
                 .Returns(ApiResponseDto<MonthHourDto>.SuccessResponse(dto));
 
             // Act
@@ -724,7 +724,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
-            await _monthHourService.Received(1).SaveMonthHourAsync(dto);
+            await _monthHourService.Received(1).SaveYearEndMonthHourAsync(dto);
         }
 
         [Fact]
@@ -736,7 +736,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             {
                 new ApiErrorDto { Message = "Invalid days value", Code = "VALIDATION_ERROR" }
             };
-            _monthHourService.SaveMonthHourAsync(dto)
+            _monthHourService.SaveYearEndMonthHourAsync(dto)
                 .Returns(ApiResponseDto<MonthHourDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
@@ -756,7 +756,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
         {
             // Arrange
             var dto = new MonthHourDto { Year = 2024, Month = 1 };
-            _monthHourService.SaveMonthHourAsync(dto)
+            _monthHourService.SaveYearEndMonthHourAsync(dto)
                 .Returns(new ApiResponseDto<MonthHourDto> { Success = false, Errors = null });
 
             // Act
@@ -768,6 +768,18 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.YearEndInitiationController
             Assert.False(value.GetProperty("success").GetBoolean());
             var errorsArray = value.GetProperty("errors");
             Assert.Equal("Failed to save month hour.", errorsArray[0].GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task SaveMonthHour_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1 };
+            _monthHourService.SaveYearEndMonthHourAsync(dto).ThrowsAsync(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _controller.SaveMonthHour(dto));
+            Assert.Equal("Save failed", exception.Message);
         }
 
         #endregion

@@ -465,5 +465,158 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // SaveYearEndMonthHourAsync — validation
+        // -----------------------------------------------------------------------
+
+        #region SaveYearEndMonthHourAsync — validation
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenDaysIsNegative_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -1, VidHours = 5, CvlHours = 3 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenVidHoursIsNegative_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = -5, CvlHours = 3 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenCvlHoursIsNegative_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = -3 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenAllValuesAreNegative_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = -1, VidHours = -5, CvlHours = -3 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // SaveYearEndMonthHourAsync — success
+        // -----------------------------------------------------------------------
+
+        #region SaveYearEndMonthHourAsync — success
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenAllValuesAreValid_ReturnsMappedDto()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
+            var entity = new MonthHour { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
+            var savedEntity = new MonthHour { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
+            var expectedDto = new MonthHourDto { Year = 2024, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2024 };
+
+            _mockMapper.Map<MonthHour>(dto).Returns(entity);
+            _mockRepository.SaveYearEndMonthHourAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndMonthHourAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Year.Should().Be(2024);
+            result.Month.Should().Be(3);
+            result.Days.Should().Be(20);
+
+            await _mockRepository.Received(1).SaveYearEndMonthHourAsync(entity);
+            _mockMapper.Received(1).Map<MonthHour>(dto);
+            _mockMapper.Received(1).Map<MonthHourDto>(savedEntity);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenValuesAreZero_PassesValidationAndCallsRepository()
+        {
+            // Arrange — zero is not negative, so validation should pass
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
+            var entity = new MonthHour { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
+            var savedEntity = new MonthHour { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
+            var expectedDto = new MonthHourDto { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
+
+            _mockMapper.Map<MonthHour>(dto).Returns(entity);
+            _mockRepository.SaveYearEndMonthHourAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndMonthHourAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            await _mockRepository.Received(1).SaveYearEndMonthHourAsync(entity);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenValuesAreNull_PassesValidationAndCallsRepository()
+        {
+            // Arrange — nullable decimal properties being null are not negative, so validation passes
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
+            var entity = new MonthHour { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
+            var savedEntity = new MonthHour { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
+            var expectedDto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
+
+            _mockMapper.Map<MonthHour>(dto).Returns(entity);
+            _mockRepository.SaveYearEndMonthHourAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndMonthHourAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            await _mockRepository.Received(1).SaveYearEndMonthHourAsync(entity);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = 3 };
+            var entity = new MonthHour { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = 3 };
+            _mockMapper.Map<MonthHour>(dto).Returns(entity);
+            _mockRepository.SaveYearEndMonthHourAsync(entity).Throws(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            exception.Message.Should().Be("Save failed");
+
+            await _mockRepository.Received(1).SaveYearEndMonthHourAsync(entity);
+        }
+
+        #endregion
     }
 }
