@@ -1,5 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -46,7 +47,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         #region DeleteBidAsync — related purchases validation
 
         [Fact]
-        public async Task DeleteBidAsync_WhenRelatedPurchasesExist_ThrowsInvalidOperationException()
+        public async Task DeleteBidAsync_WhenRelatedPurchasesExist_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             _repositoryMock
@@ -54,12 +55,12 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
                 .ReturnsAsync(true);
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 () => _sut.DeleteBidAsync(DefaultWorkGroup, DefaultAccount));
 
-            Assert.Equal(
-                "The record cannot be deleted because it is being used elsewhere.",
-                ex.Message);
+            Assert.Contains(ex.Errors, e =>
+                e.Code == "BID_HAS_RELATED_PURCHASES" &&
+                e.Message == "The record cannot be deleted because it is being used elsewhere.");
         }
 
         [Fact]
@@ -90,7 +91,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
                 .ReturnsAsync(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 () => _sut.DeleteBidAsync(DefaultWorkGroup, DefaultAccount));
 
             _repositoryMock.Verify(r => r.DeleteBidAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -127,7 +128,7 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
                 .ReturnsAsync(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 () => _sut.DeleteBidAsync(DefaultWorkGroup, DefaultAccount));
 
             _repositoryMock.Verify(r => r.HasRelatedPurchasesAsync(DefaultWorkGroup, DefaultAccount), Times.Once);
