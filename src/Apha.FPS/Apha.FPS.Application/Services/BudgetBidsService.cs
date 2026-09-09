@@ -97,7 +97,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError(
-                        "The record cannot be deleted because it is being used elsewhere.",
+                        "The record cannot be deleted because it has related purchases.",
                         "BID_HAS_RELATED_PURCHASES")
                 ]);
 
