@@ -283,7 +283,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveMilestoneFormDates(MilestoneFormDatesItem item)
+        public async Task<IActionResult> SaveMilestoneFormDates(MilestoneFormDatesItem item, bool isAddingNew = false)
         {
             if (!ModelState.IsValid)
             {
@@ -303,9 +303,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             MilestoneFormDatesDto dto = _mapper.Map<MilestoneFormDatesDto>(item);
             ApiResponseDto<MilestoneFormDatesDto> result =
-                await _milestoneService.SaveMilestoneFormDatesAsync(item.ParentProject, dto);
+                await _milestoneService.SaveMilestoneFormDatesAsync(item.ParentProject, dto, isAddingNew);
             return result.Success
-                ? Json(new { success = true, data = result.Data, message = "Financial year record saved successfully." })
+                ? Json(new { success = true, data = result.Data, message = isAddingNew ? "Financial year record saved successfully." : "Financial year record updated successfully." })
                 : Json(new { success = false, errors = result.Errors });
         }
 

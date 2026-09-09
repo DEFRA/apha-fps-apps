@@ -70,6 +70,7 @@ namespace Apha.Common.Constants
         public const string GetAllMilestoneFormDates = "api/v1/milestone/{0}/formdates";
         public const string GetMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
         public const string SaveMilestoneFormDates = "api/v1/milestone/{0}/formdates";
+        public const string SaveMilestoneFormDatesWithMode = "api/v1/milestone/{0}/formdates?isAddingNew={1}";
         public const string DeleteMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
 
         // Log Milestone

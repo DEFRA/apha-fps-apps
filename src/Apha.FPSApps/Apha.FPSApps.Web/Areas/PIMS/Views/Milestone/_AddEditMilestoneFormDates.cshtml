@@ -18,6 +18,7 @@
             <form id="editFormDatesForm" novalidate>
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="ParentProject" />
+                <input type="hidden" name="isAddingNew" value="@((ViewBag.IsAddingNew == true).ToString().ToLowerInvariant())" />
 
                 <div class="govuk-error-summary" role="alert"
                      aria-labelledby="editFormDatesErrorTitle" tabindex="-1" style="display: none;">

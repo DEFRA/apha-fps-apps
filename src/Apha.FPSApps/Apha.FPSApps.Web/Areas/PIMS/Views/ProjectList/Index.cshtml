@@ -78,10 +78,7 @@
             {
                 <text>showAlertMessage('@Html.Raw(TempData["SuccessMessage"])', AlertType.SUCCESS);</text>
             }
-            @if (TempData["Error"] != null)
-            {
-                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
-            }
+           
 
             $('#addBtn').on('click', function () {
                 window.location.href = '@Url.Action("Index", "ProposedProject", new { area = "PIMS" })';

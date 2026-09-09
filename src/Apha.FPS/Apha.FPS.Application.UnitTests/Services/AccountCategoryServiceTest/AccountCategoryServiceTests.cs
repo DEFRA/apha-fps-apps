@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -211,7 +212,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
         }
 
         [Fact]
-        public async Task AddAsync_DuplicateAccShortName_ThrowsInvalidOperationException()
+        public async Task AddAsync_DuplicateAccShortName_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = CreateTestDto(TestAccShortName, TestAccountDescription);
@@ -219,15 +220,17 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
             _repository.ExistsByAccShortNameAsync(TestAccShortName).Returns(true);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _service.AddAsync(dto));
 
-            Assert.Contains(TestAccShortName, exception.Message);
-            Assert.Contains("already exists", exception.Message);
+            var error = Assert.Single(exception.Errors);
+            Assert.Equal("ACCOUNT_CATEGORY_ALREADY_EXISTS", error.Code);
+            Assert.Contains(TestAccShortName, error.Message);
+            Assert.Contains("already exists", error.Message);
         }
 
         [Fact]
-        public async Task AddAsync_DuplicateAccShortNameDiffersOnlyByCase_ThrowsInvalidOperationException()
+        public async Task AddAsync_DuplicateAccShortNameDiffersOnlyByCase_ThrowsBusinessValidationErrorException()
         {
             // Arrange - duplicate detection must be case-insensitive
             var dto = CreateTestDto(TestAccShortName, TestAccountDescription);
@@ -235,10 +238,12 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
             _repository.ExistsByAccShortNameAsync(TestAccShortName).Returns(true);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _service.AddAsync(dto));
 
-            Assert.Contains("already exists", exception.Message);
+            var error = Assert.Single(exception.Errors);
+            Assert.Equal("ACCOUNT_CATEGORY_ALREADY_EXISTS", error.Code);
+            Assert.Contains("already exists", error.Message);
             await _repository.DidNotReceive().AddAsync(Arg.Any<AccountCategory>());
         }
 
@@ -322,18 +327,20 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_NonExistingEntity_ThrowsInvalidOperationException()
+        public async Task UpdateAsync_NonExistingEntity_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = CreateTestDto(TestAccShortName, TestAccountDescription);
             _repository.GetByIdAsync(TestAccShortName).Returns((AccountCategory?)null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _service.UpdateAsync(TestAccShortName, dto));
 
-            Assert.Contains(TestAccShortName, exception.Message);
-            Assert.Contains("not found", exception.Message);
+            var error = Assert.Single(exception.Errors);
+            Assert.Equal("ACCOUNT_CATEGORY_NOT_FOUND", error.Code);
+            Assert.Contains(TestAccShortName, error.Message);
+            Assert.Contains("not found", error.Message);
         }
 
         #endregion
@@ -370,16 +377,18 @@ namespace Apha.FPS.Application.UnitTests.Services.AccountCategoryServiceTest
         }
 
         [Fact]
-        public async Task DeleteAsync_WhenRecordIsReferenced_ThrowsInvalidOperationException()
+        public async Task DeleteAsync_WhenRecordIsReferenced_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             _repository.GetForeignKeyReferencesAsync(TestAccShortName).Returns(new List<string> { "tbladditionalcosts" });
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() =>
                 _service.DeleteAsync(TestAccShortName));
 
-            Assert.Contains("cannot be deleted", exception.Message);
+            var error = Assert.Single(exception.Errors);
+            Assert.Equal("ACCOUNT_CATEGORY_IN_USE", error.Code);
+            Assert.Contains("cannot be deleted", error.Message);
             await _repository.DidNotReceive().DeleteAsync(TestAccShortName);
         }
 

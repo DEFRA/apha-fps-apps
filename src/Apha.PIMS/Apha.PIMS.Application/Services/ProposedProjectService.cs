@@ -44,7 +44,7 @@ namespace Apha.PIMS.Application.Services
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError(
-                        "This project already exists in FPS. Only use this form for projects NOT on FPS.",
+                        "This project already exists in FPS.",
                         "PROJECT_EXISTS_IN_FPS")
                 ]);
 

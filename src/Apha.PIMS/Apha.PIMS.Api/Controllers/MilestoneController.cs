@@ -113,11 +113,11 @@ namespace Apha.PIMS.Api.Controllers
         /// <summary>Create or update a financial form dates record.</summary>
         [HttpPost("{parentProject}/formdates")]
         public async Task<IActionResult> SaveMilestoneFormDates(
-            string parentProject, [FromBody] MilestoneFormDatesReq request)
+            string parentProject, [FromBody] MilestoneFormDatesReq request, [FromQuery] bool isAddingNew = false)
         {
             MilestoneFormDatesDto dto = _mapper.Map<MilestoneFormDatesDto>(request);
             dto.ParentProject = parentProject;
-            MilestoneFormDatesDto result = await _service.SaveMilestoneFormDatesAsync(dto);
+            MilestoneFormDatesDto result = await _service.SaveMilestoneFormDatesAsync(dto, isAddingNew);
             return Ok(_mapper.Map<MilestoneFormDatesRes>(result));
         }
 

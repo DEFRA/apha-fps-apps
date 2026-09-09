@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -41,8 +42,12 @@ namespace Apha.FPS.Application.Services
             var exists = await _repository.ExistsByAccShortNameAsync(accountCategory.AccShortName);
 
             if (exists)
-                throw new InvalidOperationException(
-                    $"An account category with AccShortName '{accountCategory.AccShortName}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"An account category with AccShortName '{accountCategory.AccShortName}' already exists.",
+                        "ACCOUNT_CATEGORY_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<AccountCategory>(accountCategory);
             var result = await _repository.AddAsync(entity);
@@ -59,8 +64,12 @@ namespace Apha.FPS.Application.Services
             var existing = await _repository.GetByIdAsync(originalAccShortName);
 
             if (existing == null)
-                throw new InvalidOperationException(
-                    $"Account category with AccShortName '{originalAccShortName}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Account category with AccShortName '{originalAccShortName}' was not found.",
+                        "ACCOUNT_CATEGORY_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<AccountCategory>(accountCategory);
             var result = await _repository.UpdateAsync(entity);
@@ -75,7 +84,12 @@ namespace Apha.FPS.Application.Services
 
             if (referencedTables is { Count: > 0 })
             {
-                throw new InvalidOperationException("The selected record is being used on another page and cannot be deleted.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "The selected account category is being used by a workgroup in budget bids or by a project in additional cost and hence it cannot be deleted.",
+                        "ACCOUNT_CATEGORY_IN_USE")
+                ]);
             }
 
             return await _repository.DeleteAsync(accShortName);
