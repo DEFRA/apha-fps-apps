@@ -61,7 +61,7 @@
 
                         <div style="margin: 0 5px; flex-shrink: 0;">
                             <label class="govuk-label govuk-visually-hidden sup_font_weight_700" for="btnExport">Export</label>
-                            <button id="btnExport" type="button" class="govuk-button"
+                            <button id="btnExport" type="button" class="govuk-button" data-no-loader
                                     style="padding: 5px 10px; font-size: 16px; line-height: 1.2; margin-bottom: 2px;">
                                 Export
                             </button>
@@ -759,6 +759,12 @@
         'nav-animal-plan':     false,
         'nav-additional-cost': false
     };
+
+    var tabLoadContext = {};
+
+    function getCurrentLoadContextKey() {
+        return getSelectedProjectValue() + '|' + (document.getElementById('dpyear').value || '');
+    }
     // ── Panel visibility ──────────────────────────────────────────────────
     function showPanel(panelId) {
         document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
@@ -820,6 +826,9 @@
         var project = getSelectedProjectValue();
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
+
+        loadedTabs[tabId] = true;
+        tabLoadContext[tabId] = getCurrentLoadContextKey();
 
         if (tabId === 'nav-project-details') {
             loadProjectDetails(project, year);
@@ -915,11 +924,14 @@
 
                 showPanel(panelId);
 
-                // Mark as loaded on first visit so filter changes also refresh it
-                if (!loadedTabs[panelId]) {
+                var currentContext = getCurrentLoadContextKey();
+                var hasTabLoadedForContext = loadedTabs[panelId] && tabLoadContext[panelId] === currentContext;
+
+                if (!hasTabLoadedForContext) {
                     loadedTabs[panelId] = true;
+                    tabLoadContext[panelId] = currentContext;
+                    refreshTabById(panelId);
                 }
-                refreshTabById(panelId);
             });
         });
 
@@ -934,7 +946,15 @@
         });
         showPanel(defaultPanel);
 
-        if (loadedTabs[defaultPanel]) {
+        var initialContext = getCurrentLoadContextKey();
+        tabLoadContext[defaultPanel] = initialContext;
+
+        if (defaultPanel === 'nav-monthlyPact') {
+            setTimeout(function () {
+                refreshMonthlyPactTotals();
+                refreshMonthlyPactFpsPlanned();
+            }, 300);
+        } else if (loadedTabs[defaultPanel]) {
             setTimeout(function () { refreshTabById(defaultPanel); }, 300);
         }
     });
@@ -948,8 +968,17 @@
             alert('Please select a project and year before exporting.');
             return;
         }
-        window.location.href = '/PIMS/ProjectYearCosts/ExportToExcel?project=' +
+
+        var url = '/PIMS/ProjectYearCosts/ExportToExcel?project=' +
             encodeURIComponent(project) + '&year=' + encodeURIComponent(year);
+
+        if (typeof window.downloadFile === 'function') {
+            var fileName = 'ProjectYearCosts_' + project + '_' + year + '.xlsx';
+            window.downloadFile(url, fileName, { method: 'GET' });
+            return;
+        }
+
+        window.location.href = url;
     });
 </script>
 }

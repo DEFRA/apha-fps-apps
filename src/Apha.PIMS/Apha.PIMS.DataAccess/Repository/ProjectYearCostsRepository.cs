@@ -167,14 +167,18 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<PagedData<(MonthlyOutput Output, TestReqmt Reqmt)>> GetTestActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            List<(MonthlyOutput Output, TestReqmt Reqmt)> joined = await (
+            var rows = await (
                 from mo in _context.MonthlyOutputs.AsNoTracking()
                 join tr in _context.TestReqmts.AsNoTracking()
                     on new { mo.Year, mo.Testcode, mo.Buyer }
                     equals new { tr.Year, tr.Testcode, tr.Buyer }
                 where mo.Buyer == project && mo.Year == year
                 select new { mo, tr }
-            ).ToListAsync().ContinueWith(t => t.Result.Select(x => (x.mo, x.tr)).ToList());
+            ).ToListAsync();
+
+            List<(MonthlyOutput Output, TestReqmt Reqmt)> joined = rows
+                .Select(x => (x.mo, x.tr))
+                .ToList();
 
             string? search = paging.Search?.ToLower();
             if (!string.IsNullOrWhiteSpace(search))

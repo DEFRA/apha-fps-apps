@@ -468,6 +468,54 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectYearCostsRepositoryTe
             Assert.Equal(2d, result.Data.First().Output.Month);
         }
 
+        [Fact]
+        public async Task GetTestActualsAsync_Pagination_ReturnsRequestedPageWithTotalCount()
+        {
+            var reqmts = new List<TestReqmt>
+            {
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC010", Unitprice = 10m },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC020", Unitprice = 20m },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC030", Unitprice = 30m }
+            };
+            var outputs = new List<MonthlyOutput>
+            {
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC010", Month = 1, Workgroup = "WG1", Volume = 1 },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC020", Month = 2, Workgroup = "WG2", Volume = 2 },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC030", Month = 3, Workgroup = "WG3", Volume = 3 }
+            };
+
+            var repo = CreateRepository(testReqmts: reqmts, monthlyOutputs: outputs);
+            var paging = new PaginationParameters<string> { Page = 2, PageSize = 1 };
+
+            var result = await repo.GetTestActualsAsync("PP001", 2024, paging);
+
+            Assert.Single(result.Data);
+            Assert.Equal("TC020", result.Data.First().Output.Testcode);
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetStaffActualsAsync_Pagination_ReturnsRequestedPageWithTotalCount()
+        {
+            var data = new List<TimeCostCalcs>
+            {
+                MakeTimeCost("PP001", 2024, "AH003200", month: 1, name: "A"),
+                MakeTimeCost("PP001", 2024, "AH003200", month: 2, name: "B"),
+                MakeTimeCost("PP001", 2024, "AH003200", month: 3, name: "C")
+            };
+
+            var repo = CreateRepository(timeCostCalcs: data);
+            var paging = new PaginationParameters<string> { Page = 2, PageSize = 1 };
+
+            var result = await repo.GetStaffActualsAsync("PP001", 2024, paging);
+
+            Assert.Single(result.Data);
+            Assert.Equal(2d, result.Data.First().Month);
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+        }
+
         #endregion
     }
 }
