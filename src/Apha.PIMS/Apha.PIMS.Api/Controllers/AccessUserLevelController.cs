@@ -58,7 +58,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             AccessUserLevelDto? result = await _service.GetByIdAsync(systemid, decodedLogin, accesslevelid);
-            return result is null ? NotFound() : Ok(_mapper.Map<AccessUserLevelRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<AccessUserLevelRes>();
+            }
+
+            return Ok(_mapper.Map<AccessUserLevelRes>(result));
         }
 
         /// <summary>Create a new access user level assignment.</summary>
@@ -75,10 +80,24 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("{systemid:int}/{ntlogin}/{accesslevelid:int}")]
         public async Task<IActionResult> Delete(int systemid, string ntlogin, int accesslevelid)
         {
-            
+
             var decodedLogin = HttpUtility.UrlDecode(ntlogin);
             bool deleted = await _service.DeleteAsync(systemid, decodedLogin, accesslevelid);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

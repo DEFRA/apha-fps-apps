@@ -200,17 +200,21 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectCommentControllerTest
         }
 
         [Fact]
-        public async Task GetById_WhenCommentNotFound_ThrowsKeyNotFoundException()
+        public async Task GetById_WhenCommentNotFound_ReturnsJsonSuccessResponseWithNullData()
         {
             // Arrange
             var CommentNo = 999;
             _service.GetByIdAsync(CommentNo).Returns((CommentDto?)null);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.GetById(CommentNo));
+            // Act
+            var result = await _controller.GetById(CommentNo);
 
-            Assert.Equal($"Comment {CommentNo} not found.", exception.Message);
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<CommentRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
 
             await _service.Received(1).GetByIdAsync(CommentNo);
             _mapper.DidNotReceive().Map<CommentRes>(Arg.Any<CommentDto>());
