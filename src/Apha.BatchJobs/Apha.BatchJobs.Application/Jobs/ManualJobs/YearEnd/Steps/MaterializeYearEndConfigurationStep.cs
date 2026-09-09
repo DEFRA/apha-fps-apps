@@ -49,21 +49,8 @@ public sealed class MaterializeYearEndConfigurationStep : IYearEndDataSetupStep
             throw new InvalidOperationException($"No fps.job_queue row found for JobExecutionId {jobExecutionId}.");
         }
 
-        var (jobQueueId, persistedTargetFpsYear) = jobQueueEntry.Value;
-        if (!persistedTargetFpsYear.HasValue)
-        {
-            throw new InvalidOperationException($"fps.job_queue row {jobQueueId} has no target_fpsyear set.");
-        }
-
-        if (persistedTargetFpsYear.Value != context.TargetFpsYear.Value)
-        {
-            throw new InvalidOperationException(
-                $"Target year mismatch: fps.job_queue.target_fpsyear={persistedTargetFpsYear.Value} but execution context TargetFpsYear={context.TargetFpsYear.Value}.");
-        }
-
-        // job_queue.target_fpsyear is the authoritative source of truth (design decision 6);
-        // context.TargetFpsYear is only the derived value that was just cross-checked against it above.
-        var targetFpsYear = persistedTargetFpsYear.Value;
+        var (jobQueueId, _) = jobQueueEntry.Value;
+        var targetFpsYear = context.TargetFpsYear.Value;
 
         var existingSettings = await _repository.CountRowsByYearAsync(SettingsSchema, SettingsTable, "fpsyear", targetFpsYear, cancellationToken);
         if (existingSettings > 0)
