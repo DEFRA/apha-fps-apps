@@ -3,7 +3,7 @@
 @{
     var isEdit = Model.SubContCounter != 0;
     var projectOptionsListData = Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Projects ?? new List<object>());
-    var preselectedProject = Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project ?? string.Empty);
+    var preselectedProject = Model.Project ?? string.Empty;
 }
 
 <div class="modal-header flex-space-center">
