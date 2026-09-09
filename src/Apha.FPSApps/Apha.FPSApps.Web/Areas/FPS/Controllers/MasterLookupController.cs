@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var selectedTable = !string.IsNullOrWhiteSpace(tableName)
                 && tableNames.Contains(tableName, StringComparer.OrdinalIgnoreCase)
                 ? tableName
-                : null;
+                : tableNames.FirstOrDefault();
 
             var viewModel = new MasterLookupMaintenanceViewModel
             {

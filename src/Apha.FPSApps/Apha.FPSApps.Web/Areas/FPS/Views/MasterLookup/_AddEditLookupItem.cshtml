@@ -10,7 +10,7 @@
 
 <div class="modal-header">
     <h5 class="modal-title" id="lookupItemModalTitle">@title</h5>
-    <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 <div class="modal-body">
     <div class="govuk-error-summary" role="alert"
@@ -33,13 +33,13 @@
 
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Value">Value <span class="sup_color_red">*</span></label>
-                <input type="text" asp-for="Value" required class="govuk-input" maxlength="100">
+                <input type="text" asp-for="Value" required class="govuk-input" maxlength="50">
                 <span asp-validation-for="Value" class="govuk-error-message" style="display:none;"></span>
             </div>
         </form>
     </div>
 </div>
 <div class="modal-footer sup_flex_space_center">
-    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
     <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
 </div>
