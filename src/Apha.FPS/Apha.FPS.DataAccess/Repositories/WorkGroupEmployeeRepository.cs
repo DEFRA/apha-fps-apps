@@ -249,6 +249,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(e => e.WorkGroupGrade == wgGrade);
         }
 
+        public async Task<bool> HasAssociatedMonthlyTimeAsync(string pactId)
+        {
+            if (string.IsNullOrWhiteSpace(pactId))
+                return false;
+
+            return await _dbContext.MonthlyTimes
+                .AsNoTracking()
+                .AnyAsync(mt => mt.PactStaffId == pactId);
+        }
+
         public async Task<string> GetNextPactIdAsync()
         {
             var pactIds = await _dbContext.WorkGroupEmployees

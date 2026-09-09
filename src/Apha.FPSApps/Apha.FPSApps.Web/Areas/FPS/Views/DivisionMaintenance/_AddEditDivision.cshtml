@@ -32,7 +32,7 @@
 
                     <div class="govuk-form-group sup_margin_0">
                         <label class="govuk-label" asp-for="DivisionId">Division ID <span class="sup_color_red">*</span></label>
-                        <input type="number" asp-for="DivisionId" class="govuk-input" required min="1">
+                        <input type="text" asp-for="DivisionId" class="govuk-input js-numeric-integer" required inputmode="numeric" maxlength="10" max="2147483647" data-msg-range="Division ID must be a positive number">
                         <span asp-validation-for="DivisionId" class="govuk-error-message" style="display:none;"></span>
                     </div>
 
@@ -46,7 +46,7 @@
 
                     <div class="govuk-form-group sup_margin_0">
                         <label class="govuk-label" asp-for="DivName">Division Name <span class="sup_color_red">*</span></label>
-                        <input type="text" asp-for="DivName" required class="govuk-input" maxlength="255">
+                        <input type="text" asp-for="DivName" required class="govuk-input" maxlength="10">
                         <span asp-validation-for="DivName" class="govuk-error-message" style="display:none;"></span>
                     </div>
 

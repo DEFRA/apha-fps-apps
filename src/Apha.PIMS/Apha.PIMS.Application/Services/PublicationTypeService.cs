@@ -20,6 +20,16 @@ namespace Apha.PIMS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+        /// <summary>
+        /// Helper method for trimmed, case-insensitive string comparison.
+        /// </summary>
+        private static bool StringEqualsTrimmedIgnoreCase(string? a, string? b)
+        {
+            var trimmedA = (a ?? string.Empty).Trim();
+            var trimmedB = (b ?? string.Empty).Trim();
+            return string.Equals(trimmedA, trimmedB, StringComparison.OrdinalIgnoreCase);
+        }
+
         public async Task<List<PublicationTypeDto>> GetAllPublicationTypesAsync()
         {
             List<PublicationType> entities = await _repository.GetAllPublicationTypesAsync();
@@ -43,19 +53,34 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
-            bool exists = await _repository.PublicationTypeExistsAsync(dto.Type);
-            if (exists)
+            // Normalize the type with trimmed value
+            var normalizedType = (dto.Type ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(normalizedType))
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError("Type code is required.", "TYPE_REQUIRED")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
+
+            // Check if publication type with trimmed, case-insensitive match already exists
+            var existingType = await _repository.GetPublicationTypeByCodeAsync(normalizedType);
+            if (existingType != null)
             {
                 var errors = new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        $"Type code '{dto.Type}' already exists.",
+                        $"Publication type '{normalizedType}' already exists.",
                         "PUBLICATION_TYPE_ALREADY_EXISTS")
                 };
                 throw new BusinessValidationErrorException(errors);
             }
 
-            PublicationType entity = _mapper.Map<PublicationType>(dto);
+            // Create with normalized type
+            var entity = _mapper.Map<PublicationType>(dto);
+            entity.Type = normalizedType;
+
             PublicationType created = await _repository.AddPublicationTypeAsync(entity);
             return _mapper.Map<PublicationTypeDto>(created);
         }
@@ -64,38 +89,60 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
-            bool exists = await _repository.PublicationTypeExistsAsync(dto.Type);
-            if (!exists)
+            var normalizedType = (dto.Type ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(normalizedType))
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError("Type code is required.", "TYPE_REQUIRED")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
+
+            var existing = await _repository.GetPublicationTypeByCodeAsync(normalizedType);
+            if (existing is null)
             {
                 var errors = new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        $"Publication type with code '{dto.Type}' was not found.",
+                        $"Publication type '{normalizedType}' was not found.",
                         "PUBLICATION_TYPE_NOT_FOUND")
                 };
                 throw new BusinessValidationErrorException(errors);
             }
 
-            PublicationType entity = _mapper.Map<PublicationType>(dto);
+            var entity = _mapper.Map<PublicationType>(dto);
+            entity.Type = normalizedType;
+
             PublicationType updated = await _repository.UpdatePublicationTypeAsync(entity);
             return _mapper.Map<PublicationTypeDto>(updated);
         }
 
         public async Task<bool> DeletePublicationTypeAsync(string type)
         {
-            bool exists = await _repository.PublicationTypeExistsAsync(type);
-            if (!exists)
+            var normalizedType = (type ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(normalizedType))
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError("Type code is required.", "TYPE_REQUIRED")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
+
+            var existing = await _repository.PublicationTypeExistsAsync(normalizedType);
+            if (!existing)
             {
                 var errors = new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        $"Publication type with code '{type}' was not found.",
+                        $"Publication type '{normalizedType}' was not found.",
                         "PUBLICATION_TYPE_NOT_FOUND")
                 };
                 throw new BusinessValidationErrorException(errors);
             }
 
-            return await _repository.DeletePublicationTypeAsync(type);
+            return await _repository.DeletePublicationTypeAsync(normalizedType);
         }
 
         public async Task<bool> PublicationTypeExistsAsync(string type)

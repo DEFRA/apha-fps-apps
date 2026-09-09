@@ -49,12 +49,17 @@ namespace Apha.PIMS.Api.Controllers
 
         /// <summary>Retrieves a single risk rating by its identifier.</summary>
         /// <param name="riskid">The risk rating identifier.</param>
-        /// <returns>Returns <c>200 OK</c> with the matching <see cref="RiskRes"/>, or <c>404 Not Found</c>.</returns>
+        /// <returns>Returns <c>200 OK</c> with the matching <see cref="RiskRes"/>.</returns>
         [HttpGet("{riskId:int}")]
         public async Task<IActionResult> GetRiskRatingById(int riskId)
         {
             RiskDto? result = await _service.GetRiskRatingByIdAsync(riskId);
-            return result is null ? NotFound() : Ok(_mapper.Map<RiskRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<RiskRes>();
+            }
+
+            return Ok(_mapper.Map<RiskRes>(result));
         }
 
         /// <summary>Creates a new risk rating.</summary>
@@ -90,6 +95,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeleteRiskRatingAsync(riskId);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

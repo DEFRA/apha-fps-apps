@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -13,10 +14,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        
+
         private const string InternalCodeError = "INTERNAL_ERROR";
-       
-        private const string BaseUrl = "api/v1/radtrackprog";
 
         public PimsRadTrackProgApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -29,7 +28,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<RadTrackProgRes>>(BaseUrl);
+                var response = await _http.GetAsync<List<RadTrackProgRes>>(PimsApiEndpoints.GetAllRadTrackProgs);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<RadTrackProgDto>>>(response);
 
@@ -49,7 +48,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetPagedRadTrackProgs, query);
                 var response = await _http.GetAsync<List<RadTrackProgRes>>(url);
                 if (response.Success)
                 {
@@ -78,7 +77,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(program)}";
+                var url = string.Format(PimsApiEndpoints.GetRadTrackProgByProgram, Uri.EscapeDataString(program));
                 var response = await _http.GetAsync<RadTrackProgRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<RadTrackProgDto>>(response);
@@ -100,7 +99,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<RadTrackProgReq>(dto);
-                var response = await _http.PostAsync<RadTrackProgReq, RadTrackProgRes>(BaseUrl, request);
+                var response = await _http.PostAsync<RadTrackProgReq, RadTrackProgRes>(PimsApiEndpoints.CreateRadTrackProg, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<RadTrackProgDto>>(response);
 
@@ -121,7 +120,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<RadTrackProgReq>(dto);
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(program)}";
+                var url = string.Format(PimsApiEndpoints.UpdateRadTrackProg, Uri.EscapeDataString(program));
                 var response = await _http.PutAsync<RadTrackProgReq, RadTrackProgRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<RadTrackProgDto>>(response);
@@ -142,7 +141,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(program)}";
+                var url = string.Format(PimsApiEndpoints.DeleteRadTrackProg, Uri.EscapeDataString(program));
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
@@ -163,7 +162,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<string>>($"{BaseUrl}/programs");
+                var response = await _http.GetAsync<List<string>>(PimsApiEndpoints.GetAllRadTrackProgNames);
                 if (response.Success)
                     return ApiResponseDto<List<string>>.SuccessResponse(response.Data ?? []);
 

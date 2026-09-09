@@ -121,7 +121,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.AccessLevelControllerTest
         }
 
         [Fact]
-        public async Task GetById_ServiceReturnsNull_ReturnsNotFound()
+        public async Task GetById_ServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
         {
             // Arrange
             _service.GetByIdAsync(Arg.Any<int>(), Arg.Any<int>()).Returns((AccessLevelDto?)null);
@@ -130,7 +130,12 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.AccessLevelControllerTest
             var result = await _controller.GetById(99, 88);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<AccessLevelRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            _mapper.DidNotReceive().Map<AccessLevelRes>(Arg.Any<AccessLevelDto>());
         }
 
         #endregion
