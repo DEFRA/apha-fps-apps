@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Message ?? "An error occurred.");
-                    TempData["Error"] = error.Message ?? "An error occurred.";
+                    
                 }
             }
 
