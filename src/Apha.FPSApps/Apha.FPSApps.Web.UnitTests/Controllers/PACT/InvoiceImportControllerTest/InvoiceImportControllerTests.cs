@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IFpsYearContext _fpsYearContext;
         private readonly InvoiceImportController _controller;
 
         public InvoiceImportControllerTests()
@@ -34,12 +36,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
             _projectService = Substitute.For<IProjectService>();
             _monthService = Substitute.For<IMonthService>();
             _excelExportService = Substitute.For<IExcelExportService>();
+            _fpsYearContext = Substitute.For<IFpsYearContext>();
             _controller = new InvoiceImportController(
                 _mapper,
                 _invoiceService,
                 _projectService,
                 _monthService,
-                _excelExportService);
+                _excelExportService,
+                _fpsYearContext);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -80,7 +84,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
 
             _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>())
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
-            _invoiceService.GetFailedInvoiceImportAsync(Arg.Any<QueryParameters<string>>())
+            _invoiceService.GetFailedInvoiceImportAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<bool>())
                 .Returns(ApiResponseDto<List<InvoiceImportRowDto>>.SuccessResponse([], new PaginationDto()));
         }
 
@@ -807,6 +811,57 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
 
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task LoadFailedInvoiceImportGrid_ReadOnlyYear_PassesReadOnlyFlagToService()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            SetupDefaultServices();
+            _fpsYearContext.IsReadOnly.Returns(true);
+
+            // Act
+            await _controller.LoadFailedInvoiceImportGrid(request);
+
+            // Assert
+            await _invoiceService.Received(1)
+                .GetFailedInvoiceImportAsync(Arg.Any<QueryParameters<string>>(), true);
+        }
+
+        [Fact]
+        public async Task LoadFailedInvoiceImportGrid_EditableYear_PassesFalseFlagToService()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            SetupDefaultServices();
+            _fpsYearContext.IsReadOnly.Returns(false);
+
+            // Act
+            await _controller.LoadFailedInvoiceImportGrid(request);
+
+            // Assert
+            await _invoiceService.Received(1)
+                .GetFailedInvoiceImportAsync(Arg.Any<QueryParameters<string>>(), false);
+        }
+
+        [Fact]
+        public async Task LoadFailedInvoiceImportGrid_ReadOnlyYear_ReturnsGridWithNoData()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            SetupDefaultServices();
+            _fpsYearContext.IsReadOnly.Returns(true);
+            _invoiceService.GetFailedInvoiceImportAsync(Arg.Any<QueryParameters<string>>(), true)
+                .Returns(ApiResponseDto<List<InvoiceImportRowDto>>.SuccessResponse([], total: 0));
+
+            // Act
+            var result = await _controller.LoadFailedInvoiceImportGrid(request);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid = Assert.IsType<DataGridConfig<InvoiceImportFailedItem>>(partial.Model);
+            Assert.Empty(grid.Data);
         }
 
         #endregion
