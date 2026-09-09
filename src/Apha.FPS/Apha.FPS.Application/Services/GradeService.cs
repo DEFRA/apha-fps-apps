@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -69,7 +70,12 @@ namespace Apha.FPS.Application.Services
             var existing = await _gradeRepository.GetByIdAsync(gradeDto.GradeCode);
             if (existing != null)
             {
-                throw new InvalidOperationException($"Grade '{gradeDto.GradeCode}' already exists for the current FPS year.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Grade '{gradeDto.GradeCode}' already exists for the current FPS year.",
+                        "GRADE_ALREADY_EXISTS")
+                ]);
             }
 
             var grade = _mapper.Map<Grade>(gradeDto);
@@ -105,7 +111,12 @@ namespace Apha.FPS.Application.Services
                 var conflictingGrade = await _gradeRepository.GetByIdAsync(gradeDto.GradeCode);
                 if (conflictingGrade != null)
                 {
-                    throw new InvalidOperationException($"Cannot rename to '{gradeDto.GradeCode}' — a grade with that code already exists for the current FPS year.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            $"Cannot rename to '{gradeDto.GradeCode}' — a grade with that code already exists for the current FPS year.",
+                            "GRADE_ALREADY_EXISTS")
+                    ]);
                 }
             }
 
@@ -132,22 +143,34 @@ namespace Apha.FPS.Application.Services
             // Guard: block delete if the grade is referenced by Division Grade records
             if (await _divisionGradeRepository.ExistsForGradeCodeAsync(gradeCode))
             {
-                throw new InvalidOperationException(
-                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more Division Grade records.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot delete grade '{gradeCode}' because it is referenced by one or more Division Grade records.",
+                        "GRADE_REFERENCED_BY_DIVISION_GRADE")
+                ]);
             }
 
             // Guard: block delete if the grade is referenced by RC Grade (ProfitCentreGrade) records
             if (await _profitCentreGradeRepository.ExistsForGradeCodeAsync(gradeCode))
             {
-                throw new InvalidOperationException(
-                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more RC Grade records.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot delete grade '{gradeCode}' because it is referenced by one or more RC Grade records.",
+                        "GRADE_REFERENCED_BY_PROFITCENTRE_GRADE")
+                ]);
             }
 
             // Guard: block delete if the grade is referenced by WG Grade (WorkgroupGrade) records
             if (await _workGroupGradeRepository.ExistsForGradeCodeAsync(gradeCode))
             {
-                throw new InvalidOperationException(
-                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more WG Grade records.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot delete grade '{gradeCode}' because it is referenced by one or more WG Grade records.",
+                        "GRADE_REFERENCED_BY_WORKGROUP_GRADE")
+                ]);
             }
 
             return await _gradeRepository.DeleteAsync(gradeCode);

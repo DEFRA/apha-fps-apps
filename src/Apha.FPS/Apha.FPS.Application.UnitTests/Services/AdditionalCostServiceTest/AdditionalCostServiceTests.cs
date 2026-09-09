@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -256,7 +257,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
         }
 
         [Fact]
-        public async Task AddAsync_WithDuplicateCompositeKey_ThrowsInvalidOperationException()
+        public async Task AddAsync_WithDuplicateCompositeKey_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = new AdditionalCostDto { JobCode = "JOB001", Account = "ACC1", Description = "Existing", ItemCost = 100m };
@@ -265,9 +266,12 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "Existing").Returns(existing);
 
             // Act & Assert
-            await _sut.Invoking(s => s.AddAsync(dto))
-                .Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("*JOB001*ACC1*Existing*");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAsync(dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("ADDITIONAL_COST_ALREADY_EXISTS", error.Code);
+            Assert.Contains("JOB001", error.Message);
+            Assert.Contains("ACC1", error.Message);
+            Assert.Contains("Existing", error.Message);
 
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<AdditionalCost>());
         }
@@ -318,16 +322,19 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WithNonExistingRecord_ThrowsInvalidOperationException()
+        public async Task UpdateAsync_WithNonExistingRecord_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = new AdditionalCostDto { JobCode = "JOB001", Account = "ACC1", Description = "Ghost", ItemCost = 100m };
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "Ghost").Returns((AdditionalCost?)null);
 
             // Act & Assert
-            await _sut.Invoking(s => s.UpdateAsync(dto))
-                .Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("*JOB001*ACC1*Ghost*");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("ADDITIONAL_COST_NOT_FOUND", error.Code);
+            Assert.Contains("JOB001", error.Message);
+            Assert.Contains("ACC1", error.Message);
+            Assert.Contains("Ghost", error.Message);
 
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>(), Arg.Any<string>());
         }
@@ -384,7 +391,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenDescriptionChangedAndNewDescriptionAlreadyExists_ThrowsInvalidOperationException()
+        public async Task UpdateAsync_WhenDescriptionChangedAndNewDescriptionAlreadyExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange — renaming to a description that is already taken
             var dto = new AdditionalCostDto
@@ -402,9 +409,13 @@ namespace Apha.FPS.Application.UnitTests.Services.AdditionalCostServiceTest
             _mockRepository.GetByIdAsync("JOB001", "ACC1", "TakenDesc").Returns(duplicate);
 
             // Act & Assert
-            await _sut.Invoking(s => s.UpdateAsync(dto))
-                .Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("*JOB001*ACC1*TakenDesc*already exists*");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
+            var error = Assert.Single(ex.Errors);
+            Assert.Equal("ADDITIONAL_COST_ALREADY_EXISTS", error.Code);
+            Assert.Contains("JOB001", error.Message);
+            Assert.Contains("ACC1", error.Message);
+            Assert.Contains("TakenDesc", error.Message);
+            Assert.Contains("already exists", error.Message);
 
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<AdditionalCost>(), Arg.Any<string>(), Arg.Any<string>());
         }

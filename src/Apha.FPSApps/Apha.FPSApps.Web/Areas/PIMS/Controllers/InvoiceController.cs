@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             string? resolvedProject = !string.IsNullOrWhiteSpace(project) &&
                                       viewModel.ProjectList.Any(p => p.Value == project)
                 ? project
-                : viewModel.ProjectList.FirstOrDefault()?.Value;
+                : null;
             int currentCalendarYear = DateTime.Now.Year;
             int? resolvedYear = year ?? (viewModel.YearList.Count > 0
                 ? viewModel.YearList
