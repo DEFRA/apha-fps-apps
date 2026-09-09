@@ -370,6 +370,104 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectYearCostsRepositoryTe
             Assert.All(result.Data, r => Assert.Equal("PP001", r.Buyer));
         }
 
+        [Fact]
+        public async Task GetStaffActualsAsync_FilterByName_ReturnsMatchingRecords()
+        {
+            var data = new List<TimeCostCalcs>
+            {
+                MakeTimeCost("PP001", 2024, "AH003200", month: 1, name: "Cowie,Antonio"),
+                MakeTimeCost("PP001", 2024, "AH003200", month: 2, name: "Macleod,Maxwell")
+            };
+            var repo = CreateRepository(timeCostCalcs: data);
+            var paging = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Name\":\"cowie\"}"
+            };
+
+            var result = await repo.GetStaffActualsAsync("PP001", 2024, paging);
+
+            Assert.Single(result.Data);
+            Assert.Equal("Cowie,Antonio", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetStaffActualsAsync_FilterByMonth_ReturnsMatchingRecords()
+        {
+            var data = new List<TimeCostCalcs>
+            {
+                MakeTimeCost("PP001", 2024, "AH003200", month: 1, name: "Cowie,Antonio"),
+                MakeTimeCost("PP001", 2024, "AH003200", month: 2, name: "Macleod,Maxwell")
+            };
+            var repo = CreateRepository(timeCostCalcs: data);
+            var paging = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Month\":\"2\"}"
+            };
+
+            var result = await repo.GetStaffActualsAsync("PP001", 2024, paging);
+
+            Assert.Single(result.Data);
+            Assert.Equal(2d, result.Data.First().Month);
+        }
+
+        [Fact]
+        public async Task GetTestActualsAsync_FilterByTestCode_ReturnsMatchingRecords()
+        {
+            var reqmts = new List<TestReqmt>
+            {
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC010", Unitprice = 10m },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC020", Unitprice = 20m }
+            };
+            var outputs = new List<MonthlyOutput>
+            {
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC010", Month = 1, Workgroup = "WG1", Volume = 1 },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC020", Month = 2, Workgroup = "WG2", Volume = 2 }
+            };
+            var repo = CreateRepository(testReqmts: reqmts, monthlyOutputs: outputs);
+            var paging = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"TestCode\":\"TC020\"}"
+            };
+
+            var result = await repo.GetTestActualsAsync("PP001", 2024, paging);
+
+            Assert.Single(result.Data);
+            Assert.Equal("TC020", result.Data.First().Output.Testcode);
+        }
+
+        [Fact]
+        public async Task GetTestActualsAsync_FilterByMonth_ReturnsMatchingRecords()
+        {
+            var reqmts = new List<TestReqmt>
+            {
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC010", Unitprice = 10m },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC020", Unitprice = 20m }
+            };
+            var outputs = new List<MonthlyOutput>
+            {
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC010", Month = 1, Workgroup = "WG1", Volume = 1 },
+                new() { Buyer = "PP001", Year = 2024, Testcode = "TC020", Month = 2, Workgroup = "WG2", Volume = 2 }
+            };
+            var repo = CreateRepository(testReqmts: reqmts, monthlyOutputs: outputs);
+            var paging = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Month\":\"2\"}"
+            };
+
+            var result = await repo.GetTestActualsAsync("PP001", 2024, paging);
+
+            Assert.Single(result.Data);
+            Assert.Equal(2d, result.Data.First().Output.Month);
+        }
+
         #endregion
     }
 }

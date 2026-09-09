@@ -3,6 +3,8 @@ using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 using System.Linq.Expressions;
 
 namespace Apha.PIMS.DataAccess.Repository
@@ -184,6 +186,8 @@ namespace Apha.PIMS.DataAccess.Repository
                     .ToList();
             }
 
+            joined = ApplyTestActualsColumnFilter(joined, paging.Filter);
+
             joined = (paging.SortBy?.ToLower()) switch
             {
                 "testcode"  => paging.Descending ? joined.OrderByDescending(x => x.Output.Testcode).ToList()  : joined.OrderBy(x => x.Output.Testcode).ToList(),
@@ -217,6 +221,71 @@ namespace Apha.PIMS.DataAccess.Repository
                 "norequired"  => ApplyOrder(query, x => x.Norequired,  descending),
                 _             => query.OrderBy(x => x.Testcode)
             };
+        }
+
+        private static IDictionary<string, object>? TryGetFilterDictionary(string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson) || filterJson == "{}")
+                return null;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filterJson);
+            if (filterModel == null)
+                return null;
+
+            return (IDictionary<string, object>)filterModel;
+        }
+
+        private static bool TryGetFilterValue(
+            IDictionary<string, object>? filters,
+            string key,
+            out string value)
+        {
+            value = string.Empty;
+
+            if (filters == null || !filters.TryGetValue(key, out object? rawValue) || rawValue == null)
+                return false;
+
+            value = rawValue.ToString() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        private static IQueryable<TimeCostCalcs> ApplyStaffActualsColumnFilter(
+            IQueryable<TimeCostCalcs> query,
+            string? filterJson)
+        {
+            IDictionary<string, object>? filters = TryGetFilterDictionary(filterJson);
+
+            if (TryGetFilterValue(filters, "Name", out string staffName))
+                query = query.Where(x => x.Name != null && EF.Functions.ILike(x.Name, $"%{staffName}%"));
+
+            if (TryGetFilterValue(filters, "Month", out string monthFilter) &&
+                double.TryParse(monthFilter, out double monthValue))
+                query = query.Where(x => x.Month == monthValue);
+
+            return query;
+        }
+
+        private static List<(MonthlyOutput Output, TestReqmt Reqmt)> ApplyTestActualsColumnFilter(
+            List<(MonthlyOutput Output, TestReqmt Reqmt)> data,
+            string? filterJson)
+        {
+            IDictionary<string, object>? filters = TryGetFilterDictionary(filterJson);
+
+            if (TryGetFilterValue(filters, "TestCode", out string testCode))
+            {
+                data = data.Where(x =>
+                        !string.IsNullOrWhiteSpace(x.Output.Testcode) &&
+                        x.Output.Testcode.Contains(testCode, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (TryGetFilterValue(filters, "Month", out string monthFilter) &&
+                double.TryParse(monthFilter, out double monthValue))
+            {
+                data = data.Where(x => x.Output.Month == monthValue).ToList();
+            }
+
+            return data;
         }
 
         private static PagedData<T> ApplyPaging<T>(List<T> data, int page, int pageSize)
@@ -285,6 +354,8 @@ namespace Apha.PIMS.DataAccess.Repository
                     (x.Name       != null && x.Name.ToLower().Contains(search)) ||
                     (x.Workgroup  != null && x.Workgroup.ToLower().Contains(search)) ||
                     (x.Gradecode  != null && x.Gradecode.ToLower().Contains(search)));
+
+            query = ApplyStaffActualsColumnFilter(query, paging.Filter);
 
             query = (paging.SortBy?.ToLower()) switch
             {

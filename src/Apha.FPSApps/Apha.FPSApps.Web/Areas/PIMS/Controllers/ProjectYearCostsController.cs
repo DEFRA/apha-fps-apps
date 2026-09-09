@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
+using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 {
@@ -407,6 +408,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
+            Dictionary<string, string> filterDict = ParseCurrentFilters(request.Filter);
+
             return new DataGridConfig<TestCostActualItem>
             {
                 GridId = "testActualsGrid",
@@ -422,7 +425,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadTestActualsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TestCostActualItem>(null),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
 
@@ -503,6 +507,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
 
+            Dictionary<string, string> filterDict = ParseCurrentFilters(request.Filter);
+
             return new DataGridConfig<StaffCostActualItem>
             {
                 GridId = "staffActualsGrid",
@@ -518,7 +524,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadStaffActualsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<StaffCostActualItem>(null),
-                Pagination = pagination
+                Pagination = pagination,
+                CurrentFilters = filterDict
             };
         }
 
@@ -1025,6 +1032,14 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             byte[] bytes = await _yearCostsService.ExportProjectYearCostsToExcelAsync(project, year);
             string fileName = $"ProjectYearCosts_{project}_{year}.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        private static Dictionary<string, string> ParseCurrentFilters(string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson) || filterJson == "{}")
+                return [];
+
+            return JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson) ?? [];
         }
     }
 }
