@@ -15,7 +15,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
         private static WorkGroupEmployeeRepository CreateRepository(
             IEnumerable<WorkGroupEmployee> employees,
-            IEnumerable<Employee>? staffMembers = null)
+            IEnumerable<Employee>? staffMembers = null,
+            IEnumerable<MonthlyTime>? monthlyTimes = null)
         {
             const string testEmail = "test@example.com";
 
@@ -61,6 +62,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             });
             var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staff);
             mockContext.Setup(x => x.Employees).Returns(staffMockSet.Object);
+
+            var monthlyTimesMockSet = RepositoryTestHelper.CreateMockDbSet(monthlyTimes ?? new List<MonthlyTime>());
+            mockContext.Setup(x => x.MonthlyTimes).Returns(monthlyTimesMockSet.Object);
 
             return new WorkGroupEmployeeRepository(mockContext.Object, requestContext);
         }
@@ -923,6 +927,61 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var repo = CreateRepository(new List<WorkGroupEmployee>());
 
             var result = await repo.DeleteWorkGroupEmployeeAsync("NONEXISTENT");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region HasAssociatedMonthlyTimeAsync Tests
+
+        [Fact]
+        public async Task HasAssociatedMonthlyTimeAsync_WithMatchingPactId_ReturnsTrue()
+        {
+            var monthlyTimes = new List<MonthlyTime>
+            {
+                new() { PactStaffId = DefaultPactId, TimeCode = "TC1", Month = 1, ParentProject = "P1" }
+            };
+            var repo = CreateRepository(new List<WorkGroupEmployee>(), monthlyTimes: monthlyTimes);
+
+            var result = await repo.HasAssociatedMonthlyTimeAsync(DefaultPactId);
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedMonthlyTimeAsync_WithNoMatchingPactId_ReturnsFalse()
+        {
+            var monthlyTimes = new List<MonthlyTime>
+            {
+                new() { PactStaffId = "OTHER", TimeCode = "TC1", Month = 1, ParentProject = "P1" }
+            };
+            var repo = CreateRepository(new List<WorkGroupEmployee>(), monthlyTimes: monthlyTimes);
+
+            var result = await repo.HasAssociatedMonthlyTimeAsync(DefaultPactId);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedMonthlyTimeAsync_WithEmptyRepository_ReturnsFalse()
+        {
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            var result = await repo.HasAssociatedMonthlyTimeAsync(DefaultPactId);
+
+            Assert.False(result);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task HasAssociatedMonthlyTimeAsync_WithNullOrWhitespacePactId_ReturnsFalse(string? pactId)
+        {
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            var result = await repo.HasAssociatedMonthlyTimeAsync(pactId!);
 
             Assert.False(result);
         }

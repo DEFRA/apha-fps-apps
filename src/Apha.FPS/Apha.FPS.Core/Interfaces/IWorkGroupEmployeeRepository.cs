@@ -16,5 +16,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<WorkGroupEmployee> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity);
         Task<bool> DeleteWorkGroupEmployeeAsync(string pactId);
         Task<bool> HasAssociatedStaffAsync(string wgGrade);
+        Task<bool> HasAssociatedMonthlyTimeAsync(string pactId);
     }
 }

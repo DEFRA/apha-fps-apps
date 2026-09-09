@@ -111,6 +111,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 referencedTables.Add("tbladditionalcosts");
             }
 
+            var bidsExists = await _context.Bids
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .AnyAsync(b => b.Account == accShortName && b.FpsYear == _requestContext.FpsYear);
+
+            if (bidsExists)
+            {
+                referencedTables.Add("tblbid");
+            }
+
             return referencedTables;
         }
 

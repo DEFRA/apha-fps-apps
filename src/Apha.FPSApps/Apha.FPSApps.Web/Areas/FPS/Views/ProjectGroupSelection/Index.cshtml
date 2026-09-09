@@ -18,11 +18,12 @@
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label id="projectGroupDropdownLabel" class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 govuk-!-padding-right-1" for="projectGroupDropdown">
+                                
+                                <label id="projectGroupDropdownLabel" class="govuk-label govuk-!-padding-right-1 govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="projectGroupDropdown">
                                     Select a Project Group:
                                 </label>
                             </th>
-                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-3 isNoBottomBorder">
                                 <select id="projectGroupDropdown"
                                         asp-items="Model.ProjectGroupList"
                                         asp-for="SelectedProjectGroup"
@@ -35,14 +36,14 @@
                             </td>
 
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                                <label id="projectSearchInputLabel" class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 govuk-!-padding-right-1" for="projectSearchInput">
+                                <label id="projectSearchInputLabel" class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 govuk-!-padding-right-2" for="projectSearchInput">
                                     Project:
                                 </label>
                             </th>
-                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0  isNoBottomBorder">
                                 <div style="position:relative;">
                                     <input type="text" id="projectSearchInput" placeholder="Select Project" autocomplete="off"
-                                           class="govuk-input down-arrow-img" style="width:220px; cursor:pointer;"
+                                           class="govuk-input down-arrow-img" style="cursor:pointer;"
                                            value="@Model.ProjectSearch" aria-label="Filter project" readonly />
                                     <div id="ProjectDropdownPanel" style="display:none;">
                                         <label for="ProjectSearchBox" class="govuk-label govuk-visually-hidden">Search projects</label>
@@ -68,7 +69,7 @@
 
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-            <div id="divprojectcode" class="pmg-projectcode-wrap govuk-!-padding-bottom-5 govuk-\!-margin-left-3 govuk-!-margin-right-3">
+            <div id="divprojectcode" class="pmg-projectcode-wrap govuk-!-padding-bottom-5 govuk-!-margin-top-2 sup_margin_left_right_10">
                     <div id="@($"gridContainer_{Model.ProjectsGrid!.GridId}")">
                         @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
                     </div>
