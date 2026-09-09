@@ -116,7 +116,7 @@
                 <label class="govuk-label--s govuk-!-font-size-16" for="ProfitLoss">Profit/(Loss):</label>
                 <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(Model.ProfitLoss < 0 ? $"({Math.Abs(Model.ProfitLoss):N2})" : Model.ProfitLoss.ToString("N2"))" aria-label="Profit/(Loss)" id="ProfitLoss" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight @(Model.ProfitLoss < 0 ? "text-danger" : "text-primary")" name="ProfitLoss" asp-for="ProfitLoss">
+                <input type="text" value="@Model.ProfitLoss.ToString("N2")" aria-label="Profit/(Loss)" id="ProfitLoss" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="ProfitLoss" asp-for="ProfitLoss">
             </div>
             </div>
             <div class="summary-item">
@@ -130,7 +130,7 @@
                 <label class="govuk-label--s govuk-!-font-size-16" for="OffTarget">Off - Target:</label>
                 <div class="govuk-input__wrapper">
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                <input type="text" value="@(Model.OffTarget < 0 ? $"({Math.Abs(Model.OffTarget):N2})" : Model.OffTarget.ToString("N2"))" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="OffTarget" asp-for="OffTarget" style="color:#1d70b8;font-weight:400;">
+                <input type="text" value="@Model.OffTarget.ToString("N2")" aria-label="Off - Target" id="OffTarget" class="govuk-input govuk-!-font-size-16 govuk-input--width-10 text-AlignRight" name="OffTarget" asp-for="OffTarget">
             </div>
             </div>
         </div>
@@ -147,9 +147,9 @@
     <script>
         // ---- Currency helpers ----
 
+        // Negative values are shown with a leading minus sign (no brackets, no colour coding).
         function formatGBP(value) {
-            var formatted = new Intl.NumberFormat('en-GB', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(value));
-            return value < 0 ? '-(' + formatted + ')' : formatted;
+            return new Intl.NumberFormat('en-GB', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
         }
 
         function parseCurrency(str) {
@@ -159,11 +159,6 @@
                 str = '-' + str.slice(1, -1);
             }
             return parseFloat(str) || 0;
-        }
-
-        function applyValueColour(selector, value) {
-            $(selector).removeClass('text-danger text-primary')
-                       .addClass(value < 0 ? 'text-danger' : 'text-primary');
         }
 
         // ---- Financial summary ----
@@ -180,11 +175,9 @@
                        + parseCurrency($('#BudgetCVL').val());
             var profitLoss = income - totalCosts;
             $('#ProfitLoss').val(formatGBP(profitLoss));
-            applyValueColour('#ProfitLoss', profitLoss);
 
             var offTarget = profitLoss - parseCurrency($('#TargetProfit').val());
             $('#OffTarget').val(formatGBP(offTarget));
-            $('#OffTarget').css({ 'color': '#1d70b8', 'font-weight': '400' });
         }
 
         // ---- Total cost refreshers ----

@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // TRANSFORMENGINE: CostCentre — JS columns[2] { field:'costCentre', header:'CostCentre', width:150 }
         // Optional; cascading dropdown in modal filtered by ProfitCentre via AJAX GET /FPS/WorkgroupMaintenance/GetCostCentres
         [Display(Name = "CostCentre")]
-        [GridColumn(Width = 150, Type = GridColumnType.DecimalNumber, IsFilterable = true)]
+        [GridColumn(Width = 150, Type = GridColumnType.Text, IsFilterable = true)]
         public double? CostCentre { get; set; }
 
         // TRANSFORMENGINE: Owner — JS columns[3] { field:'owner', header:'Owner', width:180 }

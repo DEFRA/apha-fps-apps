@@ -795,15 +795,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             var dto  = new MilestoneFormDatesDto  { ParentProject = "PP001", Year = 2024 };
 
             _mapper.Map<MilestoneFormDatesDto>(item).Returns(dto);
-            _milestoneService.SaveMilestoneFormDatesAsync("PP001", dto)
+            _milestoneService.SaveMilestoneFormDatesAsync("PP001", dto, true)
                 .Returns(new ApiResponseDto<MilestoneFormDatesDto> { Success = true, Data = dto });
 
             // Act
-            var result = await _controller.SaveMilestoneFormDates(item);
+            var result = await _controller.SaveMilestoneFormDates(item, true);
 
             // Assert
             Assert.IsType<JsonResult>(result);
-            await _milestoneService.Received(1).SaveMilestoneFormDatesAsync("PP001", dto);
+            await _milestoneService.Received(1).SaveMilestoneFormDatesAsync("PP001", dto, true);
         }
 
         [Fact]
