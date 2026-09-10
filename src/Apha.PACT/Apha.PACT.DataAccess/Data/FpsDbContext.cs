@@ -49,6 +49,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<WorkGroupView> WorkGroupViews { get; set; }
         public virtual DbSet<RecreateSummaryLog> RecreateSummaryLogs { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<PerformanceLog> PerformanceLogs { get; set; }
         public virtual DbSet<Settings> Settings { get; set; }
         public virtual DbSet<ReleasePeriod> ReleasePeriods { get; set; }
         public virtual DbSet<ProjectView> ProjectViews { get; set; }
@@ -184,6 +185,8 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
             modelBuilder.ApplyConfiguration(new WorkGroupGeneralViewMap());
             modelBuilder.Entity<WorkGroupGeneralView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PerformanceLogMap());
         }
     }
 }

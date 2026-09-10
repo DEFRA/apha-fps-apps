@@ -24,6 +24,7 @@ namespace Apha.PACT.Api.Middleware
                 (path.StartsWith("/swagger")
                  || path.StartsWith("/health")
                  || path.StartsWith("/query-logs")
+                 || path.StartsWith("/performance-logs")
                  || path.StartsWith("/favicon")))
             {
                 await _next(context);

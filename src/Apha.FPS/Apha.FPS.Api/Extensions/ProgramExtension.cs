@@ -11,6 +11,7 @@ using Apha.FPS.Application.Email;
 using Apha.FPS.Application.Mappings;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Interceptors;
+using Apha.FPS.DataAccess.Logging;
 using Asp.Versioning;
 using Azure.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -30,7 +31,14 @@ namespace Apha.FPS.Api.Extensions
             var services = builder.Services;
             var configuration = builder.Configuration;
 
-            services.AddDbContext<FpsDbContext>(options =>
+            // Centralised performance logging: query timings are captured off the hot path and
+            // API-call timings are received from the web app; both persisted to performance_log
+            // by a background writer.
+            var queryProfilingEnabled = configuration.GetValue("QueryProfiling:Enabled", false);
+            services.AddSingleton<IPerformanceLogQueue>(new PerformanceLogQueue());
+            services.AddHostedService<PerformanceLogWriter>();
+
+            services.AddDbContext<FpsDbContext>((serviceProvider, options) =>
                 {
                     options.UseNpgsql(
                         configuration.GetConnectionString("FPSConnectionString")
@@ -45,24 +53,13 @@ namespace Apha.FPS.Api.Extensions
                         }
                         );
 
-                    // Centralised query profiling: captures SQL, parameters and execution time to a CSV file.
-                    if (configuration.GetValue("QueryProfiling:Enabled", false))
+                    // Centralised query profiling: captures SQL, parameters and execution time and
+                    // enqueues each entry for background persistence to the database.
+                    if (queryProfilingEnabled)
                     {
-                        var csvPath = configuration["QueryProfiling:CsvFilePath"];
-                        if (string.IsNullOrWhiteSpace(csvPath))
-                        {
-                            csvPath = Path.Combine("Logs", "query-profiling.csv");
-                        }
-
-                        // Anchor a relative path to the content root so the file location is
-                        // deterministic regardless of the process working directory.
-                        if (!Path.IsPathRooted(csvPath))
-                        {
-                            csvPath = Path.Combine(builder.Environment.ContentRootPath, csvPath);
-                        }
-
                         var thresholdMs = configuration.GetValue("QueryProfiling:SlowQueryThresholdMs", 0L);
-                        options.AddInterceptors(new QueryProfilingInterceptor(csvPath, thresholdMs));
+                        var queue = serviceProvider.GetRequiredService<IPerformanceLogQueue>();
+                        options.AddInterceptors(new QueryProfilingInterceptor(queue, thresholdMs));
                     }
                 }, ServiceLifetime.Scoped);
                        

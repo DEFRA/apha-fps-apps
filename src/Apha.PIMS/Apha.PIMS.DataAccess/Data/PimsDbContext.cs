@@ -34,6 +34,8 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<FpsYearTotal> FpsYearTotals { get; set; }
         public virtual DbSet<Settings> DatabaseSettings { get; set; }
 
+        public virtual DbSet<PerformanceLog> PerformanceLogs { get; set; }
+
         public virtual DbSet<Milestone> Milestones { get; set; }
         public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
         public virtual DbSet<MilestoneType> MilestoneTypes { get; set; }
@@ -118,6 +120,8 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new FrequencyMap());
             modelBuilder.ApplyConfiguration(new ReviewItemMap());
             modelBuilder.ApplyConfiguration(new PublicationTypeMap());
+
+            modelBuilder.ApplyConfiguration(new PerformanceLogMap());
         }
     }
 }

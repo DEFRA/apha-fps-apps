@@ -16,6 +16,7 @@ namespace Apha.FPS.DataAccess.Data
         }
 
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<PerformanceLog> PerformanceLogs { get; set; }
         public virtual DbSet<UserProgram> UserPrograms { get; set; }
         public virtual DbSet<Program> Programs { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
@@ -401,6 +402,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
+
+            modelBuilder.ApplyConfiguration(new PerformanceLogMap());
         }
             }
         }

@@ -31,6 +31,17 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IStaffJobService, StaffJobService>();
             services.AddTransient<RequestHeadersHandler>();
             services.AddTransient<ApiPerformanceLoggingHandler>();
+            // Non-instrumented client used by ApiPerformanceLoggingHandler to post performance
+            // logs to the target API without recursing through the logging handler itself.
+            // Accept the local/dev self-signed certificate for localhost targets so posts to
+            // https://localhost:<port>/performance-logs succeed during local development.
+            services.AddHttpClient("PerformanceLogClient")
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (request, cert, chain, errors) =>
+                        request.RequestUri?.IsLoopback == true
+                            || errors == System.Net.Security.SslPolicyErrors.None
+                });
             services.AddScoped<IFpsYearContext, FpsYearContext>();
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<IEmployeeService, EmployeeService>();

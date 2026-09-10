@@ -3,6 +3,7 @@ using Apha.PIMS.Api.Mappings;
 using Apha.PIMS.Api.Middleware;
 using Apha.PIMS.Application.Mappings;
 using Apha.PIMS.DataAccess.Data;
+using Apha.PIMS.DataAccess.Logging;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
@@ -19,6 +20,11 @@ namespace Apha.PIMS.Api.Extensions
         {
             var services = builder.Services;
             var configuration = builder.Configuration;
+
+            // Centralised performance logging: receives API-call timings (posted by the web app)
+            // and persists them to the performance_log table via a background writer.
+            services.AddSingleton<IPerformanceLogQueue>(new PerformanceLogQueue());
+            services.AddHostedService<PerformanceLogWriter>();
 
             // Add database context
             services.AddDbContext<PimsDbContext>(options =>
