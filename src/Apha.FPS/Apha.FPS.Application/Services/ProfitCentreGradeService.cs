@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -48,14 +49,22 @@ namespace Apha.FPS.Application.Services
             var entityPcGrade = await _repository.GetByIdAsync(dto.PcGrade);
             if (entityPcGrade != null)
             {
-                throw new InvalidOperationException(
-                    $"Cannot insert ProfitCentreGrade because RC Grade '{dto.PcGrade}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot add ProfitCentreGrade because RC Grade '{dto.PcGrade}' already exists.",
+                        "PROFITCENTREGRADE_ALREADY_EXISTS")
+                ]);
             }
             // Converted trigger tI_ProfitCentreGrade — FK guard: ProfitCentre must exist in tblkpprofitcentre
             bool profitCentreExists = await _repository.ProfitCentreExistsAsync(dto.ProfitCentre);
             if (!profitCentreExists)
-                throw new InvalidOperationException(
-                    $"Cannot insert ProfitCentreGrade because ProfitCentre '{dto.ProfitCentre}' does not exist.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot add ProfitCentreGrade because ProfitCentre '{dto.ProfitCentre}' does not exist.",
+                        "PROFITCENTRE_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<ProfitCentreGrade>(dto);
             var created = await _repository.CreateAsync(entity);
@@ -70,8 +79,12 @@ namespace Apha.FPS.Application.Services
             // Converted trigger tU_ProfitCentreGrade — FK guard: ProfitCentre must exist in tblkpprofitcentre
             bool profitCentreExists = await _repository.ProfitCentreExistsAsync(dto.ProfitCentre);
             if (!profitCentreExists)
-                throw new InvalidOperationException(
-                    $"Cannot update ProfitCentreGrade because ProfitCentre '{dto.ProfitCentre}' does not exist.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update ProfitCentreGrade because ProfitCentre '{dto.ProfitCentre}' does not exist.",
+                        "PROFITCENTRE_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<ProfitCentreGrade>(dto);
             var updated = await _repository.UpdateAsync(originalPcGrade, entity);

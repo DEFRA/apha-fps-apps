@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -166,17 +167,19 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
         }       
 
         [Fact]
-        public async Task AddProgramAsync_CaseInsensitiveDuplicate_ThrowsFriendlyInvalidOperationException()
+        public async Task AddProgramAsync_CaseInsensitiveDuplicate_ThrowsBusinessValidationErrorException()
         {
             var dto = new ProgramDto { ProgramNo = "admin", ProgramName = "Test" };
 
             // Existing program stored as "ADMIN" - detected case-insensitively
             _mockRepository.ExistsByProgramNoAsync("admin").Returns(true);
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddProgramAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddProgramAsync(dto));
 
-            ex.Message.Should().Contain("admin");
-            ex.Message.Should().Contain("already exists");
+            ex.Errors.Should().ContainSingle(e =>
+                e.Message.Contains("admin") &&
+                e.Message.Contains("already exists") &&
+                e.Code == "PROGRAM_ALREADY_EXISTS");
             await _mockRepository.Received(1).ExistsByProgramNoAsync("admin");
             await _mockRepository.DidNotReceive().AddProgramAsync(Arg.Any<Program>());
         }
@@ -231,7 +234,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
         }       
 
         [Fact]
-        public async Task AddProgramAsync_DuplicateKey_PostgresException_ThrowsFriendlyInvalidOperationException()
+        public async Task AddProgramAsync_DuplicateKey_PostgresException_ThrowsBusinessValidationErrorException()
         {
             var dto = new ProgramDto { ProgramNo = "P1", ProgramName = "Test" };
             var entity = new Program { ProgramNo = "P1", ProgramName = "Test" };
@@ -240,14 +243,15 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
             _mockMapper.Map<Program>(dto).Returns(entity);
             _mockRepository.AddProgramAsync(entity).ThrowsAsync(duplicate);
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddProgramAsync(dto));
-            ex.Message.Should().Contain("P1");
-            ex.Message.Should().Contain("already exists");
-            ex.InnerException.Should().BeSameAs(duplicate);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddProgramAsync(dto));
+            ex.Errors.Should().ContainSingle(e =>
+                e.Message.Contains("P1") &&
+                e.Message.Contains("already exists") &&
+                e.Code == "PROGRAM_ALREADY_EXISTS");
         }
 
         [Fact]
-        public async Task AddProgramAsync_DuplicateKey_WrappedInDbUpdateException_ThrowsFriendlyInvalidOperationException()
+        public async Task AddProgramAsync_DuplicateKey_WrappedInDbUpdateException_ThrowsBusinessValidationErrorException()
         {
             var dto = new ProgramDto { ProgramNo = "P1", ProgramName = "Test" };
             var entity = new Program { ProgramNo = "P1", ProgramName = "Test" };
@@ -256,9 +260,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
             _mockMapper.Map<Program>(dto).Returns(entity);
             _mockRepository.AddProgramAsync(entity).ThrowsAsync(wrapped);
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddProgramAsync(dto));
-            ex.Message.Should().Contain("already exists");
-            ex.InnerException.Should().BeSameAs(wrapped);
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddProgramAsync(dto));
+            ex.Errors.Should().ContainSingle(e =>
+                e.Message.Contains("already exists") &&
+                e.Code == "PROGRAM_ALREADY_EXISTS");
         }
 
         [Fact]
