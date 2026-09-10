@@ -559,6 +559,62 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
             Assert.False(model.Active);
         }
 
+        // ── GET TIME CODE VALID (AJAX) ────────────────────────────────────────
+
+        [Fact]
+        public async Task GetTimeCodeValid_WhenRequiredParametersMissing_ReturnsFailureJson()
+        {
+            var result = await _controller.GetTimeCodeValid(string.Empty, "TC1", "PP1");
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Equal("Work group, time code and portfolio are required.", element.GetProperty("message").GetString());
+        }
+
+        [Fact]
+        public async Task GetTimeCodeValid_WhenRecordExists_ReturnsSuccessJsonWithData()
+        {
+            _timeCodeService.GetTimeCodeValidAsync("WG1", "TC1", "PP1")
+                .Returns(ApiResponseDto<TimeCodeValidDto>.SuccessResponse(
+                    new TimeCodeValidDto
+                    {
+                        WorkGroup = "WG1",
+                        TimeCode = "TC1",
+                        ParentProject = "PP1",
+                        Portfolio = "PORT1",
+                        Active = true
+                    }));
+
+            var result = await _controller.GetTimeCodeValid("WG1", "TC1", "PP1");
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(jsonResult);
+            Assert.True(element.GetProperty("success").GetBoolean());
+
+            var data = element.GetProperty("data");
+            Assert.Equal("WG1", data.GetProperty("WorkGroup").GetString());
+            Assert.Equal("TC1", data.GetProperty("TimeCode").GetString());
+            Assert.Equal("PP1", data.GetProperty("ParentProject").GetString());
+            Assert.Equal("PORT1", data.GetProperty("Portfolio").GetString());
+            Assert.True(data.GetProperty("Active").GetBoolean());
+            Assert.True(data.GetProperty("IsEdit").GetBoolean());
+        }
+
+        [Fact]
+        public async Task GetTimeCodeValid_WhenServiceReturnsNoData_ReturnsFailureJson()
+        {
+            _timeCodeService.GetTimeCodeValidAsync("WG1", "TC1", "PP1")
+                .Returns(new ApiResponseDto<TimeCodeValidDto> { Success = true, Data = null });
+
+            var result = await _controller.GetTimeCodeValid("WG1", "TC1", "PP1");
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Equal("Time code validity record not found.", element.GetProperty("message").GetString());
+        }
+
         // ── EDIT TIME CODE (POST) ─────────────────────────────────────────────
 
         [Fact]
