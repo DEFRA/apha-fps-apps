@@ -83,6 +83,23 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof portfolioOptionsListData !== 'undefined') {
         initializePortfolioMultiDropdown();
     }
+
+    // Make the Active checkboxes clickable on the time code grid
+    enableTimeCodeActiveCheckboxes();
+
+    // Re-enable the checkboxes whenever the time code grid reloads
+    document.addEventListener('gridReloaded', function (e) {
+        if (e.detail && e.detail.gridId === (timeCodeGridId || 'timeCodeGrid')) {
+            enableTimeCodeActiveCheckboxes();
+        }
+    });
+
+    // Active/Inactive toggle on the time code grid
+    $(document).on('change', 'td.checkbox-cell[data-property="Active"] input[type="checkbox"]', function () {
+        if ($(this).closest('table').attr('id') === 'tbl_' + (timeCodeGridId || 'timeCodeGrid')) {
+            toggleTimeCodeActive(this);
+        }
+    });
 });
 
 function toggleSidebar() {
@@ -408,6 +425,92 @@ function getTimeCodeExtraFilters() {
         jobCodeId: currentJobCodeId || null,
         testCode: currentTestCode || null
     };
+}
+
+// ========================================
+// Active/Inactive Toggle (time code grid)
+// ========================================
+
+// Make the Active column checkboxes clickable in the time code grid
+function enableTimeCodeActiveCheckboxes() {
+    var gridId = timeCodeGridId || 'timeCodeGrid';
+    var $cells = $('#gridContainer_' + gridId + ' td.checkbox-cell[data-property="Active"]');
+    $cells.find('.govuk-checkboxes__item').css('pointer-events', 'auto');
+    $cells.find('input[type="checkbox"]').prop('disabled', false);
+}
+
+// Toggle active/inactive: read existing values, then post the update
+function toggleTimeCodeActive(checkboxEl) {
+    var $chk = $(checkboxEl);
+    var $row = $chk.closest('tr');
+    var timeCode = $row.find('[data-property="TimeCode"]').text().trim();
+    var workGroup = $row.find('[data-property="WorkGroup"]').text().trim();
+    var newActive = $chk.is(':checked');
+
+    if (!timeCode || !workGroup || !currentParentProject) {
+        $chk.prop('checked', !newActive);
+        showAlertMessage('Unable to determine the selected time code.', AlertType.ERROR);
+        return;
+    }
+
+    // Read remaining fields from the grid row (not returned by GetTimeCodeValid)
+    var rowProject = $row.find('[data-property="Project"]').text().trim();
+    var rowJobCode = $row.find('[data-property="JobCode"]').text().trim();
+    var rowTestCode = $row.find('[data-property="TestCode"]').text().trim();
+
+    // 1) Read all existing values for the selected time code
+    $.ajax({
+        url: '/PACT/PortfolioMaintenance/GetTimeCodeValid',
+        type: 'GET',
+        data: { workGroup: workGroup, timeCode: timeCode, parentProject: currentParentProject },
+        success: function (res) {
+            if (!res || !res.success || !res.data) {
+                $chk.prop('checked', !newActive);
+                showAlertMessage((res && res.message) || 'Failed to load time code details.', AlertType.ERROR);
+                return;
+            }
+
+            var existingData = res.data;
+
+            // 2) Build the update payload from existing values, changing only the Active flag
+            var payload = {
+                workGroup: existingData.workGroup,
+                originalWorkGroup: existingData.workGroup,
+                timeCode: existingData.timeCode,
+                project: rowProject || existingData.parentProject,
+                jobCode: rowJobCode || null,
+                testCode: rowTestCode || null,
+                portfolio: existingData.portfolio,
+                parentProject: existingData.parentProject,
+                active: newActive
+            };
+
+            // 3) Persist the change
+            $.ajax({
+                url: '/PACT/PortfolioTimeCodes/EditTimeCode',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (updateRes) {
+                    if (updateRes.success) {
+                        showAlertMessage(updateRes.message || 'Time code updated successfully.', AlertType.SUCCESS);
+                        refreshTimeCodeGrid();
+                    } else {
+                        $chk.prop('checked', !newActive);
+                        showAlertMessage(updateRes.message || 'Failed to update time code.', AlertType.ERROR);
+                    }
+                },
+                error: function () {
+                    $chk.prop('checked', !newActive);
+                    showAlertMessage('An error occurred while updating.', AlertType.ERROR);
+                }
+            });
+        },
+        error: function () {
+            $chk.prop('checked', !newActive);
+            showAlertMessage('An error occurred while loading time code details.', AlertType.ERROR);
+        }
+    });
 }
 
 // ========================================
