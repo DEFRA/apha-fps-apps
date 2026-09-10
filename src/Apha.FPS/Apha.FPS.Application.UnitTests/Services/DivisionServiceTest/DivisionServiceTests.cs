@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -186,7 +187,7 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
         }
 
         [Fact]
-        public async Task CreateDivisionAsync_ThrowsInvalidOperationException_WhenFKReferencesExist()
+        public async Task CreateDivisionAsync_ThrowsBusinessValidationErrorException_WhenFKReferencesExist()
         {
             // Arrange
             var dto = new DivisionDto { DivName = "VSD", DivisionId = 1, AgencyId = 1 };
@@ -195,14 +196,14 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
             _mockRepository.GetDivisionForeignKeyReferencesAsync("VSD").Returns(fkTables);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
                 _sut.CreateDivisionAsync(dto));
-            
-            exception.Message.Should().Be("Unable to add the division name as it is already in use.");
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Unable to add the division name as it is already in use." && e.Code == "DIVISION_NAME_IN_USE");
         }
 
         [Fact]
-        public async Task CreateDivisionAsync_ThrowsInvalidOperationException_WhenDivisionAlreadyExists()
+        public async Task CreateDivisionAsync_ThrowsBusinessValidationErrorException_WhenDivisionAlreadyExists()
         {
             // Arrange
             var dto = new DivisionDto { DivName = "VSD", DivisionId = 1, AgencyId = 1 };
@@ -211,10 +212,10 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
             _mockRepository.DivisionExistsAsync("VSD").Returns(true);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
                 _sut.CreateDivisionAsync(dto));
-            
-            exception.Message.Should().Be("Division 'VSD' already exists.");
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Division 'VSD' already exists." && e.Code == "DIVISION_ALREADY_EXISTS");
         }
 
         [Fact]
@@ -264,21 +265,21 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
         }
 
         [Fact]
-        public async Task UpdateDivisionAsync_ThrowsInvalidOperationException_WhenDivisionNotFound()
+        public async Task UpdateDivisionAsync_ThrowsBusinessValidationErrorException_WhenDivisionNotFound()
         {
             // Arrange
             var dto = new DivisionDto { DivName = "VSD", DivisionId = 1, AgencyId = 1 };
             _mockRepository.GetDivisionByNameAsync("NONEXISTENT").Returns((Division?)null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
                 _sut.UpdateDivisionAsync("NONEXISTENT", dto));
-            
-            exception.Message.Should().Be("Division 'NONEXISTENT' not found.");
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Division 'NONEXISTENT' not found." && e.Code == "DIVISION_NOT_FOUND");
         }
 
         [Fact]
-        public async Task UpdateDivisionAsync_ThrowsInvalidOperationException_WhenRenamingAndNewNameExists()
+        public async Task UpdateDivisionAsync_ThrowsBusinessValidationErrorException_WhenRenamingAndNewNameExists()
         {
             // Arrange
             var originalDivName = "VSD";
@@ -289,14 +290,14 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
             _mockRepository.DivisionExistsAsync("NEWNAME").Returns(true);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
                 _sut.UpdateDivisionAsync(originalDivName, dto));
-            
-            exception.Message.Should().Be("Cannot rename to 'NEWNAME' - division already exists.");
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot rename to 'NEWNAME' - division already exists." && e.Code == "DIVISION_ALREADY_EXISTS");
         }
 
         [Fact]
-        public async Task UpdateDivisionAsync_ThrowsInvalidOperationException_WhenRenamingAndFKReferencesExist()
+        public async Task UpdateDivisionAsync_ThrowsBusinessValidationErrorException_WhenRenamingAndFKReferencesExist()
         {
             // Arrange
             var originalDivName = "VSD";
@@ -309,10 +310,10 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
             _mockRepository.GetDivisionForeignKeyReferencesAsync(originalDivName).Returns(fkTables);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
                 _sut.UpdateDivisionAsync(originalDivName, dto));
-            
-            exception.Message.Should().Be("Unable to edit the division name as it is already in use.");
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Unable to edit the division name as it is already in use." && e.Code == "DIVISION_NAME_IN_USE");
         }
 
         #endregion
@@ -336,7 +337,7 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
         }
 
         [Fact]
-        public async Task DeleteDivisionAsync_ThrowsInvalidOperationException_WhenFKReferencesExist()
+        public async Task DeleteDivisionAsync_ThrowsBusinessValidationErrorException_WhenFKReferencesExist()
         {
             // Arrange
             var divName = "VSD";
@@ -345,10 +346,10 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionServiceTest
             _mockRepository.GetDivisionForeignKeyReferencesAsync(divName).Returns(fkTables);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => 
                 _sut.DeleteDivisionAsync(divName));
-            
-            exception.Message.Should().Be("The selected record is being used on another page and cannot be deleted.");
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "The selected record is being used on another page and cannot be deleted." && e.Code == "DIVISION_NAME_IN_USE");
         }
 
         [Fact]

@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -50,7 +51,10 @@ namespace Apha.FPS.Application.Services
         {
             var existing = await _repository.GetBidByIdAsync(bid.WorkGroupName, bid.Account);
             if (existing != null)
-                throw new InvalidOperationException("Account already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Account already exists.", "BID_ACCOUNT_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<Bid>(bid);
             var result = await _repository.AddBidAsync(entity);
@@ -68,8 +72,12 @@ namespace Apha.FPS.Application.Services
         {
             var existing = await _repository.GetBidByIdAsync(bid.WorkGroupName, bid.Account);
             if (existing == null)
-                throw new InvalidOperationException(
-                    $"Bid with Workgroup '{bid.WorkGroupName}' and Account '{bid.Account}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Bid with Workgroup '{bid.WorkGroupName}' and Account '{bid.Account}' was not found.",
+                        "BID_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<Bid>(bid);
             var result = await _repository.UpdateBidAsync(entity);
@@ -86,8 +94,12 @@ namespace Apha.FPS.Application.Services
         {
             var hasRelatedPurchases = await _repository.HasRelatedPurchasesAsync(WorkGroupName, account);
             if (hasRelatedPurchases)
-                throw new InvalidOperationException(
-                    "The record cannot be deleted because it is being used elsewhere.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "The record cannot be deleted because it has related purchases.",
+                        "BID_HAS_RELATED_PURCHASES")
+                ]);
 
             return await _repository.DeleteBidAsync(WorkGroupName, account);
         }
