@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -50,7 +51,12 @@ namespace Apha.FPS.Application.Services
 
             var existing = await _animalRepository.GetAnimalByIdAsync(animalDto.AnimalType);
             if (existing != null)
-                throw new InvalidOperationException($"Animal '{animalDto.AnimalType}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Animal '{animalDto.AnimalType}' already exists.",
+                        "ANIMAL_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<Animal>(animalDto);
             var added = await _animalRepository.AddAnimalAsync(entity);
@@ -63,8 +69,14 @@ namespace Apha.FPS.Application.Services
             if (string.IsNullOrWhiteSpace(animalDto.AnimalType))
                 throw new ArgumentException("Animal type is required.");
 
-            var existing = await _animalRepository.GetAnimalByIdAsync(animalDto.AnimalType)
-                ?? throw new KeyNotFoundException($"Animal '{animalDto.AnimalType}' not found.");
+            var existing = await _animalRepository.GetAnimalByIdAsync(animalDto.AnimalType);
+            if (existing == null)
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Animal '{animalDto.AnimalType}' not found.",
+                        "ANIMAL_NOT_FOUND")
+                ]);
 
             _mapper.Map(animalDto, existing);
             var updated = await _animalRepository.UpdateAnimalAsync(existing);

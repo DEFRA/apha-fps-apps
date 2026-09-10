@@ -1,5 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -35,8 +36,12 @@ namespace Apha.FPS.Application.Services
             var existing = await _repository.GetByYearAsync(_requestContext.FpsYear);
 
             if (existing == null)
-                throw new InvalidOperationException(
-                    $"Total Business Overheads record for year '{_requestContext.FpsYear}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Total Business Overheads record for year '{_requestContext.FpsYear}' was not found.",
+                        "TOTALBUSINESSOVERHEADS_NOT_FOUND")
+                ]);
 
             existing.BusinessOverheads = dto.TotalBusinessOverheads;
             var result = await _repository.UpdateAsync(existing);
