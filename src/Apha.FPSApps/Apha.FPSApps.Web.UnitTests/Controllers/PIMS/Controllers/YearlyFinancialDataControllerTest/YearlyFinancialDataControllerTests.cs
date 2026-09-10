@@ -154,6 +154,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             SetupDefaultIndexMocks(projects: [new ProjectListMilestoneDto { Parentproject = "PP001" }]);
             var result = await _controller.Index(null);
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.Equal(string.Empty, model.NavigationProject);
+            Assert.Null(_controller.ViewData["YfdMessage"]);
             Assert.Null(model.SelectedProject);
             Assert.Equal(string.Empty, model.Parentproject);
         }
@@ -162,6 +164,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         public async Task Index_WithExplicitProject_UsesProvidedProject()
         {
             SetupDefaultIndexMocks();
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _service.GetAllAsync("PP001", Arg.Any<QueryParameters<string>>())
+                .Returns(new ApiResponseDto<List<YearlyFinancialDataDto>> { Success = true, Data = [] });
+            _mapper.Map<List<YearlyFinancialDataItem>>(Arg.Any<List<YearlyFinancialDataDto>>()).Returns([]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
             var result = await _controller.Index("PP001");
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal("PP001", model.SelectedProject);
