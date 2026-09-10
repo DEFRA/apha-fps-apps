@@ -13,6 +13,7 @@
         IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
         IFpsMonthlyOutputApiClient FpsMonthlyOutput { get; }
         IFpsDivisionApiClient FpsDivision { get; }
+        IFpsMasterLookupApiClient FpsMasterLookup { get; }
         IFpsAgencyApiClient FpsAgency { get; }
         IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
         IFpsAccountCategoryApiClient FpsAccountCategory { get; }

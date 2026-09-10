@@ -60,8 +60,15 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
             => await _pactClient.PactProjectInvoice.GetMonthlyInvoicesSummaryAsync(query);
 
-        public async Task<ApiResponseDto<List<InvoiceImportRowDto>>> GetFailedInvoiceImportAsync(QueryParameters<string> query)
-            => await _pactClient.PactProjectInvoice.GetFailedInvoiceImportAsync(query);
+        public async Task<ApiResponseDto<List<InvoiceImportRowDto>>> GetFailedInvoiceImportAsync(QueryParameters<string> query, bool isReadOnlyYear = false)
+        {
+            if (isReadOnlyYear)
+            {
+                return ApiResponseDto<List<InvoiceImportRowDto>>.SuccessResponse([], total: 0);
+            }
+
+            return await _pactClient.PactProjectInvoice.GetFailedInvoiceImportAsync(query);
+        }
 
         public async Task<ApiResponseDto<InvoiceImportRowDto>> GetFailedInvoiceImportByIdAsync(int id)
             => await _pactClient.PactProjectInvoice.GetFailedInvoiceImportByIdAsync(id);

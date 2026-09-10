@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -976,7 +977,7 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         [Fact]
-        public async Task AddAnimalAsync_WhenAnimalAlreadyExists_ThrowsInvalidOperationException()
+        public async Task AddAnimalAsync_WhenAnimalAlreadyExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var inputDto = new AnimalDto { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
@@ -985,11 +986,13 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
             _mockRepository.GetAnimalByIdAsync(inputDto.AnimalType).Returns(Task.FromResult<Animal?>(existingEntity));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 async () => await _sut.AddAnimalAsync(inputDto)
             );
 
-            exception.Message.Should().Be($"Animal '{inputDto.AnimalType}' already exists.");
+            exception.Errors.Should().ContainSingle(e =>
+                e.Code == "ANIMAL_ALREADY_EXISTS" &&
+                e.Message == $"Animal '{inputDto.AnimalType}' already exists.");
 
             await _mockRepository.Received(1).GetAnimalByIdAsync(inputDto.AnimalType);
             await _mockRepository.DidNotReceive().AddAnimalAsync(Arg.Any<Animal>());
@@ -1080,12 +1083,16 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         [Fact]
-        public async Task UpdateAnimalAsync_ThrowsKeyNotFoundException_WhenAnimalNotFound()
+        public async Task UpdateAnimalAsync_ThrowsBusinessValidationErrorException_WhenAnimalNotFound()
         {
             var dto = BuildDto("NOTEXIST");
             _mockRepository.GetAnimalByIdAsync("NOTEXIST").Returns((Animal?)null);
 
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _sut.UpdateAnimalAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalAsync(dto));
+
+            exception.Errors.Should().ContainSingle(e =>
+                e.Code == "ANIMAL_NOT_FOUND" &&
+                e.Message == "Animal 'NOTEXIST' not found.");
         }
 
         [Fact]

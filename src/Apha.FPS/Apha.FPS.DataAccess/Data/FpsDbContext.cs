@@ -32,8 +32,10 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<JobCode> JobCodes { get; set; }
         public virtual DbSet<Status> Statuses { get; set; }
+        public virtual DbSet<MasterLookup> MasterLookups { get; set; }
         public virtual DbSet<Disease> Diseases { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
+        public virtual DbSet<Directorate> Directorates { get; set; }
         public virtual DbSet<Contract> Contracts { get; set; }
         public virtual DbSet<Animal> Animals { get; set; }
         public virtual DbSet<AnimalRequest> AnimalRequests { get; set; }
@@ -185,8 +187,10 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<JobCode>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new StatusMap());
+            modelBuilder.ApplyConfiguration(new MasterLookupMap());
             modelBuilder.ApplyConfiguration(new DiseaseMap());
             modelBuilder.ApplyConfiguration(new CustomerMap());
+            modelBuilder.ApplyConfiguration(new DirectorateMap());
 
             modelBuilder.ApplyConfiguration(new ContractMap());
             modelBuilder.Entity<Contract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -404,5 +408,5 @@ namespace Apha.FPS.DataAccess.Data
          
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
         }
-    }
-}
+            }
+        }
