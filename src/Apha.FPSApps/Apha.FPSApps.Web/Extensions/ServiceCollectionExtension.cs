@@ -55,6 +55,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
+            services.AddScoped<IMasterLookupService, MasterLookupService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
