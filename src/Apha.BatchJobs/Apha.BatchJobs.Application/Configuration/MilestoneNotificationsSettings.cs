@@ -54,6 +54,8 @@ public class MilestoneNotificationsSettings
     /// The single address that receives the one allowed test email when
     /// <see cref="OverrideRecipientEnabled"/> is true. Required whenever the override is active —
     /// an empty value fails the send rather than risk falling through to a real recipient.
+    /// Should be an internal (defradev/defra) mailbox — an external one risks the same
+    /// M365 DLP block that silently drops mail carrying real staff PII to an outside domain.
     /// </summary>
     public string? OverrideRecipient { get; set; }
 }
