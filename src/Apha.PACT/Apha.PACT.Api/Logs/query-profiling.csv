@@ -1,0 +1,17 @@
+﻿StartTimeUtc,EndTimeUtc,DurationMs,CommandKind,CommandId,CommandText,Parameters
+"2026-09-09T12:43:50.3889359Z","2026-09-09T12:43:50.4525288Z","63","Reader","a74b6d16-f55d-4dfe-8226-8f661242ee7c","SELECT count(*)::int
+FROM fps.workgroup AS w
+WHERE w.fpsyear = @ef_filter__FilterFpsYear","@ef_filter__FilterFpsYear=2025"
+"2026-09-09T12:43:50.5695816Z","2026-09-09T12:43:50.5776308Z","8","Reader","00ecc45f-6a30-4987-8842-322ac5812a7e","SELECT w.workgroup, w.fpsyear, w.centraloverhead, w.cos90, w.costcentre, w.costcentreold, w.description, w.email_recipient, w.owner, w.profitcentre, w.sendemail
+FROM fps.workgroup AS w
+WHERE w.fpsyear = @ef_filter__FilterFpsYear
+ORDER BY w.workgroup
+LIMIT @p1 OFFSET @p","@ef_filter__FilterFpsYear=2025; @p1=10; @p=0"
+"2026-09-10T04:27:54.2364500Z","2026-09-10T04:27:54.2584252Z","21","Reader","3aedbc62-4d3d-4082-9537-feb1144cc453","SELECT count(*)::int
+FROM fps.workgroup AS w
+WHERE w.fpsyear = @ef_filter__FilterFpsYear","@ef_filter__FilterFpsYear=2025"
+"2026-09-10T04:27:54.3617935Z","2026-09-10T04:27:54.3684011Z","6","Reader","7f4c167f-0a37-4c5c-8ed7-73b70c3f084c","SELECT w.workgroup, w.fpsyear, w.centraloverhead, w.cos90, w.costcentre, w.costcentreold, w.description, w.email_recipient, w.owner, w.profitcentre, w.sendemail
+FROM fps.workgroup AS w
+WHERE w.fpsyear = @ef_filter__FilterFpsYear
+ORDER BY w.workgroup
+LIMIT @p1 OFFSET @p","@ef_filter__FilterFpsYear=2025; @p1=10; @p=0"

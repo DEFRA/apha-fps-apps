@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using System.Globalization;
+using Apha.Common.Diagnostics;
 using Apha.Common.Helpers.Converter;
 
 namespace Apha.PIMS.Api.Extensions
@@ -19,6 +20,8 @@ namespace Apha.PIMS.Api.Extensions
         {
             var services = builder.Services;
             var configuration = builder.Configuration;
+
+            services.AddConnectionPoolDiagnostics(configuration);
 
             // Add database context
             services.AddDbContext<PimsDbContext>(options =>
@@ -148,6 +151,7 @@ namespace Apha.PIMS.Api.Extensions
 
             // Default route
             app.MapControllers();
+            app.MapConnectionPoolDiagnostics();
         }
     }
 }

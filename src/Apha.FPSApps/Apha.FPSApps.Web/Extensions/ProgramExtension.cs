@@ -1,10 +1,10 @@
 ﻿using Amazon;
 using Amazon.S3;
+using Apha.Common.Diagnostics;
 using Apha.FPSApps.Infrastructure.Mappings;
 using Apha.FPSApps.Web.Filters;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
@@ -18,6 +18,8 @@ namespace Apha.FPSApps.Web.Extensions
         {
             var services = builder.Services;
             var configuration = builder.Configuration;
+
+            services.AddConnectionPoolDiagnostics(configuration);
 
             if (builder.Environment.IsEnvironment("local"))
             {
@@ -120,6 +122,9 @@ namespace Apha.FPSApps.Web.Extensions
             {
                 Predicate = _ => false
             });
+
+            // Connection-pool diagnostics download (served from memory; no disk write needed)
+            app.MapConnectionPoolDiagnostics();
 
             // Error handling
             if (env.IsDevelopment() || env.IsEnvironment("local"))

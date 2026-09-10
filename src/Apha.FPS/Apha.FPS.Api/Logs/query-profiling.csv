@@ -1,0 +1,39 @@
+﻿StartTimeUtc,EndTimeUtc,DurationMs,CommandKind,CommandId,CommandText,Parameters
+"2026-09-09T12:43:35.8225140Z","2026-09-09T12:43:35.8553350Z","32","Reader","7bafc19c-612b-40cd-bf44-a8d1d2d78cbe","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE t.active
+ORDER BY t.fpsyear DESC",""
+"2026-09-09T12:43:40.2493260Z","2026-09-09T12:43:40.2692099Z","19","Reader","1d85a5cd-f888-4599-838b-ded032c77c43","SELECT t.spnumber, t.fpsyear, t.firstname, t.lastname, t.title
+FROM fps.tblemployee AS t
+WHERE t.fpsyear = @ef_filter__FilterFpsYear AND t.spnumber LIKE @prefix_startswith
+ORDER BY t.spnumber","@ef_filter__FilterFpsYear=2025; @prefix_startswith=%"
+"2026-09-09T12:43:42.4952802Z","2026-09-09T12:43:42.5023676Z","7","Reader","22d2ad70-83c8-40b2-a762-b9a9641299f2","SELECT t.divname, t.agencyid, t.centoverhead, t.divisionid
+FROM fps.tlkpdivision AS t
+ORDER BY t.divname",""
+"2026-09-09T12:43:44.0034289Z","2026-09-09T12:43:44.0117364Z","8","Reader","3b8c83a5-6d97-4e66-b288-9b289f87f0f1","SELECT t0.profitcentre, t0.conttarget, t0.division, t0.divisionid, t0.email_recipient, t0.highlevelsummary, t0.outputsheet, t0.pactcoordinatoremailname, t0.profitcentrehead, t0.profitcentrename, t0.timesheet, t0.timesheetlayout
+FROM (
+    SELECT DISTINCT t.profitcentre, t.conttarget, t.division, t.divisionid, t.email_recipient, t.highlevelsummary, t.outputsheet, t.pactcoordinatoremailname, t.profitcentrehead, t.profitcentrename, t.timesheet, t.timesheetlayout
+    FROM fps.tblkpprofitcentre AS t
+) AS t0
+ORDER BY t0.profitcentre",""
+"2026-09-09T12:44:09.3037462Z","2026-09-09T12:44:09.3146443Z","10","Reader","07cb1495-acb2-4426-b7f5-37d3e6f8e3f4","SELECT g.gradecode, g.fpsyear, g.avleavehrs, g.avsalary, g.avsickhrs, g.desc_long, g.pactcode
+FROM fps.grade AS g
+WHERE g.fpsyear = @ef_filter__FilterFpsYear
+ORDER BY g.gradecode","@ef_filter__FilterFpsYear=2025"
+"2026-09-10T04:27:39.5573770Z","2026-09-10T04:27:39.5696438Z","12","Reader","7ac3002d-5005-4067-b7ef-1aee34ca95b6","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE t.active
+ORDER BY t.fpsyear DESC",""
+"2026-09-10T04:27:44.9226404Z","2026-09-10T04:27:44.9332853Z","10","Reader","9036e81b-6afc-4d66-ba35-ab2d013a0fbf","SELECT t.spnumber, t.fpsyear, t.firstname, t.lastname, t.title
+FROM fps.tblemployee AS t
+WHERE t.fpsyear = @ef_filter__FilterFpsYear AND t.spnumber LIKE @prefix_startswith
+ORDER BY t.spnumber","@ef_filter__FilterFpsYear=2025; @prefix_startswith=%"
+"2026-09-10T04:27:47.4423885Z","2026-09-10T04:27:47.4476096Z","5","Reader","69e29fa7-d499-4e62-92c6-52dbc4e4f883","SELECT t.divname, t.agencyid, t.centoverhead, t.divisionid
+FROM fps.tlkpdivision AS t
+ORDER BY t.divname",""
+"2026-09-10T04:27:49.0092119Z","2026-09-10T04:27:49.0166903Z","7","Reader","0a91287f-cd88-4fd0-9009-621031985d22","SELECT t0.profitcentre, t0.conttarget, t0.division, t0.divisionid, t0.email_recipient, t0.highlevelsummary, t0.outputsheet, t0.pactcoordinatoremailname, t0.profitcentrehead, t0.profitcentrename, t0.timesheet, t0.timesheetlayout
+FROM (
+    SELECT DISTINCT t.profitcentre, t.conttarget, t.division, t.divisionid, t.email_recipient, t.highlevelsummary, t.outputsheet, t.pactcoordinatoremailname, t.profitcentrehead, t.profitcentrename, t.timesheet, t.timesheetlayout
+    FROM fps.tblkpprofitcentre AS t
+) AS t0
+ORDER BY t0.profitcentre",""

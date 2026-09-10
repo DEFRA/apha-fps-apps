@@ -1,0 +1,645 @@
+﻿StartTimeUtc,EndTimeUtc,DurationMs,CommandKind,CommandId,CommandText,Parameters
+"2026-09-10T04:28:56.4684825Z","2026-09-10T04:28:56.4956747Z","27","Reader","89e45fa3-fe88-4399-b9ec-5defb1a6b7a8","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:28:58.5165572Z","2026-09-10T04:28:58.5247717Z","8","Reader","1b29963b-7750-4ce1-b23e-1668c2949975","SELECT count(*)::int
+FROM mabarchive.tblproject AS t",""
+"2026-09-10T04:28:58.5607618Z","2026-09-10T04:28:58.5746648Z","13","Reader","1af85deb-9e80-4213-932f-8f1a5db57ac7","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+ORDER BY t.project DESC
+LIMIT @p1 OFFSET @p","@p1=10; @p=0"
+"2026-09-10T04:30:16.9218343Z","2026-09-10T04:30:16.9340116Z","12","Reader","5f64c4bf-b740-4548-bb3b-cd4ee2747701","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:30:18.8134484Z","2026-09-10T04:30:18.8190845Z","5","Reader","a39e91fd-da5b-4f44-b80f-a43ce9691815","SELECT count(*)::int
+FROM mabarchive.tblproject AS t",""
+"2026-09-10T04:30:18.8542187Z","2026-09-10T04:30:18.8618451Z","7","Reader","c0d82e98-2b9d-4942-a19c-15de7072339a","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+ORDER BY t.project DESC
+LIMIT @p1 OFFSET @p","@p1=10; @p=0"
+"2026-09-10T04:30:55.8512474Z","2026-09-10T04:30:55.8562356Z","4","Reader","c14ba46b-fc44-47a6-b947-7dad75a9230c","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:30:55.9067070Z","2026-09-10T04:30:55.9114901Z","4","Reader","e60589e9-1443-41c7-aa9c-49f807166992","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:30:56.1598184Z","2026-09-10T04:30:56.1646722Z","4","Reader","64e18607-e011-412e-89d6-0bf30fa16f12","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:30:56.2161070Z","2026-09-10T04:30:56.2227120Z","6","Reader","c3900e8f-ced5-4265-bec1-33cfe47fc53e","SELECT t.programno, t.fpsyear, t.customer, t.directorate, t.manager, t.minim, t.programname, t.sector_name, t.target
+FROM fps.tlkpprogram AS t
+WHERE t.fpsyear = @ef_filter__FPSYear
+ORDER BY t.programno","@ef_filter__FPSYear=2025"
+"2026-09-10T04:30:56.3562183Z","2026-09-10T04:30:56.3603786Z","4","Reader","a3560569-ca00-4118-ae8d-d9575ccdbef4","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:30:56.3951447Z","2026-09-10T04:30:56.4008994Z","5","Reader","734121b0-a3c1-40c7-8110-4455c61b6da1","SELECT t.customer
+FROM fps.tlkpcustomer AS t",""
+"2026-09-10T04:30:56.4919036Z","2026-09-10T04:30:56.4963612Z","4","Reader","d2a19799-ed7c-4327-a80c-496b3bbe1e66","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:30:56.5599374Z","2026-09-10T04:30:56.5653381Z","5","Reader","e4fdccec-217a-4b89-b7dc-46ffa99961d3","SELECT t.disease
+FROM fps.tbldisease AS t",""
+"2026-09-10T04:30:56.6304117Z","2026-09-10T04:30:56.6348310Z","4","Reader","4dd0816c-f0eb-436b-a0ba-5fbb063347ff","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:30:56.6632733Z","2026-09-10T04:30:56.6684227Z","5","Reader","45722f3b-5561-476b-8198-2364b3eb79af","SELECT t.mnumber, t.dt2number, t.name
+FROM mabarchive.tblcapsstaff AS t",""
+"2026-09-10T04:32:46.8650106Z","2026-09-10T04:32:46.8701523Z","5","Reader","1f7459b8-c688-4584-aee1-5c07204a54bc","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:46.9000075Z","2026-09-10T04:32:46.9042452Z","4","Reader","a31ecdfd-1e78-41bb-b41a-7b9b11151352","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:32:46.9879420Z","2026-09-10T04:32:46.9922327Z","4","Reader","ceba5810-6568-4257-bb73-c517fa659015","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:47.0247239Z","2026-09-10T04:32:47.0293929Z","4","Reader","89fc28b6-6a07-4927-8d42-69a186f39303","SELECT t.project, t.yearno, t.markup_additional, t.markup_animals, t.markup_tests, t.markup_time, t.profit_additional, t.profit_animals, t.profit_tests, t.profit_time
+FROM mabarchive.tblprojectyear AS t
+WHERE t.project = @decodedProject
+ORDER BY t.yearno","@decodedProject=2026/001"
+"2026-09-10T04:32:47.3882678Z","2026-09-10T04:32:47.3927754Z","4","Reader","4f8d5b39-f773-4022-a446-cee82175e751","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:47.4055835Z","2026-09-10T04:32:47.4131338Z","7","Reader","18e79215-c417-496a-a332-384b1994a68c","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:47.4707262Z","2026-09-10T04:32:47.4760707Z","5","Reader","9a77e8af-dac2-4b95-8473-58b6ee27e819","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.4764518Z","2026-09-10T04:32:47.4840052Z","7","Reader","25c8208a-623b-4771-b577-00fac5684579","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:47.4935971Z","2026-09-10T04:32:47.4977445Z","4","Reader","9776e133-282c-4a61-aad7-0a0e59b634e9","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5137592Z","2026-09-10T04:32:47.5195289Z","5","Reader","8147a57f-5fbc-485a-a714-8f8e40e27bd3","SELECT COALESCE(sum(CASE
+    WHEN t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL AND t.dailyrate IS NOT NULL THEN (t.number_of_days * t.number_of_animals) * t.dailyrate
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5246322Z","2026-09-10T04:32:47.5313181Z","6","Reader","e62b2688-da70-4168-a494-5a63eae30855","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5396467Z","2026-09-10T04:32:47.5437684Z","4","Reader","e408a676-98e1-4b46-b865-2ed1ac557773","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5472398Z","2026-09-10T04:32:47.5522802Z","5","Reader","4368d464-d4fb-42ab-a0ff-a0fb92ba923a","SELECT COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5487456Z","2026-09-10T04:32:47.5542182Z","5","Reader","05b1d8b3-ca16-4289-9b87-f1f8dd470108","SELECT COALESCE(sum(CASE
+    WHEN t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL AND t.dailyrate IS NOT NULL THEN (t.number_of_days * t.number_of_animals) * t.dailyrate
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5574082Z","2026-09-10T04:32:47.5617328Z","4","Reader","762aafc8-e5f0-48d9-9d6d-e3e466b9b67e","SELECT COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:47.5888196Z","2026-09-10T04:32:47.5951923Z","6","Reader","17aba9ab-8edf-4a38-b300-207fba07aae8","SELECT count(*)::int
+FROM mabarchive.tblstaffrequ AS t
+LEFT JOIN fps.workgroupgrade AS w ON t.wggrade = w.wggrade AND @fpsYear = w.fpsyear
+LEFT JOIN mabarchive.tblproject AS t0 ON t.project = t0.project
+LEFT JOIN mabarchive.tbleugrade_conversion AS t1 ON w.gradecode = t1.vlagrade
+WHERE t.project = @decodedProject AND t.year = @year","@fpsYear=2025; @decodedProject=2026/001; @year=2026"
+"2026-09-10T04:32:47.6454018Z","2026-09-10T04:32:47.6529545Z","7","Reader","ef1d9a32-d334-4b46-8c9f-48ce51e52ff6","SELECT t.sr_identity AS ""SrIdentity"", t.project AS ""Project"", t.year AS ""Year"", t.wggrade AS ""WgGrade"", t.name AS ""Name"", t.nohours AS ""Nohours"", t.nodays AS ""Nodays"", t.chargerate AS ""Chargerate"", t.payrate AS ""Payrate"", t.npr AS ""Npr"", t.ohr AS ""Ohr"", w.workgroup AS ""WorkGroup"", w.gradecode AS ""GradeCode"", t0.programme AS ""Programme"", t0.euroconvrate AS ""EuroConvRate"", t1.eugrade AS ""EuGrade""
+FROM mabarchive.tblstaffrequ AS t
+LEFT JOIN fps.workgroupgrade AS w ON t.wggrade = w.wggrade AND @fpsYear = w.fpsyear
+LEFT JOIN mabarchive.tblproject AS t0 ON t.project = t0.project
+LEFT JOIN mabarchive.tbleugrade_conversion AS t1 ON w.gradecode = t1.vlagrade
+WHERE t.project = @decodedProject AND t.year = @year
+ORDER BY w.workgroup, t.wggrade","@fpsYear=2025; @decodedProject=2026/001; @year=2026"
+"2026-09-10T04:32:49.1328484Z","2026-09-10T04:32:49.1370163Z","4","Reader","77af0801-d722-46a5-926b-327c89215ace","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:49.1554794Z","2026-09-10T04:32:49.1602821Z","4","Reader","d2b1c31d-57df-4fb6-8407-e1b992d929cb","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:32:49.2331356Z","2026-09-10T04:32:49.2406395Z","7","Reader","096748c5-10d1-4691-b18c-73ebfccb00b3","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:49.3181727Z","2026-09-10T04:32:49.3229236Z","4","Reader","91901a3b-6d9d-4fd0-91fe-da05283c1bb8","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum((COALESCE(t.number_of_days, 0.0) * COALESCE(t.number_of_animals, 0.0)) * COALESCE(t.dailyrate, 0.0)), 0.0) AS ""Cost"", 'Other Costs' AS ""Category""
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:32:49.3610909Z","2026-09-10T04:32:49.3680634Z","6","Reader","4c7e5d36-ded5-4302-89d3-3654292d904e","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0) AS ""Cost"", COALESCE(t1.csg7_group, 'Other') AS ""Category""
+FROM mabarchive.tbladditionalcosts AS t
+INNER JOIN (
+    SELECT t0.accshortname, t0.csg7_group
+    FROM fps.tblkpaccountcategory AS t0
+    WHERE t0.fpsyear = @ef_filter__FPSYear
+) AS t1 ON t.accountcat = t1.accshortname
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL
+GROUP BY t.project, t.year, t1.csg7_group","@ef_filter__FPSYear=2025; @decodedProjectId=2026/001"
+"2026-09-10T04:32:49.3997944Z","2026-09-10T04:32:49.4055770Z","5","Reader","72ed26e9-c9a4-47a2-908d-83cdb1b365ac","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(((COALESCE(t.nohours, 0.0) * COALESCE(t.chargerate, 0.0)) * (COALESCE(t.ohr, 0.0) + COALESCE(t.npr, 0.0))) / COALESCE(t.chargerate, 1.0)), 0.0) AS ""Cost"", 'Overheads' AS ""Category""
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND (t.chargerate <> 0.0 OR t.chargerate IS NULL)
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:32:49.4253437Z","2026-09-10T04:32:49.4299262Z","4","Reader","6affcb2c-5a95-4bc2-82db-b6c228d45ee6","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(((COALESCE(t.nohours, 0.0) * COALESCE(t.chargerate, 0.0)) * COALESCE(t.payrate, 0.0)) / COALESCE(t.chargerate, 1.0)), 0.0) AS ""Cost"", 'Pay' AS ""Category""
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND (t.chargerate <> 0.0 OR t.chargerate IS NULL)
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:32:49.4500951Z","2026-09-10T04:32:49.4553742Z","5","Reader","05c53d9c-785f-4e80-a47f-fd64f61c812c","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(COALESCE(t.notests, 0.0) * COALESCE(t.unitprice, 0.0)), 0.0) AS ""Cost"", 'Other Costs' AS ""Category""
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedProjectId
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:32:50.7585776Z","2026-09-10T04:32:50.7638136Z","5","Reader","bdd7bf27-8de2-43f1-8ea9-d37a2050af57","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:50.7764227Z","2026-09-10T04:32:50.7807060Z","4","Reader","72ed7898-f400-4ab9-84da-b738dd5d32bb","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:32:50.8445664Z","2026-09-10T04:32:50.8492890Z","4","Reader","7c8b3fcd-432d-4fc0-9aff-4a7270cab7cf","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:50.8930878Z","2026-09-10T04:32:50.8984800Z","5","Reader","082ac288-1be8-4a20-93ce-53d1436d3172","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=DaysInYear"
+"2026-09-10T04:32:50.9135847Z","2026-09-10T04:32:50.9176462Z","4","Reader","e1f7e5dd-e3f6-4e23-ab03-164cd33db9d9","SELECT t.sr_identity, t.chargerate, t.name, t.nodays, t.nohours, t.npr, t.ohr, t.payrate, t.project, t.wggrade, t.year
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND t.nodays IS NOT NULL","@decodedProjectId=2026/001"
+"2026-09-10T04:32:51.9256356Z","2026-09-10T04:32:51.9306169Z","4","Reader","621c7a06-e014-4069-8658-3cbae4544b62","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:51.9489315Z","2026-09-10T04:32:51.9544217Z","5","Reader","9519af87-7b84-465e-bb5c-b2dd9195c51f","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:32:52.0447728Z","2026-09-10T04:32:52.0490754Z","4","Reader","a3088fb3-3a69-46c8-a332-2dc5008dfa27","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:52.0780489Z","2026-09-10T04:32:52.0828856Z","4","Reader","f20ab902-a6a9-4d6c-b29f-91a310828b37","SELECT t.sr_identity, t.chargerate, t.name, t.nodays, t.nohours, t.npr, t.ohr, t.payrate, t.project, t.wggrade, t.year
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND t.nodays IS NOT NULL","@decodedProjectId=2026/001"
+"2026-09-10T04:32:52.1032426Z","2026-09-10T04:32:52.1090355Z","5","Reader","e614ca3d-3a17-4b99-9535-5fb3248bd90f","SELECT w.wggrade, w.fpsyear, w.avsalary, w.chargeratewg, w.directratewg, w.gradecode, w.hrschangedby, w.nprwg, w.ohrwg, w.payratewg, w.profitcentregrade, w.workgroup
+FROM fps.workgroupgrade AS w
+WHERE w.fpsyear = @ef_filter__FPSYear","@ef_filter__FPSYear=2025"
+"2026-09-10T04:32:53.0903912Z","2026-09-10T04:32:53.0947513Z","4","Reader","cefa9b88-e54d-4f9e-ad2b-bc96a75e0f3b","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.1120116Z","2026-09-10T04:32:53.1169246Z","4","Reader","536b25cc-dbd7-44c6-9641-3e92df1047a5","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:32:53.1744749Z","2026-09-10T04:32:53.1796515Z","5","Reader","6019ffd1-9d8a-4962-8518-e8ca1e660b2d","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.1927804Z","2026-09-10T04:32:53.1968922Z","4","Reader","3b735660-399a-408d-82f8-cdddd568014e","SELECT t.project, t.yearno, t.markup_additional, t.markup_animals, t.markup_tests, t.markup_time, t.profit_additional, t.profit_animals, t.profit_tests, t.profit_time
+FROM mabarchive.tblprojectyear AS t
+WHERE t.project = @decodedProject
+ORDER BY t.yearno","@decodedProject=2026/001"
+"2026-09-10T04:32:53.2498066Z","2026-09-10T04:32:53.2545023Z","4","Reader","6e8d6fc2-b0fd-4eb4-860a-db268666f43a","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.2677243Z","2026-09-10T04:32:53.2728449Z","5","Reader","b52afdaa-a6d8-45ed-93e9-6076ffdfadee","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.2762608Z","2026-09-10T04:32:53.2802860Z","4","Reader","a0f79902-3a66-45ac-9b78-8b57fed2960e","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.2874177Z","2026-09-10T04:32:53.2945221Z","7","Reader","e6628e37-0493-44db-a646-4821c24e3174","SELECT COALESCE(sum(CASE
+    WHEN t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL AND t.dailyrate IS NOT NULL THEN (t.number_of_days * t.number_of_animals) * t.dailyrate
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.3012062Z","2026-09-10T04:32:53.3073312Z","6","Reader","2dd8b156-3a30-44bc-aaf0-606bc0e542cc","SELECT COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.3726962Z","2026-09-10T04:32:53.3769262Z","4","Reader","e624d6aa-77b5-4758-b00b-e4a32832527c","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.4134807Z","2026-09-10T04:32:53.4190436Z","5","Reader","77cacfb9-149c-4fdc-a51f-84f603740ccb","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.4344107Z","2026-09-10T04:32:53.4400268Z","5","Reader","9e288a97-63d4-48b3-8bab-092535315f7f","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.4539754Z","2026-09-10T04:32:53.4587241Z","4","Reader","4b0f7883-dae3-4663-928d-8baa1c8ea7be","SELECT COALESCE(sum(CASE
+    WHEN t.dailyrate IS NOT NULL AND t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL THEN (t.dailyrate * t.number_of_days) * t.number_of_animals
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.4770665Z","2026-09-10T04:32:53.4817663Z","4","Reader","33d7fc32-9980-4261-88c6-863abcf8b00c","SELECT COALESCE(sum(t.itemcost), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2026"
+"2026-09-10T04:32:53.4883203Z","2026-09-10T04:32:53.4932446Z","4","Reader","81d56e87-134f-4239-9e59-13fa6afcd2f7","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitstaff"
+"2026-09-10T04:32:53.4965229Z","2026-09-10T04:32:53.5006223Z","4","Reader","34970fee-7c07-42a3-a539-116fbc170939","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profittests"
+"2026-09-10T04:32:53.5052240Z","2026-09-10T04:32:53.5103108Z","5","Reader","4557f2bf-8a11-4c4c-a644-1329162ec544","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=ProfitExceptional"
+"2026-09-10T04:32:53.5148904Z","2026-09-10T04:32:53.5196091Z","4","Reader","2525357b-0a98-4c6c-8bf6-31ce2b3ee1aa","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitanimals"
+"2026-09-10T04:32:53.5735433Z","2026-09-10T04:32:53.5775232Z","3","Reader","1e6387d2-1bc1-4d2a-b334-90cb522a8c8c","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.5895267Z","2026-09-10T04:32:53.5942266Z","4","Reader","1bb326a2-89a6-46a2-a274-6e5ca57f2b57","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.5976259Z","2026-09-10T04:32:53.6025471Z","4","Reader","4d8da613-e75e-418b-abe0-c73444e49c7e","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.6058253Z","2026-09-10T04:32:53.6096706Z","3","Reader","ac8dc6a2-a396-4c22-a3cc-e4ad50029d4d","SELECT COALESCE(sum(CASE
+    WHEN t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL AND t.dailyrate IS NOT NULL THEN (t.number_of_days * t.number_of_animals) * t.dailyrate
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.6129095Z","2026-09-10T04:32:53.6171634Z","4","Reader","08e40963-38fa-4f0a-a3d0-a1a4b8b5bc2e","SELECT COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.6844233Z","2026-09-10T04:32:53.6895511Z","5","Reader","02944d8c-741d-48e3-84ed-ee1f2b3ccb6f","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.7027368Z","2026-09-10T04:32:53.7070539Z","4","Reader","164ebbc9-0434-4b84-bb9c-b2fdb4f20515","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.7106159Z","2026-09-10T04:32:53.7151448Z","4","Reader","b14ad955-2f8e-40d3-ba3a-a7253c47510e","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.7189242Z","2026-09-10T04:32:53.7237397Z","4","Reader","503f09e4-e98a-4929-92ab-fd3376b1b881","SELECT COALESCE(sum(CASE
+    WHEN t.dailyrate IS NOT NULL AND t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL THEN (t.dailyrate * t.number_of_days) * t.number_of_animals
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.7269842Z","2026-09-10T04:32:53.7309614Z","3","Reader","a6cd6b6d-2caa-490b-813f-eee929342cff","SELECT COALESCE(sum(t.itemcost), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2027"
+"2026-09-10T04:32:53.7330689Z","2026-09-10T04:32:53.7372293Z","4","Reader","4f51e045-ca87-4e62-bf8e-f506815f9aa9","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitstaff"
+"2026-09-10T04:32:53.7402985Z","2026-09-10T04:32:53.7453419Z","5","Reader","b97c382c-8bbc-4aa7-9fba-3137970c5201","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profittests"
+"2026-09-10T04:32:53.7474045Z","2026-09-10T04:32:53.7511021Z","3","Reader","982f68ce-a442-474f-adad-a5af8bbbcf0a","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=ProfitExceptional"
+"2026-09-10T04:32:53.7561877Z","2026-09-10T04:32:53.7604089Z","4","Reader","bb9e412d-f674-4c4e-b0e5-03858695a4c2","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitanimals"
+"2026-09-10T04:32:53.8202110Z","2026-09-10T04:32:53.8255326Z","5","Reader","a49e1933-a0a3-4458-be98-4c083a5c16c2","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.8380369Z","2026-09-10T04:32:53.8421537Z","4","Reader","bae84ab8-6cb0-4d0b-90f7-0a42da876fec","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.8458787Z","2026-09-10T04:32:53.8507019Z","4","Reader","be77d29c-086e-4f26-a04f-657341048e57","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.8543904Z","2026-09-10T04:32:53.8596589Z","5","Reader","ff7996ce-74b6-43ff-a665-0cbd1d861382","SELECT COALESCE(sum(CASE
+    WHEN t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL AND t.dailyrate IS NOT NULL THEN (t.number_of_days * t.number_of_animals) * t.dailyrate
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.8619982Z","2026-09-10T04:32:53.8658578Z","3","Reader","c48f2986-ef75-4be4-ba90-97340919a276","SELECT COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.9289846Z","2026-09-10T04:32:53.9333781Z","4","Reader","ffbcde69-3765-44c6-a544-7fcfa51c536d","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:53.9508273Z","2026-09-10T04:32:53.9558091Z","4","Reader","62718d50-b9b7-4434-8deb-ae1c92a3cfd9","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.9597281Z","2026-09-10T04:32:53.9637941Z","4","Reader","f820f6e1-bd77-4971-81f4-b90755851887","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.9672462Z","2026-09-10T04:32:53.9715449Z","4","Reader","6f8548ca-653c-4ac5-a288-c43f8d69efa4","SELECT COALESCE(sum(CASE
+    WHEN t.dailyrate IS NOT NULL AND t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL THEN (t.dailyrate * t.number_of_days) * t.number_of_animals
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.9751820Z","2026-09-10T04:32:53.9800204Z","4","Reader","8e0e8f43-8844-4334-8d16-9a7bd0ee262c","SELECT COALESCE(sum(t.itemcost), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2028"
+"2026-09-10T04:32:53.9836952Z","2026-09-10T04:32:53.9873537Z","3","Reader","3accb7c8-67f3-4dd4-bca5-d10ea87cfb19","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitstaff"
+"2026-09-10T04:32:53.9916671Z","2026-09-10T04:32:53.9962241Z","4","Reader","287f84e5-c3f3-48d2-8ca3-f075b901cd6f","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profittests"
+"2026-09-10T04:32:54.0030642Z","2026-09-10T04:32:54.0080305Z","4","Reader","2d9883bd-c287-4785-9b17-331b30707697","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=ProfitExceptional"
+"2026-09-10T04:32:54.0123810Z","2026-09-10T04:32:54.0181229Z","5","Reader","e077e282-18c2-4bee-bcac-c5a2d3175fe5","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitanimals"
+"2026-09-10T04:32:54.1043435Z","2026-09-10T04:32:54.1088488Z","4","Reader","124748d5-d52b-4ce4-945e-9f31c4184a84","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:54.1236187Z","2026-09-10T04:32:54.1298487Z","6","Reader","1c1192d4-2e08-4b8b-aee7-e90a7333c54c","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.1331817Z","2026-09-10T04:32:54.1371832Z","4","Reader","6327dd40-5fc9-4cce-a2d9-61d2714b4496","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.1412097Z","2026-09-10T04:32:54.1454994Z","4","Reader","223644d0-30e8-422e-b442-7fe42e3350c5","SELECT COALESCE(sum(CASE
+    WHEN t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL AND t.dailyrate IS NOT NULL THEN (t.number_of_days * t.number_of_animals) * t.dailyrate
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.1487298Z","2026-09-10T04:32:54.1538714Z","5","Reader","541c8f7d-9220-455b-a61a-65e72684022a","SELECT COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.2157864Z","2026-09-10T04:32:54.2197481Z","3","Reader","cbb47270-85c4-4060-87ee-e02b1513ee7c","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:54.2345938Z","2026-09-10T04:32:54.2393905Z","4","Reader","9121d840-d9f5-4514-8355-0025c59edb78","SELECT COALESCE(sum(CASE
+    WHEN t.chargerate IS NOT NULL AND t.nohours IS NOT NULL THEN t.chargerate * t.nohours
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.2427006Z","2026-09-10T04:32:54.2475389Z","4","Reader","483041d5-6d1c-49c2-8ad5-1ce0ab2dc590","SELECT COALESCE(sum(CASE
+    WHEN t.unitprice IS NOT NULL AND t.notests IS NOT NULL THEN t.unitprice * t.notests
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.2510998Z","2026-09-10T04:32:54.2548714Z","3","Reader","8f0b008f-656a-4340-a351-94c98053a225","SELECT COALESCE(sum(CASE
+    WHEN t.dailyrate IS NOT NULL AND t.number_of_days IS NOT NULL AND t.number_of_animals IS NOT NULL THEN (t.dailyrate * t.number_of_days) * t.number_of_animals
+    ELSE 0.0
+END), 0.0)
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.2602759Z","2026-09-10T04:32:54.2646844Z","4","Reader","25722ab7-2196-46dc-a777-ebd301cbfa58","SELECT COALESCE(sum(t.itemcost), 0.0)
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedId AND t.year = @year","@decodedId=2026/001; @year=2029"
+"2026-09-10T04:32:54.2678242Z","2026-09-10T04:32:54.2726453Z","4","Reader","110e6c7c-c76b-4cf1-9b26-780cefaba4eb","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitstaff"
+"2026-09-10T04:32:54.2753758Z","2026-09-10T04:32:54.2791428Z","3","Reader","dc5b4426-c0ef-4989-b939-f92e95295d80","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profittests"
+"2026-09-10T04:32:54.2864022Z","2026-09-10T04:32:54.2905653Z","4","Reader","7e201384-9149-4f51-95bc-7e3d41768beb","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=ProfitExceptional"
+"2026-09-10T04:32:54.2941850Z","2026-09-10T04:32:54.2991876Z","5","Reader","9a3b6b5f-a21c-496f-bfb5-23198f20ab60","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=Profitanimals"
+"2026-09-10T04:32:55.6554160Z","2026-09-10T04:32:55.6594321Z","4","Reader","7ec2d49e-4aa9-433e-83cb-460528648799","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:32:56.0142367Z","2026-09-10T04:32:56.0189595Z","4","Reader","ad78e35c-4697-4265-9bea-6475e18e531b","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedProjectId
+LIMIT 1","@decodedProjectId=2026/001"
+"2026-09-10T04:32:56.0323716Z","2026-09-10T04:32:56.0402049Z","7","Reader","0893d2bd-dbc7-48b0-b2a7-fc2fe9329842","SELECT t.project, t.yearno, t.markup_additional, t.markup_animals, t.markup_tests, t.markup_time, t.profit_additional, t.profit_animals, t.profit_tests, t.profit_time
+FROM mabarchive.tblprojectyear AS t
+WHERE t.project = @decodedProjectId
+ORDER BY t.yearno","@decodedProjectId=2026/001"
+"2026-09-10T04:32:56.0521012Z","2026-09-10T04:32:56.0567955Z","4","Reader","417c3cf1-4450-4691-9296-f20dc19faf28","SELECT t.sr_identity, t.chargerate, t.name, t.nodays, t.nohours, t.npr, t.ohr, t.payrate, t.project, t.wggrade, t.year
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId
+ORDER BY t.year, t.wggrade","@decodedProjectId=2026/001"
+"2026-09-10T04:32:56.0718799Z","2026-09-10T04:32:56.0767460Z","4","Reader","0cdad3a6-79a9-4aca-ade4-d62ccb53f1df","SELECT t.project, t.year, t.testcode, t.notests, t.unitprice
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedProjectId
+ORDER BY t.year, t.testcode","@decodedProjectId=2026/001"
+"2026-09-10T04:32:56.0873627Z","2026-09-10T04:32:56.0924151Z","5","Reader","dbf5c437-6fef-4168-9c59-d53c097b3f78","SELECT t.ar_identity, t.animaltype, t.dailyrate, t.number_of_animals, t.number_of_days, t.project, t.year
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedProjectId
+ORDER BY t.year, t.animaltype","@decodedProjectId=2026/001"
+"2026-09-10T04:32:56.1061567Z","2026-09-10T04:32:56.1104514Z","4","Reader","21296b2f-252a-4729-8d5a-ce2cedfa9823","SELECT t.ac_identity, t.accountcat, t.costentered, t.description, t.freq, t.itemcost, t.project, t.year
+FROM mabarchive.tbladditionalcosts AS t
+WHERE t.project = @decodedProjectId
+ORDER BY t.year, t.description","@decodedProjectId=2026/001"
+"2026-09-10T04:33:26.6830183Z","2026-09-10T04:33:26.6882045Z","5","Reader","10ad38a3-2584-4abd-9762-7e6c2ef65a69","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:26.7081661Z","2026-09-10T04:33:26.7135534Z","5","Reader","1940e802-6014-4e65-bd17-75c0d3598c52","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:33:26.7708183Z","2026-09-10T04:33:26.7752004Z","4","Reader","aaf43577-450a-4ba6-8620-b4f6d6bf050f","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:26.8147915Z","2026-09-10T04:33:26.8194035Z","4","Reader","bdeb2772-da52-419a-8a16-86b6106bcc38","SELECT t.sr_identity, t.chargerate, t.name, t.nodays, t.nohours, t.npr, t.ohr, t.payrate, t.project, t.wggrade, t.year
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND t.nodays IS NOT NULL","@decodedProjectId=2026/001"
+"2026-09-10T04:33:26.8239839Z","2026-09-10T04:33:26.8620313Z","38","Reader","f81a5fe9-e011-49cc-9e48-bbed09584e76","SELECT w.wggrade, w.fpsyear, w.avsalary, w.chargeratewg, w.directratewg, w.gradecode, w.hrschangedby, w.nprwg, w.ohrwg, w.payratewg, w.profitcentregrade, w.workgroup
+FROM fps.workgroupgrade AS w
+WHERE w.fpsyear = @ef_filter__FPSYear","@ef_filter__FPSYear=2025"
+"2026-09-10T04:33:28.2988604Z","2026-09-10T04:33:28.3031500Z","4","Reader","bbac071d-5f0d-455b-a632-a93b1a697d5d","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:28.3156514Z","2026-09-10T04:33:28.3201209Z","4","Reader","5f0530b6-2fc3-4337-96fe-a1fecd3f9cbf","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:33:28.3745446Z","2026-09-10T04:33:28.3796642Z","5","Reader","f94efe02-9a5e-4499-bd80-cda63e62f5f7","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:28.3925413Z","2026-09-10T04:33:28.3968826Z","4","Reader","ded27d0d-d693-4494-abfe-1baa64c41bdd","SELECT t.setting
+FROM mabarchive.tbl_settings AS t
+WHERE t.id = @id
+LIMIT 1","@id=DaysInYear"
+"2026-09-10T04:33:28.4001199Z","2026-09-10T04:33:28.4048027Z","4","Reader","0fc4acc8-034d-4181-bdbc-0ba1b2cf4c7f","SELECT t.sr_identity, t.chargerate, t.name, t.nodays, t.nohours, t.npr, t.ohr, t.payrate, t.project, t.wggrade, t.year
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND t.nodays IS NOT NULL","@decodedProjectId=2026/001"
+"2026-09-10T04:33:29.2313920Z","2026-09-10T04:33:29.2364385Z","5","Reader","b26d22bc-c983-4722-b73d-f1f6641cefac","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:29.2481415Z","2026-09-10T04:33:29.2520691Z","3","Reader","9209df47-858c-490c-8760-92feccfb06aa","SELECT t.project, t.contract_number, t.contractprice, t.customer_name, t.date_of_submission, t.disease, t.euroconvrate, t.financialyears, t.inflation, t.isdefraproject, t.notes, t.plancat, t.prepared_by, t.programme, t.projecttitle, t.projectworkgroup, t.startdate, t.startfyear, t.submittedbyfname, t.submittedbylname
+FROM mabarchive.tblproject AS t
+WHERE t.project = @decodedId
+LIMIT 1","@decodedId=2026/001"
+"2026-09-10T04:33:29.2978747Z","2026-09-10T04:33:29.3025092Z","4","Reader","769c8cc7-8341-4659-ab8b-bf9d7177e3a8","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:29.3159607Z","2026-09-10T04:33:29.3210391Z","5","Reader","41160f4e-9a55-4a65-b480-816724a32dc1","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum((COALESCE(t.number_of_days, 0.0) * COALESCE(t.number_of_animals, 0.0)) * COALESCE(t.dailyrate, 0.0)), 0.0) AS ""Cost"", 'Other Costs' AS ""Category""
+FROM mabarchive.tblanimalreq AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:33:29.3254709Z","2026-09-10T04:33:29.3304038Z","4","Reader","9e109618-7192-444a-ae31-19f0fcdc74fd","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(COALESCE(t.itemcost, 0.0)), 0.0) AS ""Cost"", COALESCE(t1.csg7_group, 'Other') AS ""Category""
+FROM mabarchive.tbladditionalcosts AS t
+INNER JOIN (
+    SELECT t0.accshortname, t0.csg7_group
+    FROM fps.tblkpaccountcategory AS t0
+    WHERE t0.fpsyear = @ef_filter__FPSYear
+) AS t1 ON t.accountcat = t1.accshortname
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL
+GROUP BY t.project, t.year, t1.csg7_group","@ef_filter__FPSYear=2025; @decodedProjectId=2026/001"
+"2026-09-10T04:33:29.3357291Z","2026-09-10T04:33:29.3407355Z","5","Reader","14d6536b-10bc-4277-81d4-8f641bc86fab","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(((COALESCE(t.nohours, 0.0) * COALESCE(t.chargerate, 0.0)) * (COALESCE(t.ohr, 0.0) + COALESCE(t.npr, 0.0))) / COALESCE(t.chargerate, 1.0)), 0.0) AS ""Cost"", 'Overheads' AS ""Category""
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND (t.chargerate <> 0.0 OR t.chargerate IS NULL)
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:33:29.3481592Z","2026-09-10T04:33:29.3539763Z","5","Reader","e5e8a34c-edd5-4cf4-aa47-7f3cf12427ad","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(((COALESCE(t.nohours, 0.0) * COALESCE(t.chargerate, 0.0)) * COALESCE(t.payrate, 0.0)) / COALESCE(t.chargerate, 1.0)), 0.0) AS ""Cost"", 'Pay' AS ""Category""
+FROM mabarchive.tblstaffrequ AS t
+WHERE t.project = @decodedProjectId AND t.year IS NOT NULL AND (t.chargerate <> 0.0 OR t.chargerate IS NULL)
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:33:29.3569513Z","2026-09-10T04:33:29.3616444Z","4","Reader","75ad5ef6-3b2e-4182-86b5-2df38b9804e0","SELECT t.project AS ""Project"", t.year AS ""YearNo"", COALESCE(sum(COALESCE(t.notests, 0.0) * COALESCE(t.unitprice, 0.0)), 0.0) AS ""Cost"", 'Other Costs' AS ""Category""
+FROM mabarchive.tbltestrequ AS t
+WHERE t.project = @decodedProjectId
+GROUP BY t.project, t.year","@decodedProjectId=2026/001"
+"2026-09-10T04:33:30.3322637Z","2026-09-10T04:33:30.3369575Z","4","Reader","31cf84cf-a5b0-497f-bd16-810005dcdac4","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:30.3692756Z","2026-09-10T04:33:30.3743236Z","5","Reader","db3ce8e7-961f-468d-a540-fbf7ab9f3e8b","SELECT t.id, t.notes, t.setting, t.testsetting, t.userupdateable
+FROM mabarchive.tbl_settings AS t
+ORDER BY t.id",""
+"2026-09-10T04:33:30.4442836Z","2026-09-10T04:33:30.4485372Z","4","Reader","a7bfce67-4cde-4a7a-9ad5-cfc257d1ebdb","SELECT t.fpsyear, t.active, t.createdby, t.createdon, t.fpsyearcode, t.remarks, t.yearstatus
+FROM fps.tblyearmaster AS t
+WHERE lower(t.yearstatus) = 'open' AND t.active
+ORDER BY t.fpsyear DESC
+LIMIT 1",""
+"2026-09-10T04:33:30.4874209Z","2026-09-10T04:33:30.4926904Z","5","Reader","6fd149c2-102d-4e5a-812a-26f0b6f7c637","SELECT t.csg7group, t.useinflation
+FROM mabarchive.tblcsg7_accountgroups AS t
+ORDER BY t.csg7group",""

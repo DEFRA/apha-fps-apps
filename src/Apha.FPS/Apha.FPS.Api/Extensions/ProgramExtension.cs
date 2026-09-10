@@ -2,6 +2,7 @@
 using Amazon;
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
+using Apha.Common.Diagnostics;
 using Apha.Common.Helpers.Converter;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.FPS.Api.Filters;
@@ -29,6 +30,8 @@ namespace Apha.FPS.Api.Extensions
         {
             var services = builder.Services;
             var configuration = builder.Configuration;
+
+            services.AddConnectionPoolDiagnostics(configuration);
 
             services.AddDbContext<FpsDbContext>(options =>
                 {
@@ -224,6 +227,7 @@ namespace Apha.FPS.Api.Extensions
 
             // Default route
             app.MapControllers();
+            app.MapConnectionPoolDiagnostics();
         }
     }
 }

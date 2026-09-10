@@ -1,4 +1,5 @@
-﻿using Apha.Costbook.Api.Filters;
+﻿using Apha.Common.Diagnostics;
+using Apha.Costbook.Api.Filters;
 using Apha.Costbook.Api.Mappings;
 using Apha.Costbook.Api.Middleware;
 using Apha.Costbook.Application.Mappings;
@@ -20,6 +21,8 @@ namespace Apha.Costbook.Api.Extensions
         {
             var services = builder.Services;
             var configuration = builder.Configuration;
+
+            services.AddConnectionPoolDiagnostics(configuration);
 
             // Add database context
             services.AddDbContext<CostbookDbContext>(options =>
@@ -171,6 +174,7 @@ namespace Apha.Costbook.Api.Extensions
 
             // Default route
             app.MapControllers();
+            app.MapConnectionPoolDiagnostics();
         }
     }
 }
