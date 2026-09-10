@@ -26,12 +26,12 @@
         <form id="@formId">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramNo">Program <span class="sup_color_red">*</span> </label>
-                <input type="text" asp-for="ProgramNo" required class="govuk-input" readonly="@isEditMode">
+                <input type="text" asp-for="ProgramNo" required maxlength="10" class="govuk-input" readonly="@isEditMode">
                     <span asp-validation-for="ProgramNo" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramName">Program Name</label>
-                <input type="text" asp-for="ProgramName" class="govuk-input">
+                <input type="text" asp-for="ProgramName" maxlength="80" class="govuk-input">
                         <span asp-validation-for="ProgramName" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
