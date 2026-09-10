@@ -61,9 +61,13 @@ namespace Apha.FPS.Application.Services
 
             if (await _programRepository.ExistsByProgramNoAsync(programDto.ProgramNo))
             {
-                throw new InvalidOperationException(
-                    $"Program '{programDto.ProgramNo}' already exists. " +
-                    "Please use a different program.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Program '{programDto.ProgramNo}' already exists. " +
+                        "Please use a different program.",
+                        "PROGRAM_ALREADY_EXISTS")
+                ]);
             }
 
             var program = _mapper.Map<Core.Entities.Program>(programDto);
@@ -75,9 +79,13 @@ namespace Apha.FPS.Application.Services
             }
             catch (Exception ex) when (IsUniqueViolation(ex))
             {
-                throw new InvalidOperationException(
-                    $"Program '{programDto.ProgramNo}' already exists. " +
-                    "Please use a different program.", ex);
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Program '{programDto.ProgramNo}' already exists. " +
+                        "Please use a different program.",
+                        "PROGRAM_ALREADY_EXISTS")
+                ]);
             }
         }
 

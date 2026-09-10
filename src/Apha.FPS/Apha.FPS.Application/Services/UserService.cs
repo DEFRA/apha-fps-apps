@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -61,13 +62,23 @@ namespace Apha.FPS.Application.Services
 
             var existing = await _repository.GetUserByUsernameAsync(userDto.Username);
             if (existing != null)
-                throw new InvalidOperationException($"User with username '{userDto.Username}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"User with username '{userDto.Username}' already exists.",
+                        "USER_USERNAME_ALREADY_EXISTS")
+                ]);
 
             if (!string.IsNullOrWhiteSpace(userDto.UserEmail))
             {
                 var existingByEmail = await _repository.GetUserByEmailAsync(userDto.UserEmail);
                 if (existingByEmail != null)
-                    throw new InvalidOperationException($"User with email '{userDto.UserEmail}' already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            $"User with email '{userDto.UserEmail}' already exists.",
+                            "USER_EMAIL_ALREADY_EXISTS")
+                    ]);
             }
 
             var entity = _mapper.Map<User>(userDto);
@@ -92,13 +103,23 @@ namespace Apha.FPS.Application.Services
 
             var existingByName = await _repository.GetUserByUsernameAsync(userDto.Username);
             if (existingByName != null && existingByName.UserId != userDto.UserId)
-                throw new InvalidOperationException($"User with username '{userDto.Username}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"User with username '{userDto.Username}' already exists.",
+                        "USER_USERNAME_ALREADY_EXISTS")
+                ]);
 
             if (!string.IsNullOrWhiteSpace(userDto.UserEmail))
             {
                 var existingByEmail = await _repository.GetUserByEmailAsync(userDto.UserEmail);
                 if (existingByEmail != null && existingByEmail.UserId != userDto.UserId)
-                    throw new InvalidOperationException($"User with email '{userDto.UserEmail}' already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            $"User with email '{userDto.UserEmail}' already exists.",
+                            "USER_EMAIL_ALREADY_EXISTS")
+                    ]);
             }
 
             var entity = _mapper.Map<User>(userDto);
