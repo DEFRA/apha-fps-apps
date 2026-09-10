@@ -40,9 +40,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
             return ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(dtos);
         }
 
-        private static ApiResponseDto<List<ManagerDto>> MakeManagerResponse(params string[] names) =>
-            ApiResponseDto<List<ManagerDto>>.SuccessResponse(
-                names.Select(n => new ManagerDto { Name = n }).ToList());
+        // ManagerList is derived from the programmes, so manager-focused tests need
+        // programmes that carry a Manager value.
+        private static ApiResponseDto<IEnumerable<ProgramDto>> MakeProgramResponseWithManagers(
+            params (string no, string name, string? manager)[] programmes)
+        {
+            var dtos = programmes
+                .Select(p => new ProgramDto { ProgramNo = p.no, ProgramName = p.name, Manager = p.manager })
+                .Cast<ProgramDto>();
+            return ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(dtos);
+        }
 
         private static ApiResponseDto<List<CustomerDto>> MakeCustomerResponse(params string[] customers) =>
             ApiResponseDto<List<CustomerDto>>.SuccessResponse(
@@ -81,9 +88,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
         private void SetupDropdowns()
         {
             _programService.GetAllProgramsAsync()
-                .Returns(MakeProgramResponse(("P001", "Programme One"), ("P002", "Programme Two")));
-            _projectService.GetManagersAsync()
-                .Returns(MakeManagerResponse("John Smith", "Jane Doe"));
+                .Returns(MakeProgramResponseWithManagers(
+                    ("P001", "Programme One", "John Smith"),
+                    ("P002", "Programme Two", "Jane Doe")));
             _projectService.GetAllCustomersAsync()
                 .Returns(MakeCustomerResponse("ACME Ltd", "Beta Corp"));
         }
@@ -143,7 +150,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
         }
 
         [Fact]
-        public async Task Index_ManagerListIsPopulatedFromProjectService()
+        public async Task Index_ManagerListIsPopulatedFromProgrammes()
         {
             // Arrange
             SetupDropdowns();
@@ -157,6 +164,30 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
             Assert.Equal(2, model.ManagerList.Count);
             Assert.Contains(model.ManagerList, m => m.Value == "John Smith");
             Assert.Contains(model.ManagerList, m => m.Value == "Jane Doe");
+        }
+
+        [Fact]
+        public async Task Index_ManagerListDeduplicatesManagersOwningSeveralProgrammes()
+        {
+            // Arrange — same manager on multiple programmes, plus a casing/whitespace variant
+            _programService.GetAllProgramsAsync()
+                .Returns(MakeProgramResponseWithManagers(
+                    ("P001", "Programme One",   "Aaron, Basia"),
+                    ("P002", "Programme Two",   "Aaron, Basia"),
+                    ("P003", "Programme Three", " aaron, basia "),
+                    ("P004", "Programme Four",  "Abad, Jasen")));
+            _projectService.GetAllCustomersAsync()
+                .Returns(MakeCustomerResponse("ACME Ltd"));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectProfitabilityVlaViewModel>(viewResult.Model);
+            Assert.Equal(2, model.ManagerList.Count);
+            Assert.Single(model.ManagerList, m => m.Value == "Aaron, Basia");
+            Assert.Single(model.ManagerList, m => m.Value == "Abad, Jasen");
         }
 
         [Fact]
@@ -184,8 +215,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Service error" } },
                     new ApiMetaDto()));
-            _projectService.GetManagersAsync()
-                .Returns(MakeManagerResponse("John Smith"));
             _projectService.GetAllCustomersAsync()
                 .Returns(MakeCustomerResponse("ACME Ltd"));
 
@@ -199,15 +228,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
         }
 
         [Fact]
-        public async Task Index_WhenManagerServiceFails_ManagerListIsEmpty()
+        public async Task Index_WhenProgrammesHaveNoManager_ManagerListIsEmpty()
         {
             // Arrange
             _programService.GetAllProgramsAsync()
-                .Returns(MakeProgramResponse(("P001", "Programme One")));
-            _projectService.GetManagersAsync()
-                .Returns(ApiResponseDto<List<ManagerDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Service error" } },
-                    new ApiMetaDto()));
+                .Returns(MakeProgramResponseWithManagers(("P001", "Programme One", null)));
             _projectService.GetAllCustomersAsync()
                 .Returns(MakeCustomerResponse("ACME Ltd"));
 
@@ -226,8 +251,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
             // Arrange
             _programService.GetAllProgramsAsync()
                 .Returns(MakeProgramResponse(("P001", "Programme One")));
-            _projectService.GetManagersAsync()
-                .Returns(MakeManagerResponse("John Smith"));
             _projectService.GetAllCustomersAsync()
                 .Returns(ApiResponseDto<List<CustomerDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Service error" } },

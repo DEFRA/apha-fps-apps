@@ -219,20 +219,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                                       StringComparison.OrdinalIgnoreCase)
                     })
                     .ToList();
-            }
 
-            //   (existing /api/v1/employee lookup); ManagerDto.Name used as both Value and Text.
-            var managerResult = await _projectService.GetManagersAsync();
-            if (managerResult.Success && managerResult.Data != null)
-            {
-                model.ManagerList = managerResult.Data
-                    .Where(m => !string.IsNullOrWhiteSpace(m.Name))
-                    .OrderBy(m => m.Name)
-                    .Select(m => new SelectListItem
+                // Managers are sourced from the programmes rather than the staff lookup so the
+                // dropdown only offers names that can actually match a grid row: the VLA query
+                // projects Manager from the Project -> Program join (x.pg.Manager). One name can
+                // own several programmes, so collapse to a distinct, trimmed list.
+                model.ManagerList = programResult.Data
+                    .Where(p => !string.IsNullOrWhiteSpace(p.Manager))
+                    .Select(p => p.Manager!.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                    .Select(name => new SelectListItem
                     {
-                        Value    = m.Name,
-                        Text     = m.Name,
-                        Selected = string.Equals(model.SelectedManager, m.Name,
+                        Value    = name,
+                        Text     = name,
+                        Selected = string.Equals(model.SelectedManager, name,
                                       StringComparison.OrdinalIgnoreCase)
                     })
                     .ToList();

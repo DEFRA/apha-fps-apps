@@ -221,6 +221,30 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithManagerFilter_MatchesExactly()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", program: "P001"),
+                MakeProject("PP002", program: "P002"),
+                MakeProject("PP003", program: "P003")
+            };
+            var programs = new List<Program>
+            {
+                MakeProgram("P001", manager: "Ace, Esra"),
+                MakeProgram("P002", manager: "Ace, Esra Jane"),
+                MakeProgram("P003", manager: "Abad, Jasen")
+            };
+            var repo = CreateRepository(projects, programs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, manager: "Ace, Esra");
+
+            Assert.Single(result.Data);
+            Assert.All(result.Data, v => Assert.Equal("Ace, Esra", v.Manager));
+        }
+
+        [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithCustomerFilter_MatchesExactly()
         {
             var projects = new List<Project>

@@ -1956,9 +1956,9 @@ namespace Apha.FPS.DataAccess.Repositories
             if (!string.IsNullOrWhiteSpace(projectStatus))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus, $"%{projectStatus}%"));
 
-            // Program and Customer are picked from dropdowns that supply the exact stored
-            // value, so they must match exactly. A contains-style ILike would wrongly include
-            // e.g. "P10" when "P1" is selected, or "ACME Ltd" when "ACME" is selected.
+            // Program, Manager and Customer are picked from dropdowns that supply the exact
+            // stored value, so they must match exactly. A contains-style ILike would wrongly
+            // include e.g. "P10" when "P1" is selected, or "ACME Ltd" when "ACME" is selected.
             if (!string.IsNullOrWhiteSpace(programNo))
             {
                 var programFilter = programNo.Trim().ToLower();
@@ -1966,7 +1966,12 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             if (!string.IsNullOrWhiteSpace(manager))
-                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
+            {
+                var managerFilter = manager.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.pg != null
+                                            && x.pg.Manager != null
+                                            && x.pg.Manager.Trim().ToLower() == managerFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(customer))
             {
