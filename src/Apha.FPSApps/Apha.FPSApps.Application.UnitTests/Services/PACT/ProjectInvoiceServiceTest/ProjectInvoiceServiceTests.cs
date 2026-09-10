@@ -441,6 +441,42 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             Assert.False(result.Success);
         }
 
+        [Fact]
+        public async Task GetFailedInvoiceImportAsync_WhenReadOnlyYear_ReturnsEmptyWithoutCallingApi()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await _service.GetFailedInvoiceImportAsync(query, isReadOnlyYear: true);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data!);
+            Assert.Equal(0m, result.Total);
+            await _pactProjectInvoiceApiClient.DidNotReceive()
+                .GetFailedInvoiceImportAsync(Arg.Any<QueryParameters<string>>());
+        }
+
+        [Fact]
+        public async Task GetFailedInvoiceImportAsync_WhenNotReadOnlyYear_CallsApi()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var rows = new List<InvoiceImportRowDto> { new() { Id = 1, ProjectParent = "PP001" } };
+            var expectedResponse = ApiResponseDto<List<InvoiceImportRowDto>>.SuccessResponse(rows);
+            _pactProjectInvoiceApiClient.GetFailedInvoiceImportAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetFailedInvoiceImportAsync(query, isReadOnlyYear: false);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _pactProjectInvoiceApiClient.Received(1).GetFailedInvoiceImportAsync(query);
+        }
+
         #endregion
 
         #region GetFailedInvoiceImportByIdAsync Tests
