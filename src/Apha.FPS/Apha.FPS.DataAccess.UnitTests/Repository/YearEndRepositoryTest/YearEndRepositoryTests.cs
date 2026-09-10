@@ -1330,6 +1330,48 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         }
 
         [Fact]
+        public async Task EnqueueDataSetupApprovalBatchJobAsync_PreservesOriginalRequestedByAndRequestedAtUtc_AndSetsApprovedFields()
+        {
+            // Arrange — initiated by Alice; approved by a different person, Bob
+            const string initiator = "alice@example.com";
+            const string approver  = "bob@example.com";
+            var initiatedAtUtc = new DateTime(2024, 1, 1, 9, 0, 0, DateTimeKind.Utc);
+
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var existingQueue   = new BatchJobQueue
+            {
+                JobqueueId     = Guid.NewGuid(),
+                JobExecutionId = Guid.NewGuid(),
+                JobId          = 1,
+                StatusId       = 10,
+                RequestedBy    = initiator,
+                RequestedAtUtc = initiatedAtUtc,
+                StartDateTime  = initiatedAtUtc,
+                FpsYear        = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, approvedStatus]);
+
+            // Act
+            var result = await repo.EnqueueDataSetupApprovalBatchJobAsync(
+                DefaultJobName, approver, Guid.NewGuid().ToString(), "approve note");
+
+            // Assert — request identity/time untouched; decision fields reflect the approver
+            Assert.Equal(initiator,      result.RequestedBy);
+            Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
+            Assert.Equal(approver,       result.ApprovedBy);
+            Assert.NotNull(result.ApprovedAtUtc);
+            Assert.Equal(DateTimeKind.Unspecified, result.ApprovedAtUtc!.Value.Kind);
+            Assert.Null(result.RejectedBy);
+            Assert.Null(result.RejectedAtUtc);
+        }
+
+        [Fact]
         public async Task EnqueueDataSetupApprovalBatchJobAsync_SaveFails_RollsBackTransaction()
         {
             // Arrange — SaveChangesAsync throws to simulate a DB error
@@ -1497,6 +1539,49 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(30,               result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
             Assert.Equal("reject note",    result.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task EnqueueDataSetupRejectBatchJobAsync_PreservesOriginalRequestedByAndRequestedAtUtc_AndSetsRejectedFields()
+        {
+            // Arrange — initiated by Alice; rejected by a different person, Carol
+            const string initiator = "alice@example.com";
+            const string rejector  = "carol@example.com";
+            var initiatedAtUtc = new DateTime(2024, 2, 1, 9, 0, 0, DateTimeKind.Utc);
+
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = new BatchJobQueue
+            {
+                JobqueueId     = Guid.NewGuid(),
+                JobExecutionId = Guid.NewGuid(),
+                JobId          = 1,
+                StatusId       = 10,
+                RequestedBy    = initiator,
+                RequestedAtUtc = initiatedAtUtc,
+                StartDateTime  = initiatedAtUtc,
+                FpsYear        = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            var result = await repo.EnqueueDataSetupRejectBatchJobAsync(
+                DefaultJobName, rejector, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert — request identity/time untouched; decision fields reflect the rejector
+            Assert.Equal(initiator,      result.RequestedBy);
+            Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
+            Assert.Equal(rejector,       result.RejectedBy);
+            Assert.NotNull(result.RejectedAtUtc);
+            Assert.Equal(DateTimeKind.Unspecified, result.RejectedAtUtc!.Value.Kind);
+            Assert.Equal("reject note",  result.RejectionReason);
+            Assert.Null(result.ApprovedBy);
+            Assert.Null(result.ApprovedAtUtc);
         }
 
         [Fact]
@@ -1809,10 +1894,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var result = await repo.EnqueueCutOverApprovalBatchJobAsync(
                 DefaultJobName, "approver@example.com", Guid.NewGuid().ToString(), "approval note");
 
-            // Assert
+            // Assert — RequestedBy still reflects the original initiator, not the approver
             Assert.NotNull(result);
-            Assert.Equal(20,                    result.StatusId);
-            Assert.Equal("approver@example.com", result.RequestedBy);
+            Assert.Equal(20,              result.StatusId);
+            Assert.Equal(DefaultUserEmail, result.RequestedBy);
+            Assert.Equal("approver@example.com", result.ApprovedBy);
         }
 
         [Fact]
@@ -1894,6 +1980,48 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverApprovalBatchJobAsync_PreservesOriginalRequestedByAndRequestedAtUtc_AndSetsApprovedFields()
+        {
+            // Arrange — initiated by Alice; approved by a different person, Bob
+            const string initiator = "alice@example.com";
+            const string approver  = "bob@example.com";
+            var initiatedAtUtc = new DateTime(2024, 1, 1, 9, 0, 0, DateTimeKind.Utc);
+
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var existingQueue   = new BatchJobQueue
+            {
+                JobqueueId     = Guid.NewGuid(),
+                JobExecutionId = Guid.NewGuid(),
+                JobId          = 1,
+                StatusId       = 10,
+                RequestedBy    = initiator,
+                RequestedAtUtc = initiatedAtUtc,
+                StartDateTime  = initiatedAtUtc,
+                FpsYear        = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, approvedStatus]);
+
+            // Act
+            var result = await repo.EnqueueCutOverApprovalBatchJobAsync(
+                DefaultJobName, approver, Guid.NewGuid().ToString(), "approve note");
+
+            // Assert — request identity/time untouched; decision fields reflect the approver
+            Assert.Equal(initiator,      result.RequestedBy);
+            Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
+            Assert.Equal(approver,       result.ApprovedBy);
+            Assert.NotNull(result.ApprovedAtUtc);
+            Assert.Equal(DateTimeKind.Unspecified, result.ApprovedAtUtc!.Value.Kind);
+            Assert.Null(result.RejectedBy);
+            Assert.Null(result.RejectedAtUtc);
         }
 
         #endregion
@@ -2005,6 +2133,49 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Assert
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task EnqueueCutOverRejectBatchJobAsync_PreservesOriginalRequestedByAndRequestedAtUtc_AndSetsRejectedFields()
+        {
+            // Arrange — initiated by Alice; rejected by a different person, Carol
+            const string initiator = "alice@example.com";
+            const string rejector  = "carol@example.com";
+            var initiatedAtUtc = new DateTime(2024, 2, 1, 9, 0, 0, DateTimeKind.Utc);
+
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var rejectedStatus  = BuildStatus(30, 1, "rejected");
+            var existingQueue   = new BatchJobQueue
+            {
+                JobqueueId     = Guid.NewGuid(),
+                JobExecutionId = Guid.NewGuid(),
+                JobId          = 1,
+                StatusId       = 10,
+                RequestedBy    = initiator,
+                RequestedAtUtc = initiatedAtUtc,
+                StartDateTime  = initiatedAtUtc,
+                FpsYear        = DefaultFpsYear
+            };
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs:     [job],
+                queues:   [existingQueue],
+                statuses: [initiatedStatus, rejectedStatus]);
+
+            // Act
+            var result = await repo.EnqueueCutOverRejectBatchJobAsync(
+                DefaultJobName, rejector, Guid.NewGuid().ToString(), "reject note");
+
+            // Assert — request identity/time untouched; decision fields reflect the rejector
+            Assert.Equal(initiator,      result.RequestedBy);
+            Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
+            Assert.Equal(rejector,       result.RejectedBy);
+            Assert.NotNull(result.RejectedAtUtc);
+            Assert.Equal(DateTimeKind.Unspecified, result.RejectedAtUtc!.Value.Kind);
+            Assert.Equal("reject note",  result.RejectionReason);
+            Assert.Null(result.ApprovedBy);
+            Assert.Null(result.ApprovedAtUtc);
         }
 
         [Fact]

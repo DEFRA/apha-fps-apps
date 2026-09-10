@@ -111,7 +111,7 @@ namespace Apha.FPS.Application.Services
 
             var queued = await _yearEndRepository.EnqueueDataSetupApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear, contextYear);
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear, contextYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -218,7 +218,7 @@ namespace Apha.FPS.Application.Services
 
             var queued = await _yearEndRepository.EnqueueCutOverApprovalBatchJobAsync(jobName, requestedBy, correlationId, note);
 
-            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, correlationId, plannedYear,contextYear);
+            var eventDetail = BuildYearEndJobEvent(jobName, requestedBy, queued.JobExecutionId.ToString(), plannedYear,contextYear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
@@ -421,8 +421,8 @@ namespace Apha.FPS.Application.Services
                 RequestedAtUtc = DateTime.UtcNow,
                 ParametersJson = JsonSerializer.Serialize(new
                 {
-                    plannedYear,
-                    contextYear
+                    targetFpsYear = plannedYear,
+                    currentFpsYear = contextYear
                 })
             };
         }

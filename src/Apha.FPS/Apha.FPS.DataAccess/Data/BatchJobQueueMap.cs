@@ -62,11 +62,34 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.UploadRowCountsJson)
                 .HasColumnType("jsonb")
                 .HasColumnName("upload_row_counts_json");
-            entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
-            entity.Property(e => e.ApprovedAtUtc).HasColumnName("approved_at_utc");
-            entity.Property(e => e.RejectedBy).HasColumnName("rejected_by");
-            entity.Property(e => e.RejectedAtUtc).HasColumnName("rejected_at_utc");
-            entity.Property(e => e.RejectionReason).HasColumnName("rejection_reason");
+            entity.Property(e => e.ApprovedBy)
+                .HasMaxLength(256)
+                .HasColumnName("approved_by");
+
+            // Unlike every other timestamp column on this entity (requested_at_utc, startdatetime,
+            // enddatetime, created_at, updated_at - all "timestamp with time zone"), approved_at_utc
+            // and rejected_at_utc are "timestamp without time zone" in the live schema. Left to
+            // convention, Npgsql infers timestamptz for a plain DateTime property; sending a
+            // timestamptz-typed value into a naive column triggers Postgres's implicit cast using
+            // the session's TimeZone GUC, silently shifting the stored value whenever that session
+            // isn't UTC (see project_job_queue_approved_at_utc_timezone_bug memory). Declaring the
+            // real column type here, paired with writing Kind=Unspecified UTC wall-clock values at
+            // the call site (YearEndRepository), avoids the cast entirely.
+            entity.Property(e => e.ApprovedAtUtc)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("approved_at_utc");
+
+            entity.Property(e => e.RejectedBy)
+                .HasMaxLength(256)
+                .HasColumnName("rejected_by");
+
+            entity.Property(e => e.RejectedAtUtc)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("rejected_at_utc");
+
+            entity.Property(e => e.RejectionReason)
+                .HasMaxLength(1000)
+                .HasColumnName("rejection_reason");
             entity.Property(e => e.CancelledBy).HasColumnName("cancelled_by");
             entity.Property(e => e.CancelledAtUtc).HasColumnName("cancelled_at_utc");
             entity.Property(e => e.CancellationReason).HasColumnName("cancellation_reason");
