@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
         }
 
         [Fact]
-        public async Task Index_WhenNoParentproject_DefaultsToFirstProjectOption()
+        public async Task Index_WhenNoParentproject_LeavesParentprojectEmpty()
         {
             // Arrange
             var projects = new List<ProjectListMilestoneDto>
@@ -204,7 +204,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
             // Assert
             var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal("PP001", model.Parentproject);
+            Assert.Equal(string.Empty, model.Parentproject);
+            Assert.Equal(string.Empty, model.NavigationProject);
         }
 
         [Fact]
@@ -365,18 +366,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
         }
 
         [Fact]
-        public async Task LoadMilestoneGrid_WhenNullParentproject_UsesEmptyString()
+        public async Task LoadMilestoneGrid_WhenNullParentproject_ReturnsEmptyGridWithoutCallingService()
         {
             // Arrange
             SetupGridMocks();
 
             // Act
-            var result = await _controller.LoadMilestoneGrid(DefaultFilter(), null);
+            var result = Assert.IsType<PartialViewResult>(
+                await _controller.LoadMilestoneGrid(DefaultFilter(), null));
 
             // Assert
-            Assert.IsType<PartialViewResult>(result);
-            await _milestoneService.Received(1)
-                .GetAllMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Is<string>(s => s == string.Empty));
+            DataGridConfig<MilestoneItem> grid = Assert.IsType<DataGridConfig<MilestoneItem>>(result.Model);
+            Assert.Empty(grid.Data);
+            await _milestoneService.DidNotReceive()
+                .GetAllMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
         #endregion
