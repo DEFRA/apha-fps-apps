@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             _projectDetailsService = projectDetailsService;
         }
 
-        public async Task<IActionResult> Index(string? parentproject, short? year)
+        public async Task<IActionResult> Index(string? parentproject, short? year, string? project = null)
         {
             Task<ApiResponseDto<List<ProjectListViewDto>>> projectsTask = _projectListService.GetAllProjectsListAsync();
             Task<ApiResponseDto<List<YearDto>>> yearsTask = _projectDetailsService.GetAllYearAsync();
@@ -50,15 +50,19 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 .Select(y => new SelectListItem(y.Value.ToString(), y.Value.ToString()))
                 .ToList();
 
-            short resolvedYear = year ?? (short)(yearsTask.Result.Data?.Max(y => y.Value) ?? DateTime.Now.Year);
-                string resolvedProject = parentproject ?? projectOptions.FirstOrDefault()?.Value ?? string.Empty;
+            string resolvedProject = parentproject ?? project ?? string.Empty;
+            bool hasProjectContext = !string.IsNullOrWhiteSpace(resolvedProject);
+            short resolvedYear = hasProjectContext
+                ? (year ?? (short)(yearsTask.Result.Data?.Max(y => y.Value) ?? DateTime.Now.Year))
+                : (short)0;
 
-                PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
+            PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
 
-                // Only the first tab (Monthly Pact Data) is server-rendered with real data.
-                // All other tabs use empty grids and are lazy-loaded via JS on first tab click.
-                DataGridConfig<MonthlyPactItem> monthlyPactGrid =
-                    await BuildMonthlyPactGridAsync(resolvedProject, resolvedYear, defaultRequest);
+            // Only the first tab (Monthly Pact Data) is server-rendered with real data when a project is selected.
+            // All other tabs use empty grids and are lazy-loaded via JS on first tab click.
+            DataGridConfig<MonthlyPactItem> monthlyPactGrid = hasProjectContext && resolvedYear > 0
+                ? await BuildMonthlyPactGridAsync(resolvedProject, resolvedYear, defaultRequest)
+                : BuildEmptyGrid<MonthlyPactItem>("monthlyPactGrid", "Monthly Pact Data", "MonthNo", "/PIMS/ProjectYearCosts/LoadMonthlyPactGrid");
 
                 // Empty grids — data loaded via AJAX when the respective tab is clicked
                 DataGridConfig<AdditionalCostPlanItem> plansGrid =

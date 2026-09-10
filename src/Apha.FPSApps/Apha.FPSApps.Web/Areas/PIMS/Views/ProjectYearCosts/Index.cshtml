@@ -901,6 +901,10 @@
                     var previousValue = selectedProjectValue;
                     selectedProjectValue = selectedValue;
 
+                    if (typeof updatePimsSideNavProject === 'function') {
+                        updatePimsSideNavProject(selectedValue);
+                    }
+
                     if (previousValue !== selectedValue) {
                         refreshActiveTab();
                     }
@@ -911,6 +915,25 @@
         if (preselectedProject) {
             selectedProjectValue = preselectedProject;
             projectSelectDropdown.setValue(preselectedProject);
+        }
+
+        var projectContextQuery = new URLSearchParams(window.location.search || '');
+        var hasProjectContext = (projectContextQuery.get('parentproject') || '').trim() !== ''
+            || (projectContextQuery.get('project') || '').trim() !== '';
+
+        if (!hasProjectContext) {
+            selectedProjectValue = '';
+            if (projectSelectDropdown && typeof projectSelectDropdown.clear === 'function') {
+                projectSelectDropdown.clear();
+            }
+            var yearSelect = document.getElementById('dpyear');
+            if (yearSelect) {
+                yearSelect.value = '';
+            }
+        }
+
+        if (typeof updatePimsSideNavProject === 'function') {
+            updatePimsSideNavProject(hasProjectContext ? getSelectedProjectValue() : '');
         }
 
         localStorage.removeItem('monthlyPactGrid_colWidths');

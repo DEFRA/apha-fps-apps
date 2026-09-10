@@ -170,6 +170,25 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
         }
 
         [Fact]
+        public async Task Index_WithUnsupportedParentproject_FallsBackToFirstLoadBehavior()
+        {
+            // Arrange
+            SetupSuccessfulIndexMocks(projects: [new ProjectListMilestoneDto { Parentproject = "PP001", Formrequired = true }]);
+
+            // Act
+            var result = await _controller.Index(parentproject: "PP999");
+
+            // Assert
+            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.Equal("PP999", model.NavigationProject);
+            Assert.Equal("Project not found: PP999", _controller.ViewData["MileMessage"]);
+            Assert.Equal(string.Empty, model.Parentproject);
+            Assert.False(model.FormRequired);
+            await _milestoneService.DidNotReceive().GetAllMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            await _milestoneService.DidNotReceive().GetAllMilestoneFormDatesAsync(Arg.Any<string>(), Arg.Any<QueryParameters<string>>());
+        }
+
+        [Fact]
         public async Task Index_WhenNoParentproject_DefaultsToFirstProjectOption()
         {
             // Arrange

@@ -162,9 +162,51 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         public async Task Index_WithExplicitProject_UsesProvidedProject()
         {
             SetupDefaultIndexMocks();
-            var result = await _controller.Index("PP999");
+            var result = await _controller.Index("PP001");
             var model  = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal("PP999", model.SelectedProject);
+            Assert.Equal("PP001", model.SelectedProject);
+        }
+
+        [Fact]
+        public async Task Index_WithParentProject_LoadsInitialGridDataForSelectedProject()
+        {
+            SetupDefaultIndexMocks();
+            var items = new List<YearlyFinancialDataItem> { SampleItem(project: "PP001") };
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _service.GetAllAsync("PP001", Arg.Any<QueryParameters<string>>())
+                .Returns(new ApiResponseDto<List<YearlyFinancialDataDto>>
+                {
+                    Success = true,
+                    Data = [SampleDto(project: "PP001")],
+                    Pagination = new PaginationDto { TotalRecords = 1 }
+                });
+            _mapper.Map<List<YearlyFinancialDataItem>>(Arg.Any<List<YearlyFinancialDataDto>>()).Returns(items);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel { TotalRecords = 1 });
+
+            var result = await _controller.Index(project: null, parentproject: "PP001");
+            var model = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
+
+            Assert.Equal("PP001", model.SelectedProject);
+            Assert.Single(model.CostCenterListGrid.Data);
+            await _service.Received(1).GetAllAsync("PP001", Arg.Any<QueryParameters<string>>());
+        }
+
+        [Fact]
+        public async Task Index_WithUnsupportedParentProject_FallsBackToFirstLoadBehavior()
+        {
+            SetupDefaultIndexMocks(projects: [new ProjectListMilestoneDto { Parentproject = "PP001" }]);
+
+            var result = await _controller.Index(project: null, parentproject: "PP999");
+            var model = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
+
+            Assert.Equal("PP999", model.NavigationProject);
+            Assert.Equal("Project not found: PP999", _controller.ViewData["YfdMessage"]);
+            Assert.Null(model.SelectedProject);
+            Assert.Equal(string.Empty, model.Parentproject);
+            Assert.Empty(model.CostCenterListGrid.Data);
+            await _projectDetailsService.DidNotReceive().GetPimsDetailAsync(Arg.Any<string>());
+            await _service.DidNotReceive().GetAllAsync(Arg.Any<string>(), Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]

@@ -163,6 +163,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.InvoiceControl
             SetupIndexMocks(projects: ["PP001", "PP002"]);
             var result = await _controller.Index(project: "PP999");
             var model = Assert.IsType<InvoiceViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.Equal("PP999", model.NavigationProject);
+            Assert.Equal("Project not found: PP999", _controller.ViewData["InvoMessage"]);
             Assert.Null(model.FilterProject);
         }
 
