@@ -1934,9 +1934,17 @@ namespace Apha.FPS.DataAccess.Repositories
         // ── VLA Project Profitability ──────────────────────────────────────────
 
         /// <summary>
+        /// Sentinel value for the VLA Manager filter that selects rows with no manager,
+        /// i.e. the project's programme is missing or the programme's manager is blank.
+        /// </summary>
+        public const string UnassignedManagerFilter = "(Unassigned)";
+
+        /// <summary>
         /// Returns paginated project profitability data for the VLA view.
         /// Filter dimensions (all optional, case-insensitive):
         ///   projectStatus, programNo, manager, customer.
+        /// Pass <see cref="UnassignedManagerFilter"/> as <paramref name="manager"/> to return
+        /// only rows with no manager.
         /// </summary>
         public async Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(
             PaginationParameters<string> query,
@@ -1968,9 +1976,22 @@ namespace Apha.FPS.DataAccess.Repositories
             if (!string.IsNullOrWhiteSpace(manager))
             {
                 var managerFilter = manager.Trim().ToLower();
-                rawQuery = rawQuery.Where(x => x.pg != null
-                                            && x.pg.Manager != null
-                                            && x.pg.Manager.Trim().ToLower() == managerFilter);
+
+                // Rows whose programme is missing, or whose programme has no manager, project a
+                // null Manager. They appear under "All managers" but can never match a named
+                // manager, so the sentinel makes them reachable and lets the totals reconcile.
+                if (managerFilter == UnassignedManagerFilter.ToLower())
+                {
+                    rawQuery = rawQuery.Where(x => x.pg == null
+                                                || x.pg.Manager == null
+                                                || x.pg.Manager.Trim() == string.Empty);
+                }
+                else
+                {
+                    rawQuery = rawQuery.Where(x => x.pg != null
+                                                && x.pg.Manager != null
+                                                && x.pg.Manager.Trim().ToLower() == managerFilter);
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(customer))

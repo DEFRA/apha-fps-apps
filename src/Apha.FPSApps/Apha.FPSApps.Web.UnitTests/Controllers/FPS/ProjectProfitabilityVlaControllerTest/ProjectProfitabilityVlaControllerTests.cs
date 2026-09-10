@@ -161,9 +161,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectProfitabilityVlaViewModel>(viewResult.Model);
-            Assert.Equal(2, model.ManagerList.Count);
+            Assert.Equal(3, model.ManagerList.Count);
             Assert.Contains(model.ManagerList, m => m.Value == "John Smith");
             Assert.Contains(model.ManagerList, m => m.Value == "Jane Doe");
+            Assert.Contains(model.ManagerList, m => m.Value == "(Unassigned)");
         }
 
         [Fact]
@@ -185,9 +186,30 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectProfitabilityVlaViewModel>(viewResult.Model);
-            Assert.Equal(2, model.ManagerList.Count);
+            Assert.Equal(3, model.ManagerList.Count);
             Assert.Single(model.ManagerList, m => m.Value == "Aaron, Basia");
             Assert.Single(model.ManagerList, m => m.Value == "Abad, Jasen");
+            Assert.Single(model.ManagerList, m => m.Value == "(Unassigned)");
+        }
+
+        [Fact]
+        public async Task Index_ManagerListEndsWithUnassignedOption()
+        {
+            // Arrange
+            _programService.GetAllProgramsAsync()
+                .Returns(MakeProgramResponseWithManagers(
+                    ("P001", "Programme One", "Aaron, Basia")));
+            _projectService.GetAllCustomersAsync()
+                .Returns(MakeCustomerResponse("ACME Ltd"));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectProfitabilityVlaViewModel>(viewResult.Model);
+            Assert.Equal("(Unassigned)", model.ManagerList[^1].Value);
+            Assert.Equal("(Unassigned)", model.ManagerList[^1].Text);
         }
 
         [Fact]
@@ -228,7 +250,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
         }
 
         [Fact]
-        public async Task Index_WhenProgrammesHaveNoManager_ManagerListIsEmpty()
+        public async Task Index_WhenProgrammesHaveNoManager_ManagerListOnlyHasUnassignedOption()
         {
             // Arrange
             _programService.GetAllProgramsAsync()
@@ -242,7 +264,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectProfitabilityVlaViewModel>(viewResult.Model);
-            Assert.Empty(model.ManagerList);
+            Assert.Single(model.ManagerList, m => m.Value == "(Unassigned)");
         }
 
         [Fact]

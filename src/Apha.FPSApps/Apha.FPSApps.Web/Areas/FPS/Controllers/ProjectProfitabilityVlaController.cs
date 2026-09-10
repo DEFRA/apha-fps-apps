@@ -21,6 +21,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         //   memory allocation and excessive DB load. Increase if VLA dataset exceeds this limit.
         private const int SummaryMaxPageSize = 5000;
 
+        // Sentinel manager filter value understood by the API/repository: returns rows whose
+        // programme is missing or whose programme manager is blank. Must stay in sync with
+        // ProjectRepository.UnassignedManagerFilter.
+        private const string UnassignedManagerFilter = "(Unassigned)";
+
         private readonly IMapper _mapper;
 
         private readonly IProjectService _projectService;
@@ -237,6 +242,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                                       StringComparison.OrdinalIgnoreCase)
                     })
                     .ToList();
+
+                // Some grid rows have no manager (programme missing, or the programme's manager is
+                // blank). They are counted under "All managers" but match no name, so offer an
+                // explicit sentinel option that returns exactly those rows.
+                model.ManagerList.Add(new SelectListItem
+                {
+                    Value    = UnassignedManagerFilter,
+                    Text     = UnassignedManagerFilter,
+                    Selected = string.Equals(model.SelectedManager, UnassignedManagerFilter,
+                                  StringComparison.OrdinalIgnoreCase)
+                });
             }
 
             //   (existing /api/v1/customer lookup); CustomerDto.Customer used as both Value and Text.
