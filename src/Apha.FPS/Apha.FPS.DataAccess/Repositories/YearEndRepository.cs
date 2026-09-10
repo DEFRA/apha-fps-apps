@@ -204,19 +204,15 @@ namespace Apha.FPS.DataAccess.Repositories
                     .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
-                    //update the status of the job queue entry to "approved" or "rejected"
-                    // RequestedBy/RequestedAtUtc describe the original request creation and stay
-                    // untouched here - approval/rejection identity and time belong on the
-                    // dedicated Approved*/Rejected* fields below.
+                    // RequestedBy/RequestedAtUtc reflect the original request and stay untouched;
+                    // decision identity/time go on the Approved*/Rejected* fields below.
                     var decidedAtUtc = DateTime.UtcNow;
                     queueRow.StatusId = jobStatus.StatusId;
                     queueRow.StartDateTime = decidedAtUtc;
                     queueRow.ErrorMessage = note;
 
-                    // approved_at_utc/rejected_at_utc are "timestamp without time zone" columns
-                    // (see BatchJobQueueMap), unlike requested_at_utc/startdatetime above - reinterpret
-                    // (not reconvert) the same instant's wall-clock digits as Unspecified to avoid
-                    // Npgsql's implicit timestamptz cast under a non-UTC Postgres session.
+                    // approved_at_utc/rejected_at_utc are naive columns (see BatchJobQueueMap) -
+                    // reinterpret as Unspecified so Npgsql skips its implicit timestamptz cast.
                     if (isReject)
                     {
                         queueRow.RejectedBy = requestedBy;
