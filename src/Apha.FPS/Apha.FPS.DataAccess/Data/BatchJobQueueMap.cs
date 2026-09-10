@@ -62,29 +62,11 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.UploadRowCountsJson)
                 .HasColumnType("jsonb")
                 .HasColumnName("upload_row_counts_json");
-            entity.Property(e => e.ApprovedBy)
-                .HasMaxLength(256)
-                .HasColumnName("approved_by");
-
-            // Unlike this entity's other timestamp columns, approved_at_utc/rejected_at_utc are
-            // "timestamp without time zone" in the live schema. Left unmapped, Npgsql infers
-            // timestamptz for a plain DateTime and Postgres implicit-casts on write using the
-            // session's timezone, silently shifting the value under a non-UTC session.
-            entity.Property(e => e.ApprovedAtUtc)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("approved_at_utc");
-
-            entity.Property(e => e.RejectedBy)
-                .HasMaxLength(256)
-                .HasColumnName("rejected_by");
-
-            entity.Property(e => e.RejectedAtUtc)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("rejected_at_utc");
-
-            entity.Property(e => e.RejectionReason)
-                .HasMaxLength(1000)
-                .HasColumnName("rejection_reason");
+            entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
+            entity.Property(e => e.ApprovedAtUtc).HasColumnName("approved_at_utc");
+            entity.Property(e => e.RejectedBy).HasColumnName("rejected_by");
+            entity.Property(e => e.RejectedAtUtc).HasColumnName("rejected_at_utc");
+            entity.Property(e => e.RejectionReason).HasColumnName("rejection_reason");
             entity.Property(e => e.CancelledBy).HasColumnName("cancelled_by");
             entity.Property(e => e.CancelledAtUtc).HasColumnName("cancelled_at_utc");
             entity.Property(e => e.CancellationReason).HasColumnName("cancellation_reason");

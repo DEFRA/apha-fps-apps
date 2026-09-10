@@ -211,18 +211,16 @@ namespace Apha.FPS.DataAccess.Repositories
                     queueRow.StartDateTime = decidedAtUtc;
                     queueRow.ErrorMessage = note;
 
-                    // approved_at_utc/rejected_at_utc are naive columns (see BatchJobQueueMap) -
-                    // reinterpret as Unspecified so Npgsql skips its implicit timestamptz cast.
                     if (isReject)
                     {
                         queueRow.RejectedBy = requestedBy;
-                        queueRow.RejectedAtUtc = DateTime.SpecifyKind(decidedAtUtc, DateTimeKind.Unspecified);
+                        queueRow.RejectedAtUtc = decidedAtUtc;
                         queueRow.RejectionReason = note;
                     }
                     else
                     {
                         queueRow.ApprovedBy = requestedBy;
-                        queueRow.ApprovedAtUtc = DateTime.SpecifyKind(decidedAtUtc, DateTimeKind.Unspecified);
+                        queueRow.ApprovedAtUtc = decidedAtUtc;
                     }
 
                     _context.BatchJobQueues.Update(queueRow);

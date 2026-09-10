@@ -1366,7 +1366,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
             Assert.Equal(approver,       result.ApprovedBy);
             Assert.NotNull(result.ApprovedAtUtc);
-            Assert.Equal(DateTimeKind.Unspecified, result.ApprovedAtUtc!.Value.Kind);
+            Assert.Equal(DateTimeKind.Utc, result.ApprovedAtUtc!.Value.Kind);
             Assert.Null(result.RejectedBy);
             Assert.Null(result.RejectedAtUtc);
         }
@@ -1578,7 +1578,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
             Assert.Equal(rejector,       result.RejectedBy);
             Assert.NotNull(result.RejectedAtUtc);
-            Assert.Equal(DateTimeKind.Unspecified, result.RejectedAtUtc!.Value.Kind);
+            Assert.Equal(DateTimeKind.Utc, result.RejectedAtUtc!.Value.Kind);
             Assert.Equal("reject note",  result.RejectionReason);
             Assert.Null(result.ApprovedBy);
             Assert.Null(result.ApprovedAtUtc);
@@ -2019,7 +2019,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
             Assert.Equal(approver,       result.ApprovedBy);
             Assert.NotNull(result.ApprovedAtUtc);
-            Assert.Equal(DateTimeKind.Unspecified, result.ApprovedAtUtc!.Value.Kind);
+            Assert.Equal(DateTimeKind.Utc, result.ApprovedAtUtc!.Value.Kind);
             Assert.Null(result.RejectedBy);
             Assert.Null(result.RejectedAtUtc);
         }
@@ -2172,7 +2172,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(initiatedAtUtc, result.RequestedAtUtc);
             Assert.Equal(rejector,       result.RejectedBy);
             Assert.NotNull(result.RejectedAtUtc);
-            Assert.Equal(DateTimeKind.Unspecified, result.RejectedAtUtc!.Value.Kind);
+            Assert.Equal(DateTimeKind.Utc, result.RejectedAtUtc!.Value.Kind);
             Assert.Equal("reject note",  result.RejectionReason);
             Assert.Null(result.ApprovedBy);
             Assert.Null(result.ApprovedAtUtc);
