@@ -6,25 +6,27 @@
 }
 <div class="container-fluid">
     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-one-half isFloatLeft">
-            <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-top-3 govuk-!-margin-bottom-0 govuk-!-margin-left-0 isCustomPageHeadings">Compare FPS Plan with PACT Actuals</h1>
-        </div>
-        <div class="govuk-grid-column-one-half isFloatRight">
-                <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isCompareFPSPlan govuk-!-margin-top-2">
-                    <tbody class="govuk-table__body">
-                        <tr class="govuk-table__row">
-                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
-                                @await Html.PartialAsync("_ProjectDropdownSelector")
-                            </td>
-                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
-                                <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link">Back</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="govuk-grid-column-one-full isClearFix sup_border-bottom">
+            <div class="govuk-grid-column-one-half isFloatLeft">
+                <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-top-3 govuk-!-margin-bottom-0 govuk-!-margin-left-0 isCustomPageHeadings">Compare FPS Plan with PACT Actuals</h1>
             </div>
+            <div class="govuk-grid-column-one-half isFloatRight">
+                    <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isCompareFPSPlan govuk-!-margin-top-0">
+                        <tbody class="govuk-table__body">
+                            <tr class="govuk-table__row">
+                                <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                    @await Html.PartialAsync("_ProjectDropdownSelector")
+                                </td>
+                                <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                                    <a asp-area="FPS" asp-controller="ProgramProject" asp-action="Index" class="govuk-back-link">Back</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+            </div>
+        </div>
     </div>
-</div>
+
     <!-- Summary card -->
     @{
         ViewData["SummaryProjectCodeValue"]  = Model.SelectedProjectCode;
@@ -40,15 +42,15 @@
         <div class="govuk-grid-column-one-half mt-2">
             <div class="govuk-grid-row">
                 <div class="govuk-grid-column-full mt-2">
-                    <div id="gridContainer_@Model.StaffPlanGrid.GridId" style="padding: 5px;">
+                    <div id="gridContainer_@Model.StaffPlanGrid.GridId" >
                         @await Html.PartialAsync("_DataGrid", Model.StaffPlanGrid)
                     </div>
                 </div>
                 <div class="govuk-grid-column-full mt-2">
-                    <div class="financial-summary mt-1" style="padding: 0 5px;">
+                    <div class="financial-summary mt-1" >
                         <div style="display:flex; align-items:center;">
                             <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Total Planned Cost:</span>
-                            <div class="govuk-input__wrapper" style="margin-right:75px;">
+                            <div class="govuk-input__wrapper">
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                 <input type="text" id="planned-total-cost" readonly
                                        class="govuk-input text-AlignRight"
@@ -64,32 +66,34 @@
         <div class="govuk-grid-column-one-half mt-2 isCustomTableHeight">
             <div class="govuk-grid-row">
                 <div class="govuk-grid-column-full mt-2">
-                    <div id="gridContainer_@Model.CompareStaff2Grid.GridId" style="padding: 5px;">
+                    <div id="gridContainer_@Model.CompareStaff2Grid.GridId">
                         @await Html.PartialAsync("_DataGrid", Model.CompareStaff2Grid)
                     </div>
                 </div>
                 <div class="govuk-grid-column-full mt-2">
-                    <div class="financial-summary mt-1" style="padding: 0 5px;">
-                        <div style="display:flex; align-items:center; margin-bottom:4px;">
-                            <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Totals:</span>
-                            <input type="text" id="project-total-hrs" readonly
-                                   class="govuk-input text-AlignRight"
-                                   value="@(Model.TotalActualHrs.ToString("F2"))" style="width:90px; margin-right:4px;"
-                                   aria-label="Total Hrs">
-                            <div class="govuk-input__wrapper">
-                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                <input type="text" id="project-total-cost" readonly
+                    <div class="financial-summary mt-1">
+                        <div class="summary-row govuk-!-margin-0 pva-inline-summary">
+                            <div style="display:flex; align-items:center; margin-bottom:4px;">
+                                <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Totals:</span>
+                                <input type="text" id="project-total-hrs" readonly
                                        class="govuk-input text-AlignRight"
-                                       value="@(Model.TotalActualCost.ToString("N0"))" style="width:110px;"
-                                       aria-label="Total Actual Cost">
+                                       value="@(Model.TotalActualHrs.ToString("F2"))" style="width:90px; margin-right:4px;"
+                                       aria-label="Total Hrs">
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input type="text" id="project-total-cost" readonly
+                                           class="govuk-input text-AlignRight"
+                                           value="@(Model.TotalActualCost.ToString("N0"))" style="width:110px;"
+                                           aria-label="Total Actual Cost">
+                                </div>
                             </div>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Percent of Plan:</span>
-                            <input type="text" id="project-percent-plan" readonly
-                                   class="govuk-input text-AlignRight"
-                                   value="@(Model.PercentOfPlan.ToString("F0"))%" style="width:110px;"
-                                   aria-label="Percent of Plan">
+                            <div style="display:flex; align-items:center;">
+                                <span class="govuk-label--s" style="margin-left:auto; margin-right:8px; white-space:nowrap;">Percent of Plan:</span>
+                                <input type="text" id="project-percent-plan" readonly
+                                       class="govuk-input text-AlignRight"
+                                       value="@(Model.PercentOfPlan.ToString("F0"))%" style="width:110px;"
+                                       aria-label="Percent of Plan">
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -2943,11 +2943,12 @@ table.custom-table th {
     padding: 2px 5px;
 }
 
-.project-code-section.ppf-header-project-controls .govuk-button {
-    margin-bottom: 0;
-    padding: 3px 10px;
-    white-space: nowrap;
-}
+    .project-code-section.ppf-header-project-controls .govuk-button {
+        margin-bottom: 0;
+        padding: 7px 10px;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
 
 .project-code-section.ppf-header-project-controls label {
     margin-bottom: 0;
@@ -5585,11 +5586,6 @@ input.govuk-input.ssr-total-input[readonly] {
         height: 460px;
         overflow-y: auto;
     }
-}
-#gridContainer_compareStaff2Grid .grid-scroll-container,
-#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
-    height: 410px;
-    max-height: 410px;
 }
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
