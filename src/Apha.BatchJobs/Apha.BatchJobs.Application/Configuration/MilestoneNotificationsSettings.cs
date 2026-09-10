@@ -41,4 +41,19 @@ public class MilestoneNotificationsSettings
     /// a misleading audit month (plan section 6.2).
     /// </summary>
     public bool AllowMonthOverrideInProduction { get; set; } = false;
+
+    /// <summary>
+    /// Temporary DEV/test switch. When true, real per-manager DB-resolved recipients are never
+    /// emailed — at most one email for the whole execution goes to <see cref="OverrideRecipient"/>
+    /// instead, so the job's real recipient count can't determine how many test emails land in
+    /// one inbox. Must default to false; Production must never set this true.
+    /// </summary>
+    public bool OverrideRecipientEnabled { get; set; } = false;
+
+    /// <summary>
+    /// The single address that receives the one allowed test email when
+    /// <see cref="OverrideRecipientEnabled"/> is true. Required whenever the override is active —
+    /// an empty value fails the send rather than risk falling through to a real recipient.
+    /// </summary>
+    public string? OverrideRecipient { get; set; }
 }

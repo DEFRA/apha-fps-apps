@@ -574,6 +574,132 @@ public sealed class MilestoneUpdateNotificationsJobTests
     }
 
     // -------------------------------------------------------------------------
+    // OverrideRecipientEnabled — temporary DEV/test recipient override
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOverrideRecipientEnabled_ShouldSendToOverrideRecipientNotRealEmailAndNeverMarkRealKeySent()
+    {
+        var readRepo = Substitute.For<IMilestoneNotificationReadRepository>();
+        var preflight = Substitute.For<INotificationSettingsPreflight>();
+        var groupingService = Substitute.For<INotificationGroupingService>();
+        var templateRenderer = Substitute.For<IEmailTemplateRenderer>();
+        var emailService = Substitute.For<IEmailService>();
+        var deliveryRepo = DefaultDeliveryRepo();
+
+        var candidate = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/proj-a\">PROJ-A</a>");
+        readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<MilestoneNotificationCandidate>)[candidate]);
+        readRepo.GetRecipientResolutionIssuesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<RecipientResolutionIssue>)[]);
+
+        var project = new NotificationProjectLink(2026, "PROJ-A", "<a href=\"https://example.com/proj-a\">PROJ-A</a>");
+        var group = new NotificationGroup("recipientid1", "M001", "Jane Smith", "M001", "jane@example.com", false, [project]);
+        groupingService.GroupCandidates(Arg.Any<IReadOnlyList<MilestoneNotificationCandidate>>()).Returns([group]);
+
+        templateRenderer.Subject.Returns("Milestone and Deliverable Update Request");
+        templateRenderer.RenderManagerEmailBody(Arg.Any<string>(), Arg.Any<IReadOnlyList<NotificationProjectLink>>(), Arg.Any<bool>())
+            .Returns(new EmailTemplateRenderResult("<html>body</html>", [project], []));
+
+        emailService.SendAsync(Arg.Any<EmailMessage>(), default).ReturnsForAnyArgs(EmailSendResult.Sent());
+
+        var settings = new MilestoneNotificationsSettings { OverrideRecipientEnabled = true, OverrideRecipient = "override@example.com" };
+        var handler = CreateHandler(readRepo, preflight, groupingService: groupingService, templateRenderer: templateRenderer,
+            emailService: emailService, deliveryRepository: deliveryRepo, settings: settings);
+
+        await handler.ExecuteAsync();
+
+        await emailService.Received(1).SendAsync(
+            Arg.Is<EmailMessage>(m => m.To.Single() == "override@example.com" && m.To.Single() != "jane@example.com"),
+            Arg.Any<CancellationToken>());
+
+        // A real per-manager key must never be written as Pending/Sending/Sent — that would let
+        // CheckDuplicateAsync treat this test send as a real delivery once override is disabled.
+        await deliveryRepo.DidNotReceiveWithAnyArgs().InsertPendingDeliveryAsync(
+            default, default!, default, default!, default, default, default!, default!, default);
+        await deliveryRepo.DidNotReceiveWithAnyArgs().UpdateDeliveryOutcomeAsync(default, default!, default, default, default);
+        await deliveryRepo.Received(1).InsertSkippedDeliveryAsync(
+            Arg.Any<Guid>(), Arg.Any<NotificationDeliveryKey>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(),
+            "SentToRecipientOverride", Arg.Any<string>(), Arg.Any<IReadOnlyList<(string, int)>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOverrideRecipientEnabledWithMultipleCandidates_ShouldSendOnlyOneEmailAndSuppressTheRest()
+    {
+        var readRepo = Substitute.For<IMilestoneNotificationReadRepository>();
+        var preflight = Substitute.For<INotificationSettingsPreflight>();
+        var groupingService = Substitute.For<INotificationGroupingService>();
+        var templateRenderer = Substitute.For<IEmailTemplateRenderer>();
+        var emailService = Substitute.For<IEmailService>();
+        var deliveryRepo = DefaultDeliveryRepo();
+
+        var c1 = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/a\">A</a>");
+        var c2 = new MilestoneNotificationCandidate(2026, "PROJ-B", "Bob Jones", "M002", "bob@example.com", false, "<a href=\"https://example.com/b\">B</a>");
+        readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<MilestoneNotificationCandidate>)[c1, c2]);
+        readRepo.GetRecipientResolutionIssuesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<RecipientResolutionIssue>)[]);
+
+        var p1 = new NotificationProjectLink(2026, "PROJ-A", c1.EditLink);
+        var p2 = new NotificationProjectLink(2026, "PROJ-B", c2.EditLink);
+        var g1 = new NotificationGroup("r1", "M001", "Jane Smith", "M001", "jane@example.com", false, [p1]);
+        var g2 = new NotificationGroup("r2", "M002", "Bob Jones", "M002", "bob@example.com", false, [p2]);
+        groupingService.GroupCandidates(Arg.Any<IReadOnlyList<MilestoneNotificationCandidate>>()).Returns([g1, g2]);
+
+        templateRenderer.Subject.Returns("Milestone and Deliverable Update Request");
+        templateRenderer.RenderManagerEmailBody(Arg.Any<string>(), Arg.Any<IReadOnlyList<NotificationProjectLink>>(), Arg.Any<bool>())
+            .Returns(new EmailTemplateRenderResult("<html>body</html>", [p1], []));
+
+        emailService.SendAsync(Arg.Any<EmailMessage>(), default).ReturnsForAnyArgs(EmailSendResult.Sent());
+
+        var settings = new MilestoneNotificationsSettings { OverrideRecipientEnabled = true, OverrideRecipient = "override@example.com" };
+        var handler = CreateHandler(readRepo, preflight, groupingService: groupingService, templateRenderer: templateRenderer,
+            emailService: emailService, deliveryRepository: deliveryRepo, settings: settings);
+
+        await handler.ExecuteAsync();
+
+        await emailService.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+        await deliveryRepo.Received(1).InsertSkippedDeliveryAsync(
+            Arg.Any<Guid>(), Arg.Any<NotificationDeliveryKey>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(),
+            "SentToRecipientOverride", Arg.Any<string>(), Arg.Any<IReadOnlyList<(string, int)>>(), Arg.Any<CancellationToken>());
+        await deliveryRepo.Received(1).InsertSkippedDeliveryAsync(
+            Arg.Any<Guid>(), Arg.Any<NotificationDeliveryKey>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(),
+            "SuppressedByRecipientOverride", Arg.Any<string>(), Arg.Any<IReadOnlyList<(string, int)>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenOverrideRecipientEnabledButOverrideRecipientEmpty_ShouldThrowRatherThanFallThroughToRealRecipient()
+    {
+        var readRepo = Substitute.For<IMilestoneNotificationReadRepository>();
+        var preflight = Substitute.For<INotificationSettingsPreflight>();
+        var groupingService = Substitute.For<INotificationGroupingService>();
+        var templateRenderer = Substitute.For<IEmailTemplateRenderer>();
+        var emailService = Substitute.For<IEmailService>();
+        var deliveryRepo = DefaultDeliveryRepo();
+
+        var candidate = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/proj-a\">PROJ-A</a>");
+        readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<MilestoneNotificationCandidate>)[candidate]);
+        readRepo.GetRecipientResolutionIssuesAsync(default).ReturnsForAnyArgs(
+            (IReadOnlyList<RecipientResolutionIssue>)[]);
+
+        var project = new NotificationProjectLink(2026, "PROJ-A", "<a href=\"https://example.com/proj-a\">PROJ-A</a>");
+        var group = new NotificationGroup("recipientid1", "M001", "Jane Smith", "M001", "jane@example.com", false, [project]);
+        groupingService.GroupCandidates(Arg.Any<IReadOnlyList<MilestoneNotificationCandidate>>()).Returns([group]);
+
+        templateRenderer.Subject.Returns("Milestone and Deliverable Update Request");
+        templateRenderer.RenderManagerEmailBody(Arg.Any<string>(), Arg.Any<IReadOnlyList<NotificationProjectLink>>(), Arg.Any<bool>())
+            .Returns(new EmailTemplateRenderResult("<html>body</html>", [project], []));
+
+        var settings = new MilestoneNotificationsSettings { OverrideRecipientEnabled = true, OverrideRecipient = null };
+        var handler = CreateHandler(readRepo, preflight, groupingService: groupingService, templateRenderer: templateRenderer,
+            emailService: emailService, deliveryRepository: deliveryRepo, settings: settings);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.ExecuteAsync());
+        await emailService.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
+    }
+
+    // -------------------------------------------------------------------------
     // Zero candidates — valid Completed outcome; CAPS still called
     // -------------------------------------------------------------------------
 

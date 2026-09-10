@@ -60,6 +60,10 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
     private readonly MilestoneNotificationsSettings _settings;
     private readonly ILogger<MilestoneUpdateNotificationsJob> _logger;
 
+    // Scoped per execution (one instance per job run) — safe as a plain field since the send
+    // loop awaits one candidate at a time rather than running concurrently.
+    private bool _overrideEmailSentThisExecution;
+
     public string Name => BatchJobNames.MilestoneUpdateNotifications;
     public string IdempotencyStrategy => "RecipientMonthDeduplicationKey";
     public string? ScheduleExpression => null; // TBD — cron expression pending stakeholder confirmation
@@ -386,6 +390,13 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
             return;
         }
 
+        if (_settings.OverrideRecipientEnabled)
+        {
+            await SendWithRecipientOverrideAsync(
+                group, deliveryKey, jobQueueId, renderResult, counters, cancellationToken);
+            return;
+        }
+
         var children = renderResult.IncludedProjects
             .Select(p => (p.ParentProject, p.Year, "Pending", (string?)null))
             .Concat(renderResult.ExcludedProjects
@@ -448,6 +459,74 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
             await _deliveryRepository.UpdateDeliveryOutcomeAsync(
                 deliveryId, "Failed", sendResult.FailureMessage, null, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Temporary DEV/test path for <see cref="MilestoneNotificationsSettings.OverrideRecipientEnabled"/>.
+    /// Sends at most one real email per execution, to <see cref="MilestoneNotificationsSettings.OverrideRecipient"/>
+    /// instead of the group's real manager address — every candidate after the first is recorded
+    /// Skipped without attempting a send. Never writes Sent/Sending against a real recipient's
+    /// delivery key: doing so would let <see cref="CheckDuplicateAsync"/> treat a test send as a
+    /// real one and suppress that manager's actual notification once the override is turned off.
+    /// </summary>
+    private async Task SendWithRecipientOverrideAsync(
+        NotificationGroup group,
+        NotificationDeliveryKey deliveryKey,
+        Guid jobQueueId,
+        EmailTemplateRenderResult renderResult,
+        NotificationRunSummaryCounters counters,
+        CancellationToken cancellationToken)
+    {
+        var projects = renderResult.IncludedProjects.Select(p => (p.ParentProject, p.Year)).ToList();
+
+        if (_overrideEmailSentThisExecution)
+        {
+            _logger.LogInformation(
+                "OverrideRecipientEnabled — real send suppressed, override email already sent this execution | RecipientId={RecipientId} | Manager={Manager}",
+                group.RecipientId, group.ProjectManager);
+            await _deliveryRepository.InsertSkippedDeliveryAsync(
+                jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
+                "SuppressedByRecipientOverride", TemplateVersion, projects, cancellationToken);
+            counters.ManagerEmailSkippedCount++;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settings.OverrideRecipient))
+            throw new InvalidOperationException(
+                "MilestoneNotifications:OverrideRecipientEnabled is true but OverrideRecipient is empty — refusing to send.");
+
+        // Claim the one allowed send before awaiting the actual call, so a slow send can't let a
+        // second candidate through concurrently.
+        _overrideEmailSentThisExecution = true;
+
+        var message = new EmailMessage(
+            To: [_settings.OverrideRecipient],
+            Subject: $"[DEV OVERRIDE - would send to: {group.Email}] {_templateRenderer.Subject}",
+            HtmlBody: renderResult.HtmlBody,
+            IsBodyHtml: true);
+
+        var sendResult = await _emailService.SendAsync(message, cancellationToken);
+        counters.ManagerEmailAttemptCount++;
+
+        if (sendResult.Succeeded)
+        {
+            _logger.LogInformation(
+                "OverrideRecipientEnabled — sent the one allowed execution email | RecipientId={RecipientId} | Manager={Manager} | RealEmail={RealEmail} | OverrideRecipient={OverrideRecipient}",
+                group.RecipientId, group.ProjectManager, group.Email, _settings.OverrideRecipient);
+            counters.ManagerEmailSentCount++;
+        }
+        else
+        {
+            _logger.LogError(
+                "OverrideRecipientEnabled — the one allowed execution email failed to send | RecipientId={RecipientId} | Manager={Manager} | Reason={Reason}",
+                group.RecipientId, group.ProjectManager, sendResult.FailureMessage);
+            counters.ManagerEmailFailedCount++;
+        }
+
+        await _deliveryRepository.InsertSkippedDeliveryAsync(
+            jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
+            sendResult.Succeeded ? "SentToRecipientOverride" : "RecipientOverrideSendFailed",
+            TemplateVersion, projects, cancellationToken);
     }
 
     /// <summary>
