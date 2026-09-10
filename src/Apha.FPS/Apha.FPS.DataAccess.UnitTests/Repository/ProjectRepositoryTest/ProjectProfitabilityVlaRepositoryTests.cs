@@ -12,6 +12,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 {
     public class ProjectProfitabilityVlaRepositoryTests
     {
+        private static readonly string[] JobCodesAscending  = ["PP001", "PP002", "PP003"];
+        private static readonly string[] JobCodesDescending = ["PP003", "PP002", "PP001"];
+
         /// <summary>
         /// Creates a <see cref="ProjectRepository"/> with mocked DbSets.
         /// Projects and Programs drive filter/sort/page behaviour.
@@ -602,7 +605,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
             var codes = result.Data.Select(v => v.JobCode).ToList();
-            Assert.Equal(new[] { "PP001", "PP002", "PP003" }, codes);
+            Assert.Equal(JobCodesAscending, codes);
         }
 
         [Fact]
@@ -625,7 +628,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
             var codes = result.Data.Select(v => v.JobCode).ToList();
-            Assert.Equal(new[] { "PP003", "PP002", "PP001" }, codes);
+            Assert.Equal(JobCodesDescending, codes);
         }
 
         [Fact]
@@ -670,7 +673,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
             var codes = result.Data.Select(v => v.JobCode).ToList();
-            Assert.Equal(new[] { "PP001", "PP002", "PP003" }, codes);
+            Assert.Equal(JobCodesAscending, codes);
         }
 
         #endregion
