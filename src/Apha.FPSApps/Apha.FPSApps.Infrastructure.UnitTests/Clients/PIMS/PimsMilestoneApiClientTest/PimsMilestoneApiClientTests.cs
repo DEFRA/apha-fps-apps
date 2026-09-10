@@ -1015,7 +1015,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             var dto       = new MilestoneFormDatesDto { Year = 2024, ParentProject = parent, Jan = new DateTime(2024, 1, 31) };
             var request   = new MilestoneFormDatesReq { Year = 2024, ParentProject = parent };
             var res       = new MilestoneFormDatesRes { Year = 2024, ParentProject = parent };
-            var url        = string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent));
+            var url        = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent))}?isAddingNew=false";
             var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = true, Data = res };
             var mappedDto   = ApiResponseDto<MilestoneFormDatesDto>.SuccessResponse(new MilestoneFormDatesDto { Year = 2024, ParentProject = parent });
 
@@ -1043,7 +1043,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             const string parent = "PP001";
             var dto       = new MilestoneFormDatesDto { Year = 2024, ParentProject = parent };
             var request   = new MilestoneFormDatesReq { Year = 2024, ParentProject = parent };
-            var url        = string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent));
+            var url        = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent))}?isAddingNew=false";
             var errors     = new List<ApiError> { new() { Message = "Validation error", Code = "VALIDATION_ERROR" } };
             var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = false, Errors = errors };
             var mappedDto   = new ApiResponseDto<MilestoneFormDatesDto>
@@ -1070,7 +1070,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             const string parent     = "PP001";
-            var expectedUrl = string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent));
+            var expectedUrl = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parent))}?isAddingNew=false";
             var dto       = new MilestoneFormDatesDto { Year = 2024, ParentProject = parent };
             var request   = new MilestoneFormDatesReq { Year = 2024 };
             var apiResponse = new ApiResponse<MilestoneFormDatesRes> { Success = true, Data = new MilestoneFormDatesRes() };
@@ -1640,8 +1640,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         public async Task ClearStagingAsync_WithSuccessResponse_ReturnsMappedDto()
         {
             // Arrange
-            const string project = "PP001";
-            var url = string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project));
+            var url = PimsApiEndpoints.ClearStagingMilestones;
             var apiResponse = new ApiResponse<object> { Success = true, Data = new object() };
             var mappedDto   = ApiResponseDto<object>.SuccessResponse(new object());
 
@@ -1649,7 +1648,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.ClearStagingAsync(project);
+            var result = await _client.ClearStagingAsync();
 
             // Assert
             Assert.True(result.Success);
@@ -1660,8 +1659,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         public async Task ClearStagingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            const string project = "PP001";
-            var url = string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project));
+            var url = PimsApiEndpoints.ClearStagingMilestones;
             var errors = new List<ApiError> { new() { Message = "Server error", Code = "SERVER_ERROR" } };
             var apiResponse = new ApiResponse<object> { Success = false, Errors = errors };
             var mappedDto = new ApiResponseDto<object>
@@ -1675,7 +1673,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.ClearStagingAsync(project);
+            var result = await _client.ClearStagingAsync();
 
             // Assert
             Assert.False(result.Success);

@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -64,13 +65,23 @@ namespace Apha.FPS.Application.Services
 
             if (referencedTables.Count != 0)
             {
-                throw new InvalidOperationException("Unable to add the division name as it is already in use.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Unable to add the division name as it is already in use.",
+                        "DIVISION_NAME_IN_USE")
+                ]);
             }
 
             // Check if division already exists in the main table
             if (await _divisionRepository.DivisionExistsAsync(divisionDto.DivName))
             {
-                throw new InvalidOperationException($"Division '{divisionDto.DivName}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Division '{divisionDto.DivName}' already exists.",
+                        "DIVISION_ALREADY_EXISTS")
+                ]);
             }
 
             var division = _mapper.Map<Division>(divisionDto);
@@ -96,7 +107,12 @@ namespace Apha.FPS.Application.Services
             var existingDivision = await _divisionRepository.GetDivisionByNameAsync(originalDivName);
             if (existingDivision == null)
             {
-                throw new InvalidOperationException($"Division '{originalDivName}' not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Division '{originalDivName}' not found.",
+                        "DIVISION_NOT_FOUND")
+                ]);
             }
 
             // Check if new name conflicts with another division (only if name is changing)
@@ -105,14 +121,24 @@ namespace Apha.FPS.Application.Services
                 var nameConflict = await _divisionRepository.DivisionExistsAsync(divisionDto.DivName);
                 if (nameConflict)
                 {
-                    throw new InvalidOperationException($"Cannot rename to '{divisionDto.DivName}' - division already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            $"Cannot rename to '{divisionDto.DivName}' - division already exists.",
+                            "DIVISION_ALREADY_EXISTS")
+                    ]);
                 }
 
                 // Check if the division name is referenced in other tables (foreign key check)
                 var referencedTables = await _divisionRepository.GetDivisionForeignKeyReferencesAsync(originalDivName);
                 if (referencedTables.Count != 0)
                 {
-                    throw new InvalidOperationException("Unable to edit the division name as it is already in use.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            "Unable to edit the division name as it is already in use.",
+                            "DIVISION_NAME_IN_USE")
+                    ]);
                 }
             }
 
@@ -134,7 +160,12 @@ namespace Apha.FPS.Application.Services
 
             if (referencedTables.Count != 0)
             {
-                throw new InvalidOperationException("Unable to delete the division name as it is already in use.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "The selected record is being used on another page and cannot be deleted.",
+                        "DIVISION_NAME_IN_USE")
+                ]);
             }
 
             return await _divisionRepository.DeleteDivisionAsync(divName);

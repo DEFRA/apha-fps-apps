@@ -1,5 +1,6 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
@@ -67,8 +68,12 @@ namespace Apha.PIMS.Application.Services
             if (alreadyExists)
             {
                 (string reportName, string groupName) = await GetDisplayNamesAsync(dto.ReportId, dto.GroupId);
-                throw new InvalidOperationException(
-                    $"Report '{reportName}' and group '{groupName}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Report '{reportName}' and group '{groupName}' already exists.",
+                        "REPORT_GROUP_LINK_DUPLICATE")
+                ]);
             }
 
             ReportGroupLink entity = _mapper.Map<ReportGroupLink>(dto);
@@ -83,8 +88,12 @@ namespace Apha.PIMS.Application.Services
             if (!exists)
             {
                 (string reportName, string groupName) = await GetDisplayNamesAsync(reportId, groupId);
-                throw new KeyNotFoundException(
-                    $"Report '{reportName}' and group '{groupName}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Report '{reportName}' and group '{groupName}' was not found.",
+                        "REPORT_GROUP_LINK_NOT_FOUND")
+                ]);
             }
 
             return await _repository.DeleteReportGroupLinkAsync(reportId, groupId);

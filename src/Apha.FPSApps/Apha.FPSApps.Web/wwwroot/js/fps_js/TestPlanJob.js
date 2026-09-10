@@ -5,6 +5,7 @@
 var TestPlanJobConfig = {
     getJobCode: function () { return ''; },
     requireJobCodeForAdd: false,
+    fromProjectPlanning: false,
     onSaved: function () { window.location.reload(); },
     onUpdated: function () { window.location.reload(); },
     onDeleted: function () { window.location.reload(); }
@@ -21,6 +22,7 @@ function addTestPlan(btn) {
     $.ajax({
         url: '/FPS/TestPlanJob/Create',
         type: 'GET',
+        data: { fromProjectPlanning: TestPlanJobConfig.fromProjectPlanning === true },
         success: function (html) {
             $('#modaPopupBody').html(html);
             // Inject the current project as ProjectBuyerCode for the pricing lookup
@@ -89,7 +91,11 @@ function editTestPlan(btn) {
     $.ajax({
         url: '/FPS/TestPlanJob/Edit',
         type: 'GET',
-        data: { testCode: testCode, buyer: buyer },
+        data: {
+            testCode: testCode,
+            buyer: buyer,
+            fromProjectPlanning: TestPlanJobConfig.fromProjectPlanning === true
+        },
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');

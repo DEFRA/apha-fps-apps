@@ -72,10 +72,9 @@
         <li>
             <a class="dropdown-item sidenav-link"
                data-nav="excel-report"
-               asp-area="CostBook"
-               asp-controller="ProjectCosts"
-               asp-action="ExportToExcel"
-               asp-route-projectId="@Model.ProjectHeaderDto.ProjectId">
+               data-no-loader
+               href="@Url.Action("ExportToExcel", "ProjectCosts", new { area = "CostBook", projectId = Model.ProjectHeaderDto.ProjectId })"
+               onclick='event.preventDefault(); window.downloadFile(this.href, "ProjectCosts-@Model.ProjectHeaderDto.ProjectId");'>
                 Excel Report
             </a>
         </li>

@@ -16,10 +16,10 @@
             <table class="govuk-table govuk-!-margin-bottom-2 govuk-!-margin-top-2 govuk-!-margin-right-2 isFloatRight isHalfGrid isPlanAllAdditionalCosts">
                 <tbody class="govuk-table__body">
                     <tr class="govuk-table__row">
-                        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
                             @if (Model.IsProjectGroupMode)
                             {
-                                <label class="fw-bold me-2 govuk-!-padding-right-1" for="projectGroup">Project Group:</label>
+                                <label class="fw-bold me-2 " for="projectGroup">Project Group:</label>
                                 <select id="projectGroup" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
                                         class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
                                     <option value="">-- Select Project Group --</option>
@@ -77,27 +77,23 @@
             </div>
         </div>
 
-        <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-bottom-2">
-            <div class="govuk-grid-column-full sup_p_0">
-                <div class="project-code-section">
-                    <label class="govuk-label--s" for="selected-project-input">Selected project: </label>
-                    <input type="text" id="selected-project-input" value=""
-                           placeholder="Project" readonly
-                           class="govuk-input govuk-!-font-size-16"
-                           style="width:160px;">
-                    <button type="button" id="btnPlanThisProject" class="govuk-button sup_margin_0"
-                            aria-label="Plan this project"
-                            onclick="planThisProject()">
-                        <i class="fa fa-cogs" aria-hidden="true"></i> Plan
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
             <div class="govuk-grid-column-full sup_p_0">
-                <div id="gridContainer_isProjectProfitGrid">
-                    @await Html.PartialAsync("_DataGrid", Model.ProfitabilityGrid)
+                <div class="ppf-grid-with-header-controls">
+                    <div class="project-code-section ppf-header-project-controls">
+                        <label class="govuk-label--s" for="selected-project-input">Selected project: </label>
+                        <input type="text" id="selected-project-input" value=""
+                               placeholder="Project" readonly
+                               class="govuk-input govuk-!-font-size-16">
+                        <button type="button" id="btnPlanThisProject" class="govuk-button sup_margin_0"
+                                aria-label="Plan this project"
+                                onclick="planThisProject()">
+                            <i class="fa fa-cogs" aria-hidden="true"></i> Plan
+                        </button>
+                    </div>
+                    <div id="gridContainer_isProjectProfitGrid">
+                        @await Html.PartialAsync("_DataGrid", Model.ProfitabilityGrid)
+                    </div>
                 </div>
 
                 @if (!Model.IsProjectGroupMode)
@@ -306,10 +302,7 @@
                     document.getElementById('ppf-total-budget').value = formatGbp(data.totalBudget ?? 0);
                     document.getElementById('ppf-total-profit').value = formatGbp(data.totalProfit ?? 0);
                     document.getElementById('ppf-total-target-profit').value = formatGbp(data.totalTargetProfit ?? 0);
-                    var offTargetValue = data.totalOffTarget ?? '0.00';
-                    var offTargetEl = document.getElementById('ppf-total-off-target');
-                    offTargetEl.value = formatGbp(offTargetValue);
-                    offTargetEl.style.color = String(offTargetValue).trim().charAt(0) === '-' ? 'red' : 'blue';
+                    document.getElementById('ppf-total-off-target').value = formatGbp(data.totalOffTarget ?? '0.00');
                 }
 
                 function formatGbp(value) {

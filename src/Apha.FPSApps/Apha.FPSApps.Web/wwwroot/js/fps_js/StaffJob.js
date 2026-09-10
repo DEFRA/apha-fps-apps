@@ -7,6 +7,7 @@ var _hoursPerDay = 8;
 var StaffJobConfig = {
     getJobCode: function () { return ''; },
     requireJobCodeForAdd: false,
+    fromProjectPlanning: false,
     onSaved: function () { window.location.reload(); },
     onUpdated: function () { window.location.reload(); },
     onDeleted: function () { window.location.reload(); }
@@ -23,6 +24,7 @@ function addStaffJob(btn) {
     $.ajax({
         url: '/FPS/StaffJob/Create',
         type: 'GET',
+        data: { fromProjectPlanning: StaffJobConfig.fromProjectPlanning === true },
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
@@ -90,7 +92,11 @@ function editStaffJob(btn) {
     $.ajax({
         url: '/FPS/StaffJob/Edit',
         type: 'GET',
-        data: { staffId: staffJobId, jobCode: StaffJobConfig.getJobCode() },
+        data: {
+            staffId: staffJobId,
+            jobCode: StaffJobConfig.getJobCode(),
+            fromProjectPlanning: StaffJobConfig.fromProjectPlanning === true
+        },
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
@@ -278,13 +284,13 @@ function calculateStaffCost() {
     var rate = parseFloat($('#ChargeRate').val()) || 0;
     var hours = parseFloat($('#PlannedHours').val()) || 0;
     $('#StaffCost').val((rate * hours).toFixed(4));
-    $('#Days').val((hours / _hoursPerDay).toFixed(2));
+    $('#Days').val((hours / _hoursPerDay).toFixed(4));
 }
 
 function calculateHoursFromDays() {
     var days = parseFloat($('#Days').val()) || 0;
     var hours = days * _hoursPerDay;
-    $('#PlannedHours').val(hours.toFixed(2));
+    $('#PlannedHours').val(hours.toFixed(4));
     var rate = parseFloat($('#ChargeRate').val()) || 0;
     $('#StaffCost').val((rate * hours).toFixed(4));
 }

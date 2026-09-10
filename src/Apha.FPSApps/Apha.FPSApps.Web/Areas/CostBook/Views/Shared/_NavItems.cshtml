@@ -3,9 +3,7 @@
 @{
     var costbookPowerBiReportUrl = Configuration["PowerBiReports:CostBook"];
 }
-@{
-    var hasMaintenanceAccess = User.IsInRole("CostbookAdmin");
-}
+
 
             <!-- Choose Project -->
             <div class="nav-item">
@@ -16,18 +14,11 @@
 
             <!-- Maintenance -->
            <div class="nav-item">
-                @if (hasMaintenanceAccess)
-                {
+                
                     <a class="nav-button" asp-area="CostBook" asp-controller="Maintenance" asp-action="Index">
                         <div class="align-menu-text"><span>Maintenance</span></div>
                     </a>
-                }
-                else
-                {
-                    <span class="nav-button" style="cursor: not-allowed; opacity: 0.5;">
-                        <div class="align-menu-text"><span>Maintenance</span></div>
-                    </span>
-                }
+               
             </div>
 
 <!-- Power BIReports -->

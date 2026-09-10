@@ -133,11 +133,11 @@ namespace Apha.FPS.DataAccess.Repositories
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
             var record = await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
 
-            var lookupStaffList = await GetStaffWorkgroupLookup();
-            var staffName = lookupStaffList
-                .Where(p => p.StaffID == staffId).Select(s => new { s.StaffID, s.Name }).FirstOrDefault();
+            // Do not use GetStaffWorkgroupLookup() here: it is scoped to the current user's
+            // email and MakeAvailable rows, so staff outside that scope resolve to a null name.
+            var staffSummary = await GetStaffSummaryByIdAsync(staffId);
 
-            record?.Name = staffName?.Name;
+            record?.Name = staffSummary?.Name;
 
             return record != null ? ComputeStaffCost(record) : null;
         }
@@ -413,11 +413,51 @@ namespace Apha.FPS.DataAccess.Repositories
                     StaffId       = s.StaffId,
                     Name          = s.Name,
                     HrsAvail      = s.HrsAvail,
+                    JobCode       = sj != null ? sj.JobCode      : null,
                     Program       = p  != null ? p.Program       : null,
                     ProjectStatus = p  != null ? p.ProjectStatus : null,
                     PlannedHours  = sj != null ? sj.PlannedHours : (double?)null
                 }
             ).Distinct().ToListAsync();
+
+            // A single StaffID can surface in fps.vtblstaff under more than one name
+            // (e.g. "D_DSG, General" and "D_IMT1, General"). Because the staff -> job -> project
+            // join fans out per name, that would both duplicate the display row AND double-count
+            // the planned/ZTW hours. Mirror the Access query (GROUP BY StaffID + First(Name)) by
+            // collapsing every StaffID to a single canonical name before aggregating, then removing
+            // the now-identical duplicate job rows.
+            var canonicalNames = rawData
+                .GroupBy(x => new { x.ProfitCentre, x.Workgroup, x.WgGrade, x.StaffId, x.HrsAvail })
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.Name)
+                          .Where(n => n != null)
+                          .OrderBy(n => n, StringComparer.Ordinal)
+                          .FirstOrDefault());
+
+            foreach (var row in rawData)
+            {
+                var key = new { row.ProfitCentre, row.Workgroup, row.WgGrade, row.StaffId, row.HrsAvail };
+                if (canonicalNames.TryGetValue(key, out var canonicalName))
+                    row.Name = canonicalName;
+            }
+
+            rawData = rawData
+                .GroupBy(x => new
+                {
+                    x.ProfitCentre,
+                    x.Workgroup,
+                    x.WgGrade,
+                    x.StaffId,
+                    x.Name,
+                    x.HrsAvail,
+                    x.JobCode,
+                    x.Program,
+                    x.ProjectStatus,
+                    x.PlannedHours
+                })
+                .Select(g => g.First())
+                .ToList();
 
             // Stage 2: aggregate in-memory — mirrors SQL GROUP BY + SUM(CASE WHEN …).
             var result = rawData
@@ -445,9 +485,9 @@ namespace Apha.FPS.DataAccess.Repositories
             var first = group.First();
 
             double hrsAvail     = first.HrsAvail ?? 0d;
-            double plannedZt    = group.Sum(x => x.Program       == "zt_prog"      ? (x.PlannedHours ?? 0d) : 0d);
-            double nApproved    = group.Sum(x => x.ProjectStatus == "Not Approved" ? (x.PlannedHours ?? 0d) : 0d);
-            double approvedRaw  = group.Sum(x => x.ProjectStatus == "Approved"     ? (x.PlannedHours ?? 0d) : 0d);
+            double plannedZt    = group.Sum(x => string.Equals(x.Program,       "zt_prog",      StringComparison.OrdinalIgnoreCase) ? (x.PlannedHours ?? 0d) : 0d);
+            double nApproved    = group.Sum(x => string.Equals(x.ProjectStatus, "Not Approved", StringComparison.OrdinalIgnoreCase) ? (x.PlannedHours ?? 0d) : 0d);
+            double approvedRaw  = group.Sum(x => string.Equals(x.ProjectStatus, "Approved",     StringComparison.OrdinalIgnoreCase) ? (x.PlannedHours ?? 0d) : 0d);
 
             double approvedSoct = Math.Round(approvedRaw - plannedZt,               2);
             double availSoct    = Math.Round(hrsAvail    - plannedZt,               2);
@@ -482,6 +522,7 @@ namespace Apha.FPS.DataAccess.Repositories
             public string? StaffId { get; set; }
             public string? Name { get; set; }
             public double? HrsAvail { get; set; }
+            public string? JobCode { get; set; }
             public string? Program { get; set; }
             public string? ProjectStatus { get; set; }
             public double? PlannedHours { get; set; }

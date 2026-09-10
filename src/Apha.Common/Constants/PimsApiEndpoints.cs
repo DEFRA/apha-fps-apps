@@ -70,6 +70,7 @@ namespace Apha.Common.Constants
         public const string GetAllMilestoneFormDates = "api/v1/milestone/{0}/formdates";
         public const string GetMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
         public const string SaveMilestoneFormDates = "api/v1/milestone/{0}/formdates";
+        public const string SaveMilestoneFormDatesWithMode = "api/v1/milestone/{0}/formdates?isAddingNew={1}";
         public const string DeleteMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
 
         // Log Milestone
@@ -106,7 +107,7 @@ namespace Apha.Common.Constants
         public const string AddStagingMilestone = "api/v1/milestone/staging/{0}";
         public const string UpdateStagingMilestone = "api/v1/milestone/staging/{0}";
         public const string DeleteStagingMilestone = "api/v1/milestone/staging/{0}";
-        public const string ClearStagingMilestones = "api/v1/milestone/{0}/staging";
+        public const string ClearStagingMilestones = "api/v1/milestone/staging";
         public const string ValidateStagingMilestones = "api/v1/milestone/{0}/staging/validate";
         public const string ImportStagingMilestones = "api/v1/milestone/{0}/staging/import";
         public const string ImportOverwriteStagingMilestones = "api/v1/milestone/{0}/staging/import-overwrite";
@@ -144,5 +145,81 @@ namespace Apha.Common.Constants
         public const string GetAccessUserLevelById = "api/v1/accessuserlevel/{0}/{1}/{2}";
         public const string CreateAccessUserLevel = "api/v1/accessuserlevel";
         public const string DeleteAccessUserLevel = "api/v1/accessuserlevel/{0}/{1}/{2}";
+
+        // Frequency
+        public const string GetAllFrequencies = "api/v1/frequency";
+        public const string GetPagedFrequencies = "api/v1/frequency/paged";
+        public const string GetFrequencyById = "api/v1/frequency/{0}";
+        public const string CreateFrequency = "api/v1/frequency";
+        public const string UpdateFrequency = "api/v1/frequency/{0}";
+        public const string DeleteFrequency = "api/v1/frequency/{0}";
+
+        // Profit Centre Manager Link
+        public const string GetAllProfitCentreManagerLinks = "api/v1/profitcentremanagerlink";
+        public const string GetPagedProfitCentreManagerLinks = "api/v1/profitcentremanagerlink/paged";
+        public const string GetProfitCentres = "api/v1/profitcentremanagerlink/profitcentres";
+        public const string GetProfitCentreManagerLinksByProfitCentre = "api/v1/profitcentremanagerlink/{0}";
+        public const string GetProfitCentreManagerLinksByManager = "api/v1/profitcentremanagerlink/manager/{0}";
+        public const string GetProfitCentreManagerLinkById = "api/v1/profitcentremanagerlink/{0}/{1}";
+        public const string CreateProfitCentreManagerLink = "api/v1/profitcentremanagerlink";
+        public const string DeleteProfitCentreManagerLink = "api/v1/profitcentremanagerlink/{0}/{1}";
+
+        // Program Manager Link
+        public const string GetAllProgramManagerLinks = "api/v1/programmanagerlink";
+        public const string GetPagedProgramManagerLinks = "api/v1/programmanagerlink/paged";
+        public const string GetPrograms = "api/v1/programmanagerlink/programs";
+        public const string GetProgramManagerLinksByProgram = "api/v1/programmanagerlink/{0}";
+        public const string GetProgramManagerLinksByManager = "api/v1/programmanagerlink/manager/{0}";
+        public const string GetProgramManagerLinkById = "api/v1/programmanagerlink/{0}/{1}";
+        public const string CreateProgramManagerLink = "api/v1/programmanagerlink";
+        public const string DeleteProgramManagerLink = "api/v1/programmanagerlink/{0}/{1}";
+
+        // Project Manager
+        public const string GetAllProjectManagers = "api/v1/projectmanager";
+        public const string GetProjectManagerNames = "api/v1/projectmanager/names";
+        public const string GetPagedProjectManagers = "api/v1/projectmanager";
+        public const string GetProjectManagerByName = "api/v1/projectmanager/{0}";
+        public const string CreateProjectManager = "api/v1/projectmanager";
+        public const string UpdateProjectManager = "api/v1/projectmanager/{0}";
+        public const string DeleteProjectManager = "api/v1/projectmanager/{0}";
+
+        // Publication Type
+        public const string GetAllPublicationTypes = "api/v1/publication-types";
+        public const string GetPagedPublicationTypes = "api/v1/publication-types/paged";
+        public const string GetPublicationTypeByCode = "api/v1/publication-types/{0}";
+        public const string CreatePublicationType = "api/v1/publication-types";
+        public const string UpdatePublicationType = "api/v1/publication-types/{0}";
+        public const string DeletePublicationType = "api/v1/publication-types/{0}";
+
+        // RadTrack Programme
+        public const string GetAllRadTrackProgs = "api/v1/radtrackprog";
+        public const string GetPagedRadTrackProgs = "api/v1/radtrackprog/paged";
+        public const string GetRadTrackProgByProgram = "api/v1/radtrackprog/{0}";
+        public const string CreateRadTrackProg = "api/v1/radtrackprog";
+        public const string UpdateRadTrackProg = "api/v1/radtrackprog/{0}";
+        public const string DeleteRadTrackProg = "api/v1/radtrackprog/{0}";
+        public const string GetAllRadTrackProgNames = "api/v1/radtrackprog/programs";
+
+        // Report
+        public const string GetAllReports = "api/v1/report";
+        public const string GetPagedReports = "api/v1/report/paged";
+        public const string GetReportById = "api/v1/report/{0}";
+        public const string CreateReport = "api/v1/report";
+        public const string UpdateReport = "api/v1/report/{0}";
+        public const string DeleteReport = "api/v1/report/{0}";
+
+        // Risk
+        public const string GetAllRiskRatings = "api/v1/risk-ratings";
+        public const string GetPagedRiskRatings = "api/v1/risk-ratings/paged";
+        public const string GetRiskRatingById = "api/v1/risk-ratings/{0}";
+        public const string CreateRiskRating = "api/v1/risk-ratings";
+        public const string UpdateRiskRating = "api/v1/risk-ratings/{0}";
+        public const string DeleteRiskRating = "api/v1/risk-ratings/{0}";
+
+        // Setting
+        public const string GetAllSettings = "api/v1/setting";
+        public const string GetAllUserUpdateableSettings = "api/v1/setting/userupdateable";
+        public const string GetSettingById = "api/v1/setting/{0}";
+        public const string UpdateSetting = "api/v1/setting/{0}";
     }
 }

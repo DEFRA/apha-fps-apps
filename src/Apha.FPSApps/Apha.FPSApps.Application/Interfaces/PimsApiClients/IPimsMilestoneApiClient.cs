@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
         Task<ApiResponseDto<List<MilestoneFormDatesDto>>> GetAllMilestoneFormDatesAsync(string parentProject, QueryParameters<string> parameters);
         Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync(string parentProject, short year);
         Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync_PMD(string parentProject, short year);
-        Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto);
+        Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto, bool isAddingNew = false);
         Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync_PMD(string parentProject, MilestoneFormDatesDto dto);
         Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year);
 
@@ -33,7 +33,7 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
         Task<ApiResponseDto<StagingMilestoneDto>> AddStagingRowAsync(StagingMilestoneDto dto, int year);
         Task<ApiResponseDto<StagingMilestoneDto>> UpdateStagingRowAsync(int id, StagingMilestoneDto dto);
         Task<ApiResponseDto<object>> DeleteStagingRowAsync(int id);
-        Task<ApiResponseDto<object>> ClearStagingAsync(string project);
+        Task<ApiResponseDto<object>> ClearStagingAsync();
         Task<ApiResponseDto<object>> ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode);
         Task<ApiResponseDto<object>> ImportStagingAsync(string project);
         Task<ApiResponseDto<object>> ImportWithOverwriteAsync(string project);

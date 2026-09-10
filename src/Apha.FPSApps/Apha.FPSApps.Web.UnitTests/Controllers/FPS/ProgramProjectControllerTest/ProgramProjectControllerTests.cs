@@ -6,8 +6,10 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Mappings;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using System.Text.Json;
 
@@ -1518,6 +1520,88 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
                 Arg.Is<string>(s => s.Contains("SelectedProjectGroup")),
                 string.Empty
             );
+        }
+
+        #endregion
+
+        #region FpsViewModelMapper profile — Cust Inc (BudgetExt <-> CustIncome)
+
+        private static IMapper CreateRealMapper()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
+            return config.CreateMapper();
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_ProgramProjectEditViewModel_MapsBudgetExtToCustIncome()
+        {
+            var mapper = CreateRealMapper();
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetExt = 123.45m };
+
+            var dto = mapper.Map<ProjectDto>(model);
+
+            Assert.Equal(123.45m, dto.CustIncome);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_ProjectDto_MapsCustIncomeToBudgetExt()
+        {
+            var mapper = CreateRealMapper();
+            var dto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha", CustIncome = 78.91m };
+
+            var model = mapper.Map<ProgramProjectEditViewModel>(dto);
+
+            Assert.Equal(78.91m, model.BudgetExt);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_ProgramProjectEditViewModel_MapsNullBudgetExtToZeroCustIncome()
+        {
+            var mapper = CreateRealMapper();
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetExt = null };
+
+            var dto = mapper.Map<ProjectDto>(model);
+
+            Assert.Equal(0m, dto.CustIncome);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_ProgramProjectEditViewModel_OverwritesExistingCustIncome()
+        {
+            var mapper = CreateRealMapper();
+            var existing = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha", CustIncome = 999m };
+            var model = new ProgramProjectEditViewModel { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetExt = 55.55m };
+
+            var dto = mapper.Map(model, existing);
+
+            Assert.Equal(55.55m, dto.CustIncome);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_ProgramProjectItem_BudgetExtIsPopulatedFromDtoBudgetExt()
+        {
+            // The "Cust Inc" grid column binds to ProgramProjectItem.BudgetExt. This grid is
+            // read-only and is fed from ProjectDto.BudgetExt, which the API response populates
+            // directly, so no CustIncome translation is applied on this path.
+            var mapper = CreateRealMapper();
+            var dto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetExt = 200m, CustIncome = 999m };
+
+            var item = mapper.Map<ProgramProjectItem>(dto);
+
+            Assert.Equal(200m, item.BudgetExt);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_ProjectViewModel_RoundTripsBudgetCvl()
+        {
+            var mapper = CreateRealMapper();
+            var dto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Alpha", BudgetCvl = 300m };
+
+            var model = mapper.Map<ProjectViewModel>(dto);
+            var roundTripped = mapper.Map<ProjectDto>(model);
+
+            Assert.Equal(300m, model.BudgetCvl);
+            Assert.Equal(300m, roundTripped.BudgetCvl);
         }
 
         #endregion

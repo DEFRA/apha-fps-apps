@@ -1,0 +1,45 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.LookupItemViewModel
+@{
+    var tableName = ViewData["TableName"] as string ?? string.Empty;
+    var isEditMode = !string.IsNullOrWhiteSpace(Model?.Value);
+    var title = isEditMode ? "Edit Item" : "Add Item";
+    var formId = isEditMode ? "editLookupItemForm" : "addLookupItemForm";
+    var saveLabel = isEditMode ? "Update" : "Save";
+    var saveAction = isEditMode ? "updateLookupItem()" : "saveLookupItem()";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title" id="lookupItemModalTitle">@title</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body">
+    <div class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
+    <div class="row g-3">
+        <form id="@formId">
+            <input type="hidden" id="lookupTableName" value="@tableName" />
+            @if (isEditMode && Model != null)
+            {
+                <input type="hidden" id="originalValue" value="@Model.Value" />
+            }
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Value">Value <span class="sup_color_red">*</span></label>
+                <input type="text" asp-for="Value" required class="govuk-input" maxlength="50">
+                <span asp-validation-for="Value" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
+</div>

@@ -51,8 +51,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<MilestoneFormDatesDto>> GetMilestoneFormDatesAsync_PMD(string parentProject, short year)
             => await _client.PimsMilestone.GetMilestoneFormDatesAsync_PMD(parentProject, year);
 
-        public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto)
-            => await _client.PimsMilestone.SaveMilestoneFormDatesAsync(parentProject, dto);
+        public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto, bool isAddingNew = false)
+            => await _client.PimsMilestone.SaveMilestoneFormDatesAsync(parentProject, dto, isAddingNew);
 
         public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync_PMD(string parentProject, MilestoneFormDatesDto dto)
             => await _client.PimsMilestone.SaveMilestoneFormDatesAsync_PMD(parentProject, dto);
@@ -79,8 +79,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<object>> DeleteStagingRowAsync(int id)
             => await _client.PimsMilestone.DeleteStagingRowAsync(id);
 
-        public async Task<ApiResponseDto<object>> ClearStagingAsync(string project)
-            => await _client.PimsMilestone.ClearStagingAsync(project);
+        public async Task<ApiResponseDto<object>> ClearStagingAsync()
+            => await _client.PimsMilestone.ClearStagingAsync();
 
         public async Task<ApiResponseDto<object>> ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode)
             => await _client.PimsMilestone.ValidateStagingAsync(project, typeId, isDeliverableMode);

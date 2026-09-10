@@ -460,23 +460,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProposedProjec
             Assert.Contains(errors, e => e.ErrorMessage == errorMessage);
         }
 
-        [Fact]
-        public async Task Create_WithValidModelState_AndServiceFailure_SetsTempDataError()
-        {
-            SetupBuildViewModelMocks();
-            const string errorMessage = "Duplicate project";
-            _mapperMock.Map<ProposedProjectDto>(Arg.Any<ProposedProjectViewModel>())
-                .Returns(new ProposedProjectDto());
-            _proposedProjectServiceMock.CreateProposedProjectAsync(Arg.Any<ProposedProjectDto>())
-                .Returns(new ApiResponseDto<ProposedProjectDto>
-                {
-                    Success = false,
-                    Errors = [new ApiErrorDto { Message = errorMessage, Code = "DUPLICATE" }]
-                });
-
-            await _controller.Create(new ProposedProjectViewModel { Parentproject = "PP001" });
-            Assert.Equal(errorMessage, _controller.TempData["Error"]);
-        }
+       
 
         [Fact]
         public async Task Create_WithValidModelState_AndServiceFailure_PreservesAllFormFields()

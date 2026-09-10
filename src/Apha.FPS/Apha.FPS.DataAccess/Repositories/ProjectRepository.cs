@@ -337,6 +337,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     Programme      = prj.Program,
                     ContractNumber = prj.Contract,
                     Project        = prj.ParentProject,
+                    ProjectStatus  = prj.ProjectStatus,
                     AccountCat     = ac.Account,
                     Description    = ac.Description,
                     ItemCost       = ac.ItemCost
@@ -371,6 +372,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 ("Programme", r => r.Programme),
                 ("ContractNumber", r => r.ContractNumber),
                 ("Project", r => r.Project),
+                ("ProjectStatus", r => r.ProjectStatus),
                 ("AccountCat", r => r.AccountCat),
                 ("Description", r => r.Description)
             };
@@ -398,20 +400,40 @@ namespace Apha.FPS.DataAccess.Repositories
             }).ToList();
         }
 
+        private static readonly Dictionary<string, Func<ProjectExceptionalCostView, string?>> ExceptionalCostTextSelectors =
+            new()
+            {
+                ["directorate"] = r => r.Directorate,
+                ["programme"] = r => r.Programme,
+                ["contractnumber"] = r => r.ContractNumber,
+                ["project"] = r => r.Project,
+                ["projectstatus"] = r => r.ProjectStatus,
+                ["accountcat"] = r => r.AccountCat,
+                ["description"] = r => r.Description
+            };
+
         private static List<ProjectExceptionalCostView> ApplyProjectExceptionalCostSort(
             List<ProjectExceptionalCostView> rows, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
-            {
-                "directorate"    => descending ? rows.OrderByDescending(r => r.Directorate).ToList()    : rows.OrderBy(r => r.Directorate).ToList(),
-                "programme"      => descending ? rows.OrderByDescending(r => r.Programme).ToList()      : rows.OrderBy(r => r.Programme).ToList(),
-                "contractnumber" => descending ? rows.OrderByDescending(r => r.ContractNumber).ToList() : rows.OrderBy(r => r.ContractNumber).ToList(),
-                "project"        => descending ? rows.OrderByDescending(r => r.Project).ToList()        : rows.OrderBy(r => r.Project).ToList(),
-                "accountcat"     => descending ? rows.OrderByDescending(r => r.AccountCat).ToList()     : rows.OrderBy(r => r.AccountCat).ToList(),
-                "description"    => descending ? rows.OrderByDescending(r => r.Description).ToList()    : rows.OrderBy(r => r.Description).ToList(),
-                "itemcost"       => descending ? rows.OrderByDescending(r => r.ItemCost).ToList()       : rows.OrderBy(r => r.ItemCost).ToList(),
-                _                => rows
-            };
+            var key = sortBy?.ToLower();
+
+            if (key == "itemcost")
+                return Order(rows, r => r.ItemCost, descending);
+
+            if (key != null && ExceptionalCostTextSelectors.TryGetValue(key, out var selector))
+                return Order(rows, selector, descending);
+
+            return rows;
+        }
+
+        private static List<ProjectExceptionalCostView> Order<TKey>(
+            List<ProjectExceptionalCostView> rows,
+            Func<ProjectExceptionalCostView, TKey> keySelector,
+            bool descending)
+        {
+            return descending
+                ? rows.OrderByDescending(keySelector).ToList()
+                : rows.OrderBy(keySelector).ToList();
         }
 
         public async Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query)
@@ -735,6 +757,22 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
+        /// <summary>
+        /// Orders a nullable column using MS Access null semantics, where Null is treated as the
+        /// lowest value (blanks first ascending, last descending). PostgreSQL defaults to
+        /// NULLS LAST ascending, so a null-rank key is sorted ahead of the value to match Access.
+        /// </summary>
+        private static IQueryable ApplyOrderWithAccessNullSemantics<T>(
+            IQueryable<Project> query,
+            Expression<Func<Project, T?>> keySelector,
+            Expression<Func<Project, int>> nullRankSelector,
+            bool descending) where T : struct
+        {
+            return descending
+                ? query.OrderByDescending(nullRankSelector).ThenByDescending(keySelector)
+                : query.OrderBy(nullRankSelector).ThenBy(keySelector);
+        }
+
         private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -752,6 +790,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 ("Program", x => x.Program),
                 ("ProjectTitle", x => x.ProjectTitle),
                 ("Manager", x => x.Manager),
+                ("Contract", x => x.Contract),
+                ("ProjectStatus", x => x.ProjectStatus),
+                ("Customer", x => x.Customer),
                 ("OracleProjectCode", x => x.OracleProjectCode),
                 ("SubAccountCode", x => x.SubAccountCode)
             };
@@ -841,6 +882,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 "budget"           => ApplyOrder(query, p => p.BudgetCvl, descending),
                 "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
                 "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
+                "caseworksub"      => ApplyOrderWithAccessNullSemantics(query, p => p.CaseWorkSub, p => p.CaseWorkSub == null ? 0 : 1, descending),
+                "pvsincome"        => ApplyOrder(query, p => p.PvsIncome, descending),
                 "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
                 "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
                 "oracleprojectcode"=> ApplyOrder(query, p => p.OracleProjectCode, descending),
@@ -1905,22 +1948,39 @@ namespace Apha.FPS.DataAccess.Repositories
             // Use an anonymous projection so EF Core can translate all Where predicates.
             // Projecting directly to a named record type (VlaProjectEntry) and then composing
             // Where clauses on it produces untranslatable expressions like new VlaProjectEntry(...).Program.
+            // The programme join is an INNER join, matching the Access query
+            // (FROM tlkpProgram INNER JOIN tlkpProject ON tlkpProgram.ProgramNo = tlkpProject.Program):
+            // projects whose Program has no matching programme row are excluded.
             var rawQuery = (from p in _dbContext.Projects.AsNoTracking()
-                            join pg in _dbContext.Programs on p.Program equals pg.ProgramNo into pgJoin
-                            from pg in pgJoin.DefaultIfEmpty()
+                            join pg in _dbContext.Programs on p.Program equals pg.ProgramNo
                             select new { p, pg }).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(projectStatus))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus, $"%{projectStatus}%"));
 
+            // Program, Manager and Customer are picked from dropdowns that supply the exact
+            // stored value, so they must match exactly. A contains-style ILike would wrongly
+            // include e.g. "P10" when "P1" is selected, or "Ace, Esra Jane" when "Ace, Esra" is.
             if (!string.IsNullOrWhiteSpace(programNo))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program, $"%{programNo}%"));
+            {
+                var programFilter = programNo.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.p.Program.ToLower() == programFilter);
+            }
 
+            // Manager is the project's own manager (tlkpProject.Manager in the Access query),
+            // not the programme owner.
             if (!string.IsNullOrWhiteSpace(manager))
-                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
+            {
+                var managerFilter = manager.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.p.Manager != null
+                                            && x.p.Manager.Trim().ToLower() == managerFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(customer))
-                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer, $"%{customer}%"));
+            {
+                var customerFilter = customer.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.p.Customer.ToLower() == customerFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(query.Search))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{query.Search}%"));
@@ -1930,6 +1990,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{jobCode}%"));
             if (filterDict.TryGetValue(FilterKeyParentProject, out var parentProject))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject, $"%{parentProject}%"));
+            // In-grid column filters are free-text "contains" boxes, unlike the exact-match dropdowns above.
+            if (filterDict.TryGetValue("Program", out var programColumnFilter))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program, $"%{programColumnFilter}%"));
+            if (filterDict.TryGetValue("Customer", out var customerColumnFilter))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer, $"%{customerColumnFilter}%"));
 
             var projects = await rawQuery
                 .Select(x => new VlaProjectEntry(
@@ -1938,8 +2003,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     x.p.ProjectStatus,
                     x.p.Program,
                     x.p.Customer,
-                    x.pg == null ? null : x.pg.Manager,
-                    x.pg == null ? (decimal?)null : x.pg.Target))
+                    x.p.Manager,
+                    x.pg.Target))
                 .ToListAsync();
 
             if (projects.Count == 0)

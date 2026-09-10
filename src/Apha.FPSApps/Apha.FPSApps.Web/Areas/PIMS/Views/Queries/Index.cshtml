@@ -52,8 +52,7 @@
                                     Year
                                 </label>
                                 <select class="govuk-select"
-                                        id="qryFilterYear"
-                                        aria-label="Filter by year">
+                                        id="qryFilterYear">
                                     <option value="">Year</option>
                                     @foreach (var year in Model.YearOptions)
                                     {
@@ -66,21 +65,23 @@
                         <!-- Row 2: Export Queries, Contract, Open Query Button -->
                         <div class="qry-filter-row qry-filter-row--start">
                             <div>
-                                <label class="govuk-label govuk-!-font-weight-bold sup_p_0" style="display:block">Export Queries</label>
-                                <div id="qryExportQueriesBox" class="govuk-!-margin-top-1">
-                                    <label for="qryAllContractQuery">
-                                        <input type="radio" id="qryAllContractQuery" name="exportQuery" value="allContract">
-                                        All Contracts Query
-                                    </label>
-                                    <label for="qryContractMonitoringQuery">
-                                        <input type="radio" id="qryContractMonitoringQuery" name="exportQuery" value="contractMonitoring">
-                                        Contracts Monitoring Query
-                                    </label>
-                                    <label for="qryProgramMonitoringQuery">
-                                        <input type="radio" id="qryProgramMonitoringQuery" name="exportQuery" value="programMonitoring">
-                                        Program and Customer Monitoring
-                                    </label>
-                                </div>
+                                <fieldset class="govuk-fieldset">
+                                    <legend class="govuk-label govuk-!-font-weight-bold sup_p_0" style="display:block">Export Queries</legend>
+                                    <div id="qryExportQueriesBox" class="govuk-!-margin-top-1">
+                                        <label for="qryAllContractQuery">
+                                            <input type="radio" id="qryAllContractQuery" name="exportQuery" value="allContract">
+                                            All Contracts Query
+                                        </label>
+                                        <label for="qryContractMonitoringQuery">
+                                            <input type="radio" id="qryContractMonitoringQuery" name="exportQuery" value="contractMonitoring">
+                                            Contracts Monitoring Query
+                                        </label>
+                                        <label for="qryProgramMonitoringQuery">
+                                            <input type="radio" id="qryProgramMonitoringQuery" name="exportQuery" value="programMonitoring">
+                                            Program and Customer Monitoring
+                                        </label>
+                                    </div>
+                                </fieldset>
                             </div>
 
                             <div id="qryContractGroup" class="govuk-!-margin-top-0">
@@ -141,17 +142,32 @@
 
         function openQuery() {
             const selectedQuery = document.querySelector('input[name="exportQuery"]:checked');
-            const month = document.getElementById('qryFilterMonth').value;
-            const year = document.getElementById('qryFilterYear').value;
+            const monthSelect = document.getElementById('qryFilterMonth');
+            const yearSelect = document.getElementById('qryFilterYear');
+            const month = monthSelect.value;
+            const year = yearSelect.value;
             const contract = document.getElementById('qryFilterContract').value;
 
-            if (!selectedQuery) {
-                showAlertMessage('Please select an Export Query before opening the query.', AlertType.WARNING);
+            const isMonthSelected = monthSelect.selectedIndex > 0 && month.trim() !== '';
+            const isYearSelected = yearSelect.selectedIndex > 0 && year.trim() !== '';
+
+            if (!isMonthSelected && !isYearSelected) {
+                showAlertMessage('Please select Month and Year before opening the query.', AlertType.INFORMATION);
                 return;
             }
 
-            if (!month || !year) {
-                showAlertMessage('Please select Month and Year before opening the query.', AlertType.WARNING);
+            if (!isMonthSelected) {
+                showAlertMessage('Please select Month before opening the query.', AlertType.INFORMATION);
+                return;
+            }
+
+            if (!isYearSelected) {
+                showAlertMessage('Please select Year before opening the query.', AlertType.INFORMATION);
+                return;
+            }
+
+            if (!selectedQuery) {
+                showAlertMessage('Please select an Export Query before opening the query.', AlertType.INFORMATION);
                 return;
             }
 

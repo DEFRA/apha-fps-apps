@@ -164,12 +164,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<MilestoneFormDatesDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto)
+        public async Task<ApiResponseDto<MilestoneFormDatesDto>> SaveMilestoneFormDatesAsync(string parentProject, MilestoneFormDatesDto dto, bool isAddingNew = false)
         {
 
                 MilestoneFormDatesReq request = _mapper.Map<MilestoneFormDatesReq>(dto);
-                var response = await _http.PostAsync<MilestoneFormDatesReq, MilestoneFormDatesRes>(
-                    string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parentProject)), request);
+                var url = $"{string.Format(PimsApiEndpoints.SaveMilestoneFormDates, Uri.EscapeDataString(parentProject))}?isAddingNew={isAddingNew.ToString().ToLowerInvariant()}";
+                var response = await _http.PostAsync<MilestoneFormDatesReq, MilestoneFormDatesRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
                 var responseDto = _mapper.Map<ApiResponseDto<MilestoneFormDatesDto>>(response);
@@ -290,10 +290,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<object>> ClearStagingAsync(string project)
+        public async Task<ApiResponseDto<object>> ClearStagingAsync()
         {
             var response = await _http.DeleteAsync<object>(
-                string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project)));
+                string.Format(PimsApiEndpoints.ClearStagingMilestones));
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<object>>(response);
             var dto = _mapper.Map<ApiResponseDto<object>>(response);

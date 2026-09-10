@@ -54,12 +54,11 @@ namespace Apha.FPSApps.Web.UnitTests.Areas.FPS.Models.PlanStaffZTCodeItemViewMod
         [Theory]
         [InlineData(1e10)]
         [InlineData(2147483648.0)]
-        [InlineData(double.MaxValue)]
-        [InlineData(double.MinValue)]
         public void PlannedHours_WithValueOutsideInt32Range_ValidatesWithoutThrowing(double plannedHours)
         {
-            // Guards against RangeAttribute converting via Convert.ToInt32, which threw
-            // OverflowException for any double beyond Int32 bounds.
+            // Values beyond Int32 bounds but within the NonFinancialRange limits must
+            // validate without throwing (guards against RangeAttribute converting via
+            // Convert.ToInt32, which threw OverflowException for doubles beyond Int32).
             var model = CreateValidModel(plannedHours);
 
             var results = ValidateModel(model);
@@ -67,8 +66,22 @@ namespace Apha.FPSApps.Web.UnitTests.Areas.FPS.Models.PlanStaffZTCodeItemViewMod
             Assert.DoesNotContain(results, r => r.MemberNames.Contains(nameof(PlanStaffZTCodeItemViewModel.PlannedHours)));
         }
 
+        [Theory]
+        [InlineData(double.MaxValue)]
+        [InlineData(double.MinValue)]
+        public void PlannedHours_WithValueOutsideAllowedRange_FailsValidationWithoutThrowing(double plannedHours)
+        {
+            // Values outside the NonFinancialRange limits fail validation (with the
+            // range error message) but must not throw.
+            var model = CreateValidModel(plannedHours);
+
+            var results = ValidateModel(model);
+
+            Assert.Contains(results, r => r.MemberNames.Contains(nameof(PlanStaffZTCodeItemViewModel.PlannedHours)));
+        }
+
         [Fact]
-        public void PlannedHours_WithNaN_FailsValidationWithExpectedMessage()
+        public void PlannedHours_WithNaN_FailsValidationWithRangeMessage()
         {
             var model = CreateValidModel(double.NaN);
 
@@ -77,7 +90,7 @@ namespace Apha.FPSApps.Web.UnitTests.Areas.FPS.Models.PlanStaffZTCodeItemViewMod
             var failure = Assert.Single(
                 results,
                 r => r.MemberNames.Contains(nameof(PlanStaffZTCodeItemViewModel.PlannedHours)));
-            Assert.Equal("Hours must be a valid number", failure.ErrorMessage);
+            Assert.Contains("must be between", failure.ErrorMessage);
         }
 
         [Fact]

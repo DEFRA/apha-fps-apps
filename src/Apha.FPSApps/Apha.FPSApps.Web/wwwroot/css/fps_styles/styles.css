@@ -1199,6 +1199,10 @@ input:focus-visible+label {
 .financial-summary.pp-summary-4-3 .summary-item .govuk-input {
     width: 100%;
     min-width: 0;
+    /* Totals are shown as plain black text; negatives use a leading minus sign
+       rather than colour coding or brackets. */
+    color: #0b0c0c;
+    font-weight: 400;
 }
 
 @media (max-width: 1200px) {
@@ -2908,6 +2912,49 @@ table.custom-table th {
     align-items: flex-end;
 }
 
+/* Overlay the "Selected project" controls onto the grid's own title bar so they
+   sit on the same line as the grid header and stay inside the grid border. */
+.ppf-grid-with-header-controls {
+    position: relative;
+}
+
+.ppf-grid-with-header-controls .editable-grid-container > .sup_border_bottom_0 > h2.sup_align_heading {
+    min-height: 50px;
+    padding-right: 10px;
+}
+
+.project-code-section.ppf-header-project-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    height: 50px;
+    padding: 0 10px;
+    background: transparent;
+    border-radius: 0;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.project-code-section.ppf-header-project-controls .govuk-input {
+    width: 160px;
+    height: 30px;
+    margin-bottom: 0;
+    padding: 2px 5px;
+}
+
+    .project-code-section.ppf-header-project-controls .govuk-button {
+        margin-bottom: 0;
+        padding: 7px 10px;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
+
+.project-code-section.ppf-header-project-controls label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
 /* Right-align the Programme Target / Surplus-Shortfall block.
    Specificity note: this element also carries .summary-row and
    .pva-inline-summary. `.summary-row { margin: 20px 0 }` in main_style.css
@@ -2972,8 +3019,21 @@ table.custom-table th {
    the #id so it outranks `.govuk-input` in govuk-frontend, which loads first
    but would otherwise tie on the plain-class selector. */
 #projectProfitabilityTotalSummary .govuk-input,
-#projectProfitabilityTotalSummary .govuk-input__prefix {
+#projectProfitabilityTotalSummary .govuk-input__prefix,
+#projectProfitabilitySummary .govuk-input,
+#projectProfitabilitySummary .govuk-input__prefix {
     font-weight: 700;
+}
+
+/* Totals are always plain black; negatives are shown with a leading "-" sign
+   rather than any colour coding. */
+#projectProfitabilityTotalSummary .govuk-input,
+#projectProfitabilityTotalSummary .govuk-input__prefix,
+#projectProfitabilitySummary .govuk-input,
+#projectProfitabilitySummary .govuk-input__prefix,
+.summary-row.ppf-summary-column .govuk-input,
+.summary-row.ppf-summary-column .govuk-input__prefix {
+    color: #0b0c0c !important;
 }
 
 /* Programme Target / Surplus-Shortfall are totals too, so match the bold
@@ -4201,7 +4261,8 @@ body,
 .ssr-grade-header {
     padding: 6px 10px;
     border-bottom: 1px solid #b1b4b6;
-    background-color: #f3f2f1;
+    background-color: #1d70b8;
+    color: #ffffff;
 }
 
 .ssr-grade-list {
@@ -4465,13 +4526,29 @@ body,
 .s2cra-jobs-footer-highlight {
     margin-top: 6px;
     margin-left: auto;
-    /* Matches the summary panel width so the labelled total lines up with the
-       "Overall Position for the Grade" fields on the right. */
-    width: 160px;
+    /* Wide enough to fit the label and input on a single line, while still
+       aligning to the right like the "Overall Position for the Grade" panel. */
+    width: 250px;
     border: 1px solid #c8cdd3;
     padding: 8px;
     background: #fff;
 }
+
+    .s2cra-jobs-footer-highlight .s2cra-summary-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .s2cra-jobs-footer-highlight .s2cra-summary-field .govuk-label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .s2cra-jobs-footer-highlight .s2cra-summary-field .s2cra-selected-hours-input {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
 
 .s2cra-selected-hours-input {
     text-align: right;
@@ -4994,7 +5071,8 @@ body,
 }
 
 .ssr-grade-header {
-    background: #e2e2e2;
+    background: #1d70b8;
+    color: #ffffff;
     padding: 4px 8px;
     border-bottom: 1px solid #b1b4b6;
 }
@@ -5294,7 +5372,8 @@ input.govuk-input.ssr-total-input[readonly] {
 }
 
 .ssr-grade-header {
-    background: #e2e2e2;
+    background: #1d70b8;
+    color: #ffffff;
     padding: 4px 8px;
     border-bottom: 1px solid #b1b4b6;
 }
@@ -5339,6 +5418,29 @@ input.govuk-input.ssr-total-input[readonly] {
 .ssr-wg-input {
     max-width: 150px;
     height: 26px;
+}
+
+.ssr-grade-sort-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #0b0c0c;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+    .ssr-grade-sort-button:hover {
+        text-decoration: underline;
+    }
+
+.ssr-grade-sort-indicator {
+    font-size: 10px;
+    margin-left: 4px;
 }
 
 .asu-dropdown-wrapper {
@@ -5451,7 +5553,7 @@ input.govuk-input.ssr-total-input[readonly] {
     width: 20%;
 }
 .isProjectGroupManagement {
-    width: 37%;
+    width: 35%;
 }
 .isResourceReAllocationScreen {
     width: 24%;
@@ -5484,11 +5586,6 @@ input.govuk-input.ssr-total-input[readonly] {
         height: 460px;
         overflow-y: auto;
     }
-}
-#gridContainer_compareStaff2Grid .grid-scroll-container,
-#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
-    height: 410px;
-    max-height: 410px;
 }
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
@@ -5576,6 +5673,7 @@ input.govuk-input.ssr-total-input[readonly] {
         position: fixed;
         bottom: 0;
         width: 100%;
+        z-index: 1000;
     }
 .isSideNav {
     .sidenav{
@@ -5781,4 +5879,24 @@ input.govuk-input.ssr-total-input[readonly] {
     .modal-title{
         font-size: 19px;
     }
+}
+.sup_pagination_wrapper {
+    * {
+        font-size: 16px !important;
+    }
+}
+.govuk-pagination__list,
+.sup_pagination_wrapper {
+    * {
+        font-size: 16px !important;
+    }
+}
+
+.govuk-checkboxes--small .govuk-checkboxes__item {
+    padding-bottom: 0 !important;
+}
+.modal-dialog .govuk-label,
+.pva-inline-summary span, 
+.govuk-label {
+    font-weight: bold !important;
 }

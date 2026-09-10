@@ -74,21 +74,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         // ── Column mappings ───────────────────────────────────────────────────────
 
         [Theory]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Id),             "id")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.JobCode),        "jobcode")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Program),        "program")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Customer),       "customer")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Manager),        "manager")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Status),         "status")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.StaffCosts),     "staffcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.TestCost),       "testcost")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.AnimalCosts),    "animalcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.AdditionalCosts),"additionalcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.TotalCosts),     "totalcosts")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Budget),         "budget")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.Profit),         "profit")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.TargetProfit),   "targetprofit")]
-        [InlineData(nameof(ProjectProfitabilityVlaView.OffTarget),      "offtarget")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Id), "id")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.JobCode), "jobcode")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Program), "program")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Customer), "customer")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Manager), "manager")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Status), "status")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.StaffCosts), "staffcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.TestCost), "testcost")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.AnimalCosts), "animalcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.AdditionalCosts), "additionalcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.TotalCosts), "totalcosts")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Budget), "budget")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.Profit), "profit")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.TargetProfit), "targetprofit")]
+        [InlineData(nameof(ProjectProfitabilityVlaView.OffTarget), "offtarget")]
         public void OnModelCreating_ProjectProfitabilityVlaView_ColumnsMappedCorrectly(
             string propertyName, string expectedColumnName)
         {
@@ -135,24 +135,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         }
 
         [Theory]
-        [InlineData(nameof(ContributionSummaryView.ContTarget),        "conttarget")]
-        [InlineData(nameof(ContributionSummaryView.SellingPc),         "sellingpc")]
-        [InlineData(nameof(ContributionSummaryView.ChargeRate),        "chargerate")]
-        [InlineData(nameof(ContributionSummaryView.Ohr),               "ohr")]
-        [InlineData(nameof(ContributionSummaryView.SumOfGenBid),       "sumofgenbid")]
-        [InlineData(nameof(ContributionSummaryView.WorkGroup),         "workgroup")]
+        [InlineData(nameof(ContributionSummaryView.ContTarget), "conttarget")]
+        [InlineData(nameof(ContributionSummaryView.SellingPc), "sellingpc")]
+        [InlineData(nameof(ContributionSummaryView.ChargeRate), "chargerate")]
+        [InlineData(nameof(ContributionSummaryView.Ohr), "ohr")]
+        [InlineData(nameof(ContributionSummaryView.SumOfGenBid), "sumofgenbid")]
+        [InlineData(nameof(ContributionSummaryView.WorkGroup), "workgroup")]
         [InlineData(nameof(ContributionSummaryView.ProfitCentreGrade), "profitcentregrade")]
-        [InlineData(nameof(ContributionSummaryView.WgGrade),           "wggrade")]
-        [InlineData(nameof(ContributionSummaryView.AppHours),          "apphours")]
-        [InlineData(nameof(ContributionSummaryView.Hrs),               "hrs")]
-        [InlineData(nameof(ContributionSummaryView.AvHrs),             "avhrs")]
-        [InlineData(nameof(ContributionSummaryView.Fec),               "fec")]
-        [InlineData(nameof(ContributionSummaryView.AppFec),            "appfec")]
-        [InlineData(nameof(ContributionSummaryView.Contribution),      "contribution")]
-        [InlineData(nameof(ContributionSummaryView.FpsYear),           "fpsyear")]
-        [InlineData(nameof(ContributionSummaryView.UserId),            "user_id")]
-        [InlineData(nameof(ContributionSummaryView.Dt2Username),       "dt2username")]
-        [InlineData(nameof(ContributionSummaryView.UserEmail),         "useremail")]
+        [InlineData(nameof(ContributionSummaryView.WgGrade), "wggrade")]
+        [InlineData(nameof(ContributionSummaryView.AppHours), "apphours")]
+        [InlineData(nameof(ContributionSummaryView.Hrs), "hrs")]
+        [InlineData(nameof(ContributionSummaryView.AvHrs), "avhrs")]
+        [InlineData(nameof(ContributionSummaryView.Fec), "fec")]
+        [InlineData(nameof(ContributionSummaryView.AppFec), "appfec")]
+        [InlineData(nameof(ContributionSummaryView.Contribution), "contribution")]
+        [InlineData(nameof(ContributionSummaryView.FpsYear), "fpsyear")]
+        [InlineData(nameof(ContributionSummaryView.UserId), "user_id")]
+        [InlineData(nameof(ContributionSummaryView.Dt2Username), "dt2username")]
+        [InlineData(nameof(ContributionSummaryView.UserEmail), "useremail")]
         public void OnModelCreating_TimeSellerPcView_ColumnsMappedCorrectly(
             string propertyName, string expectedColumnName)
         {
@@ -164,6 +164,61 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
             var property = entityType.FindProperty(propertyName);
             Assert.NotNull(property);
             Assert.Equal(expectedColumnName, property.GetColumnName());
+        }
+
+        // ── OnModelCreating — Division column constraints ─────────────────────────
+
+        /// <summary>
+        /// Guards against the mapped length drifting from the database column type.
+        /// fps.tlkpdivision.divname is character varying(10), so exceeding this
+        /// length causes PostgreSQL error 22001 (value too long) at save time.
+        /// </summary>
+        [Fact]
+        public void OnModelCreating_DivisionDivName_MaxLengthMatchesDatabaseColumn()
+        {
+            using var ctx = CreateContext(Guid.NewGuid().ToString());
+
+            var property = ctx.Model.FindEntityType(typeof(Division))?.FindProperty(nameof(Division.DivName));
+            Assert.NotNull(property);
+            Assert.Equal(10, property.GetMaxLength());
+        }
+
+        [Fact]
+        public void OnModelCreating_DivisionDivName_IsPrimaryKey()
+        {
+            using var ctx = CreateContext(Guid.NewGuid().ToString());
+
+            var entityType = ctx.Model.FindEntityType(typeof(Division));
+            Assert.NotNull(entityType);
+
+            var primaryKey = entityType.FindPrimaryKey();
+            Assert.NotNull(primaryKey);
+            Assert.Equal(nameof(Division.DivName), Assert.Single(primaryKey.Properties).Name);
+            
+        }
+
+        // ── OnModelCreating — Workgroup column constraints ────────────────────────
+
+        /// <summary>
+        /// Guards against the mapped lengths drifting from the database column types.
+        /// fps.workgroup.workgroup is character varying(50) and description is
+        /// character varying(45); exceeding either causes PostgreSQL error 22001
+        /// (value too long) at save time.
+        /// </summary>
+        [Theory]
+        [InlineData(nameof(Workgroup.WorkGroupName), 50)]
+        [InlineData(nameof(Workgroup.ProfitCentre), 50)]
+        [InlineData(nameof(Workgroup.Owner), 50)]
+        [InlineData(nameof(Workgroup.EmailRecipient), 50)]
+        [InlineData(nameof(Workgroup.Description), 45)]
+        public void OnModelCreating_Workgroup_MaxLengthsMatchDatabaseColumns(
+            string propertyName, int expectedMaxLength)
+        {
+            using var ctx = CreateContext(Guid.NewGuid().ToString());
+
+            var property = ctx.Model.FindEntityType(typeof(Workgroup))?.FindProperty(propertyName);
+            Assert.NotNull(property);
+            Assert.Equal(expectedMaxLength, property.GetMaxLength());
         }
     }
 }

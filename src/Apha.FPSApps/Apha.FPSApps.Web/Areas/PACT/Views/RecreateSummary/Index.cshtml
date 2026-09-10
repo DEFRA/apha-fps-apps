@@ -42,7 +42,7 @@
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell sup_border_0">
                         @* Bug 2 + 3 fix: govuk-form-group wrapper, named hidden input, valmsg span *@
-                        <div class="" id="month-form-group">
+                        <div class="govuk-form-group" id="month-form-group">
                             <label class="govuk-label govuk-!-margin-bottom-1 sup_font_weight_700" for="month">
                                 Select Summary Period:
                             </label>
@@ -56,10 +56,10 @@
                         </div>
                     </td>
                     <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3 recreate-summaries__action-cell">
-                        <div class="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-5">
+                        <div class="govuk-button-group govuk-!-margin-bottom-0 ">
                             <button type="button"
                                     id="btnCreateSummary"
-                                    class="govuk-button govuk-!-margin-bottom-0"
+                                    class="govuk-button govuk-!-margin-bottom-1"
                                     data-module="govuk-button"
                                     data-prevent-double-click="true"
                                     disabled="@btnDisabled"

@@ -1,4 +1,5 @@
 ﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -116,6 +117,20 @@ namespace Apha.FPS.DataAccess.Repositories
                             FpsYear = _requestContext.FpsYear
                         });
                     }
+                    // we need to add the super user also to Users table as super user can give permission to everyone
+                    var superUserAlreadyExists = await _dbContext.UserPrograms
+                        .IgnoreQueryFilters()
+                        .AnyAsync(up => up.ProgramNo == entity.ProgramNo && up.UserID == (int)SuperUser.SuperUserId);
+
+                    if (!superUserAlreadyExists)
+                    {
+                        _dbContext.UserPrograms.Add(new UserProgram
+                        {
+                            ProgramNo = entity.ProgramNo,
+                            UserID = (int)SuperUser.SuperUserId,
+                            FpsYear = _requestContext.FpsYear
+                        });
+                    }
 
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -230,33 +245,51 @@ namespace Apha.FPS.DataAccess.Repositories
             var version = "Plan - " + DateTime.Now.ToString("dd/MM/yyyy");
             var excludedPrograms = new[] { "ZT_prog", "ZT_leave", "Pend_work" };
 
+            // The three lookup sources are keyless views (HasNoKey) whose underlying SQL can
+            // return several identical rows per join key. Joining them directly fans the result
+            // set out multiplicatively. De-duplicating each lookup on just the columns this
+            // report needs keeps the joins one-to-one, so no DISTINCT is required over the wide
+            // 13-column projection and paging can still be pushed down to the database.
+            var staff = _dbContext.StaffGeneralViews.AsNoTracking()
+                .Select(s => new { s.StaffId, s.Name, s.WorkGroupGrade })
+                .Distinct();
+
+            var workGroupGrade = _dbContext.WorkgroupGradeGeneralViews.AsNoTracking()
+                .Select(w => new { w.WgGrade, w.WorkGroup, w.GradeCode, w.ProfitCentreGrade })
+                .Distinct();
+
+            var profitCentreGrade = _dbContext.ProfitCentreGradeViews.AsNoTracking()
+                .Select(p => new { p.PcGrade, p.ProfitCentre, p.ChargeRate })
+                .Distinct();
+
             var planQuery =
-                (from prg in _dbContext.Programs
-                 join prj in _dbContext.Projects on prg.ProgramNo equals prj.Program
-                 join sj in _dbContext.StaffJobs on prj.ParentProject equals sj.JobCode
-                 join stf in _dbContext.StaffGeneralViews on sj.StaffId equals stf.StaffId
-                 join wgg in _dbContext.WorkgroupGradeGeneralViews on stf.WorkGroupGrade equals wgg.WgGrade
-                 join pcg in _dbContext.ProfitCentreGradeViews on wgg.ProfitCentreGrade equals pcg.PcGrade
-                 select new ProgramPlanCostView
-                 {
-                     Version = version,
-                     Directorate = prg.Directorate,
-                     Program = prj.Program,
-                     Customer = prj.Customer,
-                     Contract = prj.Contract,
-                     Project = prj.ParentProject,
-                     Status = prj.ProjectStatus,
-                     ResourceCentre = pcg.ProfitCentre,
-                     WorkGroup = wgg.WorkGroup,
-                     GradeCode = wgg.GradeCode,
-                     Name = stf.Name,
-                     Hours = sj.PlannedHours,
-                     HoursCost = excludedPrograms.Contains(prj.Program)
-                         ? 0m
-                         : (decimal)sj.PlannedHours * (pcg.ChargeRate ?? 0)
-                 }).Distinct();
+                from prg in _dbContext.Programs.AsNoTracking()
+                join prj in _dbContext.Projects.AsNoTracking() on prg.ProgramNo equals prj.Program
+                join sj in _dbContext.StaffJobs.AsNoTracking() on prj.ParentProject equals sj.JobCode
+                join stf in staff on sj.StaffId equals stf.StaffId
+                join wgg in workGroupGrade on stf.WorkGroupGrade equals wgg.WgGrade
+                join pcg in profitCentreGrade on wgg.ProfitCentreGrade equals pcg.PcGrade
+                select new ProgramPlanCostView
+                {
+                    Version = version,
+                    Directorate = prg.Directorate,
+                    Program = prj.Program,
+                    Customer = prj.Customer,
+                    Contract = prj.Contract,
+                    Project = prj.ParentProject,
+                    Status = prj.ProjectStatus,
+                    ResourceCentre = pcg.ProfitCentre,
+                    WorkGroup = wgg.WorkGroup,
+                    GradeCode = wgg.GradeCode,
+                    Name = stf.Name,
+                    Hours = sj.PlannedHours,
+                    HoursCost = excludedPrograms.Contains(prj.Program)
+                        ? 0m
+                        : (decimal)sj.PlannedHours * (pcg.ChargeRate ?? 0)
+                };
 
             planQuery = ApplyProgramPlanCostFilter(planQuery, query.Filter);
+
             planQuery = (IQueryable<ProgramPlanCostView>)ApplyProgramPlanCostSorting(planQuery, query.SortBy, query.Descending);
 
             return await base.ApplyPagingAsync(planQuery, query.Page, query.PageSize);

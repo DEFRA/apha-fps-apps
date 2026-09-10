@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? RecUnitPrice { get; set; }
 
         [Display(Name = "No")]
-        [Range(0, double.MaxValue, ErrorMessage = "No Required must be 0 or greater.")]
+        [NonFinancialRange]
         [GridColumn(Order = 4, Width = 110, Type = GridColumnType.DecimalNumber)]
         public double NoRequired { get; set; }
 

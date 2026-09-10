@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -31,6 +32,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string SummaryGrade { get; set; } = string.Empty;
 
         /// <summary>Total HrsAvail at staff level for selected grade (ssrWorkHrs).</summary>
+        [NonFinancialRange]
         public double SummaryWorkHrs { get; set; }
 
         /// <summary>Name of currently selected person (ssrPersonSelected).</summary>

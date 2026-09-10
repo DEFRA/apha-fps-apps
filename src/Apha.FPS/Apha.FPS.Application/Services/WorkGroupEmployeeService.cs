@@ -62,7 +62,12 @@ namespace Apha.FPS.Application.Services
 
             if (string.IsNullOrWhiteSpace(dto.WorkGroupGrade))
             {
-                throw new ArgumentException("Work Group Grade is required.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Work Group Grade is required.",
+                        "WORKGROUP_GRADE_REQUIRED")
+                ]);
             }
 
             // Only duplicate-check when a PactId is explicitly provided (e.g. future manual entry)
@@ -71,7 +76,12 @@ namespace Apha.FPS.Application.Services
                 var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(dto.PactId);
                 if (existing != null)
                 {
-                    throw new ArgumentException($"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            $"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.",
+                            "PACTID_ALREADY_EXISTS")
+                    ]);
                 }
             }
 
@@ -112,20 +122,19 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
 
-            var existing = await _repository.GetWorkGroupEmployeeByIdForStaffAsync(pactId);
-            if (existing == null)
-            {
-                return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
-            }
-            else
+            // Check if the employee has associated monthly time records (foreign key check)
+            if (await _repository.HasAssociatedMonthlyTimeAsync(pactId))
             {
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError(
-                        "Selected record cannot be deleted because it is currently assigned to a employee. Please remove the assignment first.",
-                        "WORKGROUPEMPLOYEE_HAS_ASSOCIATIONS")
+                        $"Cannot delete WorkGroupEmployee with PACT Id '{pactId}' because associated monthly time records exist.",
+                        "WORKGROUP_EMPLOYEE_HAS_MONTHLY_TIME")
                 ]);
             }
+
+            // Deleting the WorkGroupEmployee record unlinks it from the WorkGroupGrade.
+            return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
         }
     }
 }

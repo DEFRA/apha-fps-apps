@@ -1,5 +1,6 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
@@ -41,12 +42,26 @@ namespace Apha.PIMS.Application.Services
         
         public async Task<AccessLevelDto> CreateAsync(AccessLevelDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            if (dto is null)
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError("Access level data is required.", "ACCESS_LEVEL_REQUIRED")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
 
             bool alreadyExists = await _repository.ExistsAsync(dto.SystemId, dto.AccessLevelId);
             if (alreadyExists)
-                throw new InvalidOperationException(
-                    $"AccessLevel (systemid={dto.SystemId}, accesslevelid={dto.AccessLevelId}) already exists.");
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError(
+                        $"AccessLevel (systemid={dto.SystemId}, accesslevelid={dto.AccessLevelId}) already exists.",
+                        "ACCESS_LEVEL_ALREADY_EXISTS")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
 
             AccessLevel entity = _mapper.Map<AccessLevel>(dto);
             AccessLevel created = await _repository.AddAsync(entity);
@@ -55,7 +70,14 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<AccessLevelDto> UpdateAsync(AccessLevelDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            if (dto is null)
+            {
+                var errors = new List<BusinessValidationError>
+                {
+                    new BusinessValidationError("Access level data is required.", "ACCESS_LEVEL_REQUIRED")
+                };
+                throw new BusinessValidationErrorException(errors);
+            }
 
             bool exists = await _repository.ExistsAsync(dto.SystemId, dto.AccessLevelId);
             if (!exists)

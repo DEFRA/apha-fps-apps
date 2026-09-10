@@ -235,6 +235,7 @@ function reloadTimeCodeGrid(jobCodeId) {
         data: params,
         success: function(html) {
             $('#gridContainer_' + timeCodeGridId).html(html);
+            enableTimeCodeActiveCheckboxes();
         },
         error: function() { showAlertMessage('An error occurred while loading time codes.', AlertType.ERROR); }
     });
@@ -249,6 +250,7 @@ function reloadTimeCodeEmptyGrid() {
         data: params,
         success: function(html) {
             $('#gridContainer_' + timeCodeGridId).html(html);
+            enableTimeCodeActiveCheckboxes();
         },
         error: function() { showAlertMessage('An error occurred while loading empty time code grid.', AlertType.ERROR); }
     });
@@ -256,6 +258,107 @@ function reloadTimeCodeEmptyGrid() {
 
 function getTimeCodeExtraFilters() {
     return { jobCodeId: selectedJobCodeId || '' };
+}
+
+// ========================================
+// Active/Inactive Toggle (time code grid)
+// ========================================
+
+// Register the toggle handler and enable the checkboxes on initial load
+$(document).ready(function () {
+    enableTimeCodeActiveCheckboxes();
+
+    $(document).on('change', 'td.checkbox-cell[data-property="Active"] input[type="checkbox"]', function () {
+        if ($(this).closest('table').attr('id') === 'tbl_' + (timeCodeGridId || 'timeCodeGrid')) {
+            toggleTimeCodeActive(this);
+        }
+    });
+});
+
+// Make the Active column checkboxes clickable in the time code grid.
+// Editable only for an open (editable) year; for a closed / read-only year the
+// checkbox stays display-only, matching how the Edit/Delete action buttons are
+// disabled server-side by FPSReadOnlyTagHelper.
+function enableTimeCodeActiveCheckboxes() {
+    var gridId = timeCodeGridId || 'timeCodeGrid';
+    var $cells = $('#gridContainer_' + gridId + ' td.checkbox-cell[data-property="Active"]');
+
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $cells.find('.govuk-checkboxes__item').css('pointer-events', 'none');
+        $cells.find('input[type="checkbox"]').prop('disabled', true);
+        return;
+    }
+
+    $cells.find('.govuk-checkboxes__item').css('pointer-events', 'auto');
+    $cells.find('input[type="checkbox"]').prop('disabled', false);
+}
+
+// Toggle active/inactive: read existing values via GetTimeCodeValid, then post the update
+function toggleTimeCodeActive(checkboxEl) {
+    var $chk = $(checkboxEl);
+    var $row = $chk.closest('tr');
+    var timeCode = $row.find('.edit-row-btn').data('id') || $row.find('.delete-row-btn').data('id');
+    var workGroup = $row.find('[data-property="WorkGroup"] span').text().trim();
+    var jobCode = $row.find('[data-property="JobCode"] span').text().trim();
+    var newActive = $chk.is(':checked');
+    var project = decodeURIComponent(parentProject);
+
+    if (!timeCode || !workGroup || !project) {
+        $chk.prop('checked', !newActive);
+        showAlertMessage('Unable to determine the selected time code.', AlertType.ERROR);
+        return;
+    }
+
+    // 1) Read all existing values for the selected time code
+    $.ajax({
+        url: '/PACT/PortfolioMaintenance/GetTimeCodeValid',
+        type: 'GET',
+        data: { workGroup: workGroup, timeCode: timeCode, parentProject: project },
+        success: function (res) {
+            if (!res || !res.success || !res.data) {
+                $chk.prop('checked', !newActive);
+                showAlertMessage((res && res.message) || 'Failed to load time code details.', AlertType.ERROR);
+                return;
+            }
+
+            var existingData = res.data;
+
+            // 2) Build the update payload, changing only the Active flag
+            var payload = {
+                timeCode: existingData.timeCode,
+                workGroup: existingData.workGroup,
+                originalWorkGroup: existingData.workGroup,
+                parentProject: existingData.parentProject,
+                jobCode: jobCode || selectedJobCodeId || null,
+                active: newActive
+            };
+
+            // 3) Persist the change
+            $.ajax({
+                url: '/PACT/ProjectMaintenance/EditTimeCode',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (updateRes) {
+                    if (updateRes.success) {
+                        showAlertMessage('TimeCode edited successfully.', AlertType.SUCCESS);
+                        reloadTimeCodeGrid(selectedJobCodeId);
+                    } else {
+                        $chk.prop('checked', !newActive);
+                        showAlertMessage(updateRes.message || 'Failed to update time code.', AlertType.ERROR);
+                    }
+                },
+                error: function () {
+                    $chk.prop('checked', !newActive);
+                    showAlertMessage('An error occurred while updating.', AlertType.ERROR);
+                }
+            });
+        },
+        error: function () {
+            $chk.prop('checked', !newActive);
+            showAlertMessage('An error occurred while loading time code details.', AlertType.ERROR);
+        }
+    });
 }
 
 // Time Code functions
