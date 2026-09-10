@@ -275,10 +275,20 @@ $(document).ready(function () {
     });
 });
 
-// Make the Active column checkboxes clickable in the time code grid
+// Make the Active column checkboxes clickable in the time code grid.
+// Editable only for an open (editable) year; for a closed / read-only year the
+// checkbox stays display-only, matching how the Edit/Delete action buttons are
+// disabled server-side by FPSReadOnlyTagHelper.
 function enableTimeCodeActiveCheckboxes() {
     var gridId = timeCodeGridId || 'timeCodeGrid';
     var $cells = $('#gridContainer_' + gridId + ' td.checkbox-cell[data-property="Active"]');
+
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $cells.find('.govuk-checkboxes__item').css('pointer-events', 'none');
+        $cells.find('input[type="checkbox"]').prop('disabled', true);
+        return;
+    }
+
     $cells.find('.govuk-checkboxes__item').css('pointer-events', 'auto');
     $cells.find('input[type="checkbox"]').prop('disabled', false);
 }
