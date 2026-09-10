@@ -5587,7 +5587,6 @@ input.govuk-input.ssr-total-input[readonly] {
         overflow-y: auto;
     }
 }
-sss
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
