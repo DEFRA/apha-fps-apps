@@ -333,6 +333,9 @@ a {
 .sup_padding_right_7 {
     padding-right: 7px;
 }
+.sup_padding_7 {
+    padding: 7px !important;
+}
 
 .sup_padding_left_0 {
     padding-left: 0px !important;
@@ -646,7 +649,9 @@ a {
 .sup_gap_8 {
     gap: 8px;
 }
-
+.sup_gap_7 {
+    gap: 7px !important;
+}
 .sup_gap_16 {
     gap: 16px;
 }
