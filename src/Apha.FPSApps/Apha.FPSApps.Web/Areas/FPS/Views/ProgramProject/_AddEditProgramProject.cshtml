@@ -33,7 +33,7 @@
             <div class="col-6 govuk-!-margin-top-0">
                 <div class="govuk-form-group sup_margin_0">
                         <label class="govuk-label" asp-for="ProjectTitle">Description<span class="sup_color_red">*</span></label>
-                        <input type="text" asp-for="ProjectTitle" class="govuk-input" required>
+                        <input type="text" asp-for="ProjectTitle" maxlength="200" class="govuk-input" required>
                             <span asp-validation-for="ProjectTitle" class="govuk-error-message" style="display:none;"></span>
                 </div>
             </div>
