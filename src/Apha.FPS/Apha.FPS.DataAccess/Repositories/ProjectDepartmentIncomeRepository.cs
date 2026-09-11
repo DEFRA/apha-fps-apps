@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -94,11 +94,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r => BuildTimeRow(
+            return rows.Select(r => BuildTimeRow(new TimeRowInput(
                 r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.TcMonth,
                 r.IsDefraProject, r.OCC, r.OPC, r.WgProfitCentre, r.WgCostCentre,
                 r.Name, r.GradeCode, r.SpNumber,
-                r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost)).ToList();
+                r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost))).ToList();
         }
         public async Task<List<DepartmentIncomeTest>> GetTestIncomeAsync(
             string? project, int monthFrom, int monthTo)
@@ -157,10 +157,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r => BuildTestRow(
+            return rows.Select(r => BuildTestRow(new TestRowInput(
                 r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.IsDefraProject,
                 r.OCC, r.OPC, r.MoMonth, r.WgProfitCentre, r.WorkGroup,
-                r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice)).ToList();
+                r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice))).ToList();
         }
 
         public async Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(
@@ -263,7 +263,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return grouped.Select(r => new DepartmentIncomeTest
             {
-                Project           = r.Project,
+                Project           = r.Project ?? string.Empty,
                 OracleProjectCode = r.OracleProjectCode,
                 SubAccountCode    = r.SubAccountCode,
                 DefraProject      = r.IsDefraProject,
@@ -383,7 +383,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return grouped.Select(r => new DepartmentIncomeTime
             {
-                Project           = r.Key.Project,
+                Project           = r.Key.Project ?? string.Empty,
                 OracleProjectCode = r.Key.OracleProjectCode,
                 SubAccountCode    = r.Key.SubAccountCode,
                 Month             = (int)r.Key.Month,
@@ -411,7 +411,7 @@ namespace Apha.FPS.DataAccess.Repositories
                    project, startPeriod, endPeriod, animals: true,
                    map: g => new DepartmentIncomeAnimal
                    {
-                       Project           = g.Project,
+                       Project           = g.Project ?? string.Empty,
                        OracleProjectCode = g.OracleProjectCode,
                        SubAccountCode    = g.SubAccountCode,
                        DefraProject      = g.IsDefraProject,
@@ -430,7 +430,7 @@ namespace Apha.FPS.DataAccess.Repositories
                    project, startPeriod, endPeriod, animals: false,
                    map: g => new DepartmentIncomeAdditional
                    {
-                       Project           = g.Project,
+                       Project           = g.Project ?? string.Empty,
                        OracleProjectCode = g.OracleProjectCode,
                        SubAccountCode    = g.SubAccountCode,
                        DefraProject      = g.IsDefraProject,
@@ -685,11 +685,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r => BuildTimeRow(
+            return rows.Select(r => BuildTimeRow(new TimeRowInput(
                 r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.TcMonth,
                 r.IsDefraProject, r.OCC, r.OPC, r.WgProfitCentre, r.WgCostCentre,
                 r.Name, r.GradeCode, r.SpNumber,
-                r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost)).ToList();
+                r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost))).ToList();
         }
 
         public async Task<List<DepartmentIncomeTest>> GetTestIncomeCurrentAsync(
@@ -737,10 +737,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var rows = await dbQuery.OrderBy(r => r.ParentProject).ToListAsync();
 
-            return rows.Select(r => BuildTestRow(
+            return rows.Select(r => BuildTestRow(new TestRowInput(
                 r.ParentProject, r.OracleProjectCode, r.SubAccountCode, r.IsDefraProject,
                 r.OCC, r.OPC, r.MoMonth, r.WgProfitCentre, r.WorkGroup,
-                r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice)).ToList();
+                r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice))).ToList();
         }
 
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeCurrentAsync(
@@ -905,53 +905,57 @@ namespace Apha.FPS.DataAccess.Repositories
         private static string DefraFlag(short v) => v != 0 ? "Yes" : "No";
 
 
-        private static DepartmentIncomeTime BuildTimeRow(
-            string? project, string? oracleCode, string? subAccount, double tcMonth,
-            short isDefra, double? occ, string? opc, string? wgPc, double? wgCc,
-            string? name, string? gradeCode, string? spNumber,
-            decimal? chargeRate, decimal? pay, decimal? nonPay, decimal? overhead,
-            double? time, double? cost) => new()
+        private readonly record struct TimeRowInput(
+            string? Project, string? OracleCode, string? SubAccount, double TcMonth,
+            short IsDefra, double? Occ, string? Opc, string? WgPc, double? WgCc,
+            string? Name, string? GradeCode, string? SpNumber,
+            decimal? ChargeRate, decimal? Pay, decimal? NonPay, decimal? Overhead,
+            double? Time, double? Cost);
+
+        private static DepartmentIncomeTime BuildTimeRow(TimeRowInput input) => new()
         {
-            Project           = project,
-            OracleProjectCode = oracleCode,
-            SubAccountCode    = subAccount,
-            Month             = (int)tcMonth,
-            DefraProject      = DefraFlag(isDefra),
-            OCC               = FmtDouble(occ),
-            OPC               = opc,
-            SPC               = wgPc,
-            SCC               = FmtDouble(wgCc),
-            Name              = name,
-            GradeCode         = gradeCode,
-            SpNumber          = spNumber,
-            ChargeRate        = chargeRate ?? 0m,
-            Pay               = pay        ?? 0m,
-            NonPay            = nonPay     ?? 0m,
-            Overhead          = overhead   ?? 0m,
-            Time              = (decimal)(time ?? 0.0),
-            TotalCost         = (decimal)(cost ?? 0.0),
+            Project           = input.Project ?? string.Empty,
+            OracleProjectCode = input.OracleCode,
+            SubAccountCode    = input.SubAccount,
+            Month             = (int)input.TcMonth,
+            DefraProject      = DefraFlag(input.IsDefra),
+            OCC               = FmtDouble(input.Occ),
+            OPC               = input.Opc,
+            SPC               = input.WgPc,
+            SCC               = FmtDouble(input.WgCc),
+            Name              = input.Name,
+            GradeCode         = input.GradeCode,
+            SpNumber          = input.SpNumber,
+            ChargeRate        = input.ChargeRate ?? 0m,
+            Pay               = input.Pay        ?? 0m,
+            NonPay            = input.NonPay     ?? 0m,
+            Overhead          = input.Overhead   ?? 0m,
+            Time              = (decimal)(input.Time ?? 0.0),
+            TotalCost         = (decimal)(input.Cost ?? 0.0),
         };
 
-        private static DepartmentIncomeTest BuildTestRow(
-            string? project, string? oracleCode, string? subAccount, short isDefra,
-            double? occ, string? opc, double moMonth, string? wgPc, string? workGroup,
-            double? wgCc, string? testCode, double? volume, decimal? unitPrice)
+        private readonly record struct TestRowInput(
+            string? Project, string? OracleCode, string? SubAccount, short IsDefra,
+            double? Occ, string? Opc, double MoMonth, string? WgPc, string? WorkGroup,
+            double? WgCc, string? TestCode, double? Volume, decimal? UnitPrice);
+
+        private static DepartmentIncomeTest BuildTestRow(TestRowInput input)
         {
-            var up  = unitPrice ?? 0m;
-            var vol = (decimal)(volume ?? 0.0);
+            var up  = input.UnitPrice ?? 0m;
+            var vol = (decimal)(input.Volume ?? 0.0);
             return new DepartmentIncomeTest
             {
-                Project           = project,
-                OracleProjectCode = oracleCode,
-                SubAccountCode    = subAccount,
-                DefraProject      = DefraFlag(isDefra),
-                OPC               = opc,
-                OCC               = FmtDouble(occ),
-                Month             = (int)moMonth,
-                SPC               = wgPc,
-                WorkGroup         = workGroup,
-                SCC               = FmtDouble(wgCc),
-                TestCode          = testCode,
+                Project           = input.Project ?? string.Empty,
+                OracleProjectCode = input.OracleCode,
+                SubAccountCode    = input.SubAccount,
+                DefraProject      = DefraFlag(input.IsDefra),
+                OPC               = input.Opc,
+                OCC               = FmtDouble(input.Occ),
+                Month             = (int)input.MoMonth,
+                SPC               = input.WgPc,
+                WorkGroup         = input.WorkGroup,
+                SCC               = FmtDouble(input.WgCc),
+                TestCode          = input.TestCode,
                 Volume            = vol,
                 TestPrice         = up,
                 TotalCost         = up * vol,
