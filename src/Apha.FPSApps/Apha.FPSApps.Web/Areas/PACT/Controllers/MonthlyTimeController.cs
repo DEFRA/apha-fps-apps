@@ -609,6 +609,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "monthlyTimeStagingGrid",
                 Title = "Imported Time Records",
                 AllowExport = false,
+                AllowExcelExport = false,
                 ShowCheckboxColumn = false,
                 KeyProperty = "Id", 
                 AddFunction = "addStagingMonthlyTime",

@@ -294,6 +294,28 @@
     };
 
     /**
+     * Resolve the data item represented by a rendered row element.
+     * The row's data-value is used first, because the currently filtered data
+     * can be reset (e.g. when the dropdown is closed) before every handler for
+     * the originating event has run, which would make the row index stale.
+     */
+    MultiColumnDropdownComponent.prototype.getItemForRow = function (row) {
+        if (!row) return null;
+
+        var rowValue = row.getAttribute('data-value');
+        if (rowValue !== null) {
+            var match = this.originalData.find(function (item) {
+                return String(this.getFieldValue(item, this.config.valueField)) === String(rowValue);
+            }, this);
+
+            if (match) return match;
+        }
+
+        var rowIndex = parseInt(row.getAttribute('data-row-index'), 10);
+        return isNaN(rowIndex) ? null : this.filteredData[rowIndex];
+    };
+
+    /**
      * Escape HTML to prevent XSS
      */
     MultiColumnDropdownComponent.prototype.escapeHtml = function (text) {
@@ -413,8 +435,7 @@
             tbody.addEventListener('click', function (e) {
                 var row = e.target.closest('.dropdown-row');
                 if (row) {
-                    var rowIndex = parseInt(row.getAttribute('data-row-index'));
-                    var selectedData = self.filteredData[rowIndex];
+                    var selectedData = self.getItemForRow(row);
                     self.selectItem(selectedData);
                     self.closeDropdown();
                 }
@@ -444,8 +465,8 @@
                     }
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    var selectedData = self.filteredData[rowIndex];
-                    self.selectItem(selectedData);
+                    e.stopPropagation();
+                    self.selectItem(self.getItemForRow(row));
                     self.closeDropdown();
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
