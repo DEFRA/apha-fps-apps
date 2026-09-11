@@ -68,6 +68,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionDto, DivisionRes>().ReverseMap();
             CreateMap<DivisionDto, DivisionReq>().ReverseMap();
 
+            // Master Lookup
+            CreateMap<MasterLookupDto, MasterLookupRes>().ReverseMap();
+            CreateMap<LookupItemDto, LookupItemRes>().ReverseMap();
+
             // Division Grade
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();

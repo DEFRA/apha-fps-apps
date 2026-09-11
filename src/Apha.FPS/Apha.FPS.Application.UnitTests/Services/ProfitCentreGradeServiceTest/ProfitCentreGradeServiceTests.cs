@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -165,7 +166,22 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreGradeServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_ThrowsInvalidOperationException_WhenProfitCentreDoesNotExist()
+        public async Task CreateAsync_ThrowsBusinessValidationErrorException_WhenPcGradeAlreadyExists()
+        {
+            // Arrange
+            var dto            = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var existingEntity = new ProfitCentreGrade { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+
+            _mockRepository.GetByIdAsync("G001").Returns(existingEntity);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Message.Contains("G001") && e.Code == "PROFITCENTREGRADE_ALREADY_EXISTS");
+            await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<ProfitCentreGrade>());
+        }
+
+        [Fact]
+        public async Task CreateAsync_ThrowsBusinessValidationErrorException_WhenProfitCentreDoesNotExist()
         {
             // Arrange
             var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = "INVALID" };
@@ -173,8 +189,8 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreGradeServiceTest
             _mockRepository.ProfitCentreExistsAsync("INVALID").Returns(false);
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(dto));
-            ex.Message.Should().Contain("INVALID");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Message.Contains("INVALID") && e.Code == "PROFITCENTRE_NOT_FOUND");
             await _mockRepository.DidNotReceive().CreateAsync(Arg.Any<ProfitCentreGrade>());
         }
 
@@ -219,7 +235,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreGradeServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenProfitCentreDoesNotExist()
+        public async Task UpdateAsync_ThrowsBusinessValidationErrorException_WhenProfitCentreDoesNotExist()
         {
             // Arrange
             var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = "INVALID" };
@@ -227,8 +243,8 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreGradeServiceTest
             _mockRepository.ProfitCentreExistsAsync("INVALID").Returns(false);
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateAsync("G001", dto));
-            ex.Message.Should().Contain("INVALID");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync("G001", dto));
+            ex.Errors.Should().ContainSingle(e => e.Message.Contains("INVALID") && e.Code == "PROFITCENTRE_NOT_FOUND");
             await _mockRepository.DidNotReceive().UpdateAsync(Arg.Any<string>(), Arg.Any<ProfitCentreGrade>());
         }
 

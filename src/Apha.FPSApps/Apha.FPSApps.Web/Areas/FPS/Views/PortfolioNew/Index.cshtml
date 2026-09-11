@@ -5,43 +5,40 @@
 }
 
 <main id="main-content">
-    <div class="govuk-main-wrapper govuk-!-padding-top-0">
+    <div class="container-fluid">
 
         @* Page title *@
-        <div class="govuk-grid-row isClearFix sup_border-bottom govuk-!-margin-bottom-3">
-            <div class="govuk-grid-column-one-half isFloatLeft">
-                <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 govuk-!-margin-left-6 isCustomPageHeadings">
-                    Edit Portfolio Details
-                </h1>
-            </div>
-            <div class="govuk-grid-column-one-third isFloatRight">
-                <table class="govuk-table govuk-!-margin-bottom-0 isFloatRight isHalfGrid isCompareFPSPlan">
-                    <tbody class="govuk-table__body">
-                        <tr class="govuk-table__row">
-                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
-                                <a href="@Url.Action("Index", "TestCapability", new { area = "FPS", portfolio = Model.ParentProject })" class="govuk-back-link govuk-!-margin-bottom-0 govuk-!-margin-top-0">Back</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row" style="display:flex; align-items: center;">
+                    <div class="col-sm-12" style="padding:0px;">
+                        <div class="sup_border-bottom" style="min-height:42px;">
+                            <h1 class="govuk-heading-s isCustomPageHeadings sup_margin_bottom_0 sup_project_addedit_heading isFloatLeft">
+                                <span>Edit Portfolio Details</span>
+                            </h1>
+                            <a href="@Url.Action("Index", "TestCapability", new { area = "FPS", portfolio = Model.ParentProject })" class="govuk-back-link isFloatRight">Back</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        @* Error summary *@
-        <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
-            <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
-            <div class="govuk-error-summary__body">
-                <ul class="govuk-list govuk-error-summary__list"></ul>
-            </div>
-        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0px 10px 10px 10px;">
 
-        <div class="govuk-grid-row sup_margin_left_right_10">
-            <div class="govuk-grid-column-full sup_p_0">
+                @* Error summary *@
+                <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+                    <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
 
                 @* Action buttons row *@
-                <div class="govuk-grid-row">
+                <div class="row d-flex align-items-center mt-2 mb-2">
                     <div class="govuk-grid-column-one-half">
-                        <h2 class="sup_text_color govuk-heading-s sup_align_flexheading sup_p_0">
+                        <h2 class="sup_text_color govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-top-3 isInnerHeading">
                             Please insert data for mandatory fields marked with *
                         </h2>
                     </div>
@@ -221,6 +218,7 @@
                     </div>
                 </form>
 
+                </main>
             </div>
         </div>
 

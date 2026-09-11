@@ -710,6 +710,10 @@
 
         // ── Tabs ─────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(currentProject);
+            }
+
             const tabs = document.querySelectorAll('.govuk-tabs__tab');
             const panels = document.querySelectorAll('.govuk-tabs__panel');
             const tabItems = document.querySelectorAll('.govuk-tabs__list-item');

@@ -179,6 +179,11 @@ $(document).ready(function () {
             loadTimeCodeGrid(currentParentProject, '');
         }
     });
+
+    // ── Active/Inactive toggle on the Portfolio Time Code grid ────────────────
+    $(document).on('change', '#gridContainer_portfolioTimeCodeGrid td.checkbox-cell[data-property="Active"] input[type="checkbox"]', function () {
+        togglePortfolioTimeCodeActive(this);
+    });
 });
 
 // ── Wrap a plain message string into the errors-array format ─────────────
@@ -381,7 +386,79 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
         data: payload
     }).done(function (html) {
         $('#gridContainer_portfolioTimeCodeGrid').html(html);
+        enablePortfolioTimeCodeActiveCheckboxes();
     }).fail(function () { showAlertMessage('An error occurred while loading work groups.', AlertType.ERROR); });
+}
+
+// ── Make the Active column checkboxes clickable in the time code grid ─────────
+// The checkbox may only be edited for an open (editable) year. For a closed /
+// read-only year it stays display-only, matching how the Edit/Delete action
+// buttons are disabled server-side by FPSReadOnlyTagHelper.
+function enablePortfolioTimeCodeActiveCheckboxes() {
+    var $cells = $('#gridContainer_portfolioTimeCodeGrid td.checkbox-cell[data-property="Active"]');
+
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        $cells.find('.govuk-checkboxes__item').css('pointer-events', 'none');
+        $cells.find('input[type="checkbox"]').prop('disabled', true);
+        return;
+    }
+
+    $cells.find('.govuk-checkboxes__item').css('pointer-events', 'auto');
+    $cells.find('input[type="checkbox"]').prop('disabled', false);
+}
+
+// ── Toggle active/inactive: read existing values, then post the update ───────
+function togglePortfolioTimeCodeActive(checkboxEl) {
+    var $chk = $(checkboxEl);
+    var $row = $chk.closest('tr');
+    var timeCode = $row.find('[data-property="TimeCode"]').text().trim();
+    var workGroup = $row.find('[data-property="WorkGroup"]').text().trim();
+    var newActive = $chk.is(':checked');
+
+    // 1) Read all existing values for the selected time code
+    $.ajax({
+        url: '/PACT/PortfolioMaintenance/GetTimeCodeValid',
+        type: 'GET',
+        data: { workGroup: workGroup, timeCode: timeCode, parentProject: currentParentProject }
+    }).done(function (res) {
+        if (!res || !res.success || !res.data) {
+            $chk.prop('checked', !newActive);
+            showAlertMessage((res && res.message) || 'Failed to load time code details.', AlertType.ERROR);
+            return;
+        }
+
+        // 2) Build the update payload from the existing values, updating only the Active flag
+        var payload = {
+            workGroup: res.data.workGroup,
+            timeCode: res.data.timeCode,
+            parentProject: res.data.parentProject,
+            portfolio: res.data.portfolio,
+            testCode: currentTestCode,
+            active: newActive
+        };
+
+        // 3) Persist the change
+        $.ajax({
+            url: '/PACT/PortfolioMaintenance/EditPortfolioTimeCode',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload)
+        }).done(function (updateRes) {
+            if (updateRes.success) {
+                showAlertMessage(updateRes.message || 'Work group updated successfully.', AlertType.SUCCESS);
+                loadTimeCodeGrid(currentParentProject, currentTestCode);
+            } else {
+                $chk.prop('checked', !newActive);
+                showAlertMessage(updateRes.message || 'Failed to update work group.', AlertType.ERROR);
+            }
+        }).fail(function () {
+            $chk.prop('checked', !newActive);
+            showAlertMessage('An error occurred while updating.', AlertType.ERROR);
+        });
+    }).fail(function () {
+        $chk.prop('checked', !newActive);
+        showAlertMessage('An error occurred while loading time code details.', AlertType.ERROR);
+    });
 }
 
 function addPortfolioTimeCode() {
