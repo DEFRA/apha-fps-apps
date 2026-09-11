@@ -1,8 +1,6 @@
 namespace Apha.BatchJobs.Infrastructure.Data;
 
-/// <summary>
-/// EF entity for fps.scheduled_load_run.
-/// </summary>
+/// <summary>EF entity for fps.scheduled_load_run.</summary>
 internal sealed class ScheduledLoadRunTable
 {
     public Guid RunId { get; set; }
@@ -15,9 +13,7 @@ internal sealed class ScheduledLoadRunTable
     public DateTime CreatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.scheduled_load_step_run.
-/// </summary>
+/// <summary>EF entity for fps.scheduled_load_step_run.</summary>
 internal sealed class ScheduledLoadStepRunTable
 {
     public Guid StepRunId { get; set; }
@@ -32,9 +28,7 @@ internal sealed class ScheduledLoadStepRunTable
     public DateTime CreatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.scheduled_load_validation_result.
-/// </summary>
+/// <summary>EF entity for fps.scheduled_load_validation_result.</summary>
 internal sealed class ScheduledLoadValidationResultTable
 {
     public Guid ValidationId { get; set; }

@@ -19,9 +19,6 @@ public sealed class MabArchiveYearRepository : IMabArchiveYearRepository
     private readonly IMabArchiveLoader _projectAllLoader;
     private const int ExpectedLoaderCount = 24;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MabArchiveYearRepository"/> class.
-    /// </summary>
     /// <param name="context">Batch jobs database context.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="loaders">Registered MABArchive loaders in metadata-defined sequence.</param>

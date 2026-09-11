@@ -1,8 +1,6 @@
 namespace Apha.BatchJobs.Infrastructure.Data;
 
-/// <summary>
-/// EF entity for fps.fps_source_project_year.
-/// </summary>
+/// <summary>EF entity for fps.fps_source_project_year.</summary>
 internal sealed class FpsSourceProjectYearTable
 {
     public short Year { get; set; }
@@ -26,9 +24,7 @@ internal sealed class FpsSourceProjectYearTable
     public double? TotalPayCosts { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.fps_year_totals.
-/// </summary>
+/// <summary>EF entity for fps.fps_year_totals.</summary>
 internal sealed class FpsYearTotalsTable
 {
     public short Year { get; set; }
@@ -52,9 +48,7 @@ internal sealed class FpsYearTotalsTable
     public double? TotalPayCosts { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.fps_year_archive.
-/// </summary>
+/// <summary>EF entity for fps.fps_year_archive.</summary>
 internal sealed class FpsYearArchiveTable
 {
     public short Year { get; set; }
@@ -80,9 +74,7 @@ internal sealed class FpsYearArchiveTable
     public required string ArchiveReason { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.fps_project_all_current_year.
-/// </summary>
+/// <summary>EF entity for fps.fps_project_all_current_year.</summary>
 internal sealed class FpsProjectAllCurrentYearTable
 {
     public short Year { get; set; }

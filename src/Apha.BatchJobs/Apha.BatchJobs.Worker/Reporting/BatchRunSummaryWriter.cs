@@ -6,11 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace Apha.BatchJobs.Worker.Reporting;
 
 /// <summary>
-/// Writes the single structured summary line for a worker invocation, through
-/// <see cref="ILogger{TCategoryName}"/> only — no duplicate <c>Console.WriteLine</c> now that
-/// the Serilog console sink is active. Never re-logs the exception or its stack trace: that
-/// already happened once, as close to the point of failure as possible, in
-/// <c>JobOrchestrator</c> or <c>BatchWorkerRunner</c>.
+/// Writes the one structured summary line for a worker invocation, via <see cref="ILogger{TCategoryName}"/> only.
+/// Never re-logs the exception — that already happened in <c>JobOrchestrator</c> or <c>BatchWorkerRunner</c>.
 /// </summary>
 public sealed class BatchRunSummaryWriter : IBatchRunSummaryWriter
 {
