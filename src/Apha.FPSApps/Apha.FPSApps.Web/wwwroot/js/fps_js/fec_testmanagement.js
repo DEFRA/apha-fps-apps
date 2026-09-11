@@ -110,7 +110,26 @@ var BulkRates = (function () {
         var endpoint = jobName === 'BulkStaffRatesUpdate' ? '/FPS/BulkRates/DownloadStaffTestData'
             : jobName === 'BulkAnimalRatesUpdate' ? '/FPS/BulkRates/DownloadAnimalTestData'
             : '/FPS/BulkRates/DownloadTestData';
-        window.location.href = endpoint + '?fpsYear=' + fpsYear;
+        // Filenames must match the server's File() calls in BulkRatesController
+        // (DownloadTestData / DownloadStaffTestData / DownloadAnimalTestData) —
+        // window.downloadFile saves a blob locally, so Content-Disposition from
+        // the response is never consulted; this name is what the user sees.
+        var fileName = jobName === 'BulkStaffRatesUpdate' ? 'Staff_Rates_' + fpsYear + '.xlsx'
+            : jobName === 'BulkAnimalRatesUpdate' ? 'Animal_Rates_' + fpsYear + '.xlsx'
+            : 'FEC_TestRates_' + fpsYear + '.xlsx';
+        window.downloadFile(endpoint + '?fpsYear=' + fpsYear, fileName);
+    }
+
+    // Request-scoped download (Detail page) — url/fileName come from the button's
+    // data attributes since Detail.cshtml already computes them server-side to
+    // match BulkRatesController's *ForRequest actions.
+    function downloadTestDataForRequest() {
+        var btn = document.getElementById('btnDownloadTestDataForRequest');
+        if (!btn) { return; }
+        var url = btn.getAttribute('data-download-url');
+        var fileName = btn.getAttribute('data-download-file-name');
+        if (!url) { return; }
+        window.downloadFile(url, fileName);
     }
 
     // ── Upload Excel file ───────────────────────────────────────────────────
@@ -418,6 +437,10 @@ var BulkRates = (function () {
         if (btnDownload) {
             btnDownload.addEventListener('click', downloadTestData);
         }
+        var btnDownloadForRequest = document.getElementById('btnDownloadTestDataForRequest');
+        if (btnDownloadForRequest) {
+            btnDownloadForRequest.addEventListener('click', downloadTestDataForRequest);
+        }
         // Bootstrap the transient-status poll for the initial server-rendered grid —
         // 'gridReloaded' only fires from reloadGrid()'s own AJAX callback, never for
         // the first page load. No-ops harmlessly on pages without the grid (e.g. Detail).
@@ -426,19 +449,20 @@ var BulkRates = (function () {
 
     // ── Public API ──────────────────────────────────────────────────────────
     return {
-        submitCreate:           submitCreate,
-        uploadFile:             uploadFile,
-        showReleaseModal:       showReleaseModal,
-        showApproveModal:       showApproveModal,
-        showRejectModal:        showRejectModal,
-        closeRejectModal:       closeRejectModal,
-        confirmReject:          confirmReject,
-        showCancelModal:        showCancelModal,
-        closeCancelModal:       closeCancelModal,
-        confirmCancel:          confirmCancel,
-        filterGrid:             filterGrid,
-        downloadTestData:       downloadTestData,
-        downloadStagingData:    downloadStagingData
+        submitCreate:                submitCreate,
+        uploadFile:                  uploadFile,
+        showReleaseModal:            showReleaseModal,
+        showApproveModal:            showApproveModal,
+        showRejectModal:             showRejectModal,
+        closeRejectModal:            closeRejectModal,
+        confirmReject:               confirmReject,
+        showCancelModal:             showCancelModal,
+        closeCancelModal:            closeCancelModal,
+        confirmCancel:               confirmCancel,
+        filterGrid:                  filterGrid,
+        downloadTestData:            downloadTestData,
+        downloadTestDataForRequest:  downloadTestDataForRequest,
+        downloadStagingData:         downloadStagingData
     };
 }());
 
