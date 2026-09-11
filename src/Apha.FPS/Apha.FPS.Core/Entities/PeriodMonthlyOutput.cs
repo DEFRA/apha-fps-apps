@@ -18,6 +18,5 @@ namespace Apha.FPS.Core.Entities
         public double? Volume { get; set; }
         public decimal? TestPrice { get; set; }
         public decimal? TotalCost { get; set; }
-        public int FpsYear { get; set; }
     }
 }

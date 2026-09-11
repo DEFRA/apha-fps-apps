@@ -24,7 +24,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.Amount).HasColumnType("money").HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasMaxLength(30).HasColumnName("acctcode");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

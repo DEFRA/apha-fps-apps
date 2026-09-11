@@ -291,7 +291,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodProjSubContractMap());
-            modelBuilder.Entity<PeriodProjSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            
 
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -401,7 +401,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
-            modelBuilder.Entity<PeriodMonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            
 
 
         }
