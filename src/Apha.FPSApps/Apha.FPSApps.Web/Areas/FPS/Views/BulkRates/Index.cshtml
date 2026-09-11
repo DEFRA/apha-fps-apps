@@ -125,57 +125,6 @@
             </div>
         }
 
-        @if (!string.IsNullOrEmpty(Model.ActiveRequestCheckError))
-        {
-            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
-                <div class="govuk-grid-column-full">
-                    <div class="govuk-warning-text">
-                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-                        <strong class="govuk-warning-text__text">
-                            <span class="govuk-visually-hidden">Warning</span>
-                            @Model.ActiveRequestCheckError
-                        </strong>
-                    </div>
-                </div>
-            </div>
-        }
-        else if (!Model.CanCreateForYear)
-        {
-            @* Checked before CanInitiateRequest: the year-status rule applies regardless of
-               whether an active request also happens to exist (possibly for a different year,
-               since CanInitiateRequestAsync isn't year-scoped) — switching year is always the
-               actionable next step here, so this message must not be hidden behind the
-               "active request" banner below. *@
-            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2">
-                <div class="govuk-grid-column-full">
-                    <div class="govuk-warning-text">
-                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-                        <strong class="govuk-warning-text__text">
-                            <span class="govuk-visually-hidden">Warning</span>
-                            @FriendlyJobName(Model.JobNameFilter!) requests can only be created for the @Model.RequiredYearStatus FPS year.
-                            The currently selected FPS year is @(Model.CurrentYearStatus ?? "unknown"). Switch to the
-                            @Model.RequiredYearStatus FPS year to create a new request.
-                        </strong>
-                    </div>
-                </div>
-            </div>
-        }
-        else if (!Model.CanInitiateRequest)
-        {
-            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
-                <div class="govuk-grid-column-full">
-                    <div class="govuk-warning-text">
-                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-                        <strong class="govuk-warning-text__text">
-                            <span class="govuk-visually-hidden">Warning</span>
-                            An active @FriendlyJobName(Model.JobNameFilter ?? string.Empty) request is already in progress.
-                            A new request cannot be created until it is completed, rejected, or cancelled — find it in the list below.
-                        </strong>
-                    </div>
-                </div>
-            </div>
-        }
-
         <div class="govuk-grid-row">
             <div class="cc-container-fluid">
                 <div class="cc-layout-row">
@@ -183,6 +132,61 @@
                     @await Html.PartialAsync("_BulkRatesSideNav", SideNavItem(Model.JobNameFilter))
 
                     <div class="cc-content-column">
+
+                        @* These three warnings are mutually exclusive and share one
+                           if/else-if/else-if chain deliberately — moved here (inside
+                           cc-content-column, after the side nav) so they render beside
+                           the nav rather than spanning the full page width above it. *@
+                        @if (!string.IsNullOrEmpty(Model.ActiveRequestCheckError))
+                        {
+                            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
+                                <div class="govuk-grid-column-full">
+                                    <div class="govuk-warning-text">
+                                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                                        <strong class="govuk-warning-text__text">
+                                            <span class="govuk-visually-hidden">Warning</span>
+                                            @Model.ActiveRequestCheckError
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (!Model.CanCreateForYear)
+                        {
+                            @* Checked before CanInitiateRequest: the year-status rule applies regardless of
+                               whether an active request also happens to exist (possibly for a different year,
+                               since CanInitiateRequestAsync isn't year-scoped) — switching year is always the
+                               actionable next step here, so this message must not be hidden behind the
+                               "active request" banner below. *@
+                            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2">
+                                <div class="govuk-grid-column-full">
+                                    <div class="govuk-warning-text">
+                                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                                        <strong class="govuk-warning-text__text">
+                                            <span class="govuk-visually-hidden">Warning</span>
+                                            @FriendlyJobName(Model.JobNameFilter!) requests can only be created for the @Model.RequiredYearStatus FPS year.
+                                            The currently selected FPS year is @(Model.CurrentYearStatus ?? "unknown"). Switch to the
+                                            @Model.RequiredYearStatus FPS year to create a new request.
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (!Model.CanInitiateRequest)
+                        {
+                            <div class="govuk-grid-row govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
+                                <div class="govuk-grid-column-full">
+                                    <div class="govuk-warning-text">
+                                        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+                                        <strong class="govuk-warning-text__text">
+                                            <span class="govuk-visually-hidden">Warning</span>
+                                            An active @FriendlyJobName(Model.JobNameFilter ?? string.Empty) request is already in progress.
+                                            A new request cannot be created until it is completed, rejected, or cancelled — find it in the list below.
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
 
                         @* Action buttons row *@
                         <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-bottom-4">
