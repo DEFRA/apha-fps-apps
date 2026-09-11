@@ -65,9 +65,10 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<PublicationType?> GetPublicationTypeByCodeAsync(string type)
         {
+            var normalizedType = (type ?? string.Empty).Trim();
             return await _dbContext.PublicationTypes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Type == type);
+                .FirstOrDefaultAsync(p => EF.Functions.ILike(p.Type, normalizedType));
         }
 
         public async Task<PublicationType> AddPublicationTypeAsync(PublicationType entity)
@@ -86,8 +87,9 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<bool> DeletePublicationTypeAsync(string type)
         {
+            var normalizedType = (type ?? string.Empty).Trim();
             int rowsAffected = await _dbContext.PublicationTypes
-                .Where(p => p.Type == type)
+                .Where(p => EF.Functions.ILike(p.Type, normalizedType))
                 .ExecuteDeleteAsync();
 
             return rowsAffected > 0;
@@ -95,8 +97,9 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<bool> PublicationTypeExistsAsync(string type)
         {
+            var normalizedType = (type ?? string.Empty).Trim();
             return await _dbContext.PublicationTypes
-                .AnyAsync(p => p.Type == type);
+                .AnyAsync(p => EF.Functions.ILike(p.Type, normalizedType));
         }
     }
 }

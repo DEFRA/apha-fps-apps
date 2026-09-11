@@ -1199,6 +1199,10 @@ input:focus-visible+label {
 .financial-summary.pp-summary-4-3 .summary-item .govuk-input {
     width: 100%;
     min-width: 0;
+    /* Totals are shown as plain black text; negatives use a leading minus sign
+       rather than colour coding or brackets. */
+    color: #0b0c0c;
+    font-weight: 400;
 }
 
 @media (max-width: 1200px) {
@@ -2939,11 +2943,12 @@ table.custom-table th {
     padding: 2px 5px;
 }
 
-.project-code-section.ppf-header-project-controls .govuk-button {
-    margin-bottom: 0;
-    padding: 3px 10px;
-    white-space: nowrap;
-}
+    .project-code-section.ppf-header-project-controls .govuk-button {
+        margin-bottom: 0;
+        padding: 7px 10px;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
 
 .project-code-section.ppf-header-project-controls label {
     margin-bottom: 0;
@@ -3018,6 +3023,17 @@ table.custom-table th {
 #projectProfitabilitySummary .govuk-input,
 #projectProfitabilitySummary .govuk-input__prefix {
     font-weight: 700;
+}
+
+/* Totals are always plain black; negatives are shown with a leading "-" sign
+   rather than any colour coding. */
+#projectProfitabilityTotalSummary .govuk-input,
+#projectProfitabilityTotalSummary .govuk-input__prefix,
+#projectProfitabilitySummary .govuk-input,
+#projectProfitabilitySummary .govuk-input__prefix,
+.summary-row.ppf-summary-column .govuk-input,
+.summary-row.ppf-summary-column .govuk-input__prefix {
+    color: #0b0c0c !important;
 }
 
 /* Programme Target / Surplus-Shortfall are totals too, so match the bold
@@ -5537,7 +5553,7 @@ input.govuk-input.ssr-total-input[readonly] {
     width: 20%;
 }
 .isProjectGroupManagement {
-    width: 37%;
+    width: 35%;
 }
 .isResourceReAllocationScreen {
     width: 24%;
@@ -5571,11 +5587,6 @@ input.govuk-input.ssr-total-input[readonly] {
         overflow-y: auto;
     }
 }
-#gridContainer_compareStaff2Grid .grid-scroll-container,
-#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
-    height: 410px;
-    max-height: 410px;
-}
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
@@ -5605,27 +5616,6 @@ input.govuk-input.ssr-total-input[readonly] {
     .govuk-select {
         vertical-align: middle;
     }
-}
-
-#gridContainer_wgGradeGrid .editable-grid-container {
-    min-height: unset;
-}
-
-#gridContainer_wgGradeGrid table thead th,
-#gridContainer_wgGradeGrid table tbody td {
-    text-align: left !important;
-}
-
-/* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
-#gridContainer_wgStaffGrid table thead th:nth-child(3),
-#gridContainer_wgStaffGrid table thead th:nth-child(4),
-#gridContainer_wgStaffGrid table thead th:nth-child(5),
-#gridContainer_wgStaffGrid table thead th:nth-child(6),
-#gridContainer_wgStaffGrid table tbody td:nth-child(3),
-#gridContainer_wgStaffGrid table tbody td:nth-child(4),
-#gridContainer_wgStaffGrid table tbody td:nth-child(5),
-#gridContainer_wgStaffGrid table tbody td:nth-child(6) {
-    text-align: right !important;
 }
 
 /* Border on the 4 numeric total cells */

@@ -5,14 +5,13 @@
 @{
     ViewData["Title"] = "Resource Set-Up";
 }
-
 <main id="main-content">
     <div class="container-fluid">
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-full isClearFix sup_border-bottom govuk-!-margin-bottom-3">
                 <div class="govuk-grid-column-one-half isFloatLeft">
-                    <h1 class="govuk-grid-row govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-left-0 govuk-!-margin-top-3 isCustomPageHeadings">
-                        Resource Set-Up <a href="#" id="fpsSrRcTitle" class="govuk-link">@Model.ProfitCentre</a>
+                    <h1 class="govuk-heading-s govuk-!-margin-bottom-0 govuk-!-margin-left-0 govuk-!-margin-top-3 isCustomPageHeadings" style="padding-left: 20px;">
+                        Resource Set-Up for @Model.ProfitCentre
                     </h1>
                 </div>
 
@@ -46,26 +45,28 @@
         <!-- Three-grid layout -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="data-table-container sup_border govuk-!-margin-left-2 govuk-!-padding-3">
+                <div class="data-table-container govuk-!-margin-left-0 govuk-!-padding-0 govuk-!-padding-left-3">
 
                     <!-- Top row: RC Grades (55%) + WG Grades (45%) -->
                     <div class="row govuk-!-margin-bottom-4" style="align-items: flex-start;">
                         <!-- RC Grades Available -->
-                        <div class="col-7" style="border-right: 1px solid #b1b4b6;">
+                        <div class="col-6" >
                             <div id="gridContainer_@Model.RcGradeGrid.GridId">
                                 @await Html.PartialAsync("_DataGrid", Model.RcGradeGrid)
                             </div>
                         </div>
 
                         <!-- WG Grades Available within -->
-                        <div class="col-5">
-                            <h3 class="govuk-heading-s govuk-!-margin-bottom-2">WG Grades Available within</h3>
-                            <input id="fpsSrRcFilter"
-                                   class="govuk-input govuk-!-margin-bottom-2"
-                                   style="width: 100%;"
-                                   aria-label="Selected RC grade" readonly
-                                   value="" />
-                            <div class="isWgGradesGrid" id="gridContainer_@Model.WgGradeGrid.GridId">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-3 govuk-!-margin-bottom-3">
+                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0" style="white-space: nowrap;">WG Grades Available within</h3>
+                                <input id="fpsSrRcFilter" style="width:280px;"
+                                       class="govuk-input"
+                                       aria-label="Selected RC grade"
+                                       readonly
+                                       value="" />
+                            </div>
+                            <div class="isWgStaffGridCentered" id="gridContainer_@Model.WgGradeGrid.GridId">
                                 @await Html.PartialAsync("_DataGrid", Model.WgGradeGrid)
                             </div>
                         </div>
@@ -79,11 +80,11 @@
                                style="width: auto; min-width: 120px;"
                                aria-label="Selected WG grade" readonly value="" />
                     </div>
-                    <div class="row align-items-start">
+                    <div class="grid-scroll-container row align-items-start">
                         <!-- Staff of WG Grade -->
                         <div class="col-10">
                             <!-- WG Staff grid -->
-                            <div id="gridContainer_@Model.WgStaffGrid.GridId">
+                            <div class="wg-staff-center" id="gridContainer_@Model.WgStaffGrid.GridId">
                                 @await Html.PartialAsync("_DataGrid", Model.WgStaffGrid)
                             </div>
 
@@ -93,10 +94,10 @@
                                     <tr class="govuk-table__row" style="background-color: #f3f2f1;">
                                         <th scope="row" class="govuk-table__cell" id="fpsSrTotalsLabelCol1" style="font-weight:bold;">Totals</th>
                                         <td class="govuk-table__cell" id="fpsSrTotalsLabelCol2"></td>
-                                        <td class="govuk-table__cell" id="fpsSrTotalHrsPaid" style="text-align:right; font-weight:bold;">@Model.WgHrsPaid</td>
-                                        <td class="govuk-table__cell" id="fpsSrTotalLeave"   style="text-align:right; font-weight:bold;">@Model.WgLeave</td>
-                                        <td class="govuk-table__cell" id="fpsSrTotalSick"    style="text-align:right; font-weight:bold;">@Model.WgSickSpecial</td>
-                                        <td class="govuk-table__cell" id="fpsSrTotalAtWork"  style="text-align:right; font-weight:bold;">@Model.WgHrsAvail</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalHrsPaid" style="text-align:center; font-weight:bold;">@Model.WgHrsPaid</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalLeave"   style="text-align:center; font-weight:bold;">@Model.WgLeave</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalSick"    style="text-align:center; font-weight:bold;">@Model.WgSickSpecial</td>
+                                        <td class="govuk-table__cell" id="fpsSrTotalAtWork"  style="text-align:center; font-weight:bold;">@Model.WgHrsAvail</td>
                                         <td class="govuk-table__cell" id="fpsSrTotalsPlana"></td>
                                         <td class="govuk-table__cell" id="fpsSrTotalsAction"></td>
                                     </tr>
@@ -118,7 +119,7 @@
                                        value="@Model.SelectedPersonName" />
                                 <input type="hidden" id="fpsSrSelectedPactId" value="@Model.SelectedPactId" />
                                 <button type="button" id="fpsSrPlanBtn"
-                                        class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                                        class="govuk-button sup_margin_0 sup_p_8"
                                         style="width: 100%;"
                                         data-module="govuk-button"
                                         onclick="planPersonOntoZTCodes()">

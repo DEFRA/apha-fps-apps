@@ -76,7 +76,12 @@ namespace Apha.PIMS.Api.Controllers
             var decodedProfitCentre = HttpUtility.UrlDecode(profitcentre);
             var decodedManager = HttpUtility.UrlDecode(manager);
             ProfitCentreManagerLinkDto? result = await _service.GetProfitCentreManagerLinkByIdAsync(decodedProfitCentre, decodedManager);
-            return result is null ? NotFound() : Ok(_mapper.Map<ProfitCentreManagerLinkRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProfitCentreManagerLinkRes>();
+            }
+
+            return Ok(_mapper.Map<ProfitCentreManagerLinkRes>(result));
         }
 
         /// <summary>Create a new profit centre manager link.</summary>
@@ -97,6 +102,20 @@ namespace Apha.PIMS.Api.Controllers
             var decodedManager = HttpUtility.UrlDecode(manager);
             bool deleted = await _service.DeleteProfitCentreManagerLinkAsync(decodedProfitCentre, decodedManager);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

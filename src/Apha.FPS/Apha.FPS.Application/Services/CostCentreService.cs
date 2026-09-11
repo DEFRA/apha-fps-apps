@@ -42,22 +42,30 @@ namespace Apha.FPS.Application.Services
         }
 
         //   Guard 1: ArgumentNullException if dto null (fail fast before any I/O)
-        //   Guard 2: InvalidOperationException if composite key already exists (duplicate prevention from VBA analysis)
-        //   Guard 3: InvalidOperationException if ProfitCentre FK does not exist in tblkpprofitcentre (transform-plan.md item 1)
+        //   Guard 2: BusinessValidationErrorException if composite key already exists (duplicate prevention from VBA analysis)
+        //   Guard 3: BusinessValidationErrorException if ProfitCentre FK does not exist in tblkpprofitcentre (transform-plan.md item 1)
         public async Task<CostCentreDto> CreateCostCentreAsync(CostCentreDto costCentreDto)
         {
             ArgumentNullException.ThrowIfNull(costCentreDto);
             ArgumentException.ThrowIfNullOrWhiteSpace(costCentreDto.ProfitCentre);
 
             if (await _repository.ExistsAsync(costCentreDto.CostCentreNo, costCentreDto.FpsYear))
-                throw new InvalidOperationException(
-                    $"A cost centre with number '{costCentreDto.CostCentreNo}' already exists for FPS year '{costCentreDto.FpsYear}'.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"A cost centre with number '{costCentreDto.CostCentreNo}' already exists for FPS year '{costCentreDto.FpsYear}'.",
+                        "COST_CENTRE_ALREADY_EXISTS")
+                ]);
 
             //   Validates that the supplied ProfitCentre code exists in fps.tblkpprofitcentre before inserting
             var profitCentreExists = await _profitCentreRepository.ProfitCentreExistsAsync(costCentreDto.ProfitCentre);
             if (!profitCentreExists)
-                throw new InvalidOperationException(
-                    $"Profit centre '{costCentreDto.ProfitCentre}' does not exist. Select a valid profit centre.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Profit centre '{costCentreDto.ProfitCentre}' does not exist. Select a valid profit centre.",
+                        "PROFIT_CENTRE_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<CostCentre>(costCentreDto);
             var created = await _repository.CreateAsync(entity);
@@ -66,7 +74,7 @@ namespace Apha.FPS.Application.Services
 
         //   Guard 1: ArgumentNullException if dto null
         //   Guard 2: KeyNotFoundException if original record does not exist
-        //   Guard 3: InvalidOperationException if new ProfitCentre FK does not exist in tblkpprofitcentre (transform-plan.md item 1)
+        //   Guard 3: BusinessValidationErrorException if new ProfitCentre FK does not exist in tblkpprofitcentre (transform-plan.md item 1)
         public async Task<CostCentreDto> UpdateCostCentreAsync(double originalCostCentreNo, int fpsYear, CostCentreDto costCentreDto)
         {
             ArgumentNullException.ThrowIfNull(costCentreDto);
@@ -79,13 +87,21 @@ namespace Apha.FPS.Application.Services
             //   Guard: if the cost centre number is being changed, the new number must not already exist
             if (originalCostCentreNo != costCentreDto.CostCentreNo
                 && await _repository.ExistsAsync(costCentreDto.CostCentreNo, fpsYear))
-                throw new InvalidOperationException(
-                    $"A cost centre with number '{costCentreDto.CostCentreNo}' already exists for FPS year '{fpsYear}'.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"A cost centre with number '{costCentreDto.CostCentreNo}' already exists for FPS year '{fpsYear}'.",
+                        "COST_CENTRE_ALREADY_EXISTS")
+                ]);
 
             var profitCentreExists = await _profitCentreRepository.ProfitCentreExistsAsync(costCentreDto.ProfitCentre);
             if (!profitCentreExists)
-                throw new InvalidOperationException(
-                    $"Profit centre '{costCentreDto.ProfitCentre}' does not exist. Select a valid profit centre.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Profit centre '{costCentreDto.ProfitCentre}' does not exist. Select a valid profit centre.",
+                        "PROFIT_CENTRE_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<CostCentre>(costCentreDto);
             try
@@ -98,7 +114,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        "There are associated records in the workgroup table so this record cannot be edited. Please update to a cost center which does not have any associated records in the workgorup table.",
+                        "There are associated workgroups, hence this cost centre cannot be edited.",
                         "WORKGROUP_FK_VIOLATION")
                 });
             }
@@ -120,7 +136,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(new List<BusinessValidationError>
                 {
                     new BusinessValidationError(
-                        "There are associated records in the workgroup table so this record cannot be deleted.",
+                        "There are associated workgroup(s) with this cost centre, hence this record cannot be deleted.",
                         "WORKGROUP_FK_VIOLATION")
                 });
             }

@@ -2033,9 +2033,26 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ? await _service.UpdatePublicationTypeAsync(publicationTypeItem.Type, dto)
                 : await _service.CreatePublicationTypeAsync(dto);
 
-            return result.Success
-                ? Json(new { success = true, message = isEdit ? "Publication type updated successfully." : "Publication type created successfully." })
-                : Json(new { success = false, errors = result.Errors });
+            if (result.Success)
+            {
+                return Json(new { success = true, message = isEdit ? "Publication type updated successfully." : "Publication type created successfully." });
+            }
+
+            var responseMessage = result.Errors?.FirstOrDefault()?.Message ?? "Save failed.";
+            var responseErrors = (result.Errors ?? new List<ApiErrorDto>())
+                .Select(e => new
+                {
+                    field = string.Empty,
+                    message = e.Message
+                })
+                .ToList();
+
+            return Json(new
+            {
+                success = false,
+                message = responseMessage,
+                errors = responseErrors
+            });
         }
 
         [HttpDelete]

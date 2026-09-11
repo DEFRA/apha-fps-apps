@@ -40,6 +40,11 @@ function reloadFailedGrid() {
     }
 }
 
+function getSubContractRmsAntiForgeryToken() {
+    const el = document.querySelector('input[name="__RequestVerificationToken"]');
+    return el ? el.value : '';
+}
+
 function addSubContractRms() {
     if (!currentRmsMonth) {
         showAlertMessage('Please select a period first.', AlertType.INFO);
@@ -55,6 +60,7 @@ function addSubContractRms() {
             $('#modalPopup').addClass('show');
             // Initialize form validation (unobtrusive + numeric)
             initializeFormValidation('#formAddProjectCost');
+            initializeProjectCostDropdown();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -74,6 +80,7 @@ function editSubContractRms(btn) {
             $('#modalPopup').addClass('show');
             // Initialize form validation (unobtrusive + numeric)
             initializeFormValidation('#formAddProjectCost');
+            initializeProjectCostDropdown();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -196,12 +203,15 @@ function importSubContractRms(file) {
         return;
     }
 
+    const antiForgeryToken = getSubContractRmsAntiForgeryToken();
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('__RequestVerificationToken', antiForgeryToken);
 
     $.ajax({
         url: '/PACT/SubContractRms/Import',
         type: 'POST',
+        headers: { 'RequestVerificationToken': antiForgeryToken },
         data: formData,
         processData: false,
         contentType: false,
@@ -289,10 +299,18 @@ function deleteFailedSubContractRms(btn) {
 }
 
 function saveFailedSubContractRms() {
-    clearValidationErrors('#modaPopupBody');
     const form = $('#formEditFailedSubContractRms');
 
-    // Check basic form validity (required fields)
+    initializeFormValidation('#formEditFailedSubContractRms');
+    clearValidationErrors('#modaPopupBody');
+
+    // Run unobtrusive validation rules first (regex/range/custom)
+    if (typeof form.valid === 'function' && !form.valid()) {
+        displayClientValidationErrors(form, '#modaPopupBody');
+        return;
+    }
+
+    // Fallback required-fields check
     if (!isFormValid(form)) {
         displayClientValidationErrors(form, '#modaPopupBody');
         return;
@@ -421,6 +439,62 @@ $(document).ready(function () {
     });
 });
 
+// ========================================
+// Multi-Column Dropdown for Project Cost Modal
+// ========================================
+function initializeProjectCostDropdown() {
+    var container = document.querySelector('#rmsProjectMultiDropdown');
+    if (!container || typeof MultiColumnDropdownComponent === 'undefined') {
+        return;
+    }
+
+    var projectsData = [];
+    var raw = container.getAttribute('data-projects');
+    if (raw) {
+        try { projectsData = JSON.parse(raw); } catch (e) { projectsData = []; }
+    }
+
+    var selectedProject = container.getAttribute('data-selected') || '';
+
+    setTimeout(function () {
+        var projectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'rmsProjectDropdown',
+            containerSelector: '#rmsProjectMultiDropdown',
+            placeholder: 'Select Project',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by code or title',
+            labelText: '',
+            required: true,
+            columns: [
+                { field: 'Value', header: 'Project Code', width: '120px' },
+                { field: 'Text', header: 'Project Title', width: '300px' }
+            ],
+            data: projectsData || [],
+            displayField: 'Value',
+            valueField: 'Value',
+            clearButtonClearsSelection: true,
+            callbacks: {
+                onSelect: function (selectedItem, dropdown) {
+                    $('#Project').val(selectedItem.Value).trigger('change');
+                    setTimeout(function () {
+                        if (dropdown && typeof dropdown.closeDropdown === 'function') {
+                            dropdown.closeDropdown();
+                        }
+                    }, 50);
+                },
+                onClear: function (dropdown) {
+                    $('#Project').val('').trigger('change');
+                }
+            }
+        });
+
+        var initialProject = selectedProject || $('#Project').val();
+        if (initialProject) {
+            projectDropdown.setValue(initialProject);
+        }
+    }, 100);
+}
+
 window.getRmsSubContractFilters = getRmsSubContractFilters;
 window.addSubContractRms = addSubContractRms;
 window.editSubContractRms = editSubContractRms;
@@ -433,3 +507,4 @@ window.editFailedSubContractRms = editFailedSubContractRms;
 window.deleteFailedSubContractRms = deleteFailedSubContractRms;
 window.saveFailedSubContractRms = saveFailedSubContractRms;
 window.exportFailedSubContractRms = exportFailedSubContractRms;
+window.initializeProjectCostDropdown = initializeProjectCostDropdown;

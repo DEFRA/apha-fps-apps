@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -48,6 +49,27 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
         {
             Assert.Throws<ArgumentNullException>(() =>
                 new GradeService(null!, _mockDivisionGradeRepository, _mockProfitCentreGradeRepository, _mockWorkGroupGradeRepository, _mockMapper));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenDivisionGradeRepositoryIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new GradeService(_mockRepository, null!, _mockProfitCentreGradeRepository, _mockWorkGroupGradeRepository, _mockMapper));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenProfitCentreGradeRepositoryIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new GradeService(_mockRepository, _mockDivisionGradeRepository, null!, _mockWorkGroupGradeRepository, _mockMapper));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenWorkGroupGradeRepositoryIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new GradeService(_mockRepository, _mockDivisionGradeRepository, _mockProfitCentreGradeRepository, null!, _mockMapper));
         }
 
         [Fact]
@@ -194,7 +216,7 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
         }
 
         [Fact]
-        public async Task CreateAsync_ThrowsInvalidOperationException_WhenGradeAlreadyExists()
+        public async Task CreateAsync_ThrowsBusinessValidationErrorException_WhenGradeAlreadyExists()
         {
             // Arrange
             var dto    = BuildDto("A");
@@ -203,7 +225,9 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
             _mockRepository.GetByIdAsync("A").Returns(entity);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateAsync(dto));
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Grade 'A' already exists for the current FPS year." && e.Code == "GRADE_ALREADY_EXISTS");
         }
 
         [Fact]
@@ -269,7 +293,7 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
         }
 
         [Fact]
-        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenRenameConflicts()
+        public async Task UpdateAsync_ThrowsBusinessValidationErrorException_WhenRenameConflicts()
         {
             // Arrange
             var originalEntity = BuildEntity("A");
@@ -280,7 +304,9 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
             _mockRepository.GetByIdAsync("B").Returns(conflictEntity);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateAsync("A", dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync("A", dto));
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot rename to 'B' — a grade with that code already exists for the current FPS year." && e.Code == "GRADE_ALREADY_EXISTS");
         }
 
         [Fact]
@@ -393,19 +419,21 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
         }
 
         [Fact]
-        public async Task DeleteAsync_ThrowsInvalidOperationException_WhenHasDivisionGradeDependents()
+        public async Task DeleteAsync_ThrowsBusinessValidationErrorException_WhenHasDivisionGradeDependents()
         {
             // Arrange
             _mockRepository.GetByIdAsync("A").Returns(BuildEntity("A"));
             _mockDivisionGradeRepository.ExistsForGradeCodeAsync("A").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync("A"));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteAsync("A"));
             await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>());
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot delete grade 'A' because it is referenced by one or more Division Grade records." && e.Code == "GRADE_REFERENCED_BY_DIVISION_GRADE");
         }
 
         [Fact]
-        public async Task DeleteAsync_ThrowsInvalidOperationException_WhenHasProfitCentreGradeDependents()
+        public async Task DeleteAsync_ThrowsBusinessValidationErrorException_WhenHasProfitCentreGradeDependents()
         {
             // Arrange
             _mockRepository.GetByIdAsync("A").Returns(BuildEntity("A"));
@@ -413,12 +441,14 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
             _mockProfitCentreGradeRepository.ExistsForGradeCodeAsync("A").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync("A"));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteAsync("A"));
             await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>());
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot delete grade 'A' because it is referenced by one or more RC Grade records." && e.Code == "GRADE_REFERENCED_BY_PROFITCENTRE_GRADE");
         }
 
         [Fact]
-        public async Task DeleteAsync_ThrowsInvalidOperationException_WhenHasWorkGroupGradeDependents()
+        public async Task DeleteAsync_ThrowsBusinessValidationErrorException_WhenHasWorkGroupGradeDependents()
         {
             // Arrange
             _mockRepository.GetByIdAsync("A").Returns(BuildEntity("A"));
@@ -427,8 +457,10 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
             _mockWorkGroupGradeRepository.ExistsForGradeCodeAsync("A").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync("A"));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteAsync("A"));
             await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>());
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot delete grade 'A' because it is referenced by one or more WG Grade records." && e.Code == "GRADE_REFERENCED_BY_WORKGROUP_GRADE");
         }
 
         #endregion

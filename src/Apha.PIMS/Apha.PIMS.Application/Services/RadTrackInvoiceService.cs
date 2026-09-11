@@ -24,7 +24,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<PaginatedResult<RadTrackInvoiceDto>> GetAllAsync(QueryParameters<RadTrackInvoiceFilter> parameters)
         {
             if (parameters is null)
-                throw new ArgumentException("Query parameters must not be null.", nameof(parameters));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Query parameters must not be null.", "QUERY_PARAMETERS_REQUIRED")
+                ]);
 
             PaginationParameters<RadTrackInvoiceFilter> paginationParams =
                 _mapper.Map<PaginationParameters<RadTrackInvoiceFilter>>(parameters);
@@ -48,7 +51,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<RadTrackInvoiceDto> CreateAsync(RadTrackInvoiceDto dto)
         {
             if (dto is null)
-                throw new ArgumentException("Invoice DTO must not be null.", nameof(dto));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Invoice DTO must not be null.", "INVOICE_REQUIRED")
+                ]);
 
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(dto.Project))
@@ -81,7 +87,10 @@ namespace Apha.PIMS.Application.Services
         public async Task<RadTrackInvoiceDto> UpdateAsync(RadTrackInvoiceDto dto)
         {
             if (dto is null)
-                throw new ArgumentException("Invoice DTO must not be null.", nameof(dto));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError("Invoice DTO must not be null.", "INVOICE_REQUIRED")
+                ]);
 
             var errors = new List<BusinessValidationError>();
 
@@ -101,8 +110,16 @@ namespace Apha.PIMS.Application.Services
                 throw new BusinessValidationErrorException(errors);
 
             
-            RadTrackInvoice existing = await _repository.GetByIdAsync(dto.InvoiceCounter)
-                ?? throw new KeyNotFoundException($"Invoice with counter {dto.InvoiceCounter} was not found.");
+            RadTrackInvoice? existing = await _repository.GetByIdAsync(dto.InvoiceCounter);
+            if (existing is null)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Invoice with counter {dto.InvoiceCounter} was not found.",
+                        "INVOICE_NOT_FOUND")
+                ]);
+            }
 
            
             if (!string.IsNullOrWhiteSpace(dto.InvoiceRef))

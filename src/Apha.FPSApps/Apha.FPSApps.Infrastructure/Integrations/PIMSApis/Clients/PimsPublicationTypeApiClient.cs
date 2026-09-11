@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -14,7 +15,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
         private const string InternalCodeError = "INTERNAL_ERROR";
-        private const string BaseUrl = "api/v1/publication-types";
 
         public PimsPublicationTypeApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<PublicationTypeRes>>(BaseUrl);
+                var response = await _http.GetAsync<List<PublicationTypeRes>>(PimsApiEndpoints.GetAllPublicationTypes);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<PublicationTypeDto>>>(response);
 
@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+                string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetPagedPublicationTypes, query);
                 var response = await _http.GetAsync<List<PublicationTypeRes>>(url);
                 if (response.Success)
                 {
@@ -76,7 +76,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(type)}";
+                var url = string.Format(PimsApiEndpoints.GetPublicationTypeByCode, Uri.EscapeDataString(type));
                 var response = await _http.GetAsync<PublicationTypeRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<PublicationTypeDto>>(response);
@@ -98,7 +98,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<PublicationTypeReq>(dto);
-                var response = await _http.PostAsync<PublicationTypeReq, PublicationTypeRes>(BaseUrl, request);
+                var response = await _http.PostAsync<PublicationTypeReq, PublicationTypeRes>(PimsApiEndpoints.CreatePublicationType, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<PublicationTypeDto>>(response);
 
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             try
             {
                 var request = _mapper.Map<PublicationTypeReq>(dto);
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(type)}";
+                var url = string.Format(PimsApiEndpoints.UpdatePublicationType, Uri.EscapeDataString(type));
                 var response = await _http.PutAsync<PublicationTypeReq, PublicationTypeRes>(url, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<PublicationTypeDto>>(response);
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{Uri.EscapeDataString(type)}";
+                var url = string.Format(PimsApiEndpoints.DeletePublicationType, Uri.EscapeDataString(type));
                 var response = await _http.DeleteAsync<bool>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<bool>>(response);
