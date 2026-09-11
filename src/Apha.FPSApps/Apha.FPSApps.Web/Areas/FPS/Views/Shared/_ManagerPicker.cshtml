@@ -5,7 +5,7 @@
 <div style="position: relative; display: block; width: 100%;">
     <input type="text" id="ManagerDisplay" placeholder="Select Manager" autocomplete="off" aria-label="Select Manager"
            class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; box-sizing:border-box; cursor:pointer;" readonly />
-    <div id="ManagerDropdownPanel" style="display:none; position:absolute; top:100%; left:0; right:auto; width:100%; box-sizing:border-box;
+    <div id="ManagerDropdownPanel" style="display:none; position:fixed; top:0; left:0; right:auto; width:auto; box-sizing:border-box;
             max-height:260px; overflow-y:auto; overflow-x:hidden; background:#fff; border:1px solid #b1b4b6;
             box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
         <input type="text" id="ManagerSearchBox" placeholder="Type to search manager" aria-label="Type to search manager"
@@ -51,6 +51,12 @@
 
 <script>
     (function () {
+        // A previously opened panel is parked on <body>; drop it so the freshly
+        // rendered markup below is the only ManagerDropdownPanel in the document.
+        document.querySelectorAll('body > #ManagerDropdownPanel').forEach(function (stale) {
+            stale.remove();
+        });
+
         var managerDisplay = document.getElementById('ManagerDisplay');
         var managerSelect  = document.getElementById('@fieldName');
         var managerPanel   = document.getElementById('ManagerDropdownPanel');
@@ -65,8 +71,29 @@
             managerDisplay.addEventListener('click', function (e) {
                 e.stopPropagation();
                 managerPanel.style.display = managerPanel.style.display === 'none' ? 'block' : 'none';
-                if (managerPanel.style.display === 'block') { managerSearch.value = ''; filterManagerRows(); managerSearch.focus(); }
+                if (managerPanel.style.display === 'block') { positionManagerPanel(); managerSearch.value = ''; filterManagerRows(); managerSearch.focus(); }
             });
+            // The panel is fixed-positioned so it floats above the modal rather than
+            // being clipped by (or stretching) the scrollable modal body. It is moved
+            // to <body> because .modal-dialog has a transform, which would otherwise
+            // become the containing block and offset the fixed coordinates.
+            function positionManagerPanel() {
+                if (managerPanel.parentNode !== document.body) {
+                    document.body.appendChild(managerPanel);
+                }
+                var rect = managerDisplay.getBoundingClientRect();
+                var spaceBelow = window.innerHeight - rect.bottom;
+                // setProperty with 'important' so no page stylesheet can stretch the
+                // panel back to full width once it sits directly under <body>.
+                managerPanel.style.setProperty('position', 'fixed', 'important');
+                managerPanel.style.setProperty('left', rect.left + 'px', 'important');
+                managerPanel.style.setProperty('top', rect.bottom + 'px', 'important');
+                managerPanel.style.setProperty('width', rect.width + 'px', 'important');
+                managerPanel.style.setProperty('right', 'auto', 'important');
+                managerPanel.style.setProperty('bottom', 'auto', 'important');
+                managerPanel.style.setProperty('max-width', 'none', 'important');
+                managerPanel.style.setProperty('max-height', Math.min(260, spaceBelow - 8) + 'px', 'important');
+            }
             managerSearch.addEventListener('input', filterManagerRows);
             function filterManagerRows() {
                 var q = managerSearch.value.toLowerCase();

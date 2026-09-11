@@ -70,6 +70,14 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
+            // Normalize optional directorate: an empty/whitespace value must be
+            // stored as null so the nullable FK (fk_tlkpprogram_directorate) is
+            // skipped instead of trying to match a non-existent '' parent row.
+            if (string.IsNullOrWhiteSpace(programDto.Directorate))
+            {
+                programDto.Directorate = null;
+            }
+
             var program = _mapper.Map<Core.Entities.Program>(programDto);
 
             try
@@ -96,8 +104,16 @@ namespace Apha.FPS.Application.Services
             if (string.IsNullOrWhiteSpace(programDto.ProgramNo))
             {
                 throw new ArgumentException("Program number is required.");
-            }            
-           
+            }
+
+            // Normalize optional directorate: an empty/whitespace value must be
+            // stored as null so the nullable FK (fk_tlkpprogram_directorate) is
+            // skipped instead of trying to match a non-existent '' parent row.
+            if (string.IsNullOrWhiteSpace(programDto.Directorate))
+            {
+                programDto.Directorate = null;
+            }
+
             var originalProgramNo = programDto.ProgramNo;
             var existingProgram = await _programRepository.GetProgramByIdAsync(originalProgramNo);
             if (existingProgram == null)
