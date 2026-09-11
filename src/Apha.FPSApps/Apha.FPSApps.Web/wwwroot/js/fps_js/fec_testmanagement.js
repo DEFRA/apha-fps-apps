@@ -209,6 +209,16 @@ var BulkRates = (function () {
     }
     window.viewBulkRatesRequest = viewBulkRatesRequest;
 
+    // ── Side nav toggle ──────────────────────────────────────────────────────
+    // Must be a true global — called from an inline onclick attribute.
+    function toggleSidebar() {
+        var sidebar = document.querySelector('.sidenav');
+        if (sidebar) {
+            sidebar.classList.toggle('collapsed');
+        }
+    }
+    window.toggleSidebar = toggleSidebar;
+
     function filterGrid() {
         var gm = window['gridManager_bulkRatesGrid'];
         if (gm) { gm.reloadGrid({ page: 1 }); }
