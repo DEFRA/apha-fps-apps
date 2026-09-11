@@ -39,5 +39,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsMonthHour.SaveMonthHourAsync(dto);
         }
+
+        public async Task<ApiResponseDto<MonthHourDto>> SaveYearEndMonthHourAsync(MonthHourDto dto)
+        {
+            return await _fpsClient.FpsMonthHour.SaveYearEndMonthHourAsync(dto);
+        }
     }
 }

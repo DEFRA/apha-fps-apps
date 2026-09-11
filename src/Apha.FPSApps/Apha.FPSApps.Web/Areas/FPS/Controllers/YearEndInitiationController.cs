@@ -106,10 +106,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditMonthHour(short year, short month, short fpsyear, short fmonth)
+        public async Task<IActionResult> EditMonthHour(short mhyear, short month, short fpsyear, short fmonth)
         {
             var result = await _monthHourService.GetYearEndMonthHoursAsync();
-            var record = result.Data?.FirstOrDefault(m => m.Year == year && m.Month == month && m.FpsYear == fpsyear && m.Fmonth == fmonth);
+            var record = result.Data?.FirstOrDefault(m => m.Year == mhyear && m.Month == month && m.FpsYear == fpsyear && m.Fmonth == fmonth);
             if (record == null)
                 return NotFound();
 
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveSetting([FromBody] SettingDto dto)
         {
-            var result = await _settingService.SaveSettingAsync(dto);
+            var result = await _settingService.SaveYearEndSettingAsync(dto);
             if (result.Success)
                 return Json(new { success = true });
 
@@ -142,7 +142,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveMonthHour([FromBody] MonthHourDto dto)
         {
-            var result = await _monthHourService.SaveMonthHourAsync(dto);
+            var result = await _monthHourService.SaveYearEndMonthHourAsync(dto);
             if (result.Success)
                 return Json(new { success = true });
 
@@ -225,7 +225,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     FpsYear= s.FpsYear,
                     Id = s.Id,
                     Setting = s.Setting,
-                    //Notes = s.Notes,
                     ExistsForPlannedYear = s.ExistsForPlannedYear
                 }).ToList();
             }

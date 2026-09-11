@@ -106,5 +106,18 @@ namespace Apha.FPS.Api.Controllers
             var result = await _fpsSettingService.SaveSettingAsync(dto);
             return Ok(_mapper.Map<FpsSettingRes>(result));
         }
+
+        /// <summary>
+        /// Saves an FPS setting (creates or updates) in stage or main database based on planned year.
+        /// </summary>
+        /// <param name="request">The setting to save.</param>
+        /// <returns>The saved FPS setting.</returns>
+        [HttpPost("save-yearend")]
+        public async Task<IActionResult> SaveYearEndSettingAsync([FromBody] FpsSettingReq request)
+        {
+            var dto = _mapper.Map<FpsSettingDto>(request);
+            var result = await _fpsSettingService.SaveYearEndSettingAsync(dto);
+            return Ok(_mapper.Map<FpsSettingRes>(result));
+        }
     }
 }

@@ -11,5 +11,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<IEnumerable<short>>> GetDistinctYearsAsync();
         Task<ApiResponseDto<List<YearEndMonthHourDto>>> GetYearEndMonthHoursAsync();
         Task<ApiResponseDto<MonthHourDto>> SaveMonthHourAsync(MonthHourDto dto);
+        Task<ApiResponseDto<MonthHourDto>> SaveYearEndMonthHourAsync(MonthHourDto dto); 
     }
 }

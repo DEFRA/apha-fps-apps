@@ -419,5 +419,75 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.SettingServiceTest
         }
 
         #endregion
+
+        #region SaveYearEndSettingAsync
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenApiReturnsSuccess_ReturnsSavedSetting()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2025 };
+            var saved = new SettingDto { Id = "HoursInDay", Setting = "7.5", FpsYear = 2025 };
+            var expectedResponse = ApiResponseDto<SettingDto>.SuccessResponse(saved);
+            _fpsSettingApiClient.SaveYearEndSettingAsync(dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal("HoursInDay", result.Data?.Id);
+            await _fpsSettingApiClient.Received(1).SaveYearEndSettingAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "BadKey" };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "Validation failed", Code = "VALIDATION_ERROR" } };
+            var expectedResponse = ApiResponseDto<SettingDto>.FailureResponse(errors, new ApiMetaDto());
+            _fpsSettingApiClient.SaveYearEndSettingAsync(dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _fpsSettingApiClient.Received(1).SaveYearEndSettingAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_PassesDtoToApiClient()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "CapApprovalReceivedForReset", Setting = "yes", FpsYear = 2025 };
+            var expectedResponse = ApiResponseDto<SettingDto>.SuccessResponse(dto);
+            _fpsSettingApiClient.SaveYearEndSettingAsync(dto).Returns(expectedResponse);
+
+            // Act
+            await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            await _fpsSettingApiClient.Received(1).SaveYearEndSettingAsync(
+                Arg.Is<SettingDto>(d => d.Id == "CapApprovalReceivedForReset" && d.Setting == "yes"));
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenApiClientThrowsException_PropagatesException()
+        {
+            // Arrange
+            var dto = new SettingDto { Id = "Key" };
+            _fpsSettingApiClient.SaveYearEndSettingAsync(dto).ThrowsAsync(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveYearEndSettingAsync(dto));
+            Assert.Equal("Save failed", exception.Message);
+            await _fpsSettingApiClient.Received(1).SaveYearEndSettingAsync(dto);
+        }
+
+        #endregion
     }
 }
