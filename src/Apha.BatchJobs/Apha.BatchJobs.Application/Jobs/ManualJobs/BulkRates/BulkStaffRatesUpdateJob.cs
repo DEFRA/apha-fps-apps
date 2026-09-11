@@ -6,12 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 
-/// <summary>
-/// Batch job handler for BulkStaffRatesUpdate.
-/// Orchestrates Staff profit-centre grade annual rate changes triggered
-/// by an approved request in fps.job_queue.
-/// Lock lifecycle is owned exclusively by <see cref="Apha.BatchJobs.Application.Orchestration.JobOrchestrator"/>.
-/// </summary>
+/// <summary>Batch job handler for BulkStaffRatesUpdate. Orchestrates Staff profit-centre grade annual rate changes triggered by an approved request in fps.job_queue. Lock lifecycle is owned exclusively by <see cref="Apha.BatchJobs.Application.Orchestration.JobOrchestrator"/>.</summary>
 public sealed class BulkStaffRatesUpdateJob : IBatchJob
 {
     private readonly IBulkStaffRatesService _service;

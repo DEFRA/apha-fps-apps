@@ -6,11 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// Tests for <see cref="BatchRunSummaryWriter"/> — exactly one structured summary line per
-/// call, at the level matching the outcome, with a human-readable message matching the
-/// failure category / cancellation reason.
-/// </summary>
+/// <summary>Tests for <see cref="BatchRunSummaryWriter"/> — exactly one structured summary line per call, at the level matching the outcome, with a human-readable message matching the failure category / cancellation reason.</summary>
 public sealed class BatchRunSummaryWriterTests
 {
     [Fact]

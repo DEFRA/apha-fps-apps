@@ -1,8 +1,6 @@
 namespace Apha.BatchJobs.Domain.Enums;
 
-/// <summary>
-/// Outcome of a single RecreateSummaries execution step.
-/// </summary>
+/// <summary>Outcome of a single RecreateSummaries execution step.</summary>
 public enum StepStatus
 {
     /// <summary>Step completed without error.</summary>

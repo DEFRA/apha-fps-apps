@@ -3,15 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Rendering;
 
-/// <summary>
-/// Extracts and validates the <c>href</c> from the legacy-generated EditLink HTML fragment
-/// (a full <c>&lt;a href="..."&gt;...&lt;/a&gt;&lt;br&gt;</c> anchor, not a bare URL —
-/// plan section 9.2). Reusing EditLink safely means pulling out just the href and
-/// building fresh anchor markup around it — never splicing the legacy fragment's HTML
-/// directly into a new template. HTTPS-only, per spec section 22's unconditional
-/// "all links must use HTTPS" requirement — anything else is treated as invalid rather
-/// than silently downgraded.
-/// </summary>
+/// <summary>Extracts and validates the <c>href</c> from the legacy-generated EditLink HTML fragment (a full <c>&lt;a href="..."&gt;...&lt;/a&gt;&lt;br&gt;</c> anchor, not a bare URL — plan section 9.2). Reusing EditLink safely means pulling out just the href and building fresh anchor markup around it — never splicing the legacy fragment's HTML directly into a new template. HTTPS-only, per spec section 22's unconditional "all links must use HTTPS" requirement — anything else is treated as invalid rather than silently downgraded.</summary>
 internal static class EditLinkHrefExtractor
 {
     private static readonly Regex HrefPattern = new(

@@ -12,11 +12,7 @@ using System.Text.Json;
 
 namespace Apha.BatchJobs.Infrastructure.BulkRates.Repositories;
 
-/// <summary>
-/// Npgsql implementation of <see cref="IBulkRatesRepository"/>.
-/// Uses <see cref="IDbContextFactory{BatchJobsDbContext}"/> to obtain connections,
-/// consistent with the existing YearEnd infrastructure pattern.
-/// </summary>
+/// <summary>Npgsql implementation of <see cref="IBulkRatesRepository"/>. Uses <see cref="IDbContextFactory{BatchJobsDbContext}"/> to obtain connections, consistent with the existing YearEnd infrastructure pattern.</summary>
 public sealed class BulkRatesRepository : IBulkRatesRepository
 {
     private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;

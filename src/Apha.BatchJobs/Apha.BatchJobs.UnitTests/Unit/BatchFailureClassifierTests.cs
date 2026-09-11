@@ -8,12 +8,7 @@ using Npgsql;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// Tests for <see cref="BatchFailureClassifier"/> — the single source of truth for mapping a
-/// non-cancellation exception to an exit code, failure category, and CloudWatch
-/// <c>ErrorType</c> marker, shared by <see cref="Apha.BatchJobs.Application.JobOrchestrator"/>
-/// and the Worker's run summary.
-/// </summary>
+/// <summary>Tests for <see cref="BatchFailureClassifier"/> — the single source of truth for mapping a non-cancellation exception to an exit code, failure category, and CloudWatch <c>ErrorType</c> marker, shared by <see cref="Apha.BatchJobs.Application.JobOrchestrator"/> and the Worker's run summary.</summary>
 public sealed class BatchFailureClassifierTests
 {
     // A real ConfigurationRoot (not a mock) so the indexer's actual "null when key is absent"

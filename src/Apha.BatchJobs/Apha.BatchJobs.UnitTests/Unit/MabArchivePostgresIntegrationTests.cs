@@ -9,10 +9,7 @@ using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// PostgreSQL-backed MABArchive integration tests with skip-safe semantics.
-/// Tests use transaction rollback to avoid persistent data/schema changes.
-/// </summary>
+/// <summary>PostgreSQL-backed MABArchive integration tests with skip-safe semantics. Tests use transaction rollback to avoid persistent data/schema changes.</summary>
 [Trait("Category", "Integration")]
 public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
 {

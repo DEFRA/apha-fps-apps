@@ -8,11 +8,7 @@ using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.MilestoneUpdateNotifications.Repositories;
 
-/// <summary>
-/// Implementation of <see cref="IMilestoneNotificationReadRepository"/>. Queries the
-/// migrated mabarchive legacy-parity view directly (plan section 7) rather than
-/// re-deriving its filter logic, so this worker inherits its guaranteed legacy parity.
-/// </summary>
+/// <summary>Implementation of <see cref="IMilestoneNotificationReadRepository"/>. Queries the migrated mabarchive legacy-parity view directly (plan section 7) rather than re-deriving its filter logic, so this worker inherits its guaranteed legacy parity.</summary>
 public sealed class MilestoneNotificationReadRepository : IMilestoneNotificationReadRepository
 {
     private readonly BatchJobsDbContext _context;

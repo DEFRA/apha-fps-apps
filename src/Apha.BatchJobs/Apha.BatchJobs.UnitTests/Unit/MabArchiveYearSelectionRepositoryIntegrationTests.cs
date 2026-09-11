@@ -6,16 +6,7 @@ using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// PostgreSQL-backed smoke test for MabArchiveYearSelectionService's SQL wiring.
-/// GetProcessableYearsAsync validates the *entire* fps.tblyearmaster table (spec
-/// requires exactly one Open year across the whole table), so this test cannot safely
-/// seed its own Open/Planned rows without risking a false "multiple Open years" failure
-/// against whatever real data already exists. Instead it asserts against the live
-/// table's current state: it records the real Open year up front, seeds one extra
-/// out-of-range Closed sandbox row, and asserts the sandbox row is excluded from the
-/// result while the real Open year is still returned correctly.
-/// </summary>
+/// <summary>PostgreSQL-backed smoke test for MabArchiveYearSelectionService's SQL wiring. GetProcessableYearsAsync validates the *entire* fps.tblyearmaster table (spec requires exactly one Open year across the whole table), so this test cannot safely seed its own Open/Planned rows without risking a false "multiple Open years" failure against whatever real data already exists. Instead it asserts against the live table's current state: it records the real Open year up front, seeds one extra out-of-range Closed sandbox row, and asserts the sandbox row is excluded from the result while the real Open year is still returned correctly.</summary>
 [Trait("Category", "Integration")]
 public sealed class MabArchiveYearSelectionRepositoryIntegrationTests : IAsyncLifetime
 {
