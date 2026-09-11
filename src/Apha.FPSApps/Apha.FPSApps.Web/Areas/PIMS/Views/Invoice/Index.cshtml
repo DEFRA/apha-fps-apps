@@ -35,24 +35,8 @@
 
                         @* Filter 1: Project *@
                         <div class="inv-toolbar__item">
-                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProject">Project</label>
-                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                                    id="invFilterProject"
-                                    onchange="onInvProjectChange()"
-                                    aria-label="invFilterProject">
-                                <option value=""> All Projects </option>
-                                @foreach (var item in Model.ProjectList)
-                                {
-                                    if (item.Selected)
-                                    {
-                                        <option value="@item.Value" selected>@item.Text</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@item.Value">@item.Text</option>
-                                    }
-                                }
-                            </select>
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProjectMulti_input">Project</label>
+                            <div id="invFilterProjectMultiDropdown" class="sup_select_option_width_100"></div>
                         </div>
 
                         @* Filter 2: Surv Contract *@
@@ -190,7 +174,12 @@
 
 <script src="~/js/ajax-form-validation.js"></script>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
+
 @section Scripts {
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
         // ── Sidebar ─────────────────────────────────────────────────────────
         function toggleSidebar() {
@@ -199,13 +188,24 @@
 
         // ── Cached reference to the totals container ─────────────────────────────
 
+        const invoiceProjectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectList));
+        const invoicePreselectedProject = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.FilterProject ?? string.Empty));
+        var invoiceProjectSelectDropdown = null;
+        var selectedInvoiceProjectValue = invoicePreselectedProject || '';
         var $invTotals = null;
 
+        function getSelectedInvoiceProjectValue() {
+            if (invoiceProjectSelectDropdown) {
+                return invoiceProjectSelectDropdown.getValue() || '';
+            }
+            return selectedInvoiceProjectValue || '';
+        }
+
         // ── Extra filter method — called automatically by _DataGrid on every reload ──
-       
+
         function getInvoiceExtraFilters() {
             return {
-                project:  document.getElementById('invFilterProject')?.value  || '',
+                project:  getSelectedInvoiceProjectValue(),
                 contract: document.getElementById('invFilterSurvContract')?.value || '',
                 year:     document.getElementById('invFilterYear')?.value     || '',
                 program:  document.getElementById('invFilterProgram')?.value  || ''
@@ -214,10 +214,10 @@
 
         // ── Mutual-exclusivity handlers ─────────────────────────────────────────
 
-        function onInvProjectChange() {
-            var project = document.getElementById('invFilterProject')?.value || '';
+        function onInvProjectChange(project) {
+            selectedInvoiceProjectValue = (project || '').trim();
             if (typeof updatePimsSideNavProject === 'function') {
-                updatePimsSideNavProject(project);
+                updatePimsSideNavProject(selectedInvoiceProjectValue);
             }
 
             document.getElementById('invFilterSurvContract').value = '';
@@ -332,7 +332,7 @@
         // ── Add Invoice ──────────────────────────────────────────────────────────
         
         function addInvoice() {
-            var selectedProject  = document.getElementById('invFilterProject')?.value  || '';
+            var selectedProject  = getSelectedInvoiceProjectValue();
             var selectedContract = document.getElementById('invFilterSurvContract')?.value || '';
             $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
                 { project: selectedProject, contract: selectedContract },
@@ -436,14 +436,41 @@
         document.addEventListener('DOMContentLoaded', function () {
             $invTotals = $('#invTotalsContainer');
 
-            var initialProject = '@(Model.FilterProject ?? string.Empty)';
+            var initialProject = invoicePreselectedProject;
             var navigationProject = '@(Model.NavigationProject ?? string.Empty)';
             var invoMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.InvoMessage) ?? string.Empty))';
 
-            if (!initialProject.trim()) {
-                var projectSelect = document.getElementById('invFilterProject');
-                if (projectSelect) {
-                    projectSelect.value = '';
+            invoiceProjectSelectDropdown = new MultiColumnDropdownComponent({
+                dropdownId: 'invFilterProjectMulti',
+                containerSelector: '#invFilterProjectMultiDropdown',
+                placeholder: 'All Projects',
+                searchPlaceholder: 'Search by project',
+                showSerialNumber: false,
+                columns: [
+                    { field: 'Text', header: 'Project', width: '320px' }
+                ],
+                data: invoiceProjectOptionsListData || [],
+                displayField: 'Text',
+                valueField: 'Value',
+                clearButtonClearsSelection: true,
+                callbacks: {
+                    onSelect: function (selectedItem) {
+                        if (!selectedItem) return;
+                        onInvProjectChange(selectedItem.Value || '');
+                    },
+                    onClear: function () {
+                        onInvProjectChange('');
+                    }
+                }
+            });
+
+            if (initialProject.trim()) {
+                selectedInvoiceProjectValue = initialProject;
+                invoiceProjectSelectDropdown.setValue(initialProject);
+            } else {
+                selectedInvoiceProjectValue = '';
+                if (invoiceProjectSelectDropdown && typeof invoiceProjectSelectDropdown.clear === 'function') {
+                    invoiceProjectSelectDropdown.clear();
                 }
 
                 var contractSelect = document.getElementById('invFilterSurvContract');
@@ -468,7 +495,7 @@
 
             if (typeof updatePimsSideNavProject === 'function') {
                 updatePimsSideNavProject(initialProject.trim()
-                    ? (document.getElementById('invFilterProject')?.value || '')
+                    ? getSelectedInvoiceProjectValue()
                     : navigationProject);
             }
 

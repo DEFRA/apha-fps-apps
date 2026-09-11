@@ -28,13 +28,8 @@
                 <!-- ── Milestones toolbar ─────────────────────────────────── -->
                 <div class="milestones-toolbar govuk-!-margin-bottom-2">
                     <div class="sup_flex_align_center sup_flex_gap_10 govuk-!-margin-left-2">
-                        <label class="govuk-label font-size-16 sup_font_weight_700" for="projectSelectGrid">Project</label>
-                        <select asp-for="Parentproject"
-                                asp-items="Model.ProjectOptions"
-                                class="govuk-select font-size-16 govuk-!-margin-right-3"
-                                id="projectSelectGrid"
-                                onchange="onProjectChanged(this.value)">
-                        </select>
+                        <label class="govuk-label font-size-16 sup_font_weight_700" for="projectSelectGridMulti_input">Project</label>
+                        <div id="projectSelectGridMultiDropdown" class="sup_select_option_width_100 govuk-!-margin-right-3"></div>
                     </div>
                     <div >
                         <a id="importBtn"
@@ -110,7 +105,12 @@
 <input type="hidden" id="hdnTypeLookUp" value="@Model.TypeLookUp" />
 <script src="~/js/ajax-form-validation.js"></script>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
+
 @section Scripts {
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
         // ── Sidebar ─────────────────────────────────────────────────────────
         function toggleSidebar() {
@@ -118,17 +118,46 @@
         }
 
         // ── Shared state ─────────────────────────────────────────────────────
+        const milestoneProjectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectOptions));
         var currentProject = '@Html.Raw(parentproject)';
         var navigationProject = '@Html.Raw(Model.NavigationProject)';
         var logOfUpdatesFromSideNav = @(Model.IsSideNavContext ? "true" : "false");
         var mileMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.MileMessage) ?? string.Empty))';
+        var projectSelectDropdown = null;
+
+        function getSelectedMilestoneProjectValue() {
+            if (projectSelectDropdown) {
+                return projectSelectDropdown.getValue() || '';
+            }
+            return currentProject || '';
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
-            if (!currentProject.trim()) {
-                var projectSelect = document.getElementById('projectSelectGrid');
-                if (projectSelect) {
-                    projectSelect.selectedIndex = -1;
+            projectSelectDropdown = new MultiColumnDropdownComponent({
+                dropdownId: 'projectSelectGridMulti',
+                containerSelector: '#projectSelectGridMultiDropdown',
+                placeholder: 'Select a Project',
+                searchPlaceholder: 'Search by project',
+                showSerialNumber: false,
+                columns: [
+                    { field: 'Text', header: 'Project', width: '320px' }
+                ],
+                data: milestoneProjectOptionsListData || [],
+                displayField: 'Text',
+                valueField: 'Value',
+                clearButtonClearsSelection: false,
+                callbacks: {
+                    onSelect: function (selectedItem) {
+                        if (!selectedItem) return;
+                        onProjectChanged(selectedItem.Value || '');
+                    }
                 }
+            });
+
+            if (currentProject.trim()) {
+                projectSelectDropdown.setValue(currentProject);
+            } else if (projectSelectDropdown && typeof projectSelectDropdown.clear === 'function') {
+                projectSelectDropdown.clear();
             }
 
             if (mileMessage && typeof showAlertMessage === 'function') {
@@ -141,21 +170,21 @@
         });
 
         function onProjectChanged(project) {
-             currentProject = project;
+             currentProject = (project || '').trim();
 
              if (typeof updatePimsSideNavProject === 'function') {
-                 updatePimsSideNavProject(project);
+                 updatePimsSideNavProject(currentProject);
              }
 
              var logOfUpdatesBtn = document.getElementById('logOfUpdatesBtn');
              if (logOfUpdatesBtn) {
                  logOfUpdatesBtn.href = '@Url.Action("LogIndex", "Milestone", new { area = "PIMS" })'
-                     + '?project=' + encodeURIComponent(project)
+                     + '?project=' + encodeURIComponent(currentProject)
                      + '&fromSideNav=' + logOfUpdatesFromSideNav;
              }
 
              $.get('@Url.Action("GetFormRequired", "Milestone", new { area = "PIMS" })',
-                 { parentproject: project },
+                 { parentproject: currentProject },
                  function (data) {
                      var chk = document.getElementById('chkMilestoneDeliverable');
                      if (chk) { chk.checked = data.formRequired === true; }
