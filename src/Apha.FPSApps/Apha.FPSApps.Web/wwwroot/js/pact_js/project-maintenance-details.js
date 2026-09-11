@@ -10,12 +10,15 @@ var selectedJobCodeId = null;
 // Multicolumn dropdown instances
 var programDropdown = null;
 var contractDropdown = null;
+var customerDropdown = null;
 
 // Data for dropdowns
 var programListData = [];
 var contractListData = [];
+var customerListData = [];
 var selectedProgramValue = '';
 var selectedContractValue = '';
+var selectedCustomerValue = '';
 
 // Initialize the page
 function initializeProjectMaintenanceDetails(config) {
@@ -24,13 +27,16 @@ function initializeProjectMaintenanceDetails(config) {
     timeCodeGridId = config.timeCodeGridId;
     programListData = config.programListData;
     contractListData = config.contractListData;
+    customerListData = config.customerListData;
     selectedProgramValue = config.selectedProgramValue;
     selectedContractValue = config.selectedContractValue;
+    selectedCustomerValue = config.selectedCustomerValue;
 
     // Initialize dropdowns when page loads
     $(document).ready(function () {
         initializeProgramDropdown();
         initializeContractDropdown();
+        initializeCustomerDropdown();
         // Initialize form validation (unobtrusive + numeric)
         initializeFormValidation('#projectDetailForm');
     });
@@ -722,7 +728,6 @@ function initializeProgramDropdown() {
             },
             onClear: function (dropdown) {
                 $('#Project_Program').val('');
-                programDropdown.clear();
             }
         }
     });
@@ -757,7 +762,6 @@ function initializeContractDropdown() {
             },
             onClear: function (dropdown) {
                 $('#Project_Contract').val('');
-                contractDropdown.clear();
             }
         }
     });
@@ -766,6 +770,40 @@ function initializeContractDropdown() {
     if (selectedContractValue && selectedContractValue !== '') {
         setTimeout(function() {
             contractDropdown.setValue(selectedContractValue);
+        }, 0);
+    }
+}
+
+function initializeCustomerDropdown() {
+    customerDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'customerDropdown',
+        containerSelector: '#customerMultiDropdown',
+        placeholder: 'Select a Customer',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by customer',
+        labelText: 'Customer',
+        required: true,
+        columns: [
+            { field: 'Text', header: 'Customer', width: '250px' }
+        ],
+        data: customerListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                $('#Project_Customer').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function (dropdown) {
+                $('#Project_Customer').val('');
+            }
+        }
+    });
+
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
+    if (selectedCustomerValue && selectedCustomerValue !== '') {
+        setTimeout(function() {
+            customerDropdown.setValue(selectedCustomerValue);
         }, 0);
     }
 }
@@ -797,7 +835,6 @@ function initializeJobCodeWorkGroupDropdown(config) {
                 },
                 onClear: function (dropdown) {
                     $('#JobCodeWorkGroup').val('');
-                    jobCodeWorkGroupDropdown.clear();
                 }
             }
         });

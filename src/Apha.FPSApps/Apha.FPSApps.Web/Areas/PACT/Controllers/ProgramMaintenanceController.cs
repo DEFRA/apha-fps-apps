@@ -44,10 +44,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var defaultRequest = new PaginationFilter<string>();
             var grid = await BuildProjectsGrid(defaultRequest, string.IsNullOrEmpty(programNo) ? selectedProgramNo : programNo);
 
+            var customers = await _projectService.GetAllCustomersAsync();
+
             var model = new PactProgramMaintenanceViewModel
             {
                 SelectedProgramNo = selectedProgramNo,
                 ProgramList = programList,
+                CustomerList = customers.Data?.Select(c => new SelectListItem(c.Customer, c.Customer)).ToList() ?? [],
                 ProjectsGrid = grid
             };
 
