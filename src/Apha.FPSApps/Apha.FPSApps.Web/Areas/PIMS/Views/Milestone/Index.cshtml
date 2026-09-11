@@ -14,7 +14,12 @@
 
 <div class="sup_flex govuk-!-padding-top-2">
 
-    
+    <!-- ── Side Navigation ──────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+    {
+        Parentproject = Model.NavigationProject
+    })
+
     <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
 
         <div class="govuk-grid-row">
@@ -107,11 +112,39 @@
 
 @section Scripts {
     <script>
+        // ── Sidebar ─────────────────────────────────────────────────────────
+        function toggleSidebar() {
+            document.querySelector('.sidenav')?.classList.toggle('collapsed');
+        }
+
         // ── Shared state ─────────────────────────────────────────────────────
         var currentProject = '@Html.Raw(parentproject)';
+        var navigationProject = '@Html.Raw(Model.NavigationProject)';
+        var mileMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.MileMessage) ?? string.Empty))';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!currentProject.trim()) {
+                var projectSelect = document.getElementById('projectSelectGrid');
+                if (projectSelect) {
+                    projectSelect.selectedIndex = -1;
+                }
+            }
+
+            if (mileMessage && typeof showAlertMessage === 'function') {
+                showAlertMessage(mileMessage, AlertType.INFO);
+            }
+
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(currentProject.trim() ? currentProject : navigationProject);
+            }
+        });
 
         function onProjectChanged(project) {
              currentProject = project;
+
+             if (typeof updatePimsSideNavProject === 'function') {
+                 updatePimsSideNavProject(project);
+             }
 
              var logOfUpdatesBtn = document.getElementById('logOfUpdatesBtn');
              if (logOfUpdatesBtn) {
