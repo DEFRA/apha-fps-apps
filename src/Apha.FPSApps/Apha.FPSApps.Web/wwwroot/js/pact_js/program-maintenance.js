@@ -1,5 +1,6 @@
 var selectedProjectCode = '';
 let programmSelectDropdown = null;
+let customerDropdown = null;
 let selectedProgramm = null;
 $(document).ready(function () {
     // ── Program Dropdown ───
@@ -70,6 +71,7 @@ $(document).ready(function () {
             '/' + encodeURIComponent(selectedProjectCode));
     });
     initializeMultiColumnDropdown();
+    initializeCustomerDropdown();
 });
 
 function loadProgram(programNo) {
@@ -83,7 +85,16 @@ function loadProgram(programNo) {
                 $('#Program_ProgramNo').val(d.programNo);
                 $('#Program_ProgramName').val(d.programName);
                 $('#Program_SectorName').val(d.sectorName);
+                // Keep the raw customer value in the hidden field even if it is not
+                // present in the dropdown list, so Save does not lose free-text values.
                 $('#Program_Customer').val(d.customer);
+                if (customerDropdown) {
+                    if (d.customer) {
+                        customerDropdown.setValue(d.customer);
+                    } else {
+                        customerDropdown.clear();
+                    }
+                }
                 $('#Program_Manager').val(d.manager);
                 $('#Program_Minim').val(d.minim);
                 $('#Program_Directorate').val(d.directorate);
@@ -219,6 +230,33 @@ function initializeMultiColumnDropdown() {
         }
     });
     populateInitalRecordOnPageLoad();
+}
+
+function initializeCustomerDropdown() {
+    customerDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'customerDropdown',
+        containerSelector: '#customerMultiDropdown',
+        placeholder: 'Select a Customer',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by customer',
+        labelText: 'Customer',
+        required: false,
+        columns: [
+            { field: 'Text', header: 'Customer', width: '200px' }
+        ],
+        data: customerListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                $('#Program_Customer').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function (dropdown) {
+                $('#Program_Customer').val('');
+            }
+        }
+    });
 }
 
 function populateInitalRecordOnPageLoad() {

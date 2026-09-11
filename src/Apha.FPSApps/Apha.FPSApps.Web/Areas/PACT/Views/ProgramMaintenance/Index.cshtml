@@ -69,8 +69,8 @@
                                     <span asp-validation-for="Program.ProgramName" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program.Customer">Customer:</label>
-                                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program.Customer" />
+                                    <div id="customerMultiDropdown"></div>
+                                    <input type="hidden" asp-for="Program.Customer" id="Program_Customer" />
                                     <span asp-validation-for="Program.Customer" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
@@ -128,6 +128,7 @@
             projectMaintenanceUrl: '@Url.Action("Details", "ProjectMaintenance", new { area = "PACT" })'
         };
          var programListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProgramList));
+         var customerListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.CustomerList));
     </script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script src="~/js/pact_js/program-maintenance.js"></script>
