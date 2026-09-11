@@ -35,10 +35,10 @@ function initializeProjectFilterMultiColumnDropdown() {
         searchPlaceholder: 'Search by project',
         labelText: '',
         columns: [
-            { field: 'Text', header: 'Project', width: '300px' }
+            { field: 'Value', header: 'Project', width: '300px' }
         ],
         data: (typeof projectOptionsListData !== 'undefined' ? projectOptionsListData : []),
-        displayField: 'Text',
+        displayField: 'Value',
         valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {
@@ -241,14 +241,15 @@ function initializeSubContractProjectDropdown(config) {
             containerSelector: '#projectMultiDropdown',
             placeholder: 'Select Project',
             showSerialNumber: false,
-            searchPlaceholder: 'Search by project',
+            searchPlaceholder: 'Search by code or title',
             labelText: '',
             required: true,
             columns: [
-                { field: 'Text', header: 'Project', width: '300px' }
+                { field: 'Value', header: 'Project Code', width: '120px' },
+                { field: 'Text', header: 'Project Title', width: '300px' }
             ],
             data: config.projectsData || [],
-            displayField: 'Text',
+            displayField: 'Value',
             valueField: 'Value',
             clearButtonClearsSelection: true,
             callbacks: {
