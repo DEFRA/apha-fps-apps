@@ -442,7 +442,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     .Select(p => new SelectListItem
                     {
                         Value = p.ParentProject,
-                        Text = p.ParentProject
+                        Text = p.ProjectTitle
                     })
                     .ToList();
 

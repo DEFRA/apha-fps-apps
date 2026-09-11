@@ -3,6 +3,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Enums;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -23,16 +24,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IEmployeeService _employeeService;
-
-        private static readonly List<string> DefaultDirectorates =
-          new List<string> { "CSG", "Surveillance", "Lab Services" };
+        private readonly IMasterLookupService _masterLookupService;
 
         public ProgramMaintenanceController(IMapper mapper, IProgramService programService,
-            IEmployeeService employeeService)
+            IEmployeeService employeeService, IMasterLookupService masterLookupService)
         {
             _mapper = mapper;
             _programService = programService;
             _employeeService = employeeService;
+            _masterLookupService = masterLookupService;
         }
         public async Task<IActionResult> Index()
         {
@@ -243,13 +243,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task PopulateDropdownsAsync(ProgramViewModel model)
         {
             // Directorate dropdown — blank first item
-            var directorates = new List<string>(DefaultDirectorates);
-
-            if (!string.IsNullOrWhiteSpace(model.Directorate) &&
-                !directorates.Any(d => string.Equals(d, model.Directorate, StringComparison.OrdinalIgnoreCase)))
-            {
-                directorates.Add(model.Directorate);
-            }
+            var directorateResponse = await _masterLookupService.GetLookupItemsAsync(MasterLookupTable.Directorate.ToString());
+            var directorates = directorateResponse.Data?.Select(d => d.Value).ToList() ?? new List<string>();
 
             model.DirectorateOptions = directorates
                 .Select(d => new SelectListItem

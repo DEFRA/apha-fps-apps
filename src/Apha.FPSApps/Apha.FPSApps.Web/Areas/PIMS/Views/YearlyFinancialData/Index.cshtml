@@ -544,7 +544,8 @@
             setVal('pactProjectSpecific', formatGbp(projectSpecific));
             setVal('pactTotalCosts', formatGbp(pact.totalCosts));
             setVal('pactManHours', pact.hours == null ? '—' : formatEditableNumber(pact.hours, 0));
-            setVal('pactManDays', pact.hours == null ? '—' : formatEditableNumber(pact.hours / YFD_HOURS_IN_DAY, 1));
+            const pactManDays = pact.hours == null ? null : pact.hours / YFD_HOURS_IN_DAY;
+            setVal('pactManDays', pactManDays == null ? '—' : formatEditableNumber((pactManDays - Math.floor(pactManDays)) > 0.5 ? Math.ceil(pactManDays) : Math.floor(pactManDays), 0));
             setVal('pactManYears', pact.hours == null ? '—' : formatEditableNumber(pact.hours / YFD_HOURS_IN_YEAR, 3));
 
             if (copyToEditableFields) {
@@ -691,17 +692,20 @@
 
                 if (source === 'hours' && hours != null) {
                     $('#yfdModalManDays').val(formatEditableNumber(hours / YFD_HOURS_IN_DAY, 1));
-                    $('#yfdModalManYears').val(formatEditableNumber(hours / YFD_HOURS_IN_YEAR, 3));
+                    $('#yfdModalManYears').val((hours / YFD_HOURS_IN_YEAR).toString());
                 }
 
                 if (source === 'days' && days != null) {
-                    $('#yfdModalManHours').val(formatEditableNumber(days * YFD_HOURS_IN_DAY, 0));
-                    $('#yfdModalManYears').val(formatEditableNumber(days / YFD_DAYS_IN_YEAR, 3));
+                    var manHoursFromDays = toNormalizedNumber(YFD_HOURS_IN_DAY);
+                    $('#yfdModalManHours').val(isNaN(manHoursFromDays) ? '' : (days * manHoursFromDays).toString());
+                    $('#yfdModalManYears').val((days / YFD_DAYS_IN_YEAR).toString());
                 }
 
                 if (source === 'years' && years != null) {
-                    $('#yfdModalManHours').val(formatEditableNumber(years * YFD_HOURS_IN_YEAR, 0));
-                    $('#yfdModalManDays').val(formatEditableNumber(years * YFD_DAYS_IN_YEAR, 1));
+                    var manHoursPerYear = toNormalizedNumber(YFD_HOURS_IN_YEAR);
+                    var manDaysPerYear = toNormalizedNumber(YFD_DAYS_IN_YEAR);
+                    $('#yfdModalManHours').val(isNaN(manHoursPerYear) ? '' : (years * manHoursPerYear).toString());
+                    $('#yfdModalManDays').val(isNaN(manDaysPerYear) ? '' : formatEditableNumber(years * manDaysPerYear, 1));
                 }
             } finally {
                 yfdManTimeSyncing = false;

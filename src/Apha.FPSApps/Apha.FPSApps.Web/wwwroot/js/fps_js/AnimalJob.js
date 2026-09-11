@@ -5,6 +5,7 @@
 var AnimalJobConfig = {
     getJobCode: function () { return ''; },
     requireJobCodeForAdd: false,
+    fromProjectPlanning: false,
     onSaved: function () { window.location.reload(); },
     onUpdated: function () { window.location.reload(); },
     onDeleted: function () { window.location.reload(); }
@@ -21,6 +22,7 @@ function addAnimalPlan(btn) {
     $.ajax({
         url: '/FPS/AnimalJob/Create',
         type: 'GET',
+        data: { fromProjectPlanning: AnimalJobConfig.fromProjectPlanning === true },
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
@@ -86,7 +88,11 @@ function editAnimalPlan(btn) {
     $.ajax({
         url: '/FPS/AnimalJob/Edit',
         type: 'GET',
-        data: { indCounter: indCounter, jobCode: AnimalJobConfig.getJobCode() },
+        data: {
+            indCounter: indCounter,
+            jobCode: AnimalJobConfig.getJobCode(),
+            fromProjectPlanning: AnimalJobConfig.fromProjectPlanning === true
+        },
         success: function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');

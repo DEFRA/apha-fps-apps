@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -51,8 +52,12 @@ namespace Apha.FPS.Application.Services
         {
             var existing = await _repository.GetPurchaseByIdAsync(purchase.WorkGroupName, purchase.Account, purchase.ItemDescription);
             if (existing != null)
-                throw new InvalidOperationException(
-                    $"A purchase with Workgroup '{purchase.WorkGroupName}', Account '{purchase.Account}' and Item Description '{purchase.ItemDescription}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"A purchase with Workgroup '{purchase.WorkGroupName}', Account '{purchase.Account}' and Item Description '{purchase.ItemDescription}' already exists.",
+                        "PURCHASE_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<Purchase>(purchase);
             var result = await _repository.AddPurchaseAsync(entity);
@@ -72,8 +77,12 @@ namespace Apha.FPS.Application.Services
                 purchase.WorkGroupName, purchase.Account, purchase.OldItemDescription ?? purchase.ItemDescription);
 
             if (existing == null)
-                throw new InvalidOperationException(
-                    $"Purchase with Workgroup '{purchase.WorkGroupName}', Account '{purchase.Account}' and Item Description '{purchase.OldItemDescription ?? purchase.ItemDescription}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Purchase with Workgroup '{purchase.WorkGroupName}', Account '{purchase.Account}' and Item Description '{purchase.OldItemDescription ?? purchase.ItemDescription}' was not found.",
+                        "PURCHASE_NOT_FOUND")
+                ]);
 
             var result = await _repository.UpdatePurchaseAsync(
                 purchase.WorkGroupName, purchase.Account,

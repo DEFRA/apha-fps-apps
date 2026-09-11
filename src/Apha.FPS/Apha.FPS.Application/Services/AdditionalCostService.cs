@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -52,8 +53,12 @@ namespace Apha.FPS.Application.Services
                 additionalCost.JobCode, additionalCost.Account, additionalCost.Description);
 
             if (existing != null)
-                throw new InvalidOperationException(
-                    $"An additional cost with Job Code '{additionalCost.JobCode}', Account '{additionalCost.Account}' and Description '{additionalCost.Description}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"An additional cost with Job Code '{additionalCost.JobCode}', Account '{additionalCost.Account}' and Description '{additionalCost.Description}' already exists.",
+                        "ADDITIONAL_COST_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<AdditionalCost>(additionalCost);
             var result = await _repository.AddAsync(entity);
@@ -77,8 +82,12 @@ namespace Apha.FPS.Application.Services
                 additionalCost.JobCode, originalAccount, originalDescription);
 
             if (existing == null)
-                throw new InvalidOperationException(
-                    $"Additional cost with Job Code '{additionalCost.JobCode}', Account '{originalAccount}' and Description '{originalDescription}' was not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Additional cost with Job Code '{additionalCost.JobCode}', Account '{originalAccount}' and Description '{originalDescription}' was not found.",
+                        "ADDITIONAL_COST_NOT_FOUND")
+                ]);
 
             var descriptionChanged = !string.Equals(
                 originalDescription, additionalCost.Description, StringComparison.OrdinalIgnoreCase);
@@ -92,8 +101,12 @@ namespace Apha.FPS.Application.Services
                     additionalCost.JobCode, additionalCost.Account, additionalCost.Description);
 
                 if (duplicate != null)
-                    throw new InvalidOperationException(
-                        $"An additional cost with Job Code '{additionalCost.JobCode}', Account '{additionalCost.Account}' and Description '{additionalCost.Description}' already exists.");
+                    throw new BusinessValidationErrorException(
+                    [
+                        new BusinessValidationError(
+                            $"An additional cost with Job Code '{additionalCost.JobCode}', Account '{additionalCost.Account}' and Description '{additionalCost.Description}' already exists.",
+                            "ADDITIONAL_COST_ALREADY_EXISTS")
+                    ]);
             }
 
             var entity = _mapper.Map<AdditionalCost>(additionalCost);

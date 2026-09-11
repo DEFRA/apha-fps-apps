@@ -296,7 +296,21 @@ namespace Apha.PACT.Application.Services
         {
             var failures = new List<string>();
 
+            row.ProjectParent = row.ProjectParent?.Trim();
+
             ExcelValidationHelper.ValidateStringInSet(row.ProjectParent, validProjects, "Project Parent", failures);
+
+            if (failures.Count == 0 && !string.IsNullOrWhiteSpace(row.ProjectParent))
+            {
+                var canonicalProjectParent = validProjects
+                    .FirstOrDefault(x => string.Equals(x, row.ProjectParent, StringComparison.OrdinalIgnoreCase));
+
+                if (!string.IsNullOrWhiteSpace(canonicalProjectParent))
+                {
+                    row.ProjectParent = canonicalProjectParent;
+                }
+            }
+
             ExcelValidationHelper.ValidateRequiredDecimal(row.Amount, "Amount", failures);
             ExcelValidationHelper.ValidateMonth(row.Month, failures);
             ExcelValidationHelper.ValidateDecimal(row.CostOfWork, "Cost Of Work", failures, required: false);

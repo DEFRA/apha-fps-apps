@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.FPSApps.Web.Handler;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -25,19 +26,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
         private readonly IExcelExportService _excelExportService;
+        private readonly IFpsYearContext _fpsYearContext;
 
         public InvoiceImportController(
             IMapper mapper,
             IProjectInvoiceService invoiceService,
             IProjectService projectService,
             IMonthService monthService,
-            IExcelExportService excelExportService)
+            IExcelExportService excelExportService,
+            IFpsYearContext fpsYearContext)
         {
             _mapper = mapper;
             _invoiceService = invoiceService;
             _projectService = projectService;
             _monthService = monthService;
             _excelExportService = excelExportService;
+            _fpsYearContext = fpsYearContext;
         }
 
         /// <summary>
@@ -439,7 +443,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<DataGridConfig<InvoiceImportFailedItem>> BuildFailedInvoiceImportGridAsync(PaginationFilter<string> request)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _invoiceService.GetFailedInvoiceImportAsync(query);
+            var isReadOnlyYear = _fpsYearContext.IsReadOnly;
+            var response = await _invoiceService.GetFailedInvoiceImportAsync(query, isReadOnlyYear);
 
             var items = response.Data != null
                 ? _mapper.Map<List<InvoiceImportFailedItem>>(response.Data)

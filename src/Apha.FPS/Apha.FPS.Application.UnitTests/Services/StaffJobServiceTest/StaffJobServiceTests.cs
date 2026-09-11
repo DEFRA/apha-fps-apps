@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -860,7 +861,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         }
 
         [Fact]
-        public async Task AddAsync_WhenEntryAlreadyExists_ThrowsInvalidOperationException()
+        public async Task AddAsync_WhenEntryAlreadyExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var inputDto = new StaffJobDto
@@ -879,8 +880,9 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             _mockRepository.GetByIdAsync(inputDto.StaffId, inputDto.JobCode).Returns(existingEntity);
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddAsync(inputDto));
-            ex.Message.Should().Contain("JOB001");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAsync(inputDto));
+            ex.Message.Should().Contain("Record already exist for the staff");
+            ex.Message.Should().Contain("Please update the existing record");
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
         }
 
@@ -1066,10 +1068,10 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
                 .Returns(new StaffJob { StaffId = "STAFF001", JobCode = "ZT001" });
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddAsync(inputDto));
-            ex.Message.Should().Contain("Record already exist for ZT Code");
-            ex.Message.Should().Contain("ZT001");
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAsync(inputDto));
+            ex.Message.Should().Contain("Record already exist for the staff");
             ex.Message.Should().Contain("Please update the existing record");
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
         }
 
         [Fact]
