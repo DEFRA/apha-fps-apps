@@ -17,6 +17,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramMaintenanceControlle
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IEmployeeService _employeeService;
+        private readonly IMasterLookupService _masterLookupService;
         private readonly ProgramMaintenanceController _controller;
 
         public ProgramMaintenanceControllerTests()
@@ -24,7 +25,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramMaintenanceControlle
             _mapper = Substitute.For<IMapper>();
             _programService = Substitute.For<IProgramService>();
             _employeeService = Substitute.For<IEmployeeService>();
-            _controller = new ProgramMaintenanceController(_mapper, _programService, _employeeService);
+            _masterLookupService = Substitute.For<IMasterLookupService>();
+            _controller = new ProgramMaintenanceController(_mapper, _programService, _employeeService, _masterLookupService);
+        }
+
+        // Helper to stub the directorate lookup used by PopulateDropdownsAsync
+        private void SetupDirectorateLookup(params string[] values)
+        {
+            var items = values.Select(v => new LookupItemDto { Value = v }).ToList();
+            var response = ApiResponseDto<IEnumerable<LookupItemDto>>.SuccessResponse(items);
+            _masterLookupService.GetLookupItemsAsync(Arg.Any<string>()).Returns(response);
         }
 
         // Helper method to extract properties from JsonResult
@@ -163,8 +173,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramMaintenanceControlle
                 new ManagerDto { Name = "John Manager" }
             };
             var managerResponse = ApiResponseDto<List<ManagerDto>>.SuccessResponse(managers);
-                      
+
             _employeeService.GetAllManagersAsync().Returns(managerResponse);
+            SetupDirectorateLookup("IT", "Finance");
 
             // Act
             var result = await _controller.Create();
@@ -195,6 +206,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramMaintenanceControlle
             _programService.GetProgramByIdAsync(programNo).Returns(programResponse);            
             _employeeService.GetAllManagersAsync().Returns(managerResponse);
             _mapper.Map<ProgramViewModel>(program).Returns(programViewModel);
+            SetupDirectorateLookup("Finance");
 
             // Act
             var result = await _controller.Edit(programNo);

@@ -199,6 +199,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveReport(ReportItem item)
         {
+            if (!item.Emailable)
+            {
+                ModelState.Remove(nameof(ReportItem.MailComment));
+                ModelState.Remove(nameof(ReportItem.MailTitle));
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new

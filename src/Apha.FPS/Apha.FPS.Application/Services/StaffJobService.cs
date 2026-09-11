@@ -1,6 +1,7 @@
 ﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -94,8 +95,13 @@ namespace Apha.FPS.Application.Services
 
             var existing = await _staffJobRepository.GetByIdAsync(staffJob.StaffId, staffJob.JobCode);
             if (existing != null)
-                throw new InvalidOperationException($"Record already exist for ZT Code "+
-                    $"'{staffJob.JobCode}'. Please update the existing record.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Record already exist for the staff. " +
+                        $"Please update the existing record.",
+                        "STAFFJOB_ALREADY_EXISTS")
+                ]);
 
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.AddAsync(mapStaffJob);
