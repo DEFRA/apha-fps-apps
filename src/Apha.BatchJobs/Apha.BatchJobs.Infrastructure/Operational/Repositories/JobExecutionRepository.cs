@@ -19,11 +19,6 @@ public class JobExecutionRepository : IJobExecutionRepository
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<JobExecutionRepository> _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the JobExecutionRepository.
-    /// </summary>
-    /// <param name="context">The database context.</param>
-    /// <param name="logger">Optional logger for structured execution record events.</param>
     public JobExecutionRepository(BatchJobsDbContext context, ILogger<JobExecutionRepository>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -59,6 +54,15 @@ public class JobExecutionRepository : IJobExecutionRepository
             var expectedStatusId = await EnsureStatusAsync(existingRow.JobId, expectedPickupStatus.ToString(), cancellationToken);
             var runningStatusId = await EnsureStatusAsync(existingRow.JobId, JobStatus.Running.ToString(), cancellationToken);
 
+            // record.FpsYear is the target/planned year from job parameters, already cross-checked
+            // against target_fpsyear above — it is not this row's current fpsyear and must not
+            // overwrite it on pickup.
+            //
+            // record.TargetFpsYear is the same resolved value, persisted into the row's own
+            // target_fpsyear column here — the one durable place a later, separate execution
+            // (e.g. Year End Cutover) can find it via GetLastExecutionByTargetFpsYearAsync.
+            // Coalesced against the row's current value rather than set unconditionally, so a run
+            // with no targetFpsYear in its parameters can never blank out an already-persisted one.
             var updateRows = await _context.TblJobQueue
                 .Where(q => q.JobExecutionId == record.JobExecutionId && q.StatusId == expectedStatusId)
                 .ExecuteUpdateAsync(updates => updates
@@ -66,9 +70,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                     .SetProperty(q => q.StartDateTime, _ => record.StartedAt)
                     .SetProperty(q => q.RequestedBy, _ => record.UserId)
                     .SetProperty(q => q.UpdatedAt, _ => now)
-                    .SetProperty(
-                        q => q.FpsYear,
-                        q => record.FpsYear.HasValue ? record.FpsYear.Value : q.FpsYear),
+                    .SetProperty(q => q.TargetFpsYear, q => record.TargetFpsYear ?? q.TargetFpsYear),
                     cancellationToken);
 
             if (updateRows == 0)
@@ -202,6 +204,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -228,6 +231,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
             FpsYear = last.FpsYear,
+            TargetFpsYear = last.TargetFpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -239,7 +243,7 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
-    public async Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default)
+    public async Task<JobExecutionRecord?> GetLastExecutionByTargetFpsYearAsync(string jobName, int targetFpsYear, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
@@ -248,7 +252,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             from q in _context.TblJobQueue
             join m in _context.TblJobMaster on q.JobId equals m.JobId
             join s in _context.TblJobStatus on q.StatusId equals s.StatusId
-            where m.JobName == jobName && q.FpsYear == fpsYear
+            where m.JobName == jobName && q.TargetFpsYear == targetFpsYear
             orderby q.StartDateTime descending
             select new
             {
@@ -258,6 +262,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -284,6 +289,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
             FpsYear = last.FpsYear,
+            TargetFpsYear = last.TargetFpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -311,6 +317,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -343,6 +350,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = status,
             RequestedAtUtc = execution.RequestedAtUtc,
             FpsYear = execution.FpsYear,
+            TargetFpsYear = execution.TargetFpsYear,
             StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = execution.EndDateTime,
             DurationSeconds = execution.EndDateTime.HasValue && execution.StartDateTime.HasValue
@@ -403,8 +411,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             RequestedBy = requestedBy,
             RequestedAtUtc = requestedAtUtc,
             FpsYear = fpsYear,
-            // Keep compatibility with environments where startdatetime is still NOT NULL.
-            // Status remains Initiated; worker updates the value when transitioning to Running.
+            // startdatetime kept non-null for compatibility; worker updates it on transition to Running.
             StartDateTime = requestedAtUtc,
             EndDateTime = null,
             ErrorMessage = null,

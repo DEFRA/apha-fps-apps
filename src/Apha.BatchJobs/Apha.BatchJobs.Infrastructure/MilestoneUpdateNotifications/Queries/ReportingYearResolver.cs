@@ -26,9 +26,10 @@ public sealed class ReportingYearResolver : IReportingYearResolver
     /// <inheritdoc />
     public async Task<ReportingYear> ResolveAsync(CancellationToken cancellationToken)
     {
+        // SingleOrDefaultAsync: the view should return at most one row. More than one is a
+        // configuration anomaly and should throw rather than silently pick one.
         var row = await _context.MaVLatestMonthYear
-            .OrderByDescending(r => r.Year)
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (row is null)
         {

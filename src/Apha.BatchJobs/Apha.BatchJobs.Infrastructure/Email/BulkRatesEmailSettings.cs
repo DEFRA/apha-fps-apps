@@ -7,4 +7,6 @@ public sealed class BulkRatesEmailSettings
     public string CompletionRecipients { get; set; } = string.Empty;
     public string CompletionSubject { get; set; } = string.Empty;
     public string CompletionBody { get; set; } = string.Empty;
+    public string FailureSubject { get; set; } = string.Empty;
+    public string FailureBody { get; set; } = string.Empty;
 }

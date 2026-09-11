@@ -76,6 +76,6 @@ public sealed class CreatePlannedYearStep : IYearEndDataSetupStep
     private static string BuildFpsYearCode(int fpsYear)
     {
         var followingYearTwoDigits = (fpsYear + 1) % 100;
-        return $"FPS{fpsYear}-{followingYearTwoDigits:D2}";
+        return $"{fpsYear}-{followingYearTwoDigits:D2}";
     }
 }

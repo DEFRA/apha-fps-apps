@@ -2,15 +2,22 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.HealthCheck;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.RecreateSummaries;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
 
 public static class BatchJobRegistrationExtensions
 {
-    // Registers only the current-branch supported job set.
-    // Year End and MilestoneNotification are excluded until those branches merge.
+    // Phase 7F (main-port, 2026-08-28): Year End is now registered here — main-port Phases 1-7E
+    // implemented it for real, but nobody had updated this list, so BatchJobFactory could resolve
+    // "YearEnd-DataSetup"/"YearEnd-CutOver" to the right *type* (Phase 7D) yet still fail to
+    // construct it, because neither handler was ever registered in the container. Discovered live
+    // during Phase 8 Gate C4b — the first real Worker invocation to reach this far. Every prior
+    // phase's tests either constructed the handler directly or exercised the pipeline steps/services
+    // below it, never through this composition root, so nothing caught the gap until now.
     public static IServiceCollection RegisterBatchJobImplementations(
         this IServiceCollection services)
     {
@@ -19,7 +26,10 @@ public static class BatchJobRegistrationExtensions
         services.AddJob<BulkTestRatesUpdateJob>();
         services.AddJob<HealthCheckJobHandler>();
         services.AddJob<MabArchiveJob>();
+        services.AddJob<MilestoneUpdateNotificationsJob>();
         services.AddJob<RecreateSummaryJob>();
+        services.AddJob<YearEndDataSetupJobHandler>();
+        services.AddJob<YearEndCutoverJobHandler>();
         return services;
     }
 

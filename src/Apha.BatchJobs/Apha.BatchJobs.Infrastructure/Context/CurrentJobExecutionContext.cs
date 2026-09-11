@@ -15,6 +15,7 @@ public sealed class CurrentJobExecutionContext : ICurrentJobExecutionContext
     public RunMode RunMode { get; private set; }
     public string RequestedBy { get; private set; } = string.Empty;
     public string? ParametersJson { get; private set; }
+    public DateTime? RequestedAtUtc { get; private set; }
 
     public void Initialize(
         Guid jobExecutionId,
@@ -22,7 +23,8 @@ public sealed class CurrentJobExecutionContext : ICurrentJobExecutionContext
         string jobName,
         RunMode runMode,
         string requestedBy,
-        string? parametersJson)
+        string? parametersJson,
+        DateTime? requestedAtUtc = null)
     {
         JobExecutionId = jobExecutionId;
         JobQueueId = jobQueueId;
@@ -30,5 +32,6 @@ public sealed class CurrentJobExecutionContext : ICurrentJobExecutionContext
         RunMode = runMode;
         RequestedBy = requestedBy;
         ParametersJson = parametersJson;
+        RequestedAtUtc = requestedAtUtc;
     }
 }

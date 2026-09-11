@@ -1,8 +1,6 @@
 namespace Apha.BatchJobs.Infrastructure.Data;
 
-/// <summary>
-/// EF entity for fps.job_master.
-/// </summary>
+/// <summary>EF entity for fps.job_master.</summary>
 internal sealed class TblJobMaster
 {
     public int JobId { get; set; }
@@ -14,9 +12,7 @@ internal sealed class TblJobMaster
     public DateTime UpdatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.job_status.
-/// </summary>
+/// <summary>EF entity for fps.job_status.</summary>
 internal sealed class TblJobStatus
 {
     public int StatusId { get; set; }
@@ -25,9 +21,7 @@ internal sealed class TblJobStatus
     public DateTime CreatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.job_queue.
-/// </summary>
+/// <summary>EF entity for fps.job_queue.</summary>
 internal sealed class TblJobQueue
 {
     /// <summary>
@@ -46,6 +40,14 @@ internal sealed class TblJobQueue
     public required string RequestedBy { get; set; }
     public DateTime? RequestedAtUtc { get; set; }
     public int? FpsYear { get; set; }
+
+    /// <summary>
+    /// The year a Year End Data Setup request is preparing — distinct from <see cref="FpsYear"/>,
+    /// which is the request's own current/open year. Only Year End Data Setup requests set this;
+    /// every other job type on this shared table leaves it null.
+    /// </summary>
+    public int? TargetFpsYear { get; set; }
+
     public DateTime? StartDateTime { get; set; }   // Null when Initiated (not yet started)
     public DateTime? EndDateTime { get; set; }
     public string? ErrorMessage { get; set; }
@@ -53,9 +55,7 @@ internal sealed class TblJobQueue
     public DateTime UpdatedAt { get; set; }
 }
 
-/// <summary>
-/// EF entity for fps.job_queue_log.
-/// </summary>
+/// <summary>EF entity for fps.job_queue_log.</summary>
 internal sealed class TblJobQueueLog
 {
     public int JobQueueLogId { get; set; }

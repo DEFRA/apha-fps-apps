@@ -7,4 +7,5 @@ namespace Apha.BatchJobs.Domain.Entities.Email;
 public sealed record EmailMessage(
     IReadOnlyList<string> To,
     string Subject,
-    string HtmlBody);
+    string HtmlBody,
+    bool IsBodyHtml);

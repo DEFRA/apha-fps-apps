@@ -3,6 +3,7 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Configuration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -45,9 +46,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// <summary>Default maximum retry duration in seconds.</summary>
     private const int DefaultMaxRetryDurationSeconds = 0;
 
-    /// <summary>
-    /// Initializes a new instance of <see cref="JobOrchestrator"/>.
-    /// </summary>
     public JobOrchestrator(
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
@@ -116,6 +114,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+
+        // Must run before the worker-managed-scheduled fast path below, which otherwise assumes
+        // no pre-created row exists and skips this check. Incident precedent: a "MABArchive"
+        // request was once allowed to adopt and corrupt a pre-created "YearEnd-DataSetup" row
+        // because this validation lived only inside ValidatePreCreatedExecutionRecordAsync,
+        // which the fast path bypasses.
+        if (existingExecution is not null)
+        {
+            ValidateExecutionBelongsToRequestedJob(jobName, jobExecutionId, existingExecution);
+        }
 
         var shouldAutoCreateInitiated = IsWorkerManagedScheduledRun(jobName, runMode);
         // Worker-managed MABArchive Scheduled runs may self-create their initiated record below.
@@ -188,7 +196,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
             Status = JobStatus.Running,
             StartedAt = startedAt,
             RequestedAtUtc = requestedAtUtc,
-            FpsYear = fpsYear
+            FpsYear = fpsYear,
+            TargetFpsYear = fpsYear
         };
 
         int executionId = 0;
@@ -222,11 +231,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             var job = _factory.Create(jobName);
 
-            // Populate the scoped execution context so the job can read its resolved identity
-            // and parameters instead of re-parsing environment variables or querying its own
-            // jobQueueId — everyone in this DI scope (this orchestrator and the job it just
-            // resolved) shares the same instance for the lifetime of this one execution.
-            _currentExecutionContext.Initialize(jobExecutionId, jobQueueId, jobName, runMode, userId, parametersJson);
+            // Populates the scoped execution context so the job can read its identity and
+            // parameters instead of re-parsing env vars — shared by this orchestrator and the
+            // job for the lifetime of this one execution.
+            _currentExecutionContext.Initialize(
+                jobExecutionId, jobQueueId, jobName, runMode, userId, parametersJson, existingExecution.RequestedAtUtc);
 
             var runtimeTimeoutSeconds = ResolveRuntimeTimeoutSeconds(job);
 
@@ -239,8 +248,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
         catch (Exception ex)
         {
-            // Capture failures raised before/around ExecuteAsync (for example factory resolution)
-            // so execution state is persisted correctly as Failed.
+            // Captures failures raised before/around ExecuteAsync (e.g. factory resolution) as Failed.
             jobException = ex;
         }
         finally
@@ -265,10 +273,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
             await MarkFailedSafelyAsync(record, finalStatus, jobException, jobQueueId);
 
-            // Step 5 — Release lock (always), immediately after the final lifecycle state is
-            // persisted. This releases the lock before failure notification (below, outside this
-            // finally) runs — notification is best-effort operational reporting, not part of the
-            // protected batch execution, so it must not hold the lock open while it sends.
+            // Step 5 — Release lock (always), before failure notification runs. Notification is
+            // best-effort and must not hold the lock open while it sends.
             try
             {
                 await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
@@ -304,8 +310,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is null)
         {
-            var completionContext = new BatchJobCompletionContext(jobQueueId, jobExecutionId, jobName, fpsYear, userId);
+            var completionContext = new BatchJobCompletionContext(
+                jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, ErrorMessage: null);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
+            await TryNotifyExecutionOutcomeAsync(record);
         }
 
         if (jobException is OperationCanceledException cancelEx)
@@ -315,7 +323,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             // Runs after the lock has already been released above — best-effort operational
             // reporting is not part of the protected batch execution and must not delay it.
-            await TryNotifyFailureAsync(jobName, jobExecutionId, jobException);
+            // Post-completion notifiers (e.g. the Bulk Rates approver email) fire here too, since
+            // their recipients need failure visibility just as much as success — a cancelled run
+            // (handled above) is deliberately excluded, not a genuine failure worth alerting on.
+            var completionContext = new BatchJobCompletionContext(
+                jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, jobException.Message);
+            await TryNotifyCompletionAsync(completionContext, cancellationToken);
+            await TryNotifyExecutionOutcomeAsync(record);
             ThrowWithStructuredLog(jobException, jobName, jobQueueId, jobExecutionId);
         }
 
@@ -325,7 +339,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private static bool IsWorkerManagedScheduledRun(string jobName, RunMode runMode) =>
         runMode == RunMode.Scheduled &&
         (string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase) ||
-         string.Equals(jobName, BatchJobNames.MilestoneUpdateNotifications, StringComparison.OrdinalIgnoreCase));
+         MonthlyScheduledNotificationJobs.Contains(jobName));
 
     private async Task<JobExecutionRecord> AutoCreateInitiatedRecordAsync(
         string jobName, Guid jobExecutionId, string userId,
@@ -384,8 +398,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
             var attemptToken = attemptCts.Token;
 
-            // Heartbeat is now handled at job/step entry points (step-based strategy)
-            // instead of background loop, providing better observability and step correlation.
+            // Heartbeat now happens at job/step entry points, not a background loop.
             _logger.LogInformation(
                 "Heartbeat strategy: step-based checks (not background loop) | JobName={JobName} | JobQueueId={JobQueueId}",
                 jobName, jobQueueId);
@@ -496,10 +509,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Persists the final execution record status. If the update itself fails (e.g. DB is down),
-    /// logs both the persistence failure and the original exception type at Critical level so
-    /// CloudWatch metric filters can still fire, then swallows the persistence error so the
-    /// container exits with the correct non-zero code.
+    /// Persists the final execution status. If that write itself fails, logs at Critical (so
+    /// CloudWatch alarms still fire) and swallows the error so the container still exits with
+    /// the original job's exit code.
     /// </summary>
     private async Task MarkFailedSafelyAsync(
         JobExecutionRecord record,
@@ -530,10 +542,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// </summary>
     private void ThrowWithStructuredLog(Exception exception, string jobName, Guid jobQueueId, Guid jobExecutionId)
     {
-        // Only Sql and General have a CloudWatch alarm wired up for the initial implementation.
-        // Configuration and email failures (BusinessEmailException) intentionally roll up into
-        // General rather than getting their own unwatched alarm channel; email may be split out
-        // later if the monthly notification job needs a dedicated alert once live sending ships.
+        // Only Sql and General have CloudWatch alarms wired up; Configuration and email
+        // failures roll up into General rather than an unwatched alarm channel.
         var errorType = _failureClassifier.Classify(exception).ErrorType;
 
         _logger.LogError(
@@ -548,17 +558,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Sends a best-effort failure notification once retries are exhausted and the job is about
-    /// to be reported as failed. Never lets a notification failure mask the original job exception.
-    /// Gated on <see cref="BatchAlertingSettings.EnableEmailNotifications"/> AND job-name
-    /// membership in <see cref="BatchAlertingSettings.EmailEnabledJobs"/> — this hook is generic
-    /// across all jobs, so eligibility must be opted into per job rather than applying to every
-    /// job's failure by default.
-    /// </summary>
-    /// <summary>
-    /// Invokes all registered post-completion notifiers in sequence after a job is durably
-    /// Completed and its lock released. Failures in any notifier are logged at Error level and
-    /// swallowed — a notification problem must not alter the durable Completed state.
+    /// Invokes all registered post-completion notifiers after a job durably reaches Completed or
+    /// Failed and its lock is released. Notifier failures are logged and swallowed — a
+    /// notification problem must not alter the durable job outcome.
     /// </summary>
     private async Task TryNotifyCompletionAsync(BatchJobCompletionContext context, CancellationToken cancellationToken)
     {
@@ -581,30 +583,54 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
     }
 
-    private async Task TryNotifyFailureAsync(string jobName, Guid jobExecutionId, Exception exception)
+    /// <summary>
+    /// Sends a best-effort execution-outcome notification (Completed or Failed) once the final
+    /// status is durably persisted and the lock released. Never lets a notification failure
+    /// change or mask the persisted outcome. Applies to every job automatically — gated only on
+    /// <see cref="BatchAlertingSettings.EnableEmailNotifications"/> and the matching
+    /// <see cref="BatchAlertingSettings.NotifyOnSuccess"/>/<see cref="BatchAlertingSettings.NotifyOnFailure"/>
+    /// flag, with no per-job allow-list. <see cref="CancellationToken.None"/> is used deliberately —
+    /// this runs after the protected execution has already finished, so it must not be tangled up
+    /// in that execution's own cancellation.
+    /// </summary>
+    private async Task TryNotifyExecutionOutcomeAsync(JobExecutionRecord record)
     {
-        if (!_alertingSettings.EnableEmailNotifications ||
-            !_alertingSettings.EmailEnabledJobs.Contains(jobName, StringComparer.OrdinalIgnoreCase))
+        var shouldNotify = record.Status switch
+        {
+            JobStatus.Completed => _alertingSettings.NotifyOnSuccess,
+            JobStatus.Failed => _alertingSettings.NotifyOnFailure,
+            _ => false
+        };
+
+        if (!_alertingSettings.EnableEmailNotifications || !shouldNotify)
         {
             return;
         }
 
         try
         {
-            await _notificationService.SendFailureNotificationAsync(
-                jobExecutionId.ToString("D"),
-                jobName,
-                exception.Message,
-                DateTime.UtcNow,
-                CancellationToken.None);
+            var notification = new BatchExecutionNotification(
+                record.JobName,
+                record.JobExecutionId,
+                record.JobQueueId,
+                record.RunMode,
+                record.UserId,
+                record.RequestedAtUtc,
+                record.Status,
+                record.CompletedAt ?? DateTime.UtcNow,
+                record.DurationSeconds.HasValue ? TimeSpan.FromSeconds(record.DurationSeconds.Value) : null,
+                record.Status == JobStatus.Failed ? record.ErrorMessage : null);
+
+            await _notificationService.SendExecutionNotificationAsync(notification, CancellationToken.None);
         }
         catch (Exception notifyEx)
         {
             _logger.LogWarning(
                 notifyEx,
-                "Failed to send failure notification | JobName={JobName} | JobExecutionId={JobExecutionId}",
-                jobName,
-                jobExecutionId);
+                "Failed to send execution notification | JobName={JobName} | JobExecutionId={JobExecutionId} | Status={Status}",
+                record.JobName,
+                record.JobExecutionId,
+                record.Status);
         }
     }
 
@@ -619,31 +645,28 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Returns false for exceptions that must never be retried:
-    /// configuration errors, validation failures, and business-rule violations.
-    /// Only explicit transient infrastructure failures (timeouts, connectivity) are retryable.
-    /// Default is now false to avoid overly broad retry surface.
+    /// True only for explicit transient infrastructure failures (timeouts, connectivity).
+    /// Configuration, validation, and business-rule errors are never retried.
     /// </summary>
     public static bool IsRetryable(Exception ex) => ex switch
     {
-        // Never retry on cancellation or operational errors
-        OperationCanceledException => false,           // cancellation: never retry
-        
-        // Never retry on programming/configuration errors
-        ArgumentException => false,                    // programming / validation error
-        InvalidOperationException => false,            // configuration / business-rule error
-        NotSupportedException => false,                // permanent capability error
-        NotImplementedException => false,              // permanent / incomplete feature
-        
-        // Retry on transient infrastructure failures (explicit list)
-        TimeoutException => true,                      // transient network/DB timeout
-        NpgsqlException => true,                       // PostgreSQL-specific error (retry safe)
-        DbUpdateException => true,                     // EF/database transient error
-        HttpRequestException => true,                  // Network/HTTP transient error
-        System.Net.Sockets.SocketException => true,   // Network socket failure
-        IOException => true,                           // Transient I/O error
-        
-        // Default: do NOT retry (fail-safe: assume permanent unless proven transient)
+        OperationCanceledException => false,
+        ArgumentException => false,
+        InvalidOperationException => false,
+        NotSupportedException => false,
+        NotImplementedException => false,
+
+        // undefined_table: a schema/SQL mismatch, not transient infrastructure — retrying re-runs
+        // the same broken query and can never succeed.
+        PostgresException pg when pg.SqlState == PostgresErrorCodes.UndefinedTable => false,
+
+        TimeoutException => true,
+        NpgsqlException => true,
+        DbUpdateException => true,
+        HttpRequestException => true,
+        System.Net.Sockets.SocketException => true,
+        IOException => true,
+
         _ => false
     };
 
@@ -707,6 +730,21 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
     // ─── Execution contract validation ──────────────────────────────────────────
 
+    /// <summary>
+    /// A row found by jobExecutionId alone is not proof it belongs to the requested job — a
+    /// reused execution ID for a different job must never be silently adopted. Called
+    /// unconditionally in <see cref="RunAsync"/> before any other branching, so nothing can
+    /// bypass it.
+    /// </summary>
+    private static void ValidateExecutionBelongsToRequestedJob(string jobName, Guid jobExecutionId, JobExecutionRecord existingExecution)
+    {
+        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
+        }
+    }
+
     private async Task ValidatePreCreatedExecutionRecordAsync(
         string jobName,
         Guid jobExecutionId,
@@ -723,20 +761,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 $"API must insert and prepare {expectedPickupStatus} before worker start.");
         }
 
-        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
-        }
+        // Job identity is already validated in RunAsync before this method runs — not repeated here.
 
         _logger.LogInformation(
             "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
             jobExecutionId, existingExecution.JobQueueId, existingExecution.Status);
 
-        if (targetFpsYear.HasValue && existingExecution.FpsYear.HasValue && existingExecution.FpsYear.Value != targetFpsYear.Value)
+        if (targetFpsYear.HasValue && existingExecution.TargetFpsYear.HasValue && existingExecution.TargetFpsYear.Value != targetFpsYear.Value)
         {
             throw new InvalidOperationException(
-                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has fpsyear '{existingExecution.FpsYear.Value}' " +
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has target_fpsyear '{existingExecution.TargetFpsYear.Value}' " +
                 $"but trigger requested targetFpsYear '{targetFpsYear.Value}'.");
         }
 
@@ -796,7 +830,27 @@ public sealed class JobOrchestrator : IJobOrchestrator
         string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
         || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Extracts the requested FPS year from job parameters. Reads <c>plannedYear</c> (what
+    /// production sends), falling back to the legacy <c>targetFpsYear</c> alias. Throws if both
+    /// are present and disagree, rather than silently picking one.
+    /// </summary>
     private static int? TryExtractFpsYearFromParameters(string? parametersJson)
+    {
+        var plannedYear = TryExtractIntField(parametersJson, "plannedYear");
+        var legacyTargetFpsYear = TryExtractIntField(parametersJson, "targetFpsYear");
+
+        if (plannedYear.HasValue && legacyTargetFpsYear.HasValue && plannedYear.Value != legacyTargetFpsYear.Value)
+        {
+            throw new InvalidOperationException(
+                $"Job parameters contain conflicting year values: plannedYear={plannedYear.Value}, " +
+                $"targetFpsYear={legacyTargetFpsYear.Value}. These must agree or only one should be supplied.");
+        }
+
+        return plannedYear ?? legacyTargetFpsYear;
+    }
+
+    private static int? TryExtractIntField(string? parametersJson, string propertyName)
     {
         if (string.IsNullOrWhiteSpace(parametersJson))
             return null;
@@ -807,7 +861,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // EventBridge passes "null" when parametersJson is absent; treat non-object root as absent.
             if (doc.RootElement.ValueKind != JsonValueKind.Object)
                 return null;
-            if (!doc.RootElement.TryGetProperty("targetFpsYear", out var el))
+            if (!doc.RootElement.TryGetProperty(propertyName, out var el))
                 return null;
 
             if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var num))

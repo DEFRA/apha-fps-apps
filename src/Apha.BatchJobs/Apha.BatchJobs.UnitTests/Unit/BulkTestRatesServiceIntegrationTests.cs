@@ -24,7 +24,7 @@ namespace Apha.BatchJobs.UnitTests;
 public sealed class BulkTestRatesServiceIntegrationTests : IAsyncLifetime
 {
     private const string DefaultConnectionString =
-        "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Password=admin123;SSL Mode=Disable";
+        "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Password=LOCAL_DB_PASSWORD;SSL Mode=Disable";
     private readonly string _connectionString;
     private string? _skipReason;
 
