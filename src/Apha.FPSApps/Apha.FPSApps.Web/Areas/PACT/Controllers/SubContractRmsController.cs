@@ -425,6 +425,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowAdd = false,
                 AllowEdit = true,
                 AllowDelete = true, 
+                AllowExcelExport = false,
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<SubContractRmsFailedItem>(),
                 Pagination = pagination,
