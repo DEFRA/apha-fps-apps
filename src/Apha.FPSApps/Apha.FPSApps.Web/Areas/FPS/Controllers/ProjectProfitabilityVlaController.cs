@@ -222,17 +222,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             //   (existing /api/v1/employee lookup); ManagerDto.Name used as both Value and Text.
+            //   The lookup returns one row per workgroup/grade assignment, so the same person can
+            //   appear several times; collapse to a distinct, trimmed list. The grid's Manager
+            //   column is tlkpProject.Manager, which stores these same names.
             var managerResult = await _projectService.GetManagersAsync();
             if (managerResult.Success && managerResult.Data != null)
             {
                 model.ManagerList = managerResult.Data
                     .Where(m => !string.IsNullOrWhiteSpace(m.Name))
-                    .OrderBy(m => m.Name)
-                    .Select(m => new SelectListItem
+                    .Select(m => m.Name.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                    .Select(name => new SelectListItem
                     {
-                        Value    = m.Name,
-                        Text     = m.Name,
-                        Selected = string.Equals(model.SelectedManager, m.Name,
+                        Value    = name,
+                        Text     = name,
+                        Selected = string.Equals(model.SelectedManager, name,
                                       StringComparison.OrdinalIgnoreCase)
                     })
                     .ToList();

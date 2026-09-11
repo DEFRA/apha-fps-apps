@@ -320,18 +320,23 @@ namespace Apha.PACT.Application.Services
             var month = record.Month;
             var hours = record.Hours;
 
+            ValidateHours(hours, failures);
+            ValidateWorkGroup(ref workGroup, context.ValidWorkGroups, failures);
+            ValidateStaff(staffId, name, workGroup, record, context.StaffByWorkGroup, failures);
+
+            staffId = string.IsNullOrWhiteSpace(record.PactStaffId) ? staffId : record.PactStaffId.Trim();
+            name = string.IsNullOrWhiteSpace(record.Name) ? name : record.Name.Trim();
+
+            ValidateTimeCode(ref timeCode, ref workGroup, context.TimeCodeRows, failures);
+            ValidateParentProject(ref parentProject, ref workGroup, ref timeCode, context.TimeCodeRows, failures);
+            ValidateMonth(month, context.ValidMonths, failures);
+
             record.WorkGroup = workGroup;
             record.PactStaffId = staffId;
             record.Name = name;
             record.TimeCode = timeCode;
             record.ParentProject = parentProject;
 
-            ValidateHours(hours, failures);
-            ValidateWorkGroup(workGroup, context.ValidWorkGroups, failures);
-            ValidateStaff(staffId, name, workGroup, record, context.StaffByWorkGroup, failures);
-            ValidateTimeCode(timeCode, workGroup, context.TimeCodeRows, failures);
-            ValidateParentProject(parentProject, workGroup, timeCode, context.TimeCodeRows, failures);
-            ValidateMonth(month, context.ValidMonths, failures);
             ValidateDuplicates(record, failures, context, stagingKeys);
 
             return failures;
@@ -343,16 +348,29 @@ namespace Apha.PACT.Application.Services
                 failures.Add($"The hours field is not a number -\"{hours}\"");
         }
 
-        private static void ValidateWorkGroup(string? workGroup, HashSet<string> validWorkGroups, List<string> failures)
+        private static void ValidateWorkGroup(
+            ref string? workGroup,
+            HashSet<string> validWorkGroups,
+            List<string> failures)
         {
-            if (string.IsNullOrWhiteSpace(workGroup))
+            var workGroupValue = workGroup;
+
+            if (string.IsNullOrWhiteSpace(workGroupValue))
             {
                 failures.Add("The work group name is blank.");
+                return;
             }
-            else if (!validWorkGroups.Contains(workGroup))
+
+            var match = validWorkGroups
+                .FirstOrDefault(x => string.Equals(x, workGroupValue, StringComparison.OrdinalIgnoreCase));
+
+            if (string.IsNullOrWhiteSpace(match))
             {
-                failures.Add($"The work group name is invalid: {workGroup}");
+                failures.Add($"The work group name is invalid: {workGroupValue}");
+                return;
             }
+
+            workGroup = match;
         }
 
         private static void ValidateStaff(
@@ -447,49 +465,72 @@ namespace Apha.PACT.Application.Services
         }
 
         private static void ValidateTimeCode(
-            string? timeCode,
-            string? workGroup,
+            ref string? timeCode,
+            ref string? workGroup,
             List<TimeCodeValid> timeCodeRows,
             List<string> failures)
         {
-            if (string.IsNullOrWhiteSpace(timeCode))
+            var timeCodeValue = timeCode;
+            var workGroupValue = workGroup;
+
+            if (string.IsNullOrWhiteSpace(timeCodeValue))
             {
                 failures.Add("The Timecode is blank.");
                 return;
             }
 
             var validTimeCodes = timeCodeRows
-                .Where(x => string.Equals(x.WorkGroup, workGroup, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(x.TimeCode, timeCode, StringComparison.OrdinalIgnoreCase))
+                .Where(x => string.Equals(x.WorkGroup, workGroupValue, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(x.TimeCode, timeCodeValue, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (validTimeCodes.Count == 0)
             {
-                failures.Add($"Timecode not valid for this WG or invalid timecode: {timeCode}, {workGroup}");
+                failures.Add($"Timecode not valid for this WG or invalid timecode: {timeCodeValue}, {workGroupValue}");
+                return;
             }
-            else if (!validTimeCodes.Any(x => x.Active))
+
+            var canonicalTimeCodeRow = validTimeCodes.FirstOrDefault(x => x.Active) ?? validTimeCodes[0];
+            workGroup = canonicalTimeCodeRow.WorkGroup;
+            timeCode = canonicalTimeCodeRow.TimeCode;
+
+            if (!validTimeCodes.Any(x => x.Active))
             {
                 failures.Add("Timecode not valid for this WG.");
             }
         }
 
         private static void ValidateParentProject(
-            string? parentProject,
-            string? workGroup,
-            string? timeCode,
+            ref string? parentProject,
+            ref string? workGroup,
+            ref string? timeCode,
             List<TimeCodeValid> timeCodeRows,
             List<string> failures)
         {
-            if (string.IsNullOrWhiteSpace(parentProject))
+            var parentProjectValue = parentProject;
+            var workGroupValue = workGroup;
+            var timeCodeValue = timeCode;
+
+            if (string.IsNullOrWhiteSpace(parentProjectValue))
             {
                 failures.Add("The Project is blank.");
+                return;
             }
-            else if (!timeCodeRows.Any(x => string.Equals(x.WorkGroup, workGroup, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(x.TimeCode, timeCode, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(x.ParentProject, parentProject, StringComparison.OrdinalIgnoreCase)))
+
+            var matchingRow = timeCodeRows.FirstOrDefault(x =>
+                string.Equals(x.WorkGroup, workGroupValue, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(x.TimeCode, timeCodeValue, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(x.ParentProject, parentProjectValue, StringComparison.OrdinalIgnoreCase));
+
+            if (matchingRow == null)
             {
-                failures.Add($"Not valid timecode/Project/WG combination: {timeCode}, {parentProject}, {workGroup}");
+                failures.Add($"Not valid timecode/Project/WG combination: {timeCodeValue}, {parentProjectValue}, {workGroupValue}");
+                return;
             }
+
+            workGroup = matchingRow.WorkGroup;
+            timeCode = matchingRow.TimeCode;
+            parentProject = matchingRow.ParentProject;
         }
 
         private static void ValidateMonth(double? month, HashSet<double> validMonths, List<string> failures)

@@ -52,6 +52,14 @@ namespace Apha.Common.Constants
         public const string UpdateDivision = "api/v1/division/{0}";
         public const string DeleteDivision = "api/v1/division/{0}";
 
+        // Master Lookup
+        public const string GetAllMasterLookups = "api/v1/masterlookup";
+        public const string GetLookupItems = "api/v1/masterlookup/{0}/items";
+        public const string GetLookupItemsPaged = "api/v1/masterlookup/{0}/items/paged";
+        public const string CreateLookupItem = "api/v1/masterlookup/{0}/items";
+        public const string UpdateLookupItem = "api/v1/masterlookup/{0}/items";
+        public const string DeleteLookupItem = "api/v1/masterlookup/{0}/items/{1}";
+
         // Grade Maintenance (frmMaintGrade → api/v1/Grade) — added Phase 14
         public const string GetPagedGrades = "api/v1/Grade/paged";
         public const string GetGradeById = "api/v1/Grade/{0}";

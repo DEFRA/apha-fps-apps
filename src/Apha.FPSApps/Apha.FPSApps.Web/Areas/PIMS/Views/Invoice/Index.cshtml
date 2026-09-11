@@ -14,6 +14,12 @@
 
 <div class="sup_flex">
 
+    <!-- ── Side Navigation ──────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+    {
+        Parentproject = Model.NavigationProject
+    })
+
     <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
 
         <div class="govuk-grid-row">
@@ -186,8 +192,13 @@
 
 @section Scripts {
     <script>
+        // ── Sidebar ─────────────────────────────────────────────────────────
+        function toggleSidebar() {
+            document.querySelector('.sidenav')?.classList.toggle('collapsed');
+        }
+
         // ── Cached reference to the totals container ─────────────────────────────
-      
+
         var $invTotals = null;
 
         // ── Extra filter method — called automatically by _DataGrid on every reload ──
@@ -204,6 +215,11 @@
         // ── Mutual-exclusivity handlers ─────────────────────────────────────────
 
         function onInvProjectChange() {
+            var project = document.getElementById('invFilterProject')?.value || '';
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(project);
+            }
+
             document.getElementById('invFilterSurvContract').value = '';
             document.getElementById('invFilterProgram').value = '';
             applyInvoiceFilters();
@@ -419,6 +435,42 @@
         // HTML is replaced on reload — no DOM re-parenting needed.
         document.addEventListener('DOMContentLoaded', function () {
             $invTotals = $('#invTotalsContainer');
+
+            var initialProject = '@(Model.FilterProject ?? string.Empty)';
+            var navigationProject = '@(Model.NavigationProject ?? string.Empty)';
+            var invoMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.InvoMessage) ?? string.Empty))';
+
+            if (!initialProject.trim()) {
+                var projectSelect = document.getElementById('invFilterProject');
+                if (projectSelect) {
+                    projectSelect.value = '';
+                }
+
+                var contractSelect = document.getElementById('invFilterSurvContract');
+                if (contractSelect) {
+                    contractSelect.value = '';
+                }
+
+                var programSelect = document.getElementById('invFilterProgram');
+                if (programSelect) {
+                    programSelect.value = '';
+                }
+
+                var yearSelect = document.getElementById('invFilterYear');
+                if (yearSelect) {
+                    yearSelect.selectedIndex = -1;
+                }
+            }
+
+            if (invoMessage && typeof showAlertMessage === 'function') {
+                showAlertMessage(invoMessage, AlertType.INFO);
+            }
+
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(initialProject.trim()
+                    ? (document.getElementById('invFilterProject')?.value || '')
+                    : navigationProject);
+            }
 
             // Persistent listener — fires after every grid reload (sort, page, filter).
             document.addEventListener('gridReloaded', function (e) {

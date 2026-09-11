@@ -254,6 +254,10 @@
         function onProjectChanged() {
             var project = document.getElementById('commentProject')?.value || '';
 
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(project);
+            }
+
             if (!project) {
                 var topicEl = document.getElementById('filterTopic');
                 if (topicEl) { topicEl.value = ''; }
@@ -467,6 +471,14 @@
         }
 
         $(function () {
+            var projectContextQuery = new URLSearchParams(window.location.search || '');
+            var hasProjectContext = (projectContextQuery.get('parentproject') || '').trim() !== ''
+                || (projectContextQuery.get('project') || '').trim() !== '';
+
+            if (!hasProjectContext && typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject('');
+            }
+
             onProjectChanged();
 
             var forecastSpendInput = document.getElementById('forecastSpend');

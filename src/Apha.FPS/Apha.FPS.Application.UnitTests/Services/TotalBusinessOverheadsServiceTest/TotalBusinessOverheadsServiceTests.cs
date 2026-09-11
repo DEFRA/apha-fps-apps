@@ -1,5 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -130,14 +131,14 @@ namespace Apha.FPS.Application.UnitTests.Services.TotalBusinessOverheadsServiceT
         }
 
         [Fact]
-        public async Task UpdateAsync_ThrowsInvalidOperationException_WhenRecordNotFound()
+        public async Task UpdateAsync_ThrowsBusinessValidationErrorException_WhenRecordNotFound()
         {
             // Arrange
             var dto = BuildDto();
             _mockRepository.GetByYearAsync(2025).Returns((TotalBusinessOverheads?)null);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAsync(dto));
             exception.Message.Should().Contain("Total Business Overheads record for year '2025' was not found.");
         }
 

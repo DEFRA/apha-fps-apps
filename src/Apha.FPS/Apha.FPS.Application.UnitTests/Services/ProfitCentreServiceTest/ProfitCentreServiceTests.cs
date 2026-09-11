@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -295,14 +296,16 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         }
 
         [Fact]
-        public async Task CreateProfitCentreAsync_ThrowsInvalidOperationException_WhenAlreadyExists()
+        public async Task CreateProfitCentreAsync_ThrowsBusinessValidationErrorException_WhenAlreadyExists()
         {
             // Arrange
             var dto = BuildDto("PC01");
             _mockRepository.ProfitCentreExistsAsync("PC01").Returns(true);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateProfitCentreAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CreateProfitCentreAsync(dto));
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Profit centre 'PC01' already exists." && e.Code == "PROFITCENTRE_ALREADY_EXISTS");
         }
 
         [Fact]
@@ -370,7 +373,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         }
 
         [Fact]
-        public async Task UpdateProfitCentreAsync_ThrowsInvalidOperationException_WhenNotFound()
+        public async Task UpdateProfitCentreAsync_ThrowsBusinessValidationErrorException_WhenNotFound()
         {
             // Arrange
             var dto = BuildDto("PC01");
@@ -378,8 +381,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             _mockRepository.ProfitCentreExistsAsync("NOTEXIST").Returns(false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateProfitCentreAsync("NOTEXIST", dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateProfitCentreAsync("NOTEXIST", dto));
             await _mockRepository.DidNotReceive().UpdateProfitCentreAsync(Arg.Any<string>(), Arg.Any<ProfitCentre>());
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Profit centre 'NOTEXIST' not found." && e.Code == "PROFITCENTRE_NOT_FOUND");
         }
 
         #endregion
@@ -399,18 +404,22 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         }
 
         [Fact]
-        public async Task DeleteProfitCentreAsync_ThrowsInvalidOperationException_WhenGradeExists()
+        public async Task DeleteProfitCentreAsync_ThrowsBusinessValidationErrorException_WhenGradeExists()
         {
             _mockRepository.HasLinkedGradesAsync("PC01").Returns(true);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot delete profit centre: it is referenced by profit centre grade records." && e.Code == "PROFITCENTRE_REFERENCED_BY_GRADE");
         }
 
         [Fact]
-        public async Task DeleteProfitCentreAsync_ThrowsInvalidOperationException_WhenWorkgroupExists()
+        public async Task DeleteProfitCentreAsync_ThrowsBusinessValidationErrorException_WhenWorkgroupExists()
         {
             _mockRepository.HasLinkedGradesAsync("PC01").Returns(false);
             _mockRepository.HasLinkedWorkgroupsAsync("PC01").Returns(true);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot delete profit centre: it is referenced by work group records." && e.Code == "PROFITCENTRE_REFERENCED_BY_WORKGROUP");
         }
 
         [Fact]

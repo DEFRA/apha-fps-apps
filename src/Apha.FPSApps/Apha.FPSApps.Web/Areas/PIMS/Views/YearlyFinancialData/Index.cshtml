@@ -14,6 +14,12 @@
 
 <div class="sup_flex govuk-!-padding-top-2">
 
+    <!-- ── Side Navigation ──────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+    {
+        Parentproject = Model.NavigationProject
+    })
+
       <main class="main-content" id="main-content" style="padding-top: 0">
         <div class="govuk-width-container">
         <!-- ── Toolbar: Project selector + date display ──────────────────── -->
@@ -162,18 +168,29 @@
             document.querySelector('.sidenav').classList.toggle('collapsed');
         }
 
-        // ── Initialize project dropdown to empty on page load ──────────────────────────────────
-        // Ensure the Project dropdown starts empty (matches MS Access behavior)
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            var initialProject = '@(Model.SelectedProject ?? string.Empty)';
+            var navigationProject = '@(Model.NavigationProject ?? string.Empty)';
+            var yfdMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.YfdMessage) ?? string.Empty))';
             var projectSelect = document.getElementById('yfdProject');
-            if (projectSelect) {
-                // Reset to empty value on page load
-                projectSelect.value = '';
+
+            if (!initialProject.trim() && projectSelect) {
+                projectSelect.selectedIndex = -1;
+                document.getElementById('yfdStartDate').value = '';
+                document.getElementById('yfdEndDate').value = '';
+            }
+
+            if (yfdMessage && typeof showAlertMessage === 'function') {
+                showAlertMessage(yfdMessage, AlertType.INFO);
+            }
+
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(initialProject.trim()
+                    ? (projectSelect?.value || '')
+                    : navigationProject);
             }
         });
 
-
-        
         function getYearlyFinancialDataExtraFilters() {
             return {
                 project: document.getElementById('yfdProject')?.value || ''
@@ -190,6 +207,9 @@
         // ── Project change handler ───────────────────────────────────────────────────────
         function onProjectChanged() {
             var project = document.getElementById('yfdProject')?.value || '';
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(project);
+            }
             if (!project) {
                 document.getElementById('yfdStartDate').value = '';
                 document.getElementById('yfdEndDate').value = '';
@@ -544,7 +564,8 @@
             setVal('pactProjectSpecific', formatGbp(projectSpecific));
             setVal('pactTotalCosts', formatGbp(pact.totalCosts));
             setVal('pactManHours', pact.hours == null ? '—' : formatEditableNumber(pact.hours, 0));
-            setVal('pactManDays', pact.hours == null ? '—' : formatEditableNumber(pact.hours / YFD_HOURS_IN_DAY, 1));
+            const pactManDays = pact.hours == null ? null : pact.hours / YFD_HOURS_IN_DAY;
+            setVal('pactManDays', pactManDays == null ? '—' : formatEditableNumber((pactManDays - Math.floor(pactManDays)) > 0.5 ? Math.ceil(pactManDays) : Math.floor(pactManDays), 0));
             setVal('pactManYears', pact.hours == null ? '—' : formatEditableNumber(pact.hours / YFD_HOURS_IN_YEAR, 3));
 
             if (copyToEditableFields) {
@@ -691,17 +712,20 @@
 
                 if (source === 'hours' && hours != null) {
                     $('#yfdModalManDays').val(formatEditableNumber(hours / YFD_HOURS_IN_DAY, 1));
-                    $('#yfdModalManYears').val(formatEditableNumber(hours / YFD_HOURS_IN_YEAR, 3));
+                    $('#yfdModalManYears').val((hours / YFD_HOURS_IN_YEAR).toString());
                 }
 
                 if (source === 'days' && days != null) {
-                    $('#yfdModalManHours').val(formatEditableNumber(days * YFD_HOURS_IN_DAY, 0));
-                    $('#yfdModalManYears').val(formatEditableNumber(days / YFD_DAYS_IN_YEAR, 3));
+                    var manHoursFromDays = toNormalizedNumber(YFD_HOURS_IN_DAY);
+                    $('#yfdModalManHours').val(isNaN(manHoursFromDays) ? '' : (days * manHoursFromDays).toString());
+                    $('#yfdModalManYears').val((days / YFD_DAYS_IN_YEAR).toString());
                 }
 
                 if (source === 'years' && years != null) {
-                    $('#yfdModalManHours').val(formatEditableNumber(years * YFD_HOURS_IN_YEAR, 0));
-                    $('#yfdModalManDays').val(formatEditableNumber(years * YFD_DAYS_IN_YEAR, 1));
+                    var manHoursPerYear = toNormalizedNumber(YFD_HOURS_IN_YEAR);
+                    var manDaysPerYear = toNormalizedNumber(YFD_DAYS_IN_YEAR);
+                    $('#yfdModalManHours').val(isNaN(manHoursPerYear) ? '' : (years * manHoursPerYear).toString());
+                    $('#yfdModalManDays').val(isNaN(manDaysPerYear) ? '' : formatEditableNumber(years * manDaysPerYear, 1));
                 }
             } finally {
                 yfdManTimeSyncing = false;
