@@ -2011,3 +2011,41 @@ select.app-log:focus-visible,
     background-color: #1d70b8 !important;
     color: white !important;
 }
+    }
+}
+
+.uklogo .user-info {
+    gap: 20px;
+}
+
+.uklogo .govuk-button--secondary {
+    color: #fff !important;
+}
+
+.access-denied-wrapper {
+    flex-direction: column;
+    align-items: center;
+}
+
+.access-denied-message {
+    margin-top: 30px;
+    text-align: center;
+    background: #fff;
+    border: 2px solid #ffffff;
+    border-radius: 20px;
+    box-shadow: 0px 0px 3px #383838;
+    padding: 30px 40px;
+}
+
+.access-denied-message h1 {
+    color: var(--govuk-brand-colour, #1d70b8);
+}
+
+.access-denied-page {
+    overflow: hidden;
+}
+
+html:has(.access-denied-page),
+body:has(.access-denied-page) {
+    overflow: hidden;
+}

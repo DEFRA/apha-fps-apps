@@ -379,6 +379,51 @@ function closeModal() {
 //  REPORTS TAB — Add / Edit / Delete
 // ════════════════════════════════════════════════════════════════════════════
 
+function setReportEmailRequiredState(isEmailable) {
+    var $form = $('#formReport');
+    var $mailComment = $('#editMailComment');
+    var $mailTitle = $('#editMailTitle');
+
+    [$mailComment, $mailTitle].forEach(function ($field) {
+        if (!$field.length) {
+            return;
+        }
+
+        if (isEmailable) {
+            $field.attr('required', 'required');
+            $field.attr('aria-required', 'true');
+            return;
+        }
+
+        $field.removeAttr('required');
+        $field.removeAttr('aria-required');
+
+        var fieldName = $field.attr('name');
+        $field.removeClass('govuk-input--error');
+        $field.closest('.govuk-form-group').removeClass('govuk-form-group--error');
+        $form.find('[data-valmsg-for="' + fieldName + '"]')
+            .text('')
+            .hide()
+            .removeClass('field-validation-error')
+            .addClass('field-validation-valid');
+    });
+
+    $('.js-email-required-star').toggleClass('ra-hidden', !isEmailable);
+}
+
+function initializeReportEmailValidation() {
+    var $emailable = $('#editEmailable');
+    if (!$emailable.length) {
+        return;
+    }
+
+    setReportEmailRequiredState($emailable.is(':checked'));
+
+    $emailable.off('change.reportemail').on('change.reportemail', function () {
+        setReportEmailRequiredState($(this).is(':checked'));
+    });
+}
+
 function saveReport() {
     var $form       = $('#formReport');
     var $banner     = $('#reportDbError');
@@ -418,6 +463,7 @@ function addReport() {
     $.get('/PIMS/Maintenance/GetAddEditReportPartial', function (html) {
         $('#modaPopupBody').html(html);
         $('#modalPopup').addClass('show');
+        initializeReportEmailValidation();
     });
 }
 
@@ -426,6 +472,7 @@ function editReport(id) {
     $.get('/PIMS/Maintenance/GetAddEditReportPartial', { id: id }, function (html) {
         $('#modaPopupBody').html(html);
         $('#modalPopup').addClass('show');
+        initializeReportEmailValidation();
     });
 }
 

@@ -7,8 +7,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 {
     public class InvoiceViewModel
     {
+        public string NavigationProject { get; set; } = string.Empty;
+
         public string? FilterProject { get; set; }
-      
+
         public string? FilterContract { get; set; }
         public int? FilterYear { get; set; }
         public string? FilterProgram { get; set; }

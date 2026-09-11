@@ -399,6 +399,38 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
+        /// <summary>
+        /// Retrieves a time code validity record for the specified work group, time code, and portfolio.
+        /// </summary>
+        /// <param name="workGroup">The work group identifier.</param>
+        /// <param name="timeCode">The time code identifier.</param>
+        /// <param name="parentProject">The portfolio/parent project identifier.</param>
+        /// <returns>
+        /// A JSON result containing success status and the corresponding <see cref="PortfolioTimeCodeViewModel"/> when found.
+        /// </returns>
+        [HttpGet]
+        public async Task<IActionResult> GetTimeCodeValid(string workGroup, string timeCode, string parentProject)
+        {
+            if (string.IsNullOrEmpty(workGroup) || string.IsNullOrEmpty(timeCode) || string.IsNullOrEmpty(parentProject))
+                return Json(new { success = false, message = "Work group, time code and portfolio are required." });
+
+            var existing = await _timeCodeService.GetTimeCodeValidAsync(workGroup, timeCode, parentProject);
+            if (!existing.Success || existing.Data == null)
+                return Json(new { success = false, message = "Time code validity record not found." });
+
+            var vm = new PortfolioTimeCodeViewModel
+            {
+                WorkGroup = workGroup,
+                TimeCode = timeCode,
+                ParentProject = parentProject,
+                Portfolio = existing.Data.Portfolio,
+                Active = existing.Data.Active,
+                IsEdit = true
+            };
+
+            return Json(new { success = true, data = vm });
+        }
+
         [HttpPost]
         public async Task<IActionResult> EditPortfolioTimeCode([FromBody] PortfolioTimeCodeViewModel model)
         {

@@ -2943,11 +2943,12 @@ table.custom-table th {
     padding: 2px 5px;
 }
 
-.project-code-section.ppf-header-project-controls .govuk-button {
-    margin-bottom: 0;
-    padding: 3px 10px;
-    white-space: nowrap;
-}
+    .project-code-section.ppf-header-project-controls .govuk-button {
+        margin-bottom: 0;
+        padding: 7px 10px;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
 
 .project-code-section.ppf-header-project-controls label {
     margin-bottom: 0;
@@ -5586,11 +5587,6 @@ input.govuk-input.ssr-total-input[readonly] {
         overflow-y: auto;
     }
 }
-#gridContainer_compareStaff2Grid .grid-scroll-container,
-#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
-    height: 410px;
-    max-height: 410px;
-}
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
@@ -5620,27 +5616,6 @@ input.govuk-input.ssr-total-input[readonly] {
     .govuk-select {
         vertical-align: middle;
     }
-}
-
-#gridContainer_wgGradeGrid .editable-grid-container {
-    min-height: unset;
-}
-
-#gridContainer_wgGradeGrid table thead th,
-#gridContainer_wgGradeGrid table tbody td {
-    text-align: left !important;
-}
-
-/* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
-#gridContainer_wgStaffGrid table thead th:nth-child(3),
-#gridContainer_wgStaffGrid table thead th:nth-child(4),
-#gridContainer_wgStaffGrid table thead th:nth-child(5),
-#gridContainer_wgStaffGrid table thead th:nth-child(6),
-#gridContainer_wgStaffGrid table tbody td:nth-child(3),
-#gridContainer_wgStaffGrid table tbody td:nth-child(4),
-#gridContainer_wgStaffGrid table tbody td:nth-child(5),
-#gridContainer_wgStaffGrid table tbody td:nth-child(6) {
-    text-align: right !important;
 }
 
 /* Border on the 4 numeric total cells */
