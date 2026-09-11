@@ -391,13 +391,28 @@
 
     var trackedModals = new WeakSet();
 
+    // When openClass is falsy, the modal doesn't toggle a class to show/hide
+    // (e.g. #modalContainer in BudgetResourceLevel/Index.cshtml, which is
+    // shown/hidden purely via inline style - $(...).css('display','flex') /
+    // $(...).hide()). In that case fall back to checking computed visibility
+    // so the same focus-management logic still applies.
+    function isModalVisible(modal) {
+        var style = window.getComputedStyle(modal);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    function isModalOpen(modal, openClass) {
+        if (openClass) return modal.classList.contains(openClass);
+        return isModalVisible(modal);
+    }
+
     function attachModal(modal, openClass, focusScopeSelector, toggleDisplay) {
         if (!modal || trackedModals.has(modal)) return;
         trackedModals.add(modal);
 
         var focusScope = focusScopeSelector ? modal.querySelector(focusScopeSelector) : null;
         var previouslyFocused = null;
-        var isOpen = modal.classList.contains(openClass);
+        var isOpen = isModalOpen(modal, openClass);
 
         function getFocusableElements() {
             var scope = focusScope || modal;
@@ -406,6 +421,23 @@
             ).filter(function (el) {
                 return !el.hasAttribute('disabled') && el.offsetParent !== null;
             });
+        }
+
+        // When a modal opens, focus should land on its close ("X") button
+        // rather than the first form field, so keyboard/screen-reader users
+        // land on a predictable, always-available control (form fields can be
+        // disabled/hidden depending on modal state, the close button is not).
+        // The close button often lives in the modal header, outside the
+        // narrower focusScope used for Tab-trapping, so it is looked up
+        // against the whole modal rather than the getFocusableElements() list.
+        function getInitialFocusTarget(focusable) {
+            var closeButton = modal.querySelector(
+                '.btn-close, [data-bs-dismiss="modal"], [aria-label="Close"], [aria-label="close"]'
+            );
+            if (closeButton && !closeButton.hasAttribute('disabled') && closeButton.offsetParent !== null) {
+                return closeButton;
+            }
+            return focusable.length ? focusable[0] : null;
         }
 
         // Keep focus trapped inside the modal while it's open. Buttons like
@@ -450,7 +482,7 @@
         });
 
         var observer = new MutationObserver(function () {
-            var nowOpen = modal.classList.contains(openClass);
+            var nowOpen = isModalOpen(modal, openClass);
             if (nowOpen && !isOpen) {
                 if (toggleDisplay) {
                     modal.style.display = 'flex';
@@ -462,8 +494,9 @@
 
                 setTimeout(function () {
                     var focusable = getFocusableElements();
-                    if (focusable.length) {
-                        focusable[0].focus();
+                    var initialTarget = getInitialFocusTarget(focusable);
+                    if (initialTarget) {
+                        initialTarget.focus();
                     } else {
                         modal.focus();
                     }
@@ -482,7 +515,7 @@
                 previouslyFocused = null;
             }
         });
-        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(modal, { attributes: true, attributeFilter: openClass ? ['class'] : ['class', 'style'] });
 
         // Handle the case where the modal is already "open" the moment we
         // first attach to it. This happens for dynamically-injected dialogs
@@ -498,8 +531,9 @@
 
             setTimeout(function () {
                 var focusable = getFocusableElements();
-                if (focusable.length) {
-                    focusable[0].focus();
+                var initialTarget = getInitialFocusTarget(focusable);
+                if (initialTarget) {
+                    initialTarget.focus();
                 } else {
                     modal.focus();
                 }
@@ -530,10 +564,25 @@
         });
     }
 
+    // Attaches focus management to modals that show/hide purely via inline
+    // style (e.g. $('#modalContainer').css('display', 'flex') / .hide()) and
+    // never toggle a class - such as #modalContainer in
+    // BudgetResourceLevel/Index.cshtml. openClass is omitted so attachModal
+    // tracks visibility instead of a class.
+    function scanStyleToggledModals(root) {
+        var scope = root || document;
+        if (!scope.querySelectorAll) return;
+        Array.prototype.forEach.call(scope.querySelectorAll('.brl-modal-container'), function (modal) {
+            attachModal(modal, null, '.modal-dialog', false);
+        });
+    }
+
     function init() {
         scanLegacyModalPopups(document);
 
         scanEditModals(document);
+
+        scanStyleToggledModals(document);
 
         // Watch for .govuk-edit-modal dialogs injected/replaced dynamically
         // (AJAX-loaded partials such as _AddEditMilestone.cshtml,
@@ -1066,15 +1115,34 @@
             btn.setAttribute('role', 'menuitem');
             var dropdownId = btn.getAttribute('data-dropdown');
             if (dropdownId) {
+                var menu = document.getElementById(dropdownId);
+                // An empty popup is not a menu, so the button must not advertise
+                // one - aria-haspopup / aria-controls / aria-expanded are dropped
+                // and the item is exposed as unavailable instead.
+                if (!menu || !menu.querySelector('a.dropdown-item, .sub-dropdown-toggle')) {
+                    btn.removeAttribute('aria-haspopup');
+                    btn.removeAttribute('aria-controls');
+                    btn.removeAttribute('aria-expanded');
+                    btn.setAttribute('aria-disabled', 'true');
+                    return;
+                }
+                btn.removeAttribute('aria-disabled');
                 btn.setAttribute('aria-haspopup', 'true');
                 btn.setAttribute('aria-controls', dropdownId);
-                var menu = document.getElementById(dropdownId);
-                btn.setAttribute('aria-expanded', menu && menu.classList.contains('show') ? 'true' : 'false');
+                btn.setAttribute('aria-expanded', menu.classList.contains('show') ? 'true' : 'false');
             }
         });
 
         // Level-2 / level-3 menus and their entries.
+        // A role="menu" with no menuitem descendants is an invalid ARIA menu, so
+        // containers that render empty (config- or role-gated links) are left as
+        // plain markup rather than being given menu semantics.
         document.querySelectorAll('.dropdown-menu, .sub-dropdown-menu').forEach(function (menu) {
+            if (!menu.querySelector('a.dropdown-item, .sub-dropdown-toggle')) {
+                menu.removeAttribute('role');
+                menu.removeAttribute('aria-orientation');
+                return;
+            }
             menu.setAttribute('role', 'menu');
             menu.setAttribute('aria-orientation', 'vertical');
         });
@@ -1087,10 +1155,21 @@
         });
         document.querySelectorAll('.sub-dropdown-toggle').forEach(function (toggle) {
             toggle.setAttribute('role', 'menuitem');
-            toggle.setAttribute('aria-haspopup', 'true');
             var subDropdown = toggle.closest('.sub-dropdown');
             var subMenu = subDropdown ? subDropdown.querySelector(':scope > .sub-dropdown-menu') : null;
-            toggle.setAttribute('aria-expanded', subMenu && subMenu.classList.contains('show') ? 'true' : 'false');
+            if (!subMenu || !subMenu.querySelector('a.dropdown-item, .sub-dropdown-toggle')) {
+                toggle.removeAttribute('aria-haspopup');
+                toggle.removeAttribute('aria-controls');
+                toggle.removeAttribute('aria-expanded');
+                toggle.setAttribute('aria-disabled', 'true');
+                return;
+            }
+            toggle.removeAttribute('aria-disabled');
+            toggle.setAttribute('aria-haspopup', 'true');
+            if (subMenu.id) {
+                toggle.setAttribute('aria-controls', subMenu.id);
+            }
+            toggle.setAttribute('aria-expanded', subMenu.classList.contains('show') ? 'true' : 'false');
         });
 
         // The user-profile dropdown is the same kind of widget.
