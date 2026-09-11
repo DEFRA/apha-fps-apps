@@ -63,15 +63,18 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("jsonb")
                 .HasColumnName("upload_row_counts_json");
             entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
-            entity.Property(e => e.ApprovedAtUtc).HasColumnName("approved_at_utc");
+            // approved_at_utc/rejected_at_utc/triggered_at_utc/cancelled_at_utc are all
+            // `timestamp with time zone` (CR077, 2026-09-11) — mapped explicitly so the
+            // convention is visible here rather than relying on EF's default inference.
+            entity.Property(e => e.ApprovedAtUtc).HasColumnName("approved_at_utc").HasColumnType("timestamp with time zone");
             entity.Property(e => e.RejectedBy).HasColumnName("rejected_by");
-            entity.Property(e => e.RejectedAtUtc).HasColumnName("rejected_at_utc");
+            entity.Property(e => e.RejectedAtUtc).HasColumnName("rejected_at_utc").HasColumnType("timestamp with time zone");
             entity.Property(e => e.RejectionReason).HasColumnName("rejection_reason");
             entity.Property(e => e.CancelledBy).HasColumnName("cancelled_by");
-            entity.Property(e => e.CancelledAtUtc).HasColumnName("cancelled_at_utc");
+            entity.Property(e => e.CancelledAtUtc).HasColumnName("cancelled_at_utc").HasColumnType("timestamp with time zone");
             entity.Property(e => e.CancellationReason).HasColumnName("cancellation_reason");
             entity.Property(e => e.TriggeredBy).HasColumnName("triggered_by");
-            entity.Property(e => e.TriggeredAtUtc).HasColumnName("triggered_at_utc");
+            entity.Property(e => e.TriggeredAtUtc).HasColumnName("triggered_at_utc").HasColumnType("timestamp with time zone");
             entity.Property(e => e.ActiveDownloadVersion).HasColumnName("active_download_version");
         }
     }
