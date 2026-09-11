@@ -1,9 +1,6 @@
 namespace Apha.BatchJobs.Domain.Entities.BulkRates;
 
-/// <summary>
-/// Represents a row from fps.tblstagingtestorproduct for a specific request.
-/// Maps to FEC Test/Product staging data uploaded by the initiator.
-/// </summary>
+/// <summary>Represents a row from fps.tblstagingtestorproduct for a specific request. Maps to FEC Test/Product staging data uploaded by the initiator.</summary>
 public sealed record FecStagingRow(
     Guid JobQueueId,
     string TestCode,

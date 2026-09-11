@@ -19,9 +19,6 @@ public sealed class MabArchiveYearRepository : IMabArchiveYearRepository
     private readonly IMabArchiveLoader _projectAllLoader;
     private const int ExpectedLoaderCount = 24;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MabArchiveYearRepository"/> class.
-    /// </summary>
     /// <param name="context">Batch jobs database context.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="loaders">Registered MABArchive loaders in metadata-defined sequence.</param>
@@ -159,12 +156,10 @@ public sealed class MabArchiveYearRepository : IMabArchiveYearRepository
 
                 _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, targetYear);
 
-                   // Validation hook: record load performance and results
                    var sw = System.Diagnostics.Stopwatch.StartNew();
                    var rowCount = await loader.LoadAsync(targetYear, cancellationToken);
                    sw.Stop();
 
-                   // Log performance and validate row count sanity
                    if (rowCount < 0)
                    {
                        _logger.LogWarning("[{LoaderNumber}] {LoaderName}: Unexpected negative row count {RowCount}. May indicate logic error.", loader.Sequence, loader.Name, rowCount);

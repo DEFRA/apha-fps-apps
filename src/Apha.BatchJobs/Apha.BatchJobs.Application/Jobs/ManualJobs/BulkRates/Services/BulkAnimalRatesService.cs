@@ -5,13 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates.Services;
 
-/// <summary>
-/// Applies Animal annual rate changes (DailyRate, DefraDailyRate, PlanByWeek, Species, SecurityLevel)
-/// inside a single database transaction, writes permanent history, and
-/// clears request-scoped staging rows on success.
-/// Drift detection and revalidation are the responsibility of the FPS approval flow;
-/// the worker applies frozen effective values directly.
-/// </summary>
+/// <summary>Applies Animal annual rate changes (DailyRate, DefraDailyRate, PlanByWeek, Species, SecurityLevel) inside a single database transaction, writes permanent history, and clears request-scoped staging rows on success. Drift detection and revalidation are the responsibility of the FPS approval flow; the worker applies frozen effective values directly.</summary>
 public sealed class BulkAnimalRatesService : IBulkAnimalRatesService
 {
     private readonly IBulkRatesRepository _repository;

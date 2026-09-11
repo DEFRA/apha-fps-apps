@@ -2,9 +2,7 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 
-/// <summary>
-/// Validates mandatory Year End context values before data movement starts.
-/// </summary>
+/// <summary>Validates mandatory Year End context values before data movement starts.</summary>
 public sealed class ValidateYearEndContextStep : IYearEndDataSetupStep
 {
     public string Name => "ValidateYearEndContextStep";

@@ -3,13 +3,7 @@ using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Resilience;
 
-/// <summary>
-/// Custom EF Core execution strategy that retries on transient Npgsql errors
-/// (using <see cref="NpgsqlException.IsTransient"/>) but explicitly excludes
-/// disk-full errors (SQLSTATE 53100). Retrying a disk-full condition would
-/// re-execute the same heavy query, generating additional temp spill and
-/// exhausting storage faster.
-/// </summary>
+/// <summary>Custom EF Core execution strategy that retries on transient Npgsql errors (using <see cref="NpgsqlException.IsTransient"/>) but explicitly excludes disk-full errors (SQLSTATE 53100). Retrying a disk-full condition would re-execute the same heavy query, generating additional temp spill and exhausting storage faster.</summary>
 internal sealed class BatchJobsRetryStrategy : ExecutionStrategy
 {
     // PostgreSQL error class 53 = Insufficient Resources

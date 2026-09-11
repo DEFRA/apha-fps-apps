@@ -8,18 +8,14 @@ using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.MabArchive.Repositories;
 
-/// <summary>
-/// Rebuilds FPS source totals before archive load.
-/// </summary>
+/// <summary>Rebuilds FPS source totals before archive load.</summary>
 public sealed class FpsTotalsRepository : IFpsTotalsRepository
 {
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<FpsTotalsRepository> _logger;
     private readonly MabArchiveSettings _settings;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="FpsTotalsRepository"/> class.
-    /// </summary>
+    /// <summary>Initializes a new instance of the <see cref="FpsTotalsRepository"/> class.</summary>
     /// <param name="context">Batch jobs database context.</param>
     /// <param name="logger">Logger instance.</param>
     public FpsTotalsRepository(
@@ -32,9 +28,7 @@ public sealed class FpsTotalsRepository : IFpsTotalsRepository
         _settings = settings?.Value ?? new MabArchiveSettings();
     }
 
-    /// <summary>
-    /// Rebuilds FPS source totals for the specified year.
-    /// </summary>
+    /// <summary>Rebuilds FPS source totals for the specified year.</summary>
     /// <param name="year">Target FPS year.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The number of rows inserted into fps.fpsyeartotals.</returns>
