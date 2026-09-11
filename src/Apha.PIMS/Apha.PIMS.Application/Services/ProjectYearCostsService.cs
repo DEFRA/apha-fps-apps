@@ -163,27 +163,30 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<byte[]> ExportProjectYearCostsToExcelAsync(string project, short year)
         {
-            PaginationParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+            // Use reasonable page size (10000) instead of int.MaxValue to avoid excessive memory consumption
+            PaginationParameters<string> allRecords = new() { Page = 1, PageSize = 10000 };
 
-            PagedData<ProjectStaffPlan> staffPlansTask = await _repository.GetStaffPlansAsync(project, year, allRecords);
-            PagedData<TimeCostCalcs> staffActualsTask = await _repository.GetStaffActualsAsync(project, year, allRecords);
-            PagedData<TestReqmt> testPlansTask = await _repository.GetTestPlansAsync(project, year, allRecords);
-            PagedData<(MonthlyOutput Output, TestReqmt Reqmt)> testActualsTask = await _repository.GetTestActualsAsync(project, year, allRecords);
-            PagedData<ProjectAnimalPlan> animalPlansTask = await _repository.GetAnimalPlansAsync(project, year, allRecords);
-            PagedData<ProjSubContract> animalActualsTask = await _repository.GetAnimalActualsAsync(project, year, allRecords);
-            PagedData<AdditionalCosts> additionalPlansTask = await _repository.GetAdditionalPlansAsync(project, year, allRecords);
-            PagedData<ProjSubContract> additionalActualsTask = await _repository.GetAdditionalActualsAsync(project, year, allRecords);
+            PagedData<ProjectMonthFinal> monthlyPact = await _repository.GetMonthlyPactDataAsync(project, year, allRecords);
+            PagedData<ProjectStaffPlan> staffPlans = await _repository.GetStaffPlansAsync(project, year, allRecords);
+            PagedData<TimeCostCalcs> staffActuals = await _repository.GetStaffActualsAsync(project, year, allRecords);
+            PagedData<TestReqmt> testPlans = await _repository.GetTestPlansAsync(project, year, allRecords);
+            PagedData<(MonthlyOutput Output, TestReqmt Reqmt)> testActuals = await _repository.GetTestActualsAsync(project, year, allRecords);
+            PagedData<ProjectAnimalPlan> animalPlans = await _repository.GetAnimalPlansAsync(project, year, allRecords);
+            PagedData<ProjSubContract> animalActuals = await _repository.GetAnimalActualsAsync(project, year, allRecords);
+            PagedData<AdditionalCosts> additionalPlans = await _repository.GetAdditionalPlansAsync(project, year, allRecords);
+            PagedData<ProjSubContract> additionalActuals = await _repository.GetAdditionalActualsAsync(project, year, allRecords);
 
             using var workbook = new XLWorkbook();
 
-            BuildStaffPlanSheet(workbook, staffPlansTask.Data.ToList());
-            BuildStaffActualsSheet(workbook, staffActualsTask.Data.ToList());
-            BuildTestPlanSheet(workbook, testPlansTask.Data.ToList());
-            BuildTestActualsSheet(workbook, testActualsTask.Data.ToList());
-            BuildAnimalPlanSheet(workbook, animalPlansTask.Data.ToList());
-            BuildAnimalActualsSheet(workbook, animalActualsTask.Data.ToList());
-            BuildAdditionalPlanSheet(workbook, additionalPlansTask.Data.ToList());
-            BuildAdditionalActualsSheet(workbook, additionalActualsTask.Data.ToList());
+            BuildMonthlyPactSheet(workbook, monthlyPact.Data.ToList());
+            BuildStaffPlanSheet(workbook, staffPlans.Data.ToList());
+            BuildStaffActualsSheet(workbook, staffActuals.Data.ToList());
+            BuildTestPlanSheet(workbook, testPlans.Data.ToList());
+            BuildTestActualsSheet(workbook, testActuals.Data.ToList());
+            BuildAnimalPlanSheet(workbook, animalPlans.Data.ToList());
+            BuildAnimalActualsSheet(workbook, animalActuals.Data.ToList());
+            BuildAdditionalPlanSheet(workbook, additionalPlans.Data.ToList());
+            BuildAdditionalActualsSheet(workbook, additionalActuals.Data.ToList());
 
             using var stream = new System.IO.MemoryStream();
             workbook.SaveAs(stream);
@@ -199,6 +202,16 @@ namespace Apha.PIMS.Application.Services
 
         private const string PoundCurrencyFormat = "£#,##0.00";
 
+        private static string GetAbbreviatedMonthName(double monthno)
+        {
+            int m = (int)monthno;
+            if (m < 1 || m > 12) return monthno.ToString();
+            m = (m + 3) % 12;
+            if (m == 0) m = 12;  // financial month 9 → calendar Dec (mod = 0)
+            return System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat
+                .GetAbbreviatedMonthName(m);
+        }
+
         private static void ApplyTotalsRowStyle(IXLCell cell)
         {
             cell.Style.Font.Bold = true;
@@ -208,6 +221,88 @@ namespace Apha.PIMS.Application.Services
         private static void ApplyPoundCurrencyFormat(IXLCell cell)
         {
             cell.Style.NumberFormat.Format = PoundCurrencyFormat;
+        }
+
+        private static void BuildMonthlyPactSheet(XLWorkbook wb, List<ProjectMonthFinal> data)
+        {
+            var ws = wb.Worksheets.Add("MonthlyPactData");
+            string[] headers = ["Month", "Month Name", "Proj Specific", "Animals", "TimeCosts", "Test Costs", "Total Cost", "Total Hours", "Invoices", "COIW"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var m in data)
+            {
+                ws.Cell(row, 1).Value = m.Monthno;
+                ws.Cell(row, 2).Value = GetAbbreviatedMonthName(m.Monthno);
+                ws.Cell(row, 3).Value = (double)(m.Nonanimals ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 3));
+                ws.Cell(row, 4).Value = (double)(m.Animals ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 4));
+                ws.Cell(row, 5).Value = (double)(m.Timecosts ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 5));
+                ws.Cell(row, 6).Value = (double)(m.Transfercosts ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 6));
+                ws.Cell(row, 7).Value = (double)(m.Totalcost ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 7));
+                ws.Cell(row, 8).Value = m.Totalhours ?? 0d;
+                ws.Cell(row, 9).Value = (double)(m.Invoices ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 9));
+                ws.Cell(row, 10).Value = (double)(m.Coiw ?? 0m);
+                ApplyPoundCurrencyFormat(ws.Cell(row, 10));
+                row++;
+            }
+
+            // Add totals row
+            decimal totalNonanimals = data.Sum(x => x.Nonanimals ?? 0m);
+            decimal totalAnimals = data.Sum(x => x.Animals ?? 0m);
+            decimal totalTimecosts = data.Sum(x => x.Timecosts ?? 0m);
+            decimal totalTransfercosts = data.Sum(x => x.Transfercosts ?? 0m);
+            decimal totalCost = data.Sum(x => x.Totalcost ?? 0m);
+            double totalHours = data.Sum(x => x.Totalhours ?? 0d);
+            decimal totalInvoices = data.Sum(x => x.Invoices ?? 0m);
+            decimal totalCoiw = data.Sum(x => x.Coiw ?? 0m);
+
+            var totalLabelCell = ws.Cell(row, 2);
+            totalLabelCell.Value = "Totals";
+            ApplyTotalsRowStyle(totalLabelCell);
+
+            ws.Cell(row, 3).Value = (double)totalNonanimals;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 3));
+            ApplyTotalsRowStyle(ws.Cell(row, 3));
+
+            ws.Cell(row, 4).Value = (double)totalAnimals;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 4));
+            ApplyTotalsRowStyle(ws.Cell(row, 4));
+
+            ws.Cell(row, 5).Value = (double)totalTimecosts;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 5));
+            ApplyTotalsRowStyle(ws.Cell(row, 5));
+
+            ws.Cell(row, 6).Value = (double)totalTransfercosts;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 6));
+            ApplyTotalsRowStyle(ws.Cell(row, 6));
+
+            ws.Cell(row, 7).Value = (double)totalCost;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 7));
+            ApplyTotalsRowStyle(ws.Cell(row, 7));
+
+            ws.Cell(row, 8).Value = totalHours;
+            ApplyTotalsRowStyle(ws.Cell(row, 8));
+
+            ws.Cell(row, 9).Value = (double)totalInvoices;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 9));
+            ApplyTotalsRowStyle(ws.Cell(row, 9));
+
+            ws.Cell(row, 10).Value = (double)totalCoiw;
+            ApplyPoundCurrencyFormat(ws.Cell(row, 10));
+            ApplyTotalsRowStyle(ws.Cell(row, 10));
+
+            ws.Columns().AdjustToContents();
         }
 
         private static void BuildStaffPlanSheet(XLWorkbook wb, List<ProjectStaffPlan> data)

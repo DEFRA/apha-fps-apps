@@ -14,6 +14,12 @@
 
 <div class="sup_flex govuk-!-padding-top-2">
 
+    <!-- ── Side Navigation ──────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+    {
+        Parentproject = Model.NavigationProject
+    })
+
       <main class="main-content" id="main-content" style="padding-top: 0">
         <div class="govuk-width-container">
         <!-- ── Toolbar: Project selector + date display ──────────────────── -->
@@ -162,18 +168,29 @@
             document.querySelector('.sidenav').classList.toggle('collapsed');
         }
 
-        // ── Initialize project dropdown to empty on page load ──────────────────────────────────
-        // Ensure the Project dropdown starts empty (matches MS Access behavior)
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            var initialProject = '@(Model.SelectedProject ?? string.Empty)';
+            var navigationProject = '@(Model.NavigationProject ?? string.Empty)';
+            var yfdMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.YfdMessage) ?? string.Empty))';
             var projectSelect = document.getElementById('yfdProject');
-            if (projectSelect) {
-                // Reset to empty value on page load
-                projectSelect.value = '';
+
+            if (!initialProject.trim() && projectSelect) {
+                projectSelect.selectedIndex = -1;
+                document.getElementById('yfdStartDate').value = '';
+                document.getElementById('yfdEndDate').value = '';
+            }
+
+            if (yfdMessage && typeof showAlertMessage === 'function') {
+                showAlertMessage(yfdMessage, AlertType.INFO);
+            }
+
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(initialProject.trim()
+                    ? (projectSelect?.value || '')
+                    : navigationProject);
             }
         });
 
-
-        
         function getYearlyFinancialDataExtraFilters() {
             return {
                 project: document.getElementById('yfdProject')?.value || ''
@@ -190,6 +207,9 @@
         // ── Project change handler ───────────────────────────────────────────────────────
         function onProjectChanged() {
             var project = document.getElementById('yfdProject')?.value || '';
+            if (typeof updatePimsSideNavProject === 'function') {
+                updatePimsSideNavProject(project);
+            }
             if (!project) {
                 document.getElementById('yfdStartDate').value = '';
                 document.getElementById('yfdEndDate').value = '';
