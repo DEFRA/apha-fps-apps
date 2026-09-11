@@ -343,67 +343,139 @@ namespace Apha.PACT.Application.Services
             var month = record.Month;
             var volume = record.Volume;
 
-            record.WorkGroup = workGroup;
-            record.TestCode = testCode;
-            record.Buyer = buyer;
-
-            // Volume must be numeric and non-zero
             if (volume == null || volume == 0)
             {
                 failures.Add($"The volume is not a number. \"{volume}\"");
                 return failures;
             }
 
-            // WorkGroup
-            if (string.IsNullOrWhiteSpace(workGroup))
-            {
-                failures.Add("The work group name is blank.");
+            if (!TryValidateAndNormalizeWorkGroup(ref workGroup, context, failures))
                 return failures;
-            }
-            if (!context.ValidWorkGroups.Contains(workGroup))
-            {
-                failures.Add($"The work group name not an actual WG: {workGroup}");
-                return failures;
-            }
 
-            // TestCode, WG and Buyer are all required together
-            if (string.IsNullOrWhiteSpace(testCode) || string.IsNullOrWhiteSpace(buyer))
-            {
-                failures.Add("No Testcode, WG or Project (or buying test).");
+            if (!TryValidateAndNormalizeTestCodeAndBuyer(ref testCode, ref workGroup, ref buyer, context, failures))
                 return failures;
-            }
 
-            // TestCode + WorkGroup must exist in tlkpTestCapability
-            var capKey = $"{testCode}|{workGroup}";
-            if (!context.TestCapabilityKeys.Contains(capKey))
-            {
-                failures.Add($"The WG not set up to do this test, or invalid test: {testCode}, {workGroup}");
+            if (!TryValidateMonth(month, context, failures))
                 return failures;
-            }
 
-            // TestCode + Buyer must exist in tlkpTestReqmt (active)
-            var reqKey = $"{testCode}|{buyer}";
-            if (!context.ActiveBuyerKeys.Contains(reqKey))
-            {
-                failures.Add($"The test or Project (or buying test) is invalid, or this project not buying this test(anymore): {testCode}, {buyer}");
-                return failures;
-            }
-
-            // Month
-            if (month == 0)
-            {
-                failures.Add("The month No. is blank.");
-                return failures;
-            }
-            if (!context.ValidMonths.Contains(month))
-            {
-                failures.Add($"The month No. is invalid: {month}");
-                return failures;
-            }
+            record.WorkGroup = workGroup;
+            record.TestCode = testCode;
+            record.Buyer = buyer;
 
             ValidateDuplicates(record, failures, context, stagingKeys);
 
             return failures;
+        }
+
+        private static bool TryValidateAndNormalizeWorkGroup(
+            ref string workGroup,
+            OutputValidationContext context,
+            List<string> failures)
+        {
+            var workGroupValue = workGroup;
+
+            if (string.IsNullOrWhiteSpace(workGroupValue))
+            {
+                failures.Add("The work group name is blank.");
+                return false;
+            }
+
+            if (!context.ValidWorkGroups.Contains(workGroupValue))
+            {
+                failures.Add($"The work group name not an actual WG: {workGroupValue}");
+                return false;
+            }
+
+            var canonicalWorkGroup = context.ValidWorkGroups
+                .FirstOrDefault(x => string.Equals(x, workGroupValue, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(canonicalWorkGroup))
+            {
+                workGroup = canonicalWorkGroup;
+            }
+
+            return true;
+        }
+
+        private static bool TryValidateAndNormalizeTestCodeAndBuyer(
+            ref string testCode,
+            ref string workGroup,
+            ref string buyer,
+            OutputValidationContext context,
+            List<string> failures)
+        {
+            var testCodeValue = testCode;
+            var workGroupValue = workGroup;
+            var buyerValue = buyer;
+
+            if (string.IsNullOrWhiteSpace(testCodeValue) || string.IsNullOrWhiteSpace(buyerValue))
+            {
+                failures.Add("No Testcode, WG or Project (or buying test).");
+                return false;
+            }
+
+            var capKey = $"{testCodeValue}|{workGroupValue}";
+            if (!context.TestCapabilityKeys.Contains(capKey))
+            {
+                failures.Add($"The WG not set up to do this test, or invalid test: {testCodeValue}, {workGroupValue}");
+                return false;
+            }
+
+            var canonicalCapabilityKey = context.TestCapabilityKeys
+                .FirstOrDefault(x => string.Equals(x, capKey, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(canonicalCapabilityKey))
+            {
+                var parts = canonicalCapabilityKey.Split('|');
+                if (parts.Length == 2)
+                {
+                    testCodeValue = parts[0];
+                    workGroupValue = parts[1];
+                }
+            }
+
+            var reqKey = $"{testCodeValue}|{buyerValue}";
+            if (!context.ActiveBuyerKeys.Contains(reqKey))
+            {
+                failures.Add($"The test or Project (or buying test) is invalid, or this project not buying this test(anymore): {testCodeValue}, {buyerValue}");
+                return false;
+            }
+
+            var canonicalBuyerKey = context.ActiveBuyerKeys
+                .FirstOrDefault(x => string.Equals(x, reqKey, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(canonicalBuyerKey))
+            {
+                var parts = canonicalBuyerKey.Split('|');
+                if (parts.Length == 2)
+                {
+                    testCodeValue = parts[0];
+                    buyerValue = parts[1];
+                }
+            }
+
+            testCode = testCodeValue;
+            workGroup = workGroupValue;
+            buyer = buyerValue;
+
+            return true;
+        }
+
+        private static bool TryValidateMonth(
+            double month,
+            OutputValidationContext context,
+            List<string> failures)
+        {
+            if (month == 0)
+            {
+                failures.Add("The month No. is blank.");
+                return false;
+            }
+
+            if (!context.ValidMonths.Contains(month))
+            {
+                failures.Add($"The month No. is invalid: {month}");
+                return false;
+            }
+
+            return true;
         }
 
         private static void ValidateDuplicates(

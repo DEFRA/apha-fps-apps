@@ -1,4 +1,5 @@
 using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -26,23 +27,23 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<IEnumerable<string>> GetLookupItemsAsync(string tableName)
         {
-            switch (NormalizeTableName(tableName))
+            switch (ParseTableName(tableName))
             {
-                case DirectorateTable:
+                case MasterLookupTable.Directorate:
                     return await _dbContext.Directorates
                         .AsNoTracking()
                         .OrderBy(d => d.DirectorateName)
                         .Select(d => d.DirectorateName)
                     .ToListAsync();
 
-                case DiseaseTable:
+                case MasterLookupTable.Disease:
                     return await _dbContext.Diseases
                         .AsNoTracking()
                         .OrderBy(d => d.DiseaseName)
                         .Select(d => d.DiseaseName)
                         .ToListAsync();
 
-                case CustomerTable:
+                case MasterLookupTable.Customer:
                     return await _dbContext.Customers
                         .AsNoTracking()
                         .OrderBy(c => c.CustomerName)
@@ -74,15 +75,15 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> CreateLookupItemAsync(string tableName, string value)
         {
-            switch (NormalizeTableName(tableName))
+            switch (ParseTableName(tableName))
             {
-                case DirectorateTable:
+                case MasterLookupTable.Directorate:
                     _dbContext.Directorates.Add(new Directorate { DirectorateName = value });
                     break;
-                case DiseaseTable:
+                case MasterLookupTable.Disease:
                     _dbContext.Diseases.Add(new Disease { DiseaseName = value });
                     break;
-                case CustomerTable:
+                case MasterLookupTable.Customer:
                     _dbContext.Customers.Add(new Customer { CustomerName = value });
                     break;
                 default:
@@ -94,51 +95,75 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> UpdateLookupItemAsync(string tableName, string originalValue, string newValue)
         {
-            // The lookup value is the primary key, so update via ExecuteUpdate to avoid
-            // key-change tracking issues that arise when mutating a tracked entity's key.
-            return NormalizeTableName(tableName) switch
+            var table = ParseTableName(tableName);
+            int affectedRows;
+
+            switch (table)
             {
-                DirectorateTable => await _dbContext.Directorates
-                                        .Where(d => d.DirectorateName == originalValue)
-                                        .ExecuteUpdateAsync(s => s.SetProperty(d => d.DirectorateName, newValue)) > 0,
-                DiseaseTable => await _dbContext.Diseases
-                                        .Where(d => d.DiseaseName == originalValue)
-                                        .ExecuteUpdateAsync(s => s.SetProperty(d => d.DiseaseName, newValue)) > 0,
-                CustomerTable => await _dbContext.Customers
-                                        .Where(c => c.CustomerName == originalValue)
-                                        .ExecuteUpdateAsync(s => s.SetProperty(c => c.CustomerName, newValue)) > 0,
-                _ => throw UnknownTable(tableName),
-            };
+                case MasterLookupTable.Directorate:
+                    affectedRows = await _dbContext.Directorates
+                        .Where(d => d.DirectorateName == originalValue)
+                        .ExecuteUpdateAsync(s => s.SetProperty(d => d.DirectorateName, newValue));
+                    break;
+
+                case MasterLookupTable.Disease:
+                    affectedRows = await _dbContext.Diseases
+                        .Where(d => d.DiseaseName == originalValue)
+                        .ExecuteUpdateAsync(s => s.SetProperty(d => d.DiseaseName, newValue));
+                    break;
+
+                case MasterLookupTable.Customer:
+                    affectedRows = await _dbContext.Customers
+                        .Where(c => c.CustomerName == originalValue)
+                        .ExecuteUpdateAsync(s => s.SetProperty(c => c.CustomerName, newValue));
+                    break;
+
+                default:
+                    throw UnknownTable(tableName);
+            }
+
+            return affectedRows > 0;
         }
 
         public async Task<bool> DeleteLookupItemAsync(string tableName, string value)
         {
-            return NormalizeTableName(tableName) switch
-            {
-                DirectorateTable => await _dbContext.Directorates
-                    .Where(d => d.DirectorateName == value)
-                    .ExecuteDeleteAsync() > 0,
-                DiseaseTable => await _dbContext.Diseases
-                    .Where(d => d.DiseaseName == value)
-                    .ExecuteDeleteAsync() > 0,
-                CustomerTable => await _dbContext.Customers
-                    .Where(c => c.CustomerName == value)
-                    .ExecuteDeleteAsync() > 0,
-                _ => throw UnknownTable(tableName),
-            };
-        }
+            var table = ParseTableName(tableName);
+            int affectedRows;
 
-        private const string DirectorateTable = "directorate";
-        private const string DiseaseTable = "disease";
-        private const string CustomerTable = "customer";
+            switch (table)
+            {
+                case MasterLookupTable.Directorate:
+                    affectedRows = await _dbContext.Directorates
+                        .Where(d => d.DirectorateName == value)
+                        .ExecuteDeleteAsync();
+                    break;
+
+                case MasterLookupTable.Disease:
+                    affectedRows = await _dbContext.Diseases
+                        .Where(d => d.DiseaseName == value)
+                        .ExecuteDeleteAsync();
+                    break;
+
+                case MasterLookupTable.Customer:
+                    affectedRows = await _dbContext.Customers
+                        .Where(c => c.CustomerName == value)
+                        .ExecuteDeleteAsync();
+                    break;
+
+                default:
+                    throw UnknownTable(tableName);
+            }
+
+            return affectedRows > 0;
+        }
 
         private IQueryable<string> GetLookupQuery(string tableName)
         {
-            return NormalizeTableName(tableName) switch
+            return ParseTableName(tableName) switch
             {
-                DirectorateTable => _dbContext.Directorates.AsNoTracking().Select(d => d.DirectorateName),
-                DiseaseTable => _dbContext.Diseases.AsNoTracking().Select(d => d.DiseaseName),
-                CustomerTable => _dbContext.Customers.AsNoTracking().Select(c => c.CustomerName),
+                MasterLookupTable.Directorate => _dbContext.Directorates.AsNoTracking().Select(d => d.DirectorateName),
+                MasterLookupTable.Disease => _dbContext.Diseases.AsNoTracking().Select(d => d.DiseaseName),
+                MasterLookupTable.Customer => _dbContext.Customers.AsNoTracking().Select(c => c.CustomerName),
                 _ => throw UnknownTable(tableName),
             };
         }
@@ -168,14 +193,20 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(v => v) : query.OrderBy(v => v);
         }
 
-        private static string NormalizeTableName(string tableName)
+        private static MasterLookupTable ParseTableName(string tableName)
         {
             if (string.IsNullOrWhiteSpace(tableName))
             {
                 throw new ArgumentException("Table name is required.", nameof(tableName));
             }
 
-            return tableName.Trim().ToLowerInvariant();
+            if (!Enum.TryParse<MasterLookupTable>(tableName.Trim(), ignoreCase: true, out var table)
+                || !Enum.IsDefined(table))
+            {
+                throw UnknownTable(tableName);
+            }
+
+            return table;
         }
 
         private static ArgumentException UnknownTable(string tableName) =>
