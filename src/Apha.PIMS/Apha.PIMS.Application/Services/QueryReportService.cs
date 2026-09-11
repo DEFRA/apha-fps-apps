@@ -2,7 +2,7 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.PIMS.Application.Services
 {

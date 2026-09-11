@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Interfaces;
 
 namespace Apha.FPS.Api.Middleware
 {

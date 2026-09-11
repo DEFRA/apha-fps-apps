@@ -5,7 +5,7 @@ using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

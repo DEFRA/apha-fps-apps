@@ -1,7 +1,8 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Infrastructure.Mappings;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Mappings
@@ -19,45 +20,41 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Mappings
 
         public FpsApiDtoMapperTests()
         {
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
-                cfg.CreateMap<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
-                cfg.CreateMap<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
-                cfg.CreateMap<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
-                cfg.CreateMap<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
-                cfg.CreateMap<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
-                cfg.CreateMap<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
-                cfg.CreateMap<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
-                cfg.CreateMap<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
-                cfg.CreateMap<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
-                cfg.CreateMap<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
-                cfg.CreateMap<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
-            }, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
+            var config = new TypeAdapterConfig();
+            config.NewConfig<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
+            config.NewConfig<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
+            config.NewConfig<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
+            config.NewConfig<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
+            config.NewConfig<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
+            config.NewConfig<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
+            config.NewConfig<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
+            config.NewConfig<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
+            config.NewConfig<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
+            config.NewConfig<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
+            config.NewConfig<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
+            config.NewConfig<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
 
-            _mapper = config.CreateMapper();
+            _mapper = new ServiceMapper(null!, config);
         }
 
         [Fact]
         public void Configuration_IsValid()
         {
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
-                cfg.CreateMap<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
-                cfg.CreateMap<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
-                cfg.CreateMap<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
-                cfg.CreateMap<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
-                cfg.CreateMap<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
-                cfg.CreateMap<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
-                cfg.CreateMap<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
-                cfg.CreateMap<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
-                cfg.CreateMap<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
-                cfg.CreateMap<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
-                cfg.CreateMap<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
-            }, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
+            var config = new TypeAdapterConfig();
+            config.NewConfig<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
+            config.NewConfig<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
+            config.NewConfig<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
+            config.NewConfig<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
+            config.NewConfig<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
+            config.NewConfig<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
+            config.NewConfig<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
+            config.NewConfig<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
+            config.NewConfig<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
+            config.NewConfig<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
+            config.NewConfig<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
+            config.NewConfig<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
 
-            config.AssertConfigurationIsValid();
+            config.Compile();
         }
 
         [Fact]

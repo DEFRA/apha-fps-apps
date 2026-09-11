@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -18,7 +18,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
         /// <summary>
         /// Creates a JobCodeRepository alongside mocked DbSet and context for call verification.
         /// AddAsync and Entry() are set up explicitly since they differ from the base SetupDbSetOperations.
-        /// UpdateJobCodeAsync uses Entry().State â€” covered here; ExecuteDeleteAsync is not used (Remove is).
+        /// UpdateJobCodeAsync uses Entry().State — covered here; ExecuteDeleteAsync is not used (Remove is).
         /// </summary>
         private static (
             JobCodeRepository Repo,
@@ -467,7 +467,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
         [Fact]
         public async Task UpdateJobCodeAsync_ValidJobCode_SetsFpsYearBeforeEntryIsCalled()
         {
-            // Arrange â€” Entry() cannot be proxied by Moq; use Callback+Throws to verify
+            // Arrange — Entry() cannot be proxied by Moq; use Callback+Throws to verify
             // FpsYear is stamped on the entity BEFORE Entry() is invoked (mirrors EmployeeRepositoryTests pattern)
             var fpsRequestContext = Substitute.For<IFpsRequestContext>();
             fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);

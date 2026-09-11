@@ -1,11 +1,11 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PIMS;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return View(viewModel);
         }
 
-        // ── Milestones DataGrid ──────────────────────────────────────────────
+        // -- Milestones DataGrid ----------------------------------------------
 
         [HttpPost]
         public async Task<IActionResult> LoadMilestoneGrid(
@@ -341,7 +341,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return Json(new { formRequired, typeLookUp });
         }
 
-        // ── Log Milestones DataGrid ──────────────────────────────────────────
+        // -- Log Milestones DataGrid ------------------------------------------
 
         [HttpPost]
         public async Task<IActionResult> LoadLogMilestonesGrid(
@@ -398,7 +398,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             };
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────
+        // -- Helpers ----------------------------------------------------------
 
         private async Task PopulateDropdownsAsync(MilestoneViewModel viewModel)
         {

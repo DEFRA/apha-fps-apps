@@ -1,4 +1,4 @@
-ï»¿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
@@ -36,10 +36,10 @@ namespace Apha.FPS.Application.Interfaces
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
         Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
 
-        // Resource Replan â€” staff data for a workgroup, paged/filtered/sorted
+        // Resource Replan — staff data for a workgroup, paged/filtered/sorted
         Task<PaginatedResult<ProjectStaffReplanDto>> GetProjectStaffReplanAsync(QueryParameters<string> query, string workgroup);
 
-        // Exceptional (additional) costs â€” paged/filtered/sorted
+        // Exceptional (additional) costs — paged/filtered/sorted
         Task<PaginatedResult<ProjectExceptionalCostViewDto>> GetProjectExceptionalCostsPagedAsync(QueryParameters<string> query);
     }
 }

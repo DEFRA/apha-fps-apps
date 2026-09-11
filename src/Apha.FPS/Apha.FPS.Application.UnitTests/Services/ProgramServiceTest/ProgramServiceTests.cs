@@ -4,7 +4,7 @@ using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

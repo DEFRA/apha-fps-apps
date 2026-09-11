@@ -4,6 +4,8 @@ using Apha.FPSApps.Infrastructure.Mappings;
 using Apha.FPSApps.Web.Filters;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -42,18 +44,12 @@ namespace Apha.FPSApps.Web.Extensions
                 options.Cookie.SameSite = SameSiteMode.Lax;
             });
 
-            // AutoMapper  
-            services.AddAutoMapper(config =>
-            {
-                config.AddMaps(typeof(FpsApiDtoMapper).Assembly);
-                config.AddMaps(typeof(PactApiDtoMapper).Assembly);
-                config.AddMaps(typeof(CostbookApiDtoMapper).Assembly);
-                config.AddMaps(typeof(PimsApiDtoMapper).Assembly);
-                config.AddMaps(typeof(FpsViewModelMapper));
-                config.AddMaps(typeof(PactViewModelMapper));
-                config.AddMaps(typeof(CostbookViewModelMapper));
-                config.AddMaps(typeof(PimsViewModelMapper));
-            });
+            // Mapster
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Scan(typeof(FpsApiDtoMapper).Assembly);
+            mapperConfig.Scan(typeof(FpsViewModelMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
 
             // HTTP Context
             services.AddHttpContextAccessor();

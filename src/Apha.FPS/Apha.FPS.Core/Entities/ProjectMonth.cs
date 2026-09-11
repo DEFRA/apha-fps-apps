@@ -1,6 +1,6 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Core.Entities
 {
-    // Maps fps.projectmonth — cross-year table, no FpsYear query filter applied
+    // Maps fps.projectmonth � cross-year table, no FpsYear query filter applied
     public class ProjectMonth
     {
         public string Project { get; set; } = null!;

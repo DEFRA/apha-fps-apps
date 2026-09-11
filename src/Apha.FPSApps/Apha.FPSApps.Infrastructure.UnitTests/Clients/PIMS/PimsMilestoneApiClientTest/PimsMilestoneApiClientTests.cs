@@ -1,4 +1,4 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Web;
@@ -243,7 +243,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         [Fact]
         public async Task GetMilestoneAsync_UrlEncodesProjectAndNumber()
         {
-            // Arrange — special characters require encoding
+            // Arrange � special characters require encoding
             const string project = "PP 001";
             const string number  = "M/1";
             var expectedUrl = string.Format(PimsApiEndpoints.GetMilestone, Uri.EscapeDataString(project), HttpUtility.UrlEncode(number));
@@ -363,10 +363,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             var dto = new MilestoneDto { Project = "PP001", Number = "M1" };
-            _mapper.Map<MilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<MilestoneReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.SaveMilestoneAsync("PP001", dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.SaveMilestoneAsync("PP001", dto));
         }
 
         #endregion
@@ -838,7 +838,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             // Act
             await _client.GetMilestoneTypesAsync(filter);
 
-            // Assert — no query string appended for null/whitespace filter
+            // Assert � no query string appended for null/whitespace filter
             await _http.Received(1).GetAsync<List<MilestoneTypeRes>>(
                 Arg.Is<string>(u => u == PimsApiEndpoints.GetMilestoneTypes));
         }
@@ -1090,7 +1090,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
 
         #endregion
 
-        #region DeleteMilestoneFormDatesAsync — has try/catch
+        #region DeleteMilestoneFormDatesAsync � has try/catch
 
         [Fact]
         public async Task DeleteMilestoneFormDatesAsync_WithSuccessResponse_ReturnsMappedDto()
@@ -1144,7 +1144,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         [Fact]
         public async Task DeleteMilestoneFormDatesAsync_WhenHttpExecutorThrows_ReturnsInternalError()
         {
-            // Arrange — DeleteMilestoneFormDatesAsync has a try/catch; exception should be swallowed
+            // Arrange � DeleteMilestoneFormDatesAsync has a try/catch; exception should be swallowed
             const string parent = "PP001";
             const short  year   = 2024;
             var url = string.Format(PimsApiEndpoints.DeleteMilestoneFormDates, Uri.EscapeDataString(parent), year);
@@ -1312,7 +1312,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             // Act
             await _client.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
 
-            // Assert — no optional params appended; URL must not contain the param keys
+            // Assert � no optional params appended; URL must not contain the param keys
             await _http.Received(1).GetAsync<List<LogMilestoneRes>>(
                 Arg.Is<string>(u =>
                     !u.Contains("&project=") &&
@@ -1520,10 +1520,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
-            _mapper.Map<StagingMilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<StagingMilestoneReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.AddStagingRowAsync(dto, 2025));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.AddStagingRowAsync(dto, 2025));
         }
 
         #endregion

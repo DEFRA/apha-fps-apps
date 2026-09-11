@@ -1,6 +1,6 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Core.Entities
 {
-    // Maps fps.timecodevalid — cross-year table, no FpsYear query filter applied
+    // Maps fps.timecodevalid � cross-year table, no FpsYear query filter applied
     public class TimeCodeValid
     {
         public string TimeCode { get; set; } = null!;

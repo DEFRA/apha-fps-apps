@@ -1,4 +1,4 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.Common.Contracts.Costbook;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using System.Web;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients

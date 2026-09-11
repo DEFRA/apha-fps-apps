@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -124,7 +124,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private async Task<List<ResourceStaffGeneralSummaryRow>> GetStaffAllocationsByWorkGroupGradeAsync(string workGroupGrade)
         {
-            // ── Step 1: qryZTonly_CTE ────────────────────────────────────────────────
+            // -- Step 1: qryZTonly_CTE ------------------------------------------------
             // SUM(plannedhours) per StaffID where project Program = 'ZT_Prog'.
             // Mirrors the CTE and is resolved in-memory to avoid a grouped LEFT JOIN
             // that EF Core cannot translate in a single expression tree.
@@ -141,12 +141,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 }
             ).ToDictionaryAsync(x => x.StaffId, x => x.SumPlannedHours);
 
-            // ── Step 2: Main grouped query ───────────────────────────────────────────
-            // vtblStaff  → tblWGEmployee INNER JOIN tblEmployee (on SPNumber)
+            // -- Step 2: Main grouped query -------------------------------------------
+            // vtblStaff  ? tblWGEmployee INNER JOIN tblEmployee (on SPNumber)
             //                            INNER JOIN WorkGroupGrade (on WorkGroupGrade = WGGrade)
-            // sj         → tblStaffJob LEFT JOIN (filtered to known WGEmployee PACTids implicitly
+            // sj         ? tblStaffJob LEFT JOIN (filtered to known WGEmployee PACTids implicitly
             //              because we join on wg.PactId = sj.StaffId from the outer side)
-            // p          → tlkpProject LEFT JOIN on sj.Jobcode = p.ParentProject
+            // p          ? tlkpProject LEFT JOIN on sj.Jobcode = p.ParentProject
             // WHERE name LIKE '%General' AND WorkGroupGrade = @workGroupGrade
             var grouped = await (
                 from wg in _dbContext.WorkGroupEmployees.AsNoTracking()
@@ -190,7 +190,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 }
             ).ToListAsync();
 
-            // ── Step 3: Merge ZtHours and compute derived columns in-memory ──────────
+            // -- Step 3: Merge ZtHours and compute derived columns in-memory ----------
             return grouped.Select(row =>
             {
                 var ztHrs = ztHoursById.TryGetValue(row.StaffId, out var zt) ? zt : 0.0;

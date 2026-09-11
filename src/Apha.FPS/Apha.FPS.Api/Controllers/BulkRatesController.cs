@@ -4,7 +4,7 @@ using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Interfaces;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

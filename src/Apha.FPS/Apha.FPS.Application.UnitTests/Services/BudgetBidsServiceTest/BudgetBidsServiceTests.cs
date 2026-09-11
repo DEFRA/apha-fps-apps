@@ -3,7 +3,7 @@ using Apha.FPS.Application.Services;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Moq;
 
 namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest

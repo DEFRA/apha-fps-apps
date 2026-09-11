@@ -2,7 +2,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPS.Application.Services
 {

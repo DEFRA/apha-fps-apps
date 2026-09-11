@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Core.Entities
+namespace Apha.PIMS.Core.Entities
 {
     public class PublicationType
     {

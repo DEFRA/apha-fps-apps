@@ -3,7 +3,7 @@ using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

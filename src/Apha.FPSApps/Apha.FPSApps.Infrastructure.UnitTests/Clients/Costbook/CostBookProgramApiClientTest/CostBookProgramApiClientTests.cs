@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -175,7 +175,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
                 Success = true,
                 Data = programResList
             };
-            var mappingException = new AutoMapperMappingException("Mapping failed");
+            var mappingException = new InvalidOperationException("Mapping failed");
 
             _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Throws(mappingException);

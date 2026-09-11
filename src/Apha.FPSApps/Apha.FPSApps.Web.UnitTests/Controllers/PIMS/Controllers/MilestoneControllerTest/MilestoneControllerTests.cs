@@ -1,11 +1,11 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             _controller         = new MilestoneController(_mapper, _milestoneService, _projectListService);
         }
 
-        // ── shared setup helpers ────────────────────────────────────────────
+        // -- shared setup helpers --------------------------------------------
 
         /// <summary>Wires every dependency needed for Index / BuildGridsAsync to complete.</summary>
         private void SetupSuccessfulIndexMocks(
@@ -124,7 +124,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
         private static PaginationFilter<string> DefaultFilter()
             => new() { Page = 1, PageSize = 10, Filter = "{}" };
 
-        // ── Index ───────────────────────────────────────────────────────────
+        // -- Index -----------------------------------------------------------
 
         #region Index
 
@@ -285,7 +285,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── LoadMilestoneGrid ────────────────────────────────────────────────
+        // -- LoadMilestoneGrid ------------------------------------------------
 
         #region LoadMilestoneGrid
 
@@ -362,7 +362,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── LoadMilestoneFormDatesGrid ───────────────────────────────────────
+        // -- LoadMilestoneFormDatesGrid ---------------------------------------
 
         #region LoadMilestoneFormDatesGrid
 
@@ -423,7 +423,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── GetAddEditMilestonePartial ───────────────────────────────────────
+        // -- GetAddEditMilestonePartial ---------------------------------------
 
         #region GetAddEditMilestonePartial
 
@@ -526,7 +526,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── SaveMilestone ────────────────────────────────────────────────────
+        // -- SaveMilestone ----------------------------------------------------
 
         #region SaveMilestone
 
@@ -624,7 +624,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── DeleteMilestone ──────────────────────────────────────────────────
+        // -- DeleteMilestone --------------------------------------------------
 
         #region DeleteMilestone
 
@@ -678,7 +678,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── GetAddEditMilestoneFormDatesPartial ──────────────────────────────
+        // -- GetAddEditMilestoneFormDatesPartial ------------------------------
 
         #region GetAddEditMilestoneFormDatesPartial
 
@@ -769,7 +769,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── SaveMilestoneFormDates ───────────────────────────────────────────
+        // -- SaveMilestoneFormDates -------------------------------------------
 
         #region SaveMilestoneFormDates
 
@@ -827,7 +827,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── DeleteMilestoneFormDates ─────────────────────────────────────────
+        // -- DeleteMilestoneFormDates -----------------------------------------
 
         #region DeleteMilestoneFormDates
 
@@ -863,7 +863,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── UpdateFormRequired ───────────────────────────────────────────────
+        // -- UpdateFormRequired -----------------------------------------------
 
         #region UpdateFormRequired
 
@@ -901,7 +901,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── GetFormRequired ──────────────────────────────────────────────────
+        // -- GetFormRequired --------------------------------------------------
 
         #region GetFormRequired
 
@@ -960,7 +960,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── LogIndex ─────────────────────────────────────────────────────────
+        // -- LogIndex ---------------------------------------------------------
 
         #region LogIndex
 
@@ -1073,7 +1073,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
         #endregion
 
-        // ── LoadLogMilestonesGrid ────────────────────────────────────────────
+        // -- LoadLogMilestonesGrid --------------------------------------------
 
         #region LoadLogMilestonesGrid
 

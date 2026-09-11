@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -131,7 +131,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<AdditionalCostRes>> { Success = true, Data = new List<AdditionalCostRes>() };
 
             _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetAdditionalActualsAsync(Project, Year, query);
@@ -258,7 +258,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<AdditionalCostRes>> { Success = true, Data = new List<AdditionalCostRes>() };
 
             _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetAdditionalPlansAsync(Project, Year, query);
@@ -385,7 +385,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<AnimalCostRes>> { Success = true, Data = new List<AnimalCostRes>() };
 
             _http.GetAsync<List<AnimalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetAnimalActualsAsync(Project, Year, query);
@@ -512,7 +512,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<AnimalCostRes>> { Success = true, Data = new List<AnimalCostRes>() };
 
             _http.GetAsync<List<AnimalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetAnimalPlansAsync(Project, Year, query);
@@ -639,7 +639,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<TestCostRes>> { Success = true, Data = new List<TestCostRes>() };
 
             _http.GetAsync<List<TestCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<TestCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetTestPlansAsync(Project, Year, query);
@@ -766,7 +766,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<TestCostRes>> { Success = true, Data = new List<TestCostRes>() };
 
             _http.GetAsync<List<TestCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<TestCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetTestActualsAsync(Project, Year, query);
@@ -893,7 +893,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<StaffCostRes>> { Success = true, Data = new List<StaffCostRes>() };
 
             _http.GetAsync<List<StaffCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetStaffPlansAsync(Project, Year, query);
@@ -1020,7 +1020,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<StaffCostRes>> { Success = true, Data = new List<StaffCostRes>() };
 
             _http.GetAsync<List<StaffCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetStaffActualsAsync(Project, Year, query);
@@ -1144,7 +1144,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<ProjectYearDetailsRes> { Success = true, Data = new ProjectYearDetailsRes { Parentproject = Project } };
 
             _http.GetAsync<ProjectYearDetailsRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProjectYearDetailsDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<ProjectYearDetailsDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetProjectYearDetailsAsync(Project, Year);
@@ -1270,7 +1270,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<PactPayRes>> { Success = true, Data = new List<PactPayRes>() };
 
             _http.GetAsync<List<PactPayRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<PactPayDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<PactPayDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetPactPayAsync(Project, Year, query);
@@ -1398,7 +1398,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<List<MonthlyPactRes>> { Success = true, Data = new List<MonthlyPactRes>() };
 
             _http.GetAsync<List<MonthlyPactRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<MonthlyPactDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<MonthlyPactDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetMonthlyPactDataAsync(Project, Year, query);
@@ -1534,7 +1534,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             var apiResponse = new ApiResponse<FpsYearTotalsRes> { Success = true, Data = new FpsYearTotalsRes { Parentproject = Project } };
 
             _http.GetAsync<FpsYearTotalsRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<FpsYearTotalsDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<FpsYearTotalsDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetFpsYearTotalsAsync(Project, Year);

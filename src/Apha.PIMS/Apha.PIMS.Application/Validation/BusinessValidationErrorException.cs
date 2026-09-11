@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Application.Validation
+namespace Apha.PIMS.Application.Validation
 {
     public class BusinessValidationErrorException : Exception
     {

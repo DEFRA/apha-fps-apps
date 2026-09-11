@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -322,7 +322,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<ProjectExceptionalCostView>> GetProjectExceptionalCostsPagedAsync(PaginationParameters<string> query)
         {
-            // Base join: Project → Program → AdditionalCost
+            // Base join: Project ? Program ? AdditionalCost
             // Directorate (Program), Programme/ContractNumber/Project (Project),
             // AccountCat/Description/ItemCost (AdditionalCost)
             var rows = await (
@@ -512,7 +512,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     project.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
                     NormalizeDateTimesToUnspecified(project);
                     await _dbContext.Projects.AddAsync(project);
-                    // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
+                    // Converted trigger logic � UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();
 
@@ -541,7 +541,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     NormalizeDateTimesToUnspecified(project);
                     _dbContext.Entry(project).State = EntityState.Modified;
                     _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
-                    // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
+                    // Converted trigger logic � UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();
 
@@ -624,7 +624,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     entity.CustIncome = project.CustIncome;
 
                     NormalizeDateTimesToUnspecified(entity);
-                    // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
+                    // Converted trigger logic � UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();
 
@@ -718,7 +718,7 @@ namespace Apha.FPS.DataAccess.Repositories
                             && p.FpsYear == _requestContext.FpsYear);
                     if (project == null) return;
                     NormalizeDateTimesToUnspecified(project);
-                    // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete in same unit of work
+                    // Converted trigger logic � DTrig_tlkpProject FOR DELETE: stage audit log before delete in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
                     _dbContext.Projects.Remove(project);
                     await _dbContext.SaveChangesAsync();
@@ -957,7 +957,7 @@ namespace Apha.FPS.DataAccess.Repositories
         // -- ProgrammeNewProject operations ----------------------------------
 
         /// <summary>
-        /// Checks whether a project code already exists — derived from qryProjectCheck.
+        /// Checks whether a project code already exists � derived from qryProjectCheck.
         /// </summary>
         public async Task<bool> CheckProjectExistsAsync(string newProject)
         {
@@ -967,7 +967,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         /// <summary>
-        /// Checks whether an old project code has Farm File submission data — derived from qryProjectCheckFF.
+        /// Checks whether an old project code has Farm File submission data � derived from qryProjectCheckFF.
         /// </summary>
         public async Task<bool> CheckProjectExistsInFarmFileAsync(string oldProject)
         {
@@ -1014,7 +1014,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         /// <summary>
-        /// Renames a project code and updates all child table references — derived from usp_ChangeProjectCode.
+        /// Renames a project code and updates all child table references � derived from usp_ChangeProjectCode.
         /// UITrig_tlkpProject FOR INSERT appended: stages audit log entry in same unit of work.
         /// </summary>
         public async Task ChangeProjectCodeAsync(string oldCode, string newCode)
@@ -1457,7 +1457,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
 
         /// <summary>
-        /// Deletes a project and all dependent child records — derived from usp_Delete_Project.
+        /// Deletes a project and all dependent child records � derived from usp_Delete_Project.
         /// DTrig_tlkpProject (DELETE) appended: stages audit log entry.
         /// </summary>
         public async Task DeleteProjectAndChildrenAsync(string parentProject)
@@ -1482,7 +1482,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private async Task DeleteProjectCoreAsync(string parentProject)
         {
-            // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete
+            // Converted trigger logic � DTrig_tlkpProject FOR DELETE: stage audit log before delete
             var project = await _dbContext.Projects
                 .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
 
@@ -1502,16 +1502,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(jc => jc.ParentProject == parentProject)
                 .ExecuteDeleteAsync();
 
-            // sp_delete_tr — Derived from DTrig_tlkpTestReqmt: log before delete
+            // sp_delete_tr � Derived from DTrig_tlkpTestReqmt: log before delete
             await LogAndDeleteTestRequirementsAsync(parentProject);
 
-            // sp_Delete_ar — Derived from DTrig_tblAnimalReq: log before delete
+            // sp_Delete_ar � Derived from DTrig_tblAnimalReq: log before delete
             await LogAndDeleteAnimalRequestsAsync(parentProject);
 
-            // sp_Delete_sj — Derived from DTrig_tblStaffJob: log before delete
+            // sp_Delete_sj � Derived from DTrig_tblStaffJob: log before delete
             await LogAndDeleteStaffJobsAsync(parentProject);
 
-            // sp_Delete_ac — Derived from DTrig_tblAdditionalCosts: log before delete
+            // sp_Delete_ac � Derived from DTrig_tblAdditionalCosts: log before delete
             await LogAndDeleteAdditionalCostsAsync(parentProject);
 
             // sp_Delete_pp
@@ -1704,7 +1704,7 @@ namespace Apha.FPS.DataAccess.Repositories
         /// Translates qryProjectProfitability3: Projects + Programs + aggregate cost sub-queries.
         /// Staff costs sourced from TimeCostCalcsViews (vtimecostcalcs, grouped by Project).
         /// Animal costs from AnimalRequests joined to Animals for daily rate.
-        /// Test costs from TestRequirements (NoRequired × UnitPrice per vtbltestrequ).
+        /// Test costs from TestRequirements (NoRequired � UnitPrice per vtbltestrequ).
         /// Additional costs from AdditionalCosts (sum of ItemCost per JobCode).
         /// workTypeFilter: "all" | "approved" | "not-approved"
         /// </summary>
@@ -1873,7 +1873,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(g => new { JobCode = g.Key, TotalTest = g.Sum(x => x.NoRequired * x.UnitPrice) })
                 .ToList();
 
-            // Calculate animal costs: NumberOfAnimals × NumberOfDays × (IsDefraProject=0 ? DailyRate : DefraDailyRate)           
+            // Calculate animal costs: NumberOfAnimals � NumberOfDays � (IsDefraProject=0 ? DailyRate : DefraDailyRate)           
             var animalCostsRaw = await (
                 from ar in _dbContext.AnimalRequests
                 join p in _dbContext.Projects
@@ -1931,7 +1931,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(results, query.Page, query.PageSize);
         }
 
-        // ── VLA Project Profitability ──────────────────────────────────────────
+        // -- VLA Project Profitability ------------------------------------------
 
         /// <summary>
         /// Returns paginated project profitability data for the VLA view.

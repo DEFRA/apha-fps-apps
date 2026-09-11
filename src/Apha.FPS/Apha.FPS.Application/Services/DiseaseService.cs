@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Core.Interfaces;
 
 namespace Apha.FPS.Application.Services

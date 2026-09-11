@@ -1,9 +1,11 @@
-﻿using Apha.PIMS.Api.Filters;
+using Apha.PIMS.Api.Filters;
 using Apha.PIMS.Api.Mappings;
 using Apha.PIMS.Api.Middleware;
 using Apha.PIMS.Application.Mappings;
 using Apha.PIMS.DataAccess.Data;
 using Asp.Versioning;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -49,12 +51,11 @@ namespace Apha.PIMS.Api.Extensions
                 });
             }
 
-            // AutoMapper
-            services.AddAutoMapper(config =>
-            {
-                config.AddMaps(typeof(EntityMapper).Assembly);
-                config.AddMaps(typeof(RequestMapper));
-            });
+            // Mapster
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Scan(typeof(EntityMapper).Assembly, typeof(RequestMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
 
             // MVC API
             services.AddControllers(options =>

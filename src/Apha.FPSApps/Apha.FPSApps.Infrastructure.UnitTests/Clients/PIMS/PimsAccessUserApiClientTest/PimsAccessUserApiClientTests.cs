@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;

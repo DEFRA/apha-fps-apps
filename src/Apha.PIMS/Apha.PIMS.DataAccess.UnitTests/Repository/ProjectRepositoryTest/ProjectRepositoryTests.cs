@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.DataAccess.UnitTests.Repository.YourRepositoryNameRepositoryTest
+namespace Apha.PIMS.DataAccess.UnitTests.Repository.YourRepositoryNameRepositoryTest
 {
     public class ProjectRepositoryTests
     {

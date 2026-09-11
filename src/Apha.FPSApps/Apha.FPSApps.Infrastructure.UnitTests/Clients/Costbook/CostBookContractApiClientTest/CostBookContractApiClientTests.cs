@@ -1,10 +1,10 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -142,7 +142,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookContrac
             // Arrange
             var apiResponse = new ApiResponse<List<ContractRes>> { Success = true, Data = new List<ContractRes> { new ContractRes() } };
             _http.GetAsync<List<ContractRes>>("api/v1/projects/contracts").Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<ContractDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<ContractDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetAllContractNumbersAsync();

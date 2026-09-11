@@ -1,35 +1,35 @@
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.FPSApps.Web.Mappings
 {
-    public class DepartmentIncomeViewModelMapper : Profile
+    public class DepartmentIncomeViewModelMapper : IRegister
     {
-        public DepartmentIncomeViewModelMapper()
+        public void Register(TypeAdapterConfig config)
         {
             // All 18 properties align by convention
-            CreateMap<DepartmentIncomeTimeItem, DepartmentIncomeTimeDto>().ReverseMap();
+            config.NewConfig<DepartmentIncomeTimeItem, DepartmentIncomeTimeDto>().TwoWays();
 
             // All 14 properties align by convention
-            CreateMap<DepartmentIncomeTestItem, DepartmentIncomeTestDto>().ReverseMap();
+            config.NewConfig<DepartmentIncomeTestItem, DepartmentIncomeTestDto>().TwoWays();
 
             // All 13 properties align by convention
-            CreateMap<DepartmentIncomeAnimalItem, DepartmentIncomeAnimalDto>().ReverseMap();
+            config.NewConfig<DepartmentIncomeAnimalItem, DepartmentIncomeAnimalDto>().TwoWays();
 
             // All 8 properties align by convention
-            CreateMap<DepartmentIncomeAdditionalItem, DepartmentIncomeAdditionalDto>().ReverseMap();
+            config.NewConfig<DepartmentIncomeAdditionalItem, DepartmentIncomeAdditionalDto>().TwoWays();
 
             // All 7 properties align by convention (nullable decimal? pivot columns preserved)
-            CreateMap<DepartmentIncomeTotalsItem, DepartmentIncomeTotalsDto>().ReverseMap();
+            config.NewConfig<DepartmentIncomeTotalsItem, DepartmentIncomeTotalsDto>().TwoWays();
 
             // Snapshot periods — PeriodName, FinalSummariesRun, PeriodLocked aligned from PeriodSnapshotDto
-            CreateMap<PeriodSnapshotDto, DepartmentIncomeSnapshotItem>()
-                .ForMember(d => d.PeriodName,         o => o.MapFrom(s => s.PeriodName))
-                .ForMember(d => d.FinalSummariesRun,  o => o.MapFrom(s => s.FinalSummariesRun))
-                .ForMember(d => d.PeriodLocked,       o => o.MapFrom(s => s.PeriodLocked))
-                .ForMember(d => d.Month,              o => o.MapFrom(s => (int)s.EndPeriod))
-                .ForMember(d => d.ProjectCode,        o => o.Ignore());
+            config.NewConfig<PeriodSnapshotDto, DepartmentIncomeSnapshotItem>()
+                .Map(d => d.PeriodName, s => s.PeriodName)
+                .Map(d => d.FinalSummariesRun, s => s.FinalSummariesRun)
+                .Map(d => d.PeriodLocked, s => s.PeriodLocked)
+                .Map(d => d.Month, s => (int)s.EndPeriod)
+                .Ignore(d => d.ProjectCode);
         }
     }
 }

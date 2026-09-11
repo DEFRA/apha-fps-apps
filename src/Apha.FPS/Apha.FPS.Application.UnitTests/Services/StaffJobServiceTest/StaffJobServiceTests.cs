@@ -1,10 +1,10 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

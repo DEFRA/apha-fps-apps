@@ -4,7 +4,7 @@ using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

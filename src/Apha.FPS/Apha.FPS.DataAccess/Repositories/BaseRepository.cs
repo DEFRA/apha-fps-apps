@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Pagination;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 

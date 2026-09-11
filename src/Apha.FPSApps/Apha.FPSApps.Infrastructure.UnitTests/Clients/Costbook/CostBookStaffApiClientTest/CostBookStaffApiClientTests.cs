@@ -1,10 +1,10 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -142,7 +142,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookStaffAp
             // Arrange
             var apiResponse = new ApiResponse<List<StaffRes>> { Success = true, Data = new List<StaffRes> { new StaffRes() } };
             _http.GetAsync<List<StaffRes>>("api/v1/projects/staff").Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<StaffDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<StaffDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetAllStaffAsync();

@@ -4,128 +4,124 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.PIMS.Api.Mappings
 {
-    public class RequestMapper : Profile
+    public class RequestMapper : IRegister
     {
-        public RequestMapper()
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap(typeof(PaginationReq<>), typeof(QueryParameters<>)).ReverseMap();
-            CreateMap(typeof(PaginationReq<>), typeof(PaginationParameters<>)).ReverseMap();
-            CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
-            CreateMap<Pagination, PaginationDto>().ReverseMap();
-            CreateMap<Pagination, PaginationData>().ReverseMap();
+            config.NewConfig(typeof(PaginationReq<>), typeof(QueryParameters<>));
+            config.NewConfig(typeof(QueryParameters<>), typeof(PaginationReq<>));
+            config.NewConfig(typeof(PaginationReq<>), typeof(PaginationParameters<>));
+            config.NewConfig(typeof(PaginationParameters<>), typeof(PaginationReq<>));
+            config.NewConfig(typeof(PaginationRes<>), typeof(PaginatedResult<>));
+            config.NewConfig(typeof(PaginatedResult<>), typeof(PaginationRes<>));
+            config.NewConfig<Pagination, PaginationDto>().TwoWays();
+            config.NewConfig<Pagination, PaginationData>().TwoWays();
 
-            CreateMap<ProjectListViewDto, ProjectListRes>().ReverseMap();
-            CreateMap<ProjectListMilestoneDto, ProjectListMilestoneRes>().ReverseMap();
-            CreateMap<ProjectDetailsMilestoneDto, ProjectDetailsMilestoneRes>().ReverseMap();
-            CreateMap<ProjectDto, ProjectRes>().ReverseMap();
-            CreateMap<ProposedProjectDto, ProposedProjectReq>().ReverseMap();
-            CreateMap<ProposedProjectDto, ProposedProjectRes>().ReverseMap();
-            CreateMap<ProjectsDto, ProjectsRes>().ReverseMap();
+            config.NewConfig<ProjectListViewDto, ProjectListRes>().TwoWays();
+            config.NewConfig<ProjectListMilestoneDto, ProjectListMilestoneRes>().TwoWays();
+            config.NewConfig<ProjectDetailsMilestoneDto, ProjectDetailsMilestoneRes>().TwoWays();
+            config.NewConfig<ProjectDto, ProjectRes>().TwoWays();
+            config.NewConfig<ProposedProjectDto, ProposedProjectReq>().TwoWays();
+            config.NewConfig<ProposedProjectDto, ProposedProjectRes>().TwoWays();
+            config.NewConfig<ProjectsDto, ProjectsRes>().TwoWays();
 
-            
-            CreateMap<CommentDto, CommentReq>()
-                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
-                .ReverseMap()
-                .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment));
+            config.NewConfig<CommentDto, CommentReq>()
+                .Map(dest => dest.Comment, src => src.CommentText);
+            config.NewConfig<CommentReq, CommentDto>()
+                .Map(dest => dest.CommentText, src => src.Comment);
 
-            
-            CreateMap<CommentDto, CommentRes>()
-                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
-                .ReverseMap()
-                .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment));
+            config.NewConfig<CommentDto, CommentRes>()
+                .Map(dest => dest.Comment, src => src.CommentText);
+            config.NewConfig<CommentRes, CommentDto>()
+                .Map(dest => dest.CommentText, src => src.Comment);
 
-            CreateMap<ProjectDetailDto, ProjectDetailReq>().ReverseMap();
-            CreateMap<ProjectDetailDto, ProjectDetailRes>().ReverseMap();
+            config.NewConfig<ProjectDetailDto, ProjectDetailReq>().TwoWays();
+            config.NewConfig<ProjectDetailDto, ProjectDetailRes>().TwoWays();
             // Risk rating lookup maintenance
-            CreateMap<RiskDto, RiskReq>().ReverseMap();
-            CreateMap<RiskDto, RiskRes>().ReverseMap();
+            config.NewConfig<RiskDto, RiskReq>().TwoWays();
+            config.NewConfig<RiskDto, RiskRes>().TwoWays();
 
             // Publication type lookup maintenance
-            CreateMap<PublicationTypeDto, PublicationTypeReq>().ReverseMap();
-            CreateMap<PublicationTypeDto, PublicationTypeRes>().ReverseMap();
-            CreateMap<YearDto, YearRes>().ReverseMap();
+            config.NewConfig<PublicationTypeDto, PublicationTypeReq>().TwoWays();
+            config.NewConfig<PublicationTypeDto, PublicationTypeRes>().TwoWays();
+            config.NewConfig<YearDto, YearRes>().TwoWays();
 
-            
-            CreateMap<CommentTopicDto, CommentTopicRes>().ReverseMap();
+            config.NewConfig<CommentTopicDto, CommentTopicRes>().TwoWays();
 
-            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
-            CreateMap<AnimalCostDto, AnimalCostRes>().ReverseMap();
-            CreateMap<TestCostDto, TestCostRes>().ReverseMap();
-            CreateMap<StaffCostDto, StaffCostRes>().ReverseMap();
-            CreateMap<ProjectYearDetailsDto, ProjectYearDetailsRes>().ReverseMap();
-            CreateMap<PactPayDto, PactPayRes>().ReverseMap();
-            CreateMap<MonthlyPactDto, MonthlyPactRes>().ReverseMap();
-            CreateMap<FpsYearTotalsDto, FpsYearTotalsRes>().ReverseMap();
+            config.NewConfig<AdditionalCostDto, AdditionalCostRes>().TwoWays();
+            config.NewConfig<AnimalCostDto, AnimalCostRes>().TwoWays();
+            config.NewConfig<TestCostDto, TestCostRes>().TwoWays();
+            config.NewConfig<StaffCostDto, StaffCostRes>().TwoWays();
+            config.NewConfig<ProjectYearDetailsDto, ProjectYearDetailsRes>().TwoWays();
+            config.NewConfig<PactPayDto, PactPayRes>().TwoWays();
+            config.NewConfig<MonthlyPactDto, MonthlyPactRes>().TwoWays();
+            config.NewConfig<FpsYearTotalsDto, FpsYearTotalsRes>().TwoWays();
 
-            CreateMap<MilestoneDto, MilestoneRes>().ReverseMap();
-            CreateMap<MilestoneDto, MilestoneReq>().ReverseMap();
-            CreateMap<MilestoneTypeDto, MilestoneTypeRes>().ReverseMap();
+            config.NewConfig<MilestoneDto, MilestoneRes>().TwoWays();
+            config.NewConfig<MilestoneDto, MilestoneReq>().TwoWays();
+            config.NewConfig<MilestoneTypeDto, MilestoneTypeRes>().TwoWays();
 
-            CreateMap<MilestoneFormDatesDto, MilestoneFormDatesReq>().ReverseMap();
-            CreateMap<MilestoneFormDatesDto, MilestoneFormDatesRes>().ReverseMap();
+            config.NewConfig<MilestoneFormDatesDto, MilestoneFormDatesReq>().TwoWays();
+            config.NewConfig<MilestoneFormDatesDto, MilestoneFormDatesRes>().TwoWays();
 
-            CreateMap<LogMilestoneDto, LogMilestoneRes>().ReverseMap();
-            CreateMap<RadTrackInvoiceDto, RadTrackInvoiceReq>().ReverseMap();
-            CreateMap<RadTrackInvoiceDto, RadTrackInvoiceRes>().ReverseMap();
+            config.NewConfig<LogMilestoneDto, LogMilestoneRes>().TwoWays();
+            config.NewConfig<RadTrackInvoiceDto, RadTrackInvoiceReq>().TwoWays();
+            config.NewConfig<RadTrackInvoiceDto, RadTrackInvoiceRes>().TwoWays();
 
-            
-            CreateMap<ReportDto, ReportReq>().ReverseMap();
-            CreateMap<ReportDto, ReportRes>().ReverseMap();
-            CreateMap<ReportGroupDto, ReportGroupReq>().ReverseMap();
-            CreateMap<ReportGroupDto, ReportGroupRes>().ReverseMap();
-            CreateMap<ReportGroupLinkDto, ReportGroupLinkReq>().ReverseMap();
-            CreateMap<ReportGroupLinkDto, ReportGroupLinkRes>().ReverseMap();
+            config.NewConfig<ReportDto, ReportReq>().TwoWays();
+            config.NewConfig<ReportDto, ReportRes>().TwoWays();
+            config.NewConfig<ReportGroupDto, ReportGroupReq>().TwoWays();
+            config.NewConfig<ReportGroupDto, ReportGroupRes>().TwoWays();
+            config.NewConfig<ReportGroupLinkDto, ReportGroupLinkReq>().TwoWays();
+            config.NewConfig<ReportGroupLinkDto, ReportGroupLinkRes>().TwoWays();
 
-           
-            CreateMap<ProjectManagerDto, ProjectManagerReq>().ReverseMap();
-            CreateMap<ProjectManagerDto, ProjectManagerRes>().ReverseMap();
-            CreateMap<ProgramManagerLinkDto, ProgramManagerLinkReq>().ReverseMap();
-            CreateMap<ProgramManagerLinkDto, ProgramManagerLinkRes>().ReverseMap();
-            CreateMap<ProgramLookupDto, ProgramLookupRes>().ReverseMap();
-            CreateMap<ProfitCentreLookupDto, ProfitCentreLookupRes>().ReverseMap();
-            CreateMap<ProfitCentreManagerLinkDto, ProfitCentreManagerLinkReq>().ReverseMap();
-            CreateMap<ProfitCentreManagerLinkDto, ProfitCentreManagerLinkRes>().ReverseMap();
+            config.NewConfig<ProjectManagerDto, ProjectManagerReq>().TwoWays();
+            config.NewConfig<ProjectManagerDto, ProjectManagerRes>().TwoWays();
+            config.NewConfig<ProgramManagerLinkDto, ProgramManagerLinkReq>().TwoWays();
+            config.NewConfig<ProgramManagerLinkDto, ProgramManagerLinkRes>().TwoWays();
+            config.NewConfig<ProgramLookupDto, ProgramLookupRes>().TwoWays();
+            config.NewConfig<ProfitCentreLookupDto, ProfitCentreLookupRes>().TwoWays();
+            config.NewConfig<ProfitCentreManagerLinkDto, ProfitCentreManagerLinkReq>().TwoWays();
+            config.NewConfig<ProfitCentreManagerLinkDto, ProfitCentreManagerLinkRes>().TwoWays();
 
-            
-            CreateMap<SettingDto, SettingReq>().ReverseMap();
-            CreateMap<SettingDto, SettingRes>().ReverseMap();
+            config.NewConfig<SettingDto, SettingReq>().TwoWays();
+            config.NewConfig<SettingDto, SettingRes>().TwoWays();
 
-           
-            CreateMap<AccessUserDto, AccessUserReq>().ReverseMap();
-            CreateMap<AccessUserDto, AccessUserRes>().ReverseMap();
-            
-            CreateMap<AccessLevelDto, AccessLevelRes>().ReverseMap();
-            CreateMap<AccessUserLevelDto, AccessUserLevelReq>().ReverseMap();
-            CreateMap<AccessUserLevelDto, AccessUserLevelRes>().ReverseMap();
-            CreateMap<AccessSystemDto, AccessSystemRes>().ReverseMap();
+            config.NewConfig<AccessUserDto, AccessUserReq>().TwoWays();
+            config.NewConfig<AccessUserDto, AccessUserRes>().TwoWays();
 
-            
-            CreateMap<FrequencyDto, FrequencyReq>().ReverseMap();
-            CreateMap<FrequencyDto, FrequencyRes>().ReverseMap();
-            CreateMap<ReviewItemDto, ReviewItemReq>().ReverseMap();
-            CreateMap<ReviewItemDto, ReviewItemRes>().ReverseMap();
+            config.NewConfig<AccessLevelDto, AccessLevelRes>().TwoWays();
+            config.NewConfig<AccessUserLevelDto, AccessUserLevelReq>().TwoWays();
+            config.NewConfig<AccessUserLevelDto, AccessUserLevelRes>().TwoWays();
+            config.NewConfig<AccessSystemDto, AccessSystemRes>().TwoWays();
 
-            
-            CreateMap<RadTrackProgDto, RadTrackProgReq>().ReverseMap();
-            CreateMap<RadTrackProgDto, RadTrackProgRes>().ReverseMap();
-            CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
-            CreateMap<StagingMilestoneDto, StagingMilestoneRes>().ReverseMap();
-            
-            CreateMap<YearlyFinancialDataDto, YearlyFinancialDataReq>().ReverseMap();
-            CreateMap<YearlyFinancialDataDto, YearlyFinancialDataRes>().ReverseMap();
-            CreateMap<PactProjectYearCostsDto, PactProjectYearCostsRes>()
-                .ForMember(dest => dest.Year, opt => opt.MapFrom(src => (short)src.Year))
-                .ReverseMap()
-                .ForMember(dest => dest.Year, opt => opt.MapFrom(src => (double)src.Year));
+            config.NewConfig<FrequencyDto, FrequencyReq>().TwoWays();
+            config.NewConfig<FrequencyDto, FrequencyRes>().TwoWays();
+            config.NewConfig<ReviewItemDto, ReviewItemReq>().TwoWays();
+            config.NewConfig<ReviewItemDto, ReviewItemRes>().TwoWays();
 
-            CreateMap<ProjectYearManagerDto, ProjectYearManagerRes>().ReverseMap();
-            CreateMap<QueryReportDto, QueryReportRes>().ReverseMap();
-            CreateMap<MonitoringReportData, MonitoringReportDataRes>().ReverseMap();
-            CreateMap<ProgramCustomerMonitoringReportData, ProgramCustomerMonitoringReportDataRes>().ReverseMap();
+            config.NewConfig<RadTrackProgDto, RadTrackProgReq>().TwoWays();
+            config.NewConfig<RadTrackProgDto, RadTrackProgRes>().TwoWays();
+            config.NewConfig<StagingMilestoneDto, StagingMilestoneReq>().TwoWays();
+            config.NewConfig<StagingMilestoneDto, StagingMilestoneRes>().TwoWays();
+
+            config.NewConfig<YearlyFinancialDataDto, YearlyFinancialDataReq>().TwoWays();
+            config.NewConfig<YearlyFinancialDataDto, YearlyFinancialDataRes>().TwoWays();
+
+            config.NewConfig<PactProjectYearCostsDto, PactProjectYearCostsRes>()
+                .Map(dest => dest.Year, src => (short)src.Year);
+            config.NewConfig<PactProjectYearCostsRes, PactProjectYearCostsDto>()
+                .Map(dest => dest.Year, src => (double)src.Year);
+
+            config.NewConfig<ProjectYearManagerDto, ProjectYearManagerRes>().TwoWays();
+            config.NewConfig<QueryReportDto, QueryReportRes>().TwoWays();
+            config.NewConfig<MonitoringReportData, MonitoringReportDataRes>().TwoWays();
+            config.NewConfig<ProgramCustomerMonitoringReportData, ProgramCustomerMonitoringReportDataRes>().TwoWays();
         }
     }
 }
+

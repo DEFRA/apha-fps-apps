@@ -1,6 +1,6 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,4 +1,4 @@
-ï»¿using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
@@ -992,7 +992,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 1, null);
 
-            // Assert â€” finalSummariesRun==1 stored as -1 per business rule
+            // Assert — finalSummariesRun==1 stored as -1 per business rule
             Assert.NotNull(result);
             Assert.Equal("TestPeriod", result.PeriodName);
             Assert.Equal((short)-1, result.FinalSummariesRun);
@@ -1020,7 +1020,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", -1, null);
 
-            // Assert â€” finalSummariesRun==-1 also stored as -1
+            // Assert — finalSummariesRun==-1 also stored as -1
             Assert.NotNull(result);
             Assert.Equal((short)-1, result.FinalSummariesRun);
         }
@@ -1047,7 +1047,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 0, null);
 
-            // Assert â€” 0 is not 1 or -1 so stored as 0
+            // Assert — 0 is not 1 or -1 so stored as 0
             Assert.NotNull(result);
             Assert.Equal((short)0, result.FinalSummariesRun);
         }
@@ -1074,7 +1074,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 2, null);
 
-            // Assert â€” 2 is not 1 or -1 so stored as 0
+            // Assert — 2 is not 1 or -1 so stored as 0
             Assert.NotNull(result);
             Assert.Equal((short)0, result.FinalSummariesRun);
         }
@@ -1098,10 +1098,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
 
-            // Act â€” null finalSummariesRun defaults to 0 via ?? operator
+            // Act — null finalSummariesRun defaults to 0 via ?? operator
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", null, null);
 
-            // Assert â€” 0 stored as 0
+            // Assert — 0 stored as 0
             Assert.NotNull(result);
             Assert.Equal((short)0, result.FinalSummariesRun);
         }
@@ -1128,7 +1128,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             await repository.SetFinalSummaryRunAsync("PersistPeriod", 1, null);
 
-            // Assert â€” reload from DB to confirm SaveChangesAsync was called
+            // Assert — reload from DB to confirm SaveChangesAsync was called
             context.ChangeTracker.Clear();
             var reloaded = await context.ReleasePeriods.FindAsync("PersistPeriod", TestFpsYear);
             Assert.NotNull(reloaded);
@@ -1171,7 +1171,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             await repository.SetFinalSummaryRunAsync("NonExistentPeriod", 1, null);
 
-            // Assert â€” existing period must remain unchanged
+            // Assert — existing period must remain unchanged
             context.ChangeTracker.Clear();
             var unchanged = await context.ReleasePeriods.FindAsync("ExistingPeriod", TestFpsYear);
             Assert.NotNull(unchanged);
@@ -1229,7 +1229,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync("FieldCheckPeriod", 1, null);
 
-            // Assert â€” only FinalSummariesRun must change; all other fields remain intact
+            // Assert — only FinalSummariesRun must change; all other fields remain intact
             Assert.NotNull(result);
             Assert.Equal((short)-1, result.FinalSummariesRun);
             Assert.Equal(1.5, result.StartPeriod);
@@ -1257,10 +1257,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
 
-            // Act â€” empty string is treated as no sendEmail
+            // Act — empty string is treated as no sendEmail
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 1, "");
 
-            // Assert â€” UpdateFinalSummaryRunAsync path taken
+            // Assert — UpdateFinalSummaryRunAsync path taken
             Assert.NotNull(result);
             Assert.Equal("TestPeriod", result.PeriodName);
             Assert.Equal((short)-1, result.FinalSummariesRun);
@@ -1285,10 +1285,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
 
-            // Act â€” whitespace is treated as no sendEmail
+            // Act — whitespace is treated as no sendEmail
             var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 1, "   ");
 
-            // Assert â€” UpdateFinalSummaryRunAsync path taken
+            // Assert — UpdateFinalSummaryRunAsync path taken
             Assert.NotNull(result);
             Assert.Equal("TestPeriod", result.PeriodName);
             Assert.Equal((short)-1, result.FinalSummariesRun);
@@ -1312,7 +1312,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync(null, null, "1");
 
-            // Assert â€” returns non-null empty ReleasePeriod, NOT the period record
+            // Assert — returns non-null empty ReleasePeriod, NOT the period record
             Assert.NotNull(result);
             Assert.Null(result.PeriodName);
 
@@ -1357,7 +1357,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             var result = await repository.SetFinalSummaryRunAsync(null, null, "0");
 
-            // Assert â€” "0" is not "1" or "-1" so settingValue = "0"
+            // Assert — "0" is not "1" or "-1" so settingValue = "0"
             Assert.NotNull(result);
 
             context.ChangeTracker.Clear();
@@ -1376,7 +1376,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
 
-            // Act â€” "true" is not "1" or "-1"
+            // Act — "true" is not "1" or "-1"
             var result = await repository.SetFinalSummaryRunAsync(null, null, "true");
 
             // Assert
@@ -1390,14 +1390,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         [Fact]
         public async Task SetFinalSummaryRunAsync_WithSendEmailOne_SettingNotFound_ReturnsEmptyPeriodWithoutThrowing()
         {
-            // Arrange â€” no Settings seeded
+            // Arrange — no Settings seeded
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
             var repository = new RecreateAndReleaseSummaryRepository(context);
 
-            // Act â€” null-conditional on setting means no crash when not found
+            // Act — null-conditional on setting means no crash when not found
             var result = await repository.SetFinalSummaryRunAsync(null, null, "1");
 
-            // Assert â€” still returns a non-null empty ReleasePeriod
+            // Assert — still returns a non-null empty ReleasePeriod
             Assert.NotNull(result);
             Assert.Null(result.PeriodName);
         }
@@ -1416,7 +1416,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Act
             await repository.SetFinalSummaryRunAsync(null, null, "1");
 
-            // Assert â€” reload to confirm SaveChangesAsync was called
+            // Assert — reload to confirm SaveChangesAsync was called
             context.ChangeTracker.Clear();
             var reloaded = await context.Settings.FindAsync("SendEmail");
             Assert.Equal("-1", reloaded!.Setting);

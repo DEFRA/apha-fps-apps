@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -16,7 +16,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         /// <summary>
         /// Creates a FpsSettingRepository with in-memory TblSettings data.
         /// IFpsYearContext is substituted via NSubstitute.
-        /// FpsSetting has a FpsCalYear query filter in FpsDbContext â€” the year value
+        /// FpsSetting has a FpsCalYear query filter in FpsDbContext — the year value
         /// controls which records are visible, so it is set explicitly per test where relevant.
         /// </summary>
         private static FpsSettingRepository CreateRepository(
@@ -92,7 +92,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task GetAllAsync_ReturnsList_NotNull()
         {
-            // Arrange â€” verifies the return type contract is always List, never null
+            // Arrange — verifies the return type contract is always List, never null
             var repo = CreateRepository(new List<FpsSetting>());
 
             // Act
@@ -105,7 +105,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task GetAllAsync_ReturnsSettingsForCorrectYear_WhenMultipleYearsExist()
         {
-            // Arrange â€” mock DbSet holds all years; the FpsCalYear query filter on FpsDbContext
+            // Arrange — mock DbSet holds all years; the FpsCalYear query filter on FpsDbContext
             // means only records matching the substituted FPSYear should be returned
             var settings = new List<FpsSetting>
             {
@@ -395,13 +395,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
 
         #endregion
 
-        #region SaveAsync and GetYearEndSettingsAsync â€” infrastructure limitations
+        #region SaveAsync and GetYearEndSettingsAsync — infrastructure limitations
 
         // SaveAsync calls _dbContext.TblSettings.IgnoreQueryFilters().FirstOrDefaultAsync(...).
         // IgnoreQueryFilters() wraps the mock queryable in an EF-specific expression node; when
         // LINQ-to-Objects subsequently evaluates that expression it re-enters IgnoreQueryFilters
         // recursively, causing a StackOverflowException that cannot be caught.  SaveAsync tests
-        // are therefore omitted â€” integration tests are the appropriate vehicle.
+        // are therefore omitted — integration tests are the appropriate vehicle.
         //
         // GetYearEndSettingsAsync additionally calls GetOpenYear(), which uses
         // .Select(y => y.FpsYear).FirstAsync().  The .Select() step calls

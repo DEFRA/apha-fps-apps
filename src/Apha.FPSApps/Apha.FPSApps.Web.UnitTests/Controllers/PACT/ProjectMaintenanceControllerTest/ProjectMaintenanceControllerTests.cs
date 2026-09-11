@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -8,7 +8,8 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Apha.FPSApps.Web.Mappings;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -866,7 +867,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task DeleteJobCode_HasRelatedTimeCodeValidRecords_ReturnsJsonFailure()
         {
-            // Arrange — API returns 409 BUSINESS_RULE_VIOLATION when related TimeCodeValid records exist
+            // Arrange � API returns 409 BUSINESS_RULE_VIOLATION when related TimeCodeValid records exist
             var errors = new List<ApiErrorDto>
             {
                 new() { Code = "BUSINESS_RULE_VIOLATION", Message = "This JobCode has related records in TimeCodeValid and cannot be deleted." }
@@ -1123,7 +1124,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task EditTimeCode_Post_WorkGroupChanged_DeleteAndCreateSucceed_ReturnsJsonSuccess()
         {
-            // Arrange — OriginalWorkGroup differs from WorkGroup → delete+create path
+            // Arrange � OriginalWorkGroup differs from WorkGroup ? delete+create path
             var model = new TimeCodeViewModel
             {
                 TimeCode = "TC1",
@@ -1206,7 +1207,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task EditTimeCode_Post_WorkGroupUnchanged_CallsUpdateNotDeleteCreate()
         {
-            // Arrange — same WorkGroup → standard update path
+            // Arrange � same WorkGroup ? standard update path
             var model = new TimeCodeViewModel
             {
                 TimeCode = "TC1",
@@ -1674,12 +1675,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
 
         #endregion
 
-        #region PactViewModelMapper profile — Budget Ext (BudgetExt <-> CustIncome)
+        #region PactViewModelMapper profile � Budget Ext (BudgetExt <-> CustIncome)
 
         private static IMapper CreateRealPactMapper()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<PactViewModelMapper>(), NullLoggerFactory.Instance);
-            return config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(PactViewModelMapper).Assembly);
+            return new ServiceMapper(null!, config);
         }
 
         [Fact]

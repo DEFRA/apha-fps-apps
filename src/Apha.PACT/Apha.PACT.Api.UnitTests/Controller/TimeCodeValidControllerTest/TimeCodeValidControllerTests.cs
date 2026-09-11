@@ -1,10 +1,10 @@
-ï»¿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -485,7 +485,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task DeleteBulk_WithEmptyItems_ReturnsOk()
         {
-            // Arrange â€” empty items list; service still returns true
+            // Arrange — empty items list; service still returns true
             var request = new BulkDeleteTimeCodeReq { ParentProject = "PRJ1", Items = [] };
             _serviceMock
                 .DeleteBulkAsync(
@@ -567,7 +567,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task CopyBulkWorkGroups_WithEmptyWorkGroups_ReturnsOkWithEmptyList()
         {
-            // Arrange â€” no work groups selected; service returns empty collection
+            // Arrange — no work groups selected; service returns empty collection
             var request = new BulkCopyWorkGroupReq
             {
                 ParentProject = "PRJ1",

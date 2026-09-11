@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;

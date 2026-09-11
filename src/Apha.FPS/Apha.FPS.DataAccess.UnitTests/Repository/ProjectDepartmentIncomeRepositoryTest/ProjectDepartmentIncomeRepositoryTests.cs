@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -15,7 +15,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         private const int    TestMonthTo   = 12;
         private const int    TestFpsYear   = 2024;
 
-        // â”€â”€ Factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Factory ─────────────────────────────────────────────────────────────
 
         private static ProjectDepartmentIncomeRepository CreateRepository(
             IEnumerable<TimeCostCalcs>?      timeCostCalcs      = null,
@@ -65,7 +65,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             return new ProjectDepartmentIncomeRepository(mockContext.Object, mockRequestContext.Object);
         }
 
-        // â”€â”€ Seed helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Seed helpers ─────────────────────────────────────────────────────────
 
         private static TimeCostCalcs MakeTimeCostCalc(
             string workGroup = "WG1",
@@ -281,7 +281,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
                 Descending = descending
             };
 
-        // â”€â”€ Constructor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Constructor ─────────────────────────────────────────────────────────
 
         #region Constructor
 
@@ -297,7 +297,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetTimeIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetTimeIncomeAsync ──────────────────────────────────────────────────
 
         #region GetTimeIncomeAsync
 
@@ -360,7 +360,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetTimeIncomeAsync_ExcludesNonChargeClass()
         {
-            // Arrange â€” "Budget" class should be excluded, only "Charge" is kept
+            // Arrange — "Budget" class should be excluded, only "Charge" is kept
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc(@class: "Budget")],
                 workgroups:         [MakeWorkgroup()],
@@ -378,7 +378,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetTimeIncomeAsync_ExcludesMonthsOutsideRange()
         {
-            // Arrange â€” month 13 is outside [1,12]
+            // Arrange — month 13 is outside [1,12]
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc(month: 13)],
                 workgroups:         [MakeWorkgroup()],
@@ -434,7 +434,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetTimeIncomeAsync_WithNoMatchingEmployee_SpNumberIsNull()
         {
-            // Arrange â€” no employee seeded so the left join produces null
+            // Arrange — no employee seeded so the left join produces null
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc()],
                 workgroups:         [MakeWorkgroup()],
@@ -453,7 +453,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetTimeIncomeAsync_WithNoCostCentre_OccAndOpcAreNull()
         {
-            // Arrange â€” project has no CostCentre match
+            // Arrange — project has no CostCentre match
             var proj = MakeProject(costCentre: null);
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc()],
@@ -514,7 +514,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetPagedTimeIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetPagedTimeIncomeAsync ─────────────────────────────────────────────
 
         #region GetPagedTimeIncomeAsync
 
@@ -645,7 +645,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetTestIncomeAsync_ExcludesMonthsOutsideRange()
         {
-            // Arrange â€” month 13 outside [1,12]
+            // Arrange — month 13 outside [1,12]
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -662,7 +662,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetPagedTestIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetPagedTestIncomeAsync ─────────────────────────────────────────────
 
         #region GetPagedTestIncomeAsync
 
@@ -706,7 +706,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetTestSnapshotIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetTestSnapshotIncomeAsync ──────────────────────────────────────────
 
         #region GetTestSnapshotIncomeAsync
 
@@ -765,14 +765,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetAnimalIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetAnimalIncomeAsync ────────────────────────────────────────────────
 
         #region GetAnimalIncomeAsync
 
         [Fact]
         public async Task GetAnimalIncomeAsync_WithMatchingProject_ReturnsAnimalRows()
         {
-            // Arrange â€” "LargeAnimals" is in AnimalAcctCodes
+            // Arrange — "LargeAnimals" is in AnimalAcctCodes
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -791,7 +791,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetAnimalIncomeAsync_ExcludesNonAnimalAccountCodes()
         {
-            // Arrange â€” "Consumables" is NOT in AnimalAcctCodes
+            // Arrange — "Consumables" is NOT in AnimalAcctCodes
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -803,7 +803,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             // Act
             var result = await repo.GetAnimalIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
 
-            // Assert â€” no animal rows since account code is not an animal code
+            // Assert — no animal rows since account code is not an animal code
             Assert.Empty(result);
         }
 
@@ -827,7 +827,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetPagedAnimalIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetPagedAnimalIncomeAsync ───────────────────────────────────────────
 
         #region GetPagedAnimalIncomeAsync
 
@@ -851,14 +851,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetAdditionalIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetAdditionalIncomeAsync ────────────────────────────────────────────
 
         #region GetAdditionalIncomeAsync
 
         [Fact]
         public async Task GetAdditionalIncomeAsync_ExcludesAnimalAccountCodes()
         {
-            // Arrange â€” LargeAnimals is an animal code, NOT additional
+            // Arrange — LargeAnimals is an animal code, NOT additional
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -870,14 +870,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             // Act
             var result = await repo.GetAdditionalIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
 
-            // Assert â€” excluded because account code is in AnimalAcctCodes
+            // Assert — excluded because account code is in AnimalAcctCodes
             Assert.Empty(result);
         }
 
         [Fact]
         public async Task GetAdditionalIncomeAsync_IncludesNonAnimalAccountCodes()
         {
-            // Arrange â€” "Consumables" is NOT in AnimalAcctCodes â†’ additional
+            // Arrange — "Consumables" is NOT in AnimalAcctCodes → additional
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -912,7 +912,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetPagedAdditionalIncomeAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetPagedAdditionalIncomeAsync ───────────────────────────────────────
 
         #region GetPagedAdditionalIncomeAsync
 
@@ -936,14 +936,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetTotalsAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetTotalsAsync ──────────────────────────────────────────────────────
 
         #region GetTotalsAsync
 
         [Fact]
         public async Task GetTotalsAsync_WithMatchingProject_ReturnsTotals()
         {
-            // Arrange â€” seed all cost-type data so totals can be aggregated
+            // Arrange — seed all cost-type data so totals can be aggregated
             var repo = CreateRepository(
                 timeCostCalcs:    [MakeTimeCostCalc()],
                 workgroups:       [MakeWorkgroup()],
@@ -984,7 +984,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetTimeIncomeCurrentAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetTimeIncomeCurrentAsync ───────────────────────────────────────────
 
         #region GetTimeIncomeCurrentAsync
 
@@ -1046,7 +1046,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetTestIncomeCurrentAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetTestIncomeCurrentAsync ───────────────────────────────────────────
 
         #region GetTestIncomeCurrentAsync
 
@@ -1089,14 +1089,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetAnimalIncomeCurrentAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetAnimalIncomeCurrentAsync ─────────────────────────────────────────
 
         #region GetAnimalIncomeCurrentAsync
 
         [Fact]
         public async Task GetAnimalIncomeCurrentAsync_ExcludesNonAnimalAccountCodes()
         {
-            // Arrange â€” "Consumables" is NOT an animal code
+            // Arrange — "Consumables" is NOT an animal code
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -1131,14 +1131,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetAdditionalIncomeCurrentAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetAdditionalIncomeCurrentAsync ────────────────────────────────────
 
         #region GetAdditionalIncomeCurrentAsync
 
         [Fact]
         public async Task GetAdditionalIncomeCurrentAsync_ExcludesAnimalAccountCodes()
         {
-            // Arrange â€” LargeAnimals is an animal code â†’ excluded from additional
+            // Arrange — LargeAnimals is an animal code → excluded from additional
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -1157,7 +1157,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetAdditionalIncomeCurrentAsync_IncludesNonAnimalAccountCodes()
         {
-            // Arrange â€” "Consumables" is NOT an animal code â†’ included
+            // Arrange — "Consumables" is NOT an animal code → included
             var repo = CreateRepository(
                 workgroups:       [MakeWorkgroup()],
                 projects:         [MakeProject()],
@@ -1175,7 +1175,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetTotalsCurrentAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetTotalsCurrentAsync ───────────────────────────────────────────────
 
         #region GetTotalsCurrentAsync
 
@@ -1202,7 +1202,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetPeriodsAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetPeriodsAsync ─────────────────────────────────────────────────────
 
         #region GetPeriodsAsync
 
@@ -1257,7 +1257,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ GetSnapshotPeriodsAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GetSnapshotPeriodsAsync ─────────────────────────────────────────────
 
         #region GetSnapshotPeriodsAsync
 
@@ -1285,7 +1285,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         [Fact]
         public async Task GetSnapshotPeriodsAsync_FiltersByFpsYear()
         {
-            // Arrange â€” one period for current year, one for another year
+            // Arrange — one period for current year, one for another year
             var repo = CreateRepository(
                 periods: [
                     MakePeriod("Period1", TestFpsYear, 1),
@@ -1295,7 +1295,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             // Act
             var result = await repo.GetSnapshotPeriodsAsync();
 
-            // Assert â€” only current year
+            // Assert — only current year
             Assert.Single(result);
             Assert.Equal(TestFpsYear, result[0].FpsYear);
         }
@@ -1315,7 +1315,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // â”€â”€ UpdatePeriodLockedAsync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── UpdatePeriodLockedAsync ─────────────────────────────────────────────
 
         #region UpdatePeriodLockedAsync
 
@@ -2074,7 +2074,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: IsDefraProject false path ────────────────────────────
+        // -- Branch coverage: IsDefraProject false path ----------------------------
 
         #region IsDefraProject false branch
 
@@ -2204,7 +2204,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: null cost centre (cc == null) ───────────────────────
+        // -- Branch coverage: null cost centre (cc == null) -----------------------
 
         #region Null CostCentre branch (OCC/OPC null)
 
@@ -2335,7 +2335,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: null WgCostCentre → SCC null ────────────────────────
+        // -- Branch coverage: null WgCostCentre ? SCC null ------------------------
 
         #region Null WgCostCentre branch (SCC null)
 
@@ -2398,7 +2398,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: no employee match → SpNumber null ───────────────────
+        // -- Branch coverage: no employee match ? SpNumber null -------------------
 
         #region Null employee (SpNumber null)
 
@@ -2436,7 +2436,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: null project parameter paths ────────────────────────
+        // -- Branch coverage: null project parameter paths ------------------------
 
         #region NullProject paths
 
@@ -2492,7 +2492,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: empty results ───────────────────────────────────────
+        // -- Branch coverage: empty results ---------------------------------------
 
         #region Empty result paths
 
@@ -2555,7 +2555,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: Totals null-cost branches
+        // -- Branch coverage: Totals null-cost branches
 
         #region Totals zero/null cost branches
 
@@ -2630,7 +2630,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
         #endregion
 
-        // ── Branch coverage: GetTestSnapshotIncomeAsync OCC null ─────────────────
+        // -- Branch coverage: GetTestSnapshotIncomeAsync OCC null -----------------
 
         #region GetTestSnapshotIncomeAsync OCC null
 

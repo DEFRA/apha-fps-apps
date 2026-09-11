@@ -1,8 +1,8 @@
-﻿using Apha.Common.Contracts.PIMS;
+using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -279,7 +279,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
                 Manager       = "MGR2",
                 Projectstatus = "Active",
                 Disease       = "TB",
-                TransferTo    = null   // null → transferTo falls back to parentproject
+                TransferTo    = null   // null ? transferTo falls back to parentproject
             };
             var dto = new ProposedProjectDto
             {
@@ -311,7 +311,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
             };
 
             _mapper.Map<ProposedProjectDto>(request).Returns(dto);
-            // transferTo = request.TransferTo ?? parentproject → "PP001"
+            // transferTo = request.TransferTo ?? parentproject ? "PP001"
             _service.UpdateProposedProjectAsync(dto, parentproject).Returns(updatedDto);
             _mapper.Map<ProposedProjectRes>(updatedDto).Returns(updatedRes);
 
@@ -374,7 +374,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
             var dto = new ProposedProjectDto { Projecttitle = "Updated Project", Projectstatus = "Active" };
 
             _mapper.Map<ProposedProjectDto>(request).Returns(dto);
-            // transferTo = request.TransferTo ?? parentproject → "PP001"
+            // transferTo = request.TransferTo ?? parentproject ? "PP001"
             _service.UpdateProposedProjectAsync(dto, parentproject).Throws(new Exception("Database error"));
 
             // Act & Assert

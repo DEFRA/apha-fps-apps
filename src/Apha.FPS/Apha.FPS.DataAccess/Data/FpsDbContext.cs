@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -298,7 +298,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            // ── Cross-year tables: no HasQueryFilter — bulk rename operates across all years ──
+            // -- Cross-year tables: no HasQueryFilter � bulk rename operates across all years --
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
 

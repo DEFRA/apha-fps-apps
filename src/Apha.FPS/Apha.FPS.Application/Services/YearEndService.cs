@@ -7,7 +7,7 @@ using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;

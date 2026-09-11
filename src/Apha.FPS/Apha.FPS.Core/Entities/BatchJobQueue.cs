@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Core.Entities
 {
     public class BatchJobQueue
     {
@@ -10,7 +10,7 @@
         public DateTime? RequestedAtUtc { get; set; }
         // Populated at creation by the producer: Year End, Recreate Summary, or Bulk Rates.
         // The Batch Worker's Running transition later overwrites it with the actual execution
-        // start — see JobExecutionRepository in Apha.BatchJobs.Infrastructure.Operational.Repositories.
+        // start � see JobExecutionRepository in Apha.BatchJobs.Infrastructure.Operational.Repositories.
         public DateTime StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }
@@ -18,9 +18,9 @@
         public DateTime UpdatedAt { get; set; }
         public int FpsYear { get; set; }
 
-        // ── Bulk Rates workflow columns ──────────────────────────────────────────
+        // -- Bulk Rates workflow columns ------------------------------------------
         // Added for BulkRatesRepository's LINQ conversion rather than a second entity
-        // mapped to this table — EF Core rejects two unrelated entity types sharing one
+        // mapped to this table � EF Core rejects two unrelated entity types sharing one
         // table without an explicit linking relationship.
         //
         // Not all of these are Bulk-Rates-exclusive. The approval and rejection audit fields

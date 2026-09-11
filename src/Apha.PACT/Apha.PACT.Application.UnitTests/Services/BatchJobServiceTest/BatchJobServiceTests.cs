@@ -6,7 +6,7 @@ using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.PACT.Application.UnitTests.Services.BatchJobServiceTest

@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -23,8 +23,8 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetTimeIncomeAsync — mirrors qryDeptIncomeTime SELECT
+        // -----------------------------------------------------------------------------
+        // GetTimeIncomeAsync � mirrors qryDeptIncomeTime SELECT
         //
         // Access query reference (qryDeptIncomeTime):
         //   Source tables: tblWGEmployeeMAB, tlkpProject_MAP, CostCentre,
@@ -32,7 +32,7 @@ namespace Apha.FPS.DataAccess.Repositories
         //   Filter:  Class = Charge, Month between MonthFrom and MonthTo,
         //            ParentProject matches selected project
         //   Order:   ParentProject 
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTime>> GetTimeIncomeAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -124,8 +124,8 @@ namespace Apha.FPS.DataAccess.Repositories
         // Note: tblTestRequ_TM in Access is fps.tlkptestreqmt (TestRequirement entity):
         //   Buyer=JobCode, TestCode=TestCode, UnitPrice=TestPrice, active=1 (active only)
         // Access MonthlyOutput saved query groups volume by (buyer,testcode,month,workgroup) before
-        // joining WorkGroup_MAP — replicated here with moAggregated group-by step.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // joining WorkGroup_MAP � replicated here with moAggregated group-by step.
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTest>> GetTestIncomeAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -134,7 +134,7 @@ namespace Apha.FPS.DataAccess.Repositories
             // Two-step: DB query returns raw anonymous type; in-memory projection formats strings.
             //
             // Access qryDeptIncomeTest shows one row per (buyer, testcode, month, workgroup).
-            // Month IS part of the group key — each period month produces its own row.
+            // Month IS part of the group key � each period month produces its own row.
             // Any row-count difference vs Access reflects data differences between databases.
             var moAggregated =
                 from mo in _context.MonthlyOutputs.AsNoTracking()
@@ -194,7 +194,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice)).ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         // GetTestSnapshotIncomeAsync
         //
         // SQL Server logic:
@@ -209,10 +209,10 @@ namespace Apha.FPS.DataAccess.Repositories
         //     AND Project = ISNULL(@project, Project)
         //
         // period_monthlyoutput has no fpsyear column.  FpsYear is obtained by joining
-        // period_monthlyoutput.period → tblperiod.endperiod → tblperiod.fpsyear.
+        // period_monthlyoutput.period ? tblperiod.endperiod ? tblperiod.fpsyear.
         // The delta (end - start) shows the net change between two period snapshots.
         // Rows where volume cancelled out (abs(sum) == 0) are excluded by the HAVING clause.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(
             string? project, int startPeriod, int endPeriod)
         {
@@ -335,8 +335,8 @@ namespace Apha.FPS.DataAccess.Repositories
             }).ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetAnimalIncomeAsync — mirrors qryDeptIncomeAnimals SELECT
+        // -----------------------------------------------------------------------------
+        // GetAnimalIncomeAsync � mirrors qryDeptIncomeAnimals SELECT
         //
         // Access SQL:
         //   FROM (CostCentre RIGHT JOIN tlkpProject_MAP ON CostCentre.CostCentre = tlkpProject_MAP.CostCentre)
@@ -347,15 +347,15 @@ namespace Apha.FPS.DataAccess.Repositories
         //   ORDER BY ParentProject
         //
         // VBA helpers ported to C# private static methods:
-        //   fnAnimalDesc(d) → ParseAnimalDesc(d)
-        //   fnAnimalDays(d) → ParseAnimalDays(d)
-        //   DLookUp("[DailyRate]","tblAnimals","[AnimalType]=...") → Animals join in LINQ
-        // ─────────────────────────────────────────────────────────────────────────────
+        //   fnAnimalDesc(d) ? ParseAnimalDesc(d)
+        //   fnAnimalDays(d) ? ParseAnimalDays(d)
+        //   DLookUp("[DailyRate]","tblAnimals","[AnimalType]=...") ? Animals join in LINQ
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeAsync(
             string? project, int monthFrom, int monthTo)
         {
             // Mirrors qryDeptIncomeAnimals (Access).
-            // SPC='SSSD' and SCC=35227 are intentionally hardcoded constants — both qryDeptIncomeAnimals
+            // SPC='SSSD' and SCC=35227 are intentionally hardcoded constants � both qryDeptIncomeAnimals
             // (Access view) and fPeriodAnimals (SQL Server function) use these fixed values for all
             // animal housing rows.
             var fpsYear = _requestContext.FpsYear;
@@ -392,7 +392,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 subContracts = subContracts.Where(r => r.ParentProject == project).ToList();
 
             // GROUP BY all key fields, SUM(Amount) AS TotalCost.
-            // HAVING abs(Sum(amount)) > 0.001 — suppress zero-net rows.
+            // HAVING abs(Sum(amount)) > 0.001 � suppress zero-net rows.
             var result = subContracts
                 .GroupBy(r => new
                 {
@@ -425,11 +425,11 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetAdditionalIncomeAsync — mirrors fPeriodDeptIncomeExceptional (Snapshot Data tab)
+        // -----------------------------------------------------------------------------
+        // GetAdditionalIncomeAsync � mirrors fPeriodDeptIncomeExceptional (Snapshot Data tab)
         //
         // The Access snapshot path uses the fPeriod* SQL Server TVF, which includes
-        // HAVING Sum(Amount) > 0 — rows with a negative net TotalCost are excluded.
+        // HAVING Sum(Amount) > 0 � rows with a negative net TotalCost are excluded.
         // This differs from qryDeptIncomeExceptional (Current Data Old Style) which shows
         // all rows, including negative ones.
         //
@@ -440,15 +440,15 @@ namespace Apha.FPS.DataAccess.Repositories
         //   GROUP BY ParentProject, OracleProjectCode, SubAccountCode, IIf(...), OPC, OCC, Month
         //   HAVING ParentProject Like nz(fnDeptIncomeProject(),"*")
         //     AND Month BETWEEN fnDeptIncomeMonthFrom() AND fnDeptIncomeMonthTo()
-        //     AND Sum(Amount) > 0        ← excludes negative-net rows in Snapshot tab
+        //     AND Sum(Amount) > 0        ? excludes negative-net rows in Snapshot tab
         //   ORDER BY ParentProject
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeAsync(
             string? project, int monthFrom, int monthTo)
             => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: true);
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetTotalsAsync — mirrors qryDeptIncomeTotals TRANSFORM/PIVOT
+        // -----------------------------------------------------------------------------
+        // GetTotalsAsync � mirrors qryDeptIncomeTotals TRANSFORM/PIVOT
         //
         // Access SQL:
         //   TRANSFORM Sum(qryDeptIncomeTotals_sub.TotalCost) AS SumOfTotalCost
@@ -462,7 +462,7 @@ namespace Apha.FPS.DataAccess.Repositories
         //
         // LINQ PIVOT emulation: GroupBy Project+OracleProjectCode, then conditional Sum per area.
         // To avoid N+1 overhead, the four sub-queries are executed and unioned in memory.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTotals>> GetTotalsAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -473,13 +473,13 @@ namespace Apha.FPS.DataAccess.Repositories
             return ComputeTotals(timeRows, testRows, animalRows, additionalRows);
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetTimeIncomeCurrentAsync — mirrors qryDeptIncomeTime (Current Data Old Style)
+        // -----------------------------------------------------------------------------
+        // GetTimeIncomeCurrentAsync � mirrors qryDeptIncomeTime (Current Data Old Style)
         //
         // Unlike GetTimeIncomeAsync (snapshot), this does NOT group by JobCode.
         // qryDeptIncomeTime uses raw TimeCostCalcs rows, producing one row per
         // (WorkGroup, Project, Month, StaffId, JobCode) combination.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTime>> GetTimeIncomeCurrentAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -539,12 +539,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 r.ChargeRate, r.Pay, r.NonPay, r.Overhead, r.Time, r.Cost)).ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         // GetTestIncomeCurrentAsync
         //
         // Unlike GetTestIncomeAsync (snapshot), this does NOT aggregate volume by buyer+testcode+month.
         // qryDeptIncomeTests uses raw MonthlyOutput rows joined to WorkGroup and vtblTestRequ_TM.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTest>> GetTestIncomeCurrentAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -596,15 +596,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 r.WgCostCentre, r.TestCode, r.Volume, r.UnitPrice)).ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         // GetAnimalIncomeCurrentAsync
         //
         // Unlike GetAnimalIncomeAsync (snapshot), the Access qryDeptIncomeAnimals current
-        // path returns one row per Proj_SubContract entry — NOT grouped by month.
+        // path returns one row per Proj_SubContract entry � NOT grouped by month.
         // Each row exposes Description (AnimalType), AnimalDays, and DailyRate directly
         // from the Proj_SubContract columns.  The snapshot aggregates those into a single
         // per-month TotalCost row; the current query does not.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeCurrentAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -666,22 +666,22 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetAdditionalIncomeCurrentAsync — mirrors qryDeptIncomeExceptional (Current Data Old Style)
+        // -----------------------------------------------------------------------------
+        // GetAdditionalIncomeCurrentAsync � mirrors qryDeptIncomeExceptional (Current Data Old Style)
         //
         // Unlike the snapshot path (GetAdditionalIncomeAsync), Access qryDeptIncomeExceptional
-        // has NO HAVING Sum(Amount) > 0 guard — all rows are returned, including those with a
+        // has NO HAVING Sum(Amount) > 0 guard � all rows are returned, including those with a
         // negative net TotalCost (e.g. Month 1 reversal row).
         // This is why Current Data (Old Style) shows 4 rows while Snapshot Data shows 3.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeCurrentAsync(
             string? project, int monthFrom, int monthTo)
             => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: false);
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetTotalsCurrentAsync — mirrors qryDeptIncomeTotals (Current Data Old Style)
+        // -----------------------------------------------------------------------------
+        // GetTotalsCurrentAsync � mirrors qryDeptIncomeTotals (Current Data Old Style)
         // Sums TotalCost per area across the four current-style queries (no period diff).
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<DepartmentIncomeTotals>> GetTotalsCurrentAsync(
             string? project, int monthFrom, int monthTo)
         {
@@ -692,13 +692,13 @@ namespace Apha.FPS.DataAccess.Repositories
             return ComputeTotals(timeRows, testRows, animalRows, additionalRows);
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetPeriodsAsync — period/month dropdown lookup
+        // -----------------------------------------------------------------------------
+        // GetPeriodsAsync � period/month dropdown lookup
         //
         // Source: sf_Period.frm subform + fps.tblkperiodmonth view
         //   (view definition: JOIN fps.tblperiod ON tblperiod.endperiod = tblperiodmonth.endmonth)
         //   Columns: endmonth (AccntsPeriod), monthno (MonthNumber), periodname (MonthName), fpsyear
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<PeriodLookup>> GetPeriodsAsync(double? accntsPeriod = null)
         {
             var query = _context.PeriodLookups
@@ -726,15 +726,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
-        // GetSnapshotPeriodsAsync — snapshot tab period status lookup
+        // -----------------------------------------------------------------------------
+        // GetSnapshotPeriodsAsync � snapshot tab period status lookup
         //
         // Source: tblPeriod (fps.tblperiod)
         //   SELECT PeriodName, EndPeriod, FinalSummariesRun, PeriodLocked
         //   FROM tblPeriod
         //   WHERE fpsyear = <current>
         //   ORDER BY EndPeriod
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         public async Task<List<Period>> GetSnapshotPeriodsAsync()
         {
             return await _context.Periods
@@ -755,10 +755,10 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _context.SaveChangesAsync();
         }
 
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
         // Paged variants
         //   fetch all matching rows, apply filter helpers, apply sort, then base.ApplyPaging.
-        // ─────────────────────────────────────────────────────────────────────────────
+        // -----------------------------------------------------------------------------
 
         public async Task<PagedData<DepartmentIncomeTime>> GetPagedTimeIncomeAsync(
             PaginationParameters<string> query, string? project, int monthFrom, int monthTo)
@@ -796,12 +796,12 @@ namespace Apha.FPS.DataAccess.Repositories
             return base.ApplyPaging(sorted, Math.Max(query.Page, 1), Math.Max(query.PageSize, 10));
         }
 
-        // ── Shared formatting helpers ─────────────────────────────────────────────────
+        // -- Shared formatting helpers -------------------------------------------------
 
         private static string? FmtDouble(double? v) => v.HasValue ? ((long)v.Value).ToString() : null;
         private static string DefraFlag(short v) => v != 0 ? "Yes" : "No";
 
-        // ── Shared row builders ───────────────────────────────────────────────────────
+        // -- Shared row builders -------------------------------------------------------
 
         private static DepartmentIncomeTime BuildTimeRow(
             string? project, string? oracleCode, string? subAccount, double tcMonth,
@@ -856,7 +856,7 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        // ── Shared Totals aggregation ─────────────────────────────────────────────────
+        // -- Shared Totals aggregation -------------------------------------------------
 
         private static List<DepartmentIncomeTotals> ComputeTotals(
             List<DepartmentIncomeTime>       timeRows,
@@ -889,7 +889,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .OrderBy(r => r.Project)
                 .ToList();
 
-        // ── Shared Additional income query (snapshot uses positiveOnly:true) ──────────
+        // -- Shared Additional income query (snapshot uses positiveOnly:true) ----------
 
         private async Task<List<DepartmentIncomeAdditional>> QueryAdditionalIncomeAsync(
             string? project, int monthFrom, int monthTo, bool positiveOnly)
@@ -952,7 +952,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList();
         }
 
-        // ── Generic filter/sort helpers ───────────────────────────────────────────
+        // -- Generic filter/sort helpers -------------------------------------------
 
         private static List<T> ApplyFilter<T>(
             List<T> rows,
@@ -984,7 +984,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 : rows.OrderBy(keySelector).ToList();
         }
 
-        // ── Per-entity filter wrappers ────────────────────────────────────────────
+        // -- Per-entity filter wrappers --------------------------------------------
 
         private static List<DepartmentIncomeTime> ApplyTimeFilter(List<DepartmentIncomeTime> rows, string? filterJson)
             => ApplyFilter(rows, filterJson, new Dictionary<string, Func<DepartmentIncomeTime, string?>>
@@ -1040,7 +1040,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 [nameof(DepartmentIncomeAdditional.OPC)]               = r => r.OPC,
             });
 
-        // ── Per-entity sort wrappers ──────────────────────────────────────────────
+        // -- Per-entity sort wrappers ----------------------------------------------
 
         private static List<DepartmentIncomeTime> ApplyTimeSort(List<DepartmentIncomeTime> rows, string? sortBy, bool descending)
             => ApplySort(rows, sortBy, descending, new Dictionary<string, Func<DepartmentIncomeTime, object?>>

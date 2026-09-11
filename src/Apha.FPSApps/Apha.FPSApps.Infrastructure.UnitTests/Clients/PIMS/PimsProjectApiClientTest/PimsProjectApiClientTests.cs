@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -404,7 +404,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             var apiResponse = new ApiResponse<ProjectRes> { Success = true, Data = new ProjectRes { Parentproject = parentproject } };
 
             _http.GetAsync<ProjectRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetFpsProjectByIdAsync(parentproject);
@@ -533,7 +533,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             var apiResponse = new ApiResponse<ProposedProjectRes> { Success = true, Data = new ProposedProjectRes { Parentproject = parentproject } };
 
             _http.GetAsync<ProposedProjectRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProposedProjectDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<ProposedProjectDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetProposedProjectByIdAsync(parentproject);
@@ -672,7 +672,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectApiClien
             };
 
             _http.GetAsync<List<ProjectsRes>>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<ProjectsDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<ProjectsDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetYearlyDetailsByProjectAsync(parentproject);

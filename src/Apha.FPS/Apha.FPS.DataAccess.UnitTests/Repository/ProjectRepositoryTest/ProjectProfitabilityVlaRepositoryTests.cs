@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -16,7 +16,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         /// Creates a <see cref="ProjectRepository"/> with mocked DbSets.
         /// Projects and Programs drive filter/sort/page behaviour.
         /// All cost tables (StaffJobs, TestRequirements, etc.) are empty so every
-        /// computed cost field is 0 â€” keeping filter tests focused on metadata.
+        /// computed cost field is 0 — keeping filter tests focused on metadata.
         /// </summary>
         private static ProjectRepository CreateRepository(
             IEnumerable<Project>? projects = null,
@@ -35,7 +35,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             mockContext.Setup(x => x.Programs)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(programs ?? Enumerable.Empty<Program>()).Object);
 
-            // Empty cost tables â€” all computed costs will be 0 in these tests
+            // Empty cost tables — all computed costs will be 0 in these tests
             mockContext.Setup(x => x.StaffJobs)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<StaffJob>()).Object);
             mockContext.Setup(x => x.WorkGroupEmployees)
@@ -452,7 +452,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
-        #region Financials â€” null budget / null target / no matching program
+        #region Financials — null budget / null target / no matching program
 
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_NullBudget_TreatedAsZero()
@@ -490,7 +490,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_ProjectWithNoMatchingProgram_ManagerAndTargetAreDefault()
         {
-            // Project refers to P999 which has no entry in Programs â†’ pg is null
+            // Project refers to P999 which has no entry in Programs ? pg is null
             var projects = new List<Project> { MakeProject("PP001", program: "P999", budget: 500m) };
             var repo = CreateRepository(projects, programs: new List<Program>());
             var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
@@ -505,7 +505,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
-        #region ApplyVlaSorting â€” all sort keys
+        #region ApplyVlaSorting — all sort keys
 
         [Theory]
         [InlineData("jobcode",         false)]
@@ -656,7 +656,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_NullModelFilter_ReturnsAllRows()
         {
-            // JSON "null" deserialises to null â€” exercises the filterModel == null guard in ParseFilterDict
+            // JSON "null" deserialises to null — exercises the filterModel == null guard in ParseFilterDict
             var projects = new List<Project>
             {
                 MakeProject("PP001"),
@@ -736,7 +736,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
             var row = Assert.Single(result.Data);
-            // 4Ã—25 + 1Ã—50 = 150
+            // 4×25 + 1×50 = 150
             Assert.Equal(150m, row.TestCost);
         }
 
@@ -766,7 +766,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
             var row = Assert.Single(result.Data);
-            // IsDefraProject=0 â†’ DailyRate: 3 Ã— 4 Ã— Â£8 = Â£96
+            // IsDefraProject=0 ? DailyRate: 3 × 4 × £8 = £96
             Assert.Equal(96m, row.AnimalCosts);
         }
 
@@ -824,8 +824,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
             var row = Assert.Single(result.Data);
-            // SectorName="charge" â†’ sectorCharge=1 â†’ staffCosts included
-            // 8 hours Ã— Â£25 chargeRate = Â£200
+            // SectorName="charge" ? sectorCharge=1 ? staffCosts included
+            // 8 hours × £25 chargeRate = £200
             Assert.Equal(200m, row.StaffCosts);
         }
 

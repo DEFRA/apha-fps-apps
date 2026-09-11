@@ -1,11 +1,11 @@
-ï»¿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
 {
     public interface IProjectRepository
     {
-        // ProjectProfitability â€” project profitability query
+        // ProjectProfitability — project profitability query
         Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(PaginationParameters<string> query, string programNo, string workTypeFilter);
         Task<PagedData<ProjectProfitabilityView>> GetProjectGroupProfitabilityAsync(PaginationParameters<string> query, string projectGroup, string workTypeFilter);
 
@@ -48,10 +48,10 @@ namespace Apha.FPS.Core.Interfaces
         // Program FK validation (derived from tI_tlkpProject / tU_tlkpProject triggers)
         Task<bool> CheckProgramExistsAsync(string programNo);
 
-        // Resource Replan â€” staff data for a workgroup, paged/filtered/sorted
+        // Resource Replan — staff data for a workgroup, paged/filtered/sorted
         Task<PagedData<ProjectStaffReplanView>> GetProjectStaffReplanAsync(PaginationParameters<string> query, string workgroup);
 
-        // Exceptional (additional) costs joined across projects, programmes and additional costs â€” paged/filtered/sorted
+        // Exceptional (additional) costs joined across projects, programmes and additional costs — paged/filtered/sorted
         Task<PagedData<ProjectExceptionalCostView>> GetProjectExceptionalCostsPagedAsync(PaginationParameters<string> query);
     }
 }

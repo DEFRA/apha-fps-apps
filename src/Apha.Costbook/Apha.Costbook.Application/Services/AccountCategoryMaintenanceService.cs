@@ -3,7 +3,7 @@ using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.Costbook.Application.Services
 {

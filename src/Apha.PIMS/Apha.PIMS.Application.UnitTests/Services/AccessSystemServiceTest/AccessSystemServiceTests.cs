@@ -2,7 +2,7 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.PIMS.Application.UnitTests.Services.AccessSystemServiceTest

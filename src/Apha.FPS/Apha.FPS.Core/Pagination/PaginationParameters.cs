@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Core.Pagination
+namespace Apha.FPS.Core.Pagination
 {
     public class PaginationParameters<TFilter>
     {

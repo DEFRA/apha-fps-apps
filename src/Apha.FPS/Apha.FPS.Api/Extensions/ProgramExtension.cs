@@ -1,4 +1,4 @@
-ï»¿// FPS API startup extensions â€” service registration and middleware pipeline configuration.
+// FPS API startup extensions — service registration and middleware pipeline configuration.
 using Amazon;
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
@@ -12,6 +12,8 @@ using Apha.FPS.Application.Mappings;
 using Apha.FPS.DataAccess.Data;
 using Asp.Versioning;
 using Azure.Identity;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -57,12 +59,11 @@ namespace Apha.FPS.Api.Extensions
             }
 
 
-            // AutoMapper
-            services.AddAutoMapper(config =>
-            {
-                config.AddMaps(typeof(EntityMapper).Assembly);
-                config.AddMaps(typeof(RequestMapper));
-            });
+            // Mapster
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Scan(typeof(EntityMapper).Assembly, typeof(RequestMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
 
             // MVC API
             services.AddControllers(options =>
@@ -128,7 +129,7 @@ namespace Apha.FPS.Api.Extensions
 
             builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
 
-            // No S3 client/IS3StorageService registration here â€” Bulk Rates audit-copy retention
+            // No S3 client/IS3StorageService registration here — Bulk Rates audit-copy retention
             // moved to the FPSApps Web/Application layer (best-effort, post-success only); FPS API
             // has no remaining S3 consumer. See docs/bulkrates-review-fixes, Point 2.
 
@@ -177,7 +178,7 @@ namespace Apha.FPS.Api.Extensions
                 Predicate = _ => false
             });
 
-            // Error handling â€” must be first to catch exceptions from all downstream middleware
+            // Error handling — must be first to catch exceptions from all downstream middleware
             if (env.IsDevelopment() || env.IsEnvironment("local"))
             {
                 app.UseDeveloperExceptionPage();

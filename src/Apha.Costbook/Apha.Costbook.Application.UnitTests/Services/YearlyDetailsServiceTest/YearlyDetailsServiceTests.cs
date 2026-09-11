@@ -6,7 +6,7 @@ using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.Costbook.Application.UnitTests.Services.YearlyDetailsServiceTest;

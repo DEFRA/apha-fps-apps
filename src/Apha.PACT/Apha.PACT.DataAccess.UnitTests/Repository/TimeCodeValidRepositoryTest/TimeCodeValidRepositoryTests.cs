@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -465,7 +465,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task CopyWorkGroupAsync_WithExistingWorkGroupInTarget_SkipsExistingAndCopiesNew()
         {
-            // Arrange â€” WG1 exists in both source and target; WG2 exists only in source
+            // Arrange — WG1 exists in both source and target; WG2 exists only in source
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC_SRC", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
@@ -477,7 +477,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
             // Act
             var result = (await repo.CopyWorkGroupAsync("JC_SRC", "JC_TGT", "PRJ1")).ToList();
 
-            // Assert â€” only WG2 should be copied; WG1 skipped because it already exists in target
+            // Assert — only WG2 should be copied; WG1 skipped because it already exists in target
             Assert.Single(result);
             Assert.Equal("WG2",    result[0].WorkGroup);
             Assert.Equal("JC_TGT", result[0].JobCode);
@@ -495,7 +495,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task DeleteBulkAsync_WithMatchingItems_RemovesExactPairsAndReturnsTrue()
         {
-            // Arrange â€” two entities in store; only one pair passed in items
+            // Arrange — two entities in store; only one pair passed in items
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear },
@@ -516,14 +516,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task DeleteBulkAsync_WithNoMatchingItems_SkipsRemoveAndReturnsTrue()
         {
-            // Arrange â€” store is empty so nothing can match
+            // Arrange — store is empty so nothing can match
             var (repo, timeCodesMockSet, mockContext) = CreateRepositoryWithMocks([]);
             var items = new List<(string WorkGroup, string TimeCode)> { ("WG_NONE", "TC_NONE") };
 
             // Act
             var result = await repo.DeleteBulkAsync(items, "PRJ_NONE");
 
-            // Assert â€” always returns true; no side-effects when nothing matches
+            // Assert — always returns true; no side-effects when nothing matches
             Assert.True(result);
             timeCodesMockSet.Verify(x => x.RemoveRange(It.IsAny<IEnumerable<TimeCodeValid>>()), Times.Never);
             RepositoryTestHelper.VerifySaveChanges(mockContext, times: 0);
@@ -555,7 +555,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task CopySelectedWorkGroupsAsync_WithMatchingWorkGroups_CreatesCopiesAndReturns()
         {
-            // Arrange â€” two source entries, both work groups requested
+            // Arrange — two source entries, both work groups requested
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC_SRC", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
@@ -580,7 +580,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task CopySelectedWorkGroupsAsync_WithNoMatchingWorkGroups_ReturnsEmptyCollection()
         {
-            // Arrange â€” store is empty; no copies produced so AddRangeAsync must not be called
+            // Arrange — store is empty; no copies produced so AddRangeAsync must not be called
             var (repo, timeCodesMockSet, _) = CreateRepositoryWithMocks([]);
             var workGroups = new List<string> { "WG_NONE" };
 
@@ -595,7 +595,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task CopySelectedWorkGroupsAsync_WithExistingWorkGroupInTarget_SkipsExistingAndCopiesNew()
         {
-            // Arrange â€” WG1 already exists in target; WG2 exists only in source
+            // Arrange — WG1 already exists in target; WG2 exists only in source
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC_SRC", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
@@ -608,7 +608,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
             // Act
             var result = (await repo.CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1")).ToList();
 
-            // Assert â€” only WG2 copied; WG1 skipped because it already exists in target
+            // Assert — only WG2 copied; WG1 skipped because it already exists in target
             Assert.Single(result);
             Assert.Equal("WG2",    result[0].WorkGroup);
             Assert.Equal("JC_TGT", result[0].JobCode);
@@ -621,7 +621,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
         [Fact]
         public async Task CopySelectedWorkGroupsAsync_WithSubsetOfWorkGroups_ReturnsOnlyMatchingCopiesAndPreservesActiveFlag()
         {
-            // Arrange â€” three source entries; only WG1 is in the requested work groups
+            // Arrange — three source entries; only WG1 is in the requested work groups
             var timeCodes = new List<TimeCodeValid>
             {
                 new() { TimeCode = "TC_SRC", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC_SRC", Active = true,  FpsYear = DefaultTestFpsYear },
@@ -634,7 +634,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
             // Act
             var result = (await repo.CopySelectedWorkGroupsAsync(workGroups, "JC_SRC", "JC_TGT", "PRJ1")).ToList();
 
-            // Assert â€” only WG1 copied; Active flag preserved; copy fields set correctly
+            // Assert — only WG1 copied; Active flag preserved; copy fields set correctly
             Assert.Single(result);
             Assert.Equal("WG1",    result[0].WorkGroup);
             Assert.Equal("JC_TGT", result[0].JobCode);

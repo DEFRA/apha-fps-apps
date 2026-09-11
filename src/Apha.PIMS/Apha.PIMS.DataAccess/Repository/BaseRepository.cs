@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Pagination;
+using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 

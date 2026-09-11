@@ -1,82 +1,84 @@
-﻿using Apha.Common.Contracts.PACT;
+using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.PACT.Application.Mappings
 {
-    public class EntityMapper : Profile
+    public class EntityMapper : IRegister
     {
-        public EntityMapper()
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap(typeof(PaginationParameters<>), typeof(QueryParameters<>)).ReverseMap();
-            CreateMap(typeof(PagedData<>), typeof(PaginatedResult<>)).ReverseMap();
+            config.NewConfig(typeof(PaginationParameters<>), typeof(QueryParameters<>));
+            config.NewConfig(typeof(QueryParameters<>), typeof(PaginationParameters<>));
+            config.NewConfig(typeof(PagedData<>), typeof(PaginatedResult<>));
+            config.NewConfig(typeof(PaginatedResult<>), typeof(PagedData<>));
 
-            CreateMap<PaginationData, PaginationDto>().ReverseMap();
+            config.NewConfig<PaginationData, PaginationDto>().TwoWays();
 
-            CreateMap<JobCode, JobCodeDto>().ReverseMap();
-            CreateMap<TimeCodeValid, TimeCodeValidDto>().ReverseMap();
-            CreateMap<WorkGroup, WorkGroupDto>().ReverseMap();
-            CreateMap<Owner, OwnerDto>().ReverseMap();
-            CreateMap<WorkGroupView, WorkGroupViewDto>();
-            CreateMap<Month, MonthDto>().ReverseMap();
-            CreateMap<MonthDto, MonthRes>().ReverseMap();
-            CreateMap<ProjectInvoice, ProjectInvoiceDto>().ReverseMap();
-            CreateMap<InvoiceImportRow, InvoiceImportRowDto>().ReverseMap();
-            CreateMap<ProjectInvoiceStaging, InvoiceImportRowDto>();
-            CreateMap<ProjectSubContract, ProjectSubContractDto>().ReverseMap();
-            CreateMap<SubContractRmsImportRow, SubContractRmsImportRowDto>().ReverseMap();
-            CreateMap<ProjectSubcontractStaging, SubContractRmsImportRowDto>();
-            CreateMap<SubContractRmsImport, SubContractRmsImportDto>().ReverseMap();
-            CreateMap<SubContractRmsImportResult, SubContractRmsImportResultDto>().ReverseMap();
-            CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
-            CreateMap<TestCapabilityWithDescription, TestCapabilityDto>();
-            CreateMap<TestRequirement, TestRequirementtDto>().ReverseMap();
-            CreateMap<TestRequirementDetail, TestRequirementtDto>();
-            CreateMap<TestSupplierView, TestSupplierViewDto>().ReverseMap();
-            CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
-            CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
-            CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
-            CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
-            CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
-            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
-            CreateMap<StagingMonthlyOutput, StagingMonthlyOutputDto>().ReverseMap();
-            CreateMap<MonthlyOutputImportRowDto, StagingMonthlyOutputDto>().ReverseMap();
-            CreateMap<MonthlyTime, MonthlyTimeDto>().ReverseMap();
-            CreateMap<MonthlyTimeStaff, MonthlyTimeDto>();
-            CreateMap<StagingMonthlyTime, StagingMonthlyTimeDto>().ReverseMap();
-            CreateMap<MonthlyTimeImportRowDto, StagingMonthlyTimeDto>().ReverseMap();
-            CreateMap<MonthlyTimeLog, MonthlyTimeLogDto>().ReverseMap();
-            CreateMap<MonthlyTimeLogFilter, MonthlyTimeLogFilterDto>().ReverseMap();
-            CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
-            CreateMap<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().ReverseMap();
-            CreateMap<WgSummarisedStaffTimeUsageView, WgSummarisedStaffTimeUsageEntryDto>();
-            CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
-            CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
-            CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
-            CreateMap<RecreateSummaryLog, RecreateSummaryLogDto>().ReverseMap();
-            CreateMap<RecreateSummaryLogWithComment, RecreateSummaryLogDto>().ReverseMap();
-            CreateMap<ReleasePeriod, ReleasePeriodDto>().ReverseMap();
-            CreateMap<ReleaseSummary, ReleaseSummaryDto>();
-            CreateMap<JobCodeZtLookup, JobCodeZtDto>().ReverseMap();
-            CreateMap<TestPriceCheckView, TestPriceCheckDto>().ReverseMap();
-            CreateMap<TestFeePlanView, TestFeePlanDto>().ReverseMap();
-            CreateMap<TimePurchaseProject, TimePurchaseProjectDto>();
-            CreateMap<TimeSaleProfitCentre, TimeSaleProfitCentreDto>();
-            CreateMap<TimeSaleWorkGroup, TimeSaleWorkGroupDto>();
-            CreateMap<TestSaleSellingWorkgroup, TestSaleSellingWorkgroupDto>();
-            CreateMap<TestSaleBuyingProject, TestSaleBuyingProjectDto>();
-            CreateMap<WgTestCapabilitiesWithDescription, WgTestCapabilitiesWithDescriptionDto>();
-            CreateMap<TestReqBreakdownView, TestReqBreakdownDto>().ReverseMap();
-            CreateMap<BatchJobHistory, BatchJobHistoryDto>().ReverseMap();
-            CreateMap<BatchJobQueue, BatchJobQueueDto>().ReverseMap();
-            CreateMap<BatchJobQueue, BatchJobQueueRes>().ReverseMap();
-            CreateMap<BatchJobQueue, BatchJobEventTriggerDto>()
-                .ForMember(dest => dest.Jobqueue, opt => opt.MapFrom(src => src))
-                .ForMember(dest => dest.EventId, opt => opt.Ignore());
-            CreateMap<TestActualBreakdownView, TestActualBreakdownDto>().ReverseMap();
+            config.NewConfig<JobCode, JobCodeDto>().TwoWays();
+            config.NewConfig<TimeCodeValid, TimeCodeValidDto>().TwoWays();
+            config.NewConfig<WorkGroup, WorkGroupDto>().TwoWays();
+            config.NewConfig<Owner, OwnerDto>().TwoWays();
+            config.NewConfig<WorkGroupView, WorkGroupViewDto>();
+            config.NewConfig<Month, MonthDto>().TwoWays();
+            config.NewConfig<MonthDto, MonthRes>().TwoWays();
+            config.NewConfig<ProjectInvoice, ProjectInvoiceDto>().TwoWays();
+            config.NewConfig<InvoiceImportRow, InvoiceImportRowDto>().TwoWays();
+            config.NewConfig<ProjectInvoiceStaging, InvoiceImportRowDto>();
+            config.NewConfig<ProjectSubContract, ProjectSubContractDto>().TwoWays();
+            config.NewConfig<SubContractRmsImportRow, SubContractRmsImportRowDto>().TwoWays();
+            config.NewConfig<ProjectSubcontractStaging, SubContractRmsImportRowDto>();
+            config.NewConfig<SubContractRmsImport, SubContractRmsImportDto>().TwoWays();
+            config.NewConfig<SubContractRmsImportResult, SubContractRmsImportResultDto>().TwoWays();
+            config.NewConfig<TestCapability, TestCapabilityDto>().TwoWays();
+            config.NewConfig<TestCapabilityWithDescription, TestCapabilityDto>();
+            config.NewConfig<TestRequirement, TestRequirementtDto>().TwoWays();
+            config.NewConfig<TestRequirementDetail, TestRequirementtDto>();
+            config.NewConfig<TestSupplierView, TestSupplierViewDto>().TwoWays();
+            config.NewConfig<TestorProduct, TestorProductDto>().TwoWays();
+            config.NewConfig<CalenderMonth, CalenderMonthDto>().TwoWays();
+            config.NewConfig<ProjectMonth, ProjectMonthDto>().TwoWays();
+            config.NewConfig<ProjectMonthFinal, ProjectMonthFinalDto>().TwoWays();
+            config.NewConfig<MonthlyOutputLog, MonthlyOutputLogDto>().TwoWays();
+            config.NewConfig<MonthlyOutput, MonthlyOutputDto>().TwoWays();
+            config.NewConfig<StagingMonthlyOutput, StagingMonthlyOutputDto>().TwoWays();
+            config.NewConfig<MonthlyOutputImportRowDto, StagingMonthlyOutputDto>().TwoWays();
+            config.NewConfig<MonthlyTime, MonthlyTimeDto>().TwoWays();
+            config.NewConfig<MonthlyTimeStaff, MonthlyTimeDto>();
+            config.NewConfig<StagingMonthlyTime, StagingMonthlyTimeDto>().TwoWays();
+            config.NewConfig<MonthlyTimeImportRowDto, StagingMonthlyTimeDto>().TwoWays();
+            config.NewConfig<MonthlyTimeLog, MonthlyTimeLogDto>().TwoWays();
+            config.NewConfig<MonthlyTimeLogFilter, MonthlyTimeLogFilterDto>().TwoWays();
+            config.NewConfig<WorkGroupTimeCode, WorkGroupTimeCodeDto>().TwoWays();
+            config.NewConfig<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().TwoWays();
+            config.NewConfig<WgSummarisedStaffTimeUsageView, WgSummarisedStaffTimeUsageEntryDto>();
+            config.NewConfig<SummarisedWgTimeView, SummarisedWgTimeDto>().TwoWays();
+            config.NewConfig<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
+            config.NewConfig<SummarisedWgTimeDto, SummarisedWgTimeRes>().TwoWays();
+            config.NewConfig<RecreateSummaryLog, RecreateSummaryLogDto>().TwoWays();
+            config.NewConfig<RecreateSummaryLogWithComment, RecreateSummaryLogDto>().TwoWays();
+            config.NewConfig<ReleasePeriod, ReleasePeriodDto>().TwoWays();
+            config.NewConfig<ReleaseSummary, ReleaseSummaryDto>();
+            config.NewConfig<JobCodeZtLookup, JobCodeZtDto>().TwoWays();
+            config.NewConfig<TestPriceCheckView, TestPriceCheckDto>().TwoWays();
+            config.NewConfig<TestFeePlanView, TestFeePlanDto>().TwoWays();
+            config.NewConfig<TimePurchaseProject, TimePurchaseProjectDto>();
+            config.NewConfig<TimeSaleProfitCentre, TimeSaleProfitCentreDto>();
+            config.NewConfig<TimeSaleWorkGroup, TimeSaleWorkGroupDto>();
+            config.NewConfig<TestSaleSellingWorkgroup, TestSaleSellingWorkgroupDto>();
+            config.NewConfig<TestSaleBuyingProject, TestSaleBuyingProjectDto>();
+            config.NewConfig<WgTestCapabilitiesWithDescription, WgTestCapabilitiesWithDescriptionDto>();
+            config.NewConfig<TestReqBreakdownView, TestReqBreakdownDto>().TwoWays();
+            config.NewConfig<BatchJobHistory, BatchJobHistoryDto>().TwoWays();
+            config.NewConfig<BatchJobQueue, BatchJobQueueDto>().TwoWays();
+            config.NewConfig<BatchJobQueue, BatchJobQueueRes>().TwoWays();
+            config.NewConfig<BatchJobQueue, BatchJobEventTriggerDto>()
+                .Map(dest => dest.Jobqueue, src => src)
+                .Ignore(dest => dest.EventId);
+            config.NewConfig<TestActualBreakdownView, TestActualBreakdownDto>().TwoWays();
 
         }
     }

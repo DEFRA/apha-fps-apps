@@ -1,10 +1,10 @@
-﻿using Apha.PACT.Application.Dtos;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServiceTest
@@ -476,10 +476,10 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             _mockRepository.GetReleaseSummariesAsync().Returns(releaseSummary);
             _mockMapper.When(m => m.Map<ReleaseSummaryDto>(Arg.Any<ReleaseSummary>()))
-                .Do(_ => throw new AutoMapperMappingException("Mapper error"));
+                .Do(_ => throw new InvalidOperationException("Mapper error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _service.GetReleaseSummariesAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetReleaseSummariesAsync());
         }
 
         #endregion
@@ -637,10 +637,10 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun, Arg.Any<string>()).Returns(entity);
             _mockMapper.When(m => m.Map<ReleasePeriodDto?>(entity))
-                .Do(_ => throw new AutoMapperMappingException("Mapper error"));
+                .Do(_ => throw new InvalidOperationException("Mapper error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(
+            await Assert.ThrowsAsync<InvalidOperationException>(
                 () => _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun, "1"));
         }
 

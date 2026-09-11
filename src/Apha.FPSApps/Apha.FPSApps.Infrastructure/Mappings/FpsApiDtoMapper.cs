@@ -3,245 +3,249 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
-using AutoMapper;
+using Mapster;
 namespace Apha.FPSApps.Infrastructure.Mappings
 {
-    public class FpsApiDtoMapper : Profile
+    public class FpsApiDtoMapper : IRegister
     {
-        public FpsApiDtoMapper()
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap(typeof(ApiResponseDto<>), typeof(ApiResponse<>)).ReverseMap();
-            CreateMap<ApiErrorDto, ApiError>().ReverseMap();
-            CreateMap<ApiMetaDto, ApiMeta>().ReverseMap();
-            CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
-            CreateMap<PaginationDto, Pagination>().ReverseMap();
+            config.NewConfig(typeof(ApiResponseDto<>), typeof(ApiResponse<>));
+            config.NewConfig(typeof(ApiResponse<>), typeof(ApiResponseDto<>));
+            config.NewConfig<ApiErrorDto, ApiError>().TwoWays();
+            config.NewConfig<ApiMetaDto, ApiMeta>().TwoWays();
+            config.NewConfig(typeof(PaginationRes<>), typeof(PaginatedResult<>));
+            config.NewConfig(typeof(PaginatedResult<>), typeof(PaginationRes<>));
+            config.NewConfig<PaginationDto, Pagination>().TwoWays();
 
-            CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
-            CreateMap<StaffJobZtViewDto, StaffJobZtViewRes>().ReverseMap();
-            CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
-            CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
-            CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
-            CreateMap<ProgramDto, ProgramReq>().ReverseMap();
-            CreateMap<ProgramDto, ProgramRes>().ReverseMap();
-            CreateMap<ManagerDto, ManagerRes>().ReverseMap();
-            CreateMap<EmployeeDto, EmployeeReq>().ReverseMap();
-            CreateMap<EmployeeDto, EmployeeRes>().ReverseMap();
+            config.NewConfig<StaffJobViewDto, StaffJobViewRes>().TwoWays();
+            config.NewConfig<StaffJobZtViewDto, StaffJobZtViewRes>().TwoWays();
+            config.NewConfig<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().TwoWays();
+            config.NewConfig<StaffJobDto, StaffJobReq>().TwoWays();
+            config.NewConfig<StaffJobDto, StaffJobRes>().TwoWays();
+            config.NewConfig<ProgramDto, ProgramReq>().TwoWays();
+            config.NewConfig<ProgramDto, ProgramRes>().TwoWays();
+            config.NewConfig<ManagerDto, ManagerRes>().TwoWays();
+            config.NewConfig<EmployeeDto, EmployeeReq>().TwoWays();
+            config.NewConfig<EmployeeDto, EmployeeRes>().TwoWays();
 
             // FPS Project
             // CustIncome in the FPS API wire format lives in ProjectReq.BudgetExt (see FPS RequestMapper)
-            CreateMap<ProjectDto, ProjectReq>()
-                .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome))
-                .ReverseMap()
-                .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
-            CreateMap<ProjectDto, ProjectRes>().ReverseMap();
-            CreateMap<ProjectSpecificQueryDto, ProjectSpecificQueryRes>().ReverseMap();
+            config.NewConfig<ProjectDto, ProjectReq>()
+                .Map(d => d.BudgetExt, s => s.CustIncome);
+            config.NewConfig<ProjectReq, ProjectDto>()
+                .Map(d => d.CustIncome, s => s.BudgetExt);
+            config.NewConfig<ProjectDto, ProjectRes>().TwoWays();
+            config.NewConfig<ProjectSpecificQueryDto, ProjectSpecificQueryRes>().TwoWays();
 
             // FPS Lookups
-            CreateMap<StatusDto, StatusRes>().ReverseMap();
-            CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
-            CreateMap<CustomerDto, CustomerRes>().ReverseMap();
-            CreateMap<ContractDto, ContractRes>().ReverseMap();
-            CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
+            config.NewConfig<StatusDto, StatusRes>().TwoWays();
+            config.NewConfig<DiseaseDto, DiseaseRes>().TwoWays();
+            config.NewConfig<CustomerDto, CustomerRes>().TwoWays();
+            config.NewConfig<ContractDto, ContractRes>().TwoWays();
+            config.NewConfig<ProjectGroupDto, ProjectGroupRes>().TwoWays();
             
             // FPS Animal Plan
-            CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
-            CreateMap<AnimalSnapshotViewDto, AnimalSnapshotViewRes>().ReverseMap();
-            CreateMap<AnimalDto, AnimalRes>().ReverseMap();
-            CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
-            CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
+            config.NewConfig<AnimalCostViewDto, AnimalCostViewRes>().TwoWays();
+            config.NewConfig<AnimalSnapshotViewDto, AnimalSnapshotViewRes>().TwoWays();
+            config.NewConfig<AnimalDto, AnimalRes>().TwoWays();
+            config.NewConfig<AnimalRequestDto, AnimalRequestReq>().TwoWays();
+            config.NewConfig<AnimalRequestDto, AnimalRequestRes>().TwoWays();
             
             // FPS Animal Master
-            CreateMap<AnimalDto, AnimalReq>().ReverseMap();
+            config.NewConfig<AnimalDto, AnimalReq>().TwoWays();
             
             // YEar Master
-            CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
-            CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
+            config.NewConfig<YearMasterDto, YearMasterRes>().TwoWays();
+            config.NewConfig<YearMasterDto, YearMasterReq>().TwoWays();
 
             // Testor Product
-            CreateMap<Apha.FPSApps.Application.Dtos.PACT.TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
+            config.NewConfig<Apha.FPSApps.Application.Dtos.PACT.TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().TwoWays();
             
             // View Project Plan vs Actual Staff
-            CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
-            CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
+            config.NewConfig<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().TwoWays();
+            config.NewConfig<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().TwoWays();
             
             // Division
-            CreateMap<DivisionDto, DivisionRes>().ReverseMap();
-            CreateMap<DivisionDto, DivisionReq>().ReverseMap();
+            config.NewConfig<DivisionDto, DivisionRes>().TwoWays();
+            config.NewConfig<DivisionDto, DivisionReq>().TwoWays();
 
             // Division Grade
-            CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
-            CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
+            config.NewConfig<DivisionGradeDto, DivisionGradeRes>().TwoWays();
+            config.NewConfig<DivisionGradeDto, DivisionGradeReq>().TwoWays();
 
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
-            CreateMap<GradeDto, GradeReq>().ReverseMap();
-            CreateMap<GradeDto, GradeRes>().ReverseMap();
+            config.NewConfig<GradeDto, GradeReq>().TwoWays();
+            config.NewConfig<GradeDto, GradeRes>().TwoWays();
 
             // Agency
-            CreateMap<AgencyDto, AgencyRes>().ReverseMap();
+            config.NewConfig<AgencyDto, AgencyRes>().TwoWays();
 
             // Additional Cost
-            CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
-            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
-            CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
-            CreateMap<AccountCategoryDto, AccountCategoryReq>().ReverseMap();
+            config.NewConfig<AdditionalCostDto, AdditionalCostReq>().TwoWays();
+            config.NewConfig<AdditionalCostDto, AdditionalCostRes>().TwoWays();
+            config.NewConfig<AccountCategoryDto, AccountCategoryRes>().TwoWays();
+            config.NewConfig<AccountCategoryDto, AccountCategoryReq>().TwoWays();
 
             // View Project Plan vs Actual Tests
-            CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
+            config.NewConfig<MonthlyOutputDto, MonthlyOutputRes>().TwoWays();
 
             // ProgrammeNewProject (merged into ProjectDto - mappings above)
-            CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
-            CreateMap<SubAccountDto, SubAccountRes>()
-                .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
-            CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
+            config.NewConfig<AccountCodeDto, AccountCodeRes>().TwoWays();
+            config.NewConfig<SubAccountDto, SubAccountRes>()
+                .Map(d => d.SubAccount, s => s.SubAccount);
+            config.NewConfig<SubAccountRes, SubAccountDto>()
+                .Map(d => d.SubAccount, s => s.SubAccount);
+            config.NewConfig<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().TwoWays();
 
             // CostCentre CRUD: maps frontend CostCentreDto to/from backend CostCentreReq (POST/PUT)
             //   and CostCentreRes (GET/GET-paged/POST/PUT responses)
-            CreateMap<CostCentreDto, CostCentreReq>().ReverseMap();
-            CreateMap<CostCentreDto, CostCentreRes>().ReverseMap();
+            config.NewConfig<CostCentreDto, CostCentreReq>().TwoWays();
+            config.NewConfig<CostCentreDto, CostCentreRes>().TwoWays();
 
-            CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
-            CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
+            config.NewConfig<PactStaffDto, PactStaffRes>().TwoWays();
+            config.NewConfig<WorkGroupPersonDto, WorkGroupPersonRes>().TwoWays();
 
             // Resource Set-Up
-            CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
-            CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
-            CreateMap<ProfitCentreCostDto, ProfitCentreCostRes>().ReverseMap();
-            CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
-            CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
-            CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
-            CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
-            CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
-            CreateMap<WorkGroupEmployeeStaffDto, WorkGroupEmployeeReq>().ReverseMap();
-            CreateMap<WorkGroupEmployeeStaffDto, WorkGroupEmployeeRes>().ReverseMap();
+            config.NewConfig<ProfitCentreDto, ProfitCentreRes>().TwoWays();
+            config.NewConfig<ProfitCentreDto, ProfitCentreReq>().TwoWays();
+            config.NewConfig<ProfitCentreCostDto, ProfitCentreCostRes>().TwoWays();
+            config.NewConfig<ProfitCentreGradeDto, ProfitCentreGradeRes>().TwoWays();
+            config.NewConfig<ProfitCentreGradeDto, ProfitCentreGradeReq>().TwoWays();
+            config.NewConfig<WorkgroupGradeDto, WorkgroupGradeRes>().TwoWays();
+            config.NewConfig<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().TwoWays();
+            config.NewConfig<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().TwoWays();
+            config.NewConfig<WorkGroupEmployeeStaffDto, WorkGroupEmployeeReq>().TwoWays();
+            config.NewConfig<WorkGroupEmployeeStaffDto, WorkGroupEmployeeRes>().TwoWays();
 
             // ProjectProfitability
-            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();            // ProjectProfitabilityVla
+            config.NewConfig<ProjectProfitabilityDto, ProjectProfitabilityRes>().TwoWays();            // ProjectProfitabilityVla
             //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
             //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
-            CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
-                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
-                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.GetValueOrDefault(0)))
-                .ReverseMap()
-                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.Project))
-                .ForMember(d => d.Id, o => o.MapFrom(s => (int?)s.Id));
+            config.NewConfig<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
+                .Map(d => d.Project, s => s.JobCode)
+                .Map(d => d.Id, s => s.Id.GetValueOrDefault(0));
+            config.NewConfig<ProjectProfitabilityVlaRes, ProjectProfitabilityVlaDto>()
+                .Map(d => d.JobCode, s => s.Project)
+                .Map(d => d.Id, s => (int?)s.Id);
 
             // Staff Plan view
-            CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+            config.NewConfig<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().TwoWays();
 
             // Staff Plan Details view
-            CreateMap<ProjectStaffPlanDetailsViewDto, ProjectStaffPlanDetailsViewRes>().ReverseMap();
+            config.NewConfig<ProjectStaffPlanDetailsViewDto, ProjectStaffPlanDetailsViewRes>().TwoWays();
 
             // Project Group Staff Plan view
-            CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
+            config.NewConfig<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().TwoWays();
 
             // Workgroup Staff Plan view
-            CreateMap<WgStaffPlanViewDto, WgStaffPlanViewRes>().ReverseMap();
+            config.NewConfig<WgStaffPlanViewDto, WgStaffPlanViewRes>().TwoWays();
 
-            CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
+            config.NewConfig<PactStaffDto, PactStaffRes>().TwoWays();
 
             // WorkgroupGrade
-            CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
+            config.NewConfig<WorkgroupGradeDto, WorkgroupGradeReq>().TwoWays();
 
             // Job Code (ZT lookup) - now served from PACT API
-            CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
+            config.NewConfig<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().TwoWays();
 
 
             // Income/Contribution from Time Sales (frmTimeSellerPC)
-            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
-            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
+            config.NewConfig<ContributionSummaryRowDto, ContributionSummaryRowRes>().TwoWays();
+            config.NewConfig<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().TwoWays();
 
             // BudgetResourceLevel
-            CreateMap<BidDto, BidReq>().ReverseMap();
-            CreateMap<BidDto, BidRes>().ReverseMap();
-            CreateMap<BidViewDto, BidViewRes>().ReverseMap();
-            CreateMap<TestsRequiredByWgDto, TestsRequiredByWgRes>().ReverseMap();
-            CreateMap<TestsRequiredByRcDto, TestsRequiredByRcRes>().ReverseMap();
-            CreateMap<GenericBidViewDto, GenericBidViewRes>().ReverseMap();
-            CreateMap<ProjectExceptionalCostViewDto, ProjectExceptionalCostViewRes>().ReverseMap();
-            CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
-            CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
+            config.NewConfig<BidDto, BidReq>().TwoWays();
+            config.NewConfig<BidDto, BidRes>().TwoWays();
+            config.NewConfig<BidViewDto, BidViewRes>().TwoWays();
+            config.NewConfig<TestsRequiredByWgDto, TestsRequiredByWgRes>().TwoWays();
+            config.NewConfig<TestsRequiredByRcDto, TestsRequiredByRcRes>().TwoWays();
+            config.NewConfig<GenericBidViewDto, GenericBidViewRes>().TwoWays();
+            config.NewConfig<ProjectExceptionalCostViewDto, ProjectExceptionalCostViewRes>().TwoWays();
+            config.NewConfig<PurchaseDto, PurchaseReq>().TwoWays();
+            config.NewConfig<PurchaseDto, PurchaseRes>().TwoWays();
 
             // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
-            CreateMap<ProjectLogRes, ProjectLogDto>()
-                .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
-                .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
+            config.NewConfig<ProjectLogRes, ProjectLogDto>()
+                .Map(d => d.CaseWorkSub, s => s.CaseworkSub)
+                .Map(d => d.PlanCaseWorkDebit, s => s.PlanCaseworkDebit);
 
             // StaffJobLog: Res.Name (staff display name resolved server-side) maps to Dto.Name by convention.
-            CreateMap<StaffJobLogRes, StaffJobLogDto>();
+            config.NewConfig<StaffJobLogRes, StaffJobLogDto>();
 
             // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;
             //   Res.NoRequired is int? but Dto.NoRequired is double?. Explicit ForMember casts applied.
-            CreateMap<TestRequirementLogRes, TestRequirementLogDto>()
-                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null))
-                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null));
+            config.NewConfig<TestRequirementLogRes, TestRequirementLogDto>()
+                .Map(d => d.UnitPrice, s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null)
+                .Map(d => d.NoRequired, s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null);
 
             // AnimalRequestLog: all property names and types align — convention mapping suffices.
-            CreateMap<AnimalRequestLogRes, AnimalRequestLogDto>();
+            config.NewConfig<AnimalRequestLogRes, AnimalRequestLogDto>();
 
             // AdditionalCostLog: all property names and types align — convention mapping suffices.
-            CreateMap<AdditionalCostLogRes, AdditionalCostLogDto>();
+            config.NewConfig<AdditionalCostLogRes, AdditionalCostLogDto>();
             // UserPermission
-            CreateMap<UserDto, UserRes>().ReverseMap();
-            CreateMap<UserDto, UserReq>().ReverseMap();
-            CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
-            CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
-            CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
+            config.NewConfig<UserDto, UserRes>().TwoWays();
+            config.NewConfig<UserDto, UserReq>().TwoWays();
+            config.NewConfig<UserPermissionDataDto, UserPermissionRes>().TwoWays();
+            config.NewConfig<UserPermissionDataDto, UserPermissionReq>().TwoWays();
+            config.NewConfig<PermissionOptionsDto, PermissionOptionsRes>().TwoWays();
             
             // Total Business Overheads
-            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
-            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+            config.NewConfig<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().TwoWays();
+            config.NewConfig<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().TwoWays();
 
             // Setting
-            CreateMap<SettingDto, FpsSettingRes>().ReverseMap();
-            CreateMap<SettingDto, FpsSettingReq>().ReverseMap();
-            CreateMap<YearEndSettingDto, FpsYearEndSettingRes>().ReverseMap();
+            config.NewConfig<SettingDto, FpsSettingRes>().TwoWays();
+            config.NewConfig<SettingDto, FpsSettingReq>().TwoWays();
+            config.NewConfig<YearEndSettingDto, FpsYearEndSettingRes>().TwoWays();
 
             // MonthHour
-            CreateMap<MonthHourDto, MonthHourRes>().ReverseMap();
-            CreateMap<MonthHourDto, MonthHourReq>().ReverseMap();
-            CreateMap<YearEndMonthHourDto, YearEndMonthHourRes>().ReverseMap();
+            config.NewConfig<MonthHourDto, MonthHourRes>().TwoWays();
+            config.NewConfig<MonthHourDto, MonthHourReq>().TwoWays();
+            config.NewConfig<YearEndMonthHourDto, YearEndMonthHourRes>().TwoWays();
             // StaffResourceUtilisation
-            CreateMap<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().ReverseMap();
+            config.NewConfig<StaffResourceUtilisationDto, StaffResourceUtilisationRes>().TwoWays();
 
             //  TestListVLA
-            CreateMap<TestRCCostDto, TestRCCostRes>().ReverseMap();
-            CreateMap<TestRCCostDto, TestRCCostReq>().ReverseMap();
-            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
-            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
+            config.NewConfig<TestRCCostDto, TestRCCostRes>().TwoWays();
+            config.NewConfig<TestRCCostDto, TestRCCostReq>().TwoWays();
+            config.NewConfig<TestRequirementRCCostDto, TestRequirementRCCostRes>().TwoWays();
+            config.NewConfig<TestRequirementRCCostDto, TestRequirementRCCostReq>().TwoWays();
 
             // ResourceAllocation — Stage 2 Check Resource Allocation
-            CreateMap<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().ReverseMap();
-            CreateMap<ResourceStaffJobDto, ResourceStaffJobRes>().ReverseMap();
-            CreateMap<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().ReverseMap();
+            config.NewConfig<ResourceStaffAllocationDto, ResourceStaffAllocationRes>().TwoWays();
+            config.NewConfig<ResourceStaffJobDto, ResourceStaffJobRes>().TwoWays();
+            config.NewConfig<ResourceStaffJobDetailDto, ResourceStaffJobDetailRes>().TwoWays();
 
             // ResourceMgmtReplan — Resource Re-allocation Screen (frmRM_RePlan)
-            CreateMap<ResourceMgmtReplanViewDto, ResourceMgmtReplanViewRes>().ReverseMap();
-            CreateMap<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStaffJobRes>().ReverseMap();
+            config.NewConfig<ResourceMgmtReplanViewDto, ResourceMgmtReplanViewRes>().TwoWays();
+            config.NewConfig<ResourceMgmtReplanStaffJobDto, ResourceMgmtReplanStaffJobRes>().TwoWays();
 
             // Resource Replan — project staff replan
-            CreateMap<ProjectStaffReplanDto, ProjectStaffReplanRes>().ReverseMap();
+            config.NewConfig<ProjectStaffReplanDto, ProjectStaffReplanRes>().TwoWays();
             // Year End batch job
-            CreateMap<BatchJobQueueDto, BatchJobQueueRes>().ReverseMap();
-            CreateMap<BatchJobHistoryDto, BatchJobHistoryRes>().ReverseMap();
-            CreateMap<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().ReverseMap();
+            config.NewConfig<BatchJobQueueDto, BatchJobQueueRes>().TwoWays();
+            config.NewConfig<BatchJobHistoryDto, BatchJobHistoryRes>().TwoWays();
+            config.NewConfig<BatchJobEventTriggerDto, BatchJobEventTriggerRes>().TwoWays();
 
             // Bulk Rates — Common Res -> Web DTO. One-directional: the Web app never builds a
             // Res from its own Dto (nothing serializes these back out), so a ReverseMap would
             // declare an unused equivalence. BulkRatesValidationErrorRes deliberately maps onto
             // a narrower BulkRatesValidationErrorDto (no Id/JobQueueId/UploadVersion) — a valid,
             // ordinary AutoMapper mapping since only unmapped *destination* members are an error.
-            CreateMap<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
-            CreateMap<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
-            CreateMap<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
-            CreateMap<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
-            CreateMap<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
-            CreateMap<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
-            CreateMap<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
-            CreateMap<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
-            CreateMap<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
-            CreateMap<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
-            CreateMap<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
-            CreateMap<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
+            config.NewConfig<BulkRatesQueueEntryRes, BulkRatesQueueEntryDto>();
+            config.NewConfig<BulkRatesUploadMetadataRes, BulkRatesUploadMetadataDto>();
+            config.NewConfig<BulkRatesRowCountsRes, BulkRatesRowCountsDto>();
+            config.NewConfig<BulkRatesQueueLogRes, BulkRatesQueueLogDto>();
+            config.NewConfig<BulkRatesValidationErrorRes, BulkRatesValidationErrorDto>();
+            config.NewConfig<BulkRatesFecStagingRowRes, BulkRatesFecStagingRowDto>();
+            config.NewConfig<BulkRatesAgrupStagingRowRes, BulkRatesAgrupStagingRowDto>();
+            config.NewConfig<BulkRatesAnimalStagingRowRes, BulkRatesAnimalStagingRowDto>();
+            config.NewConfig<BulkRatesStaffStagingRowRes, BulkRatesStaffStagingRowDto>();
+            config.NewConfig<BulkRatesRequestDetailRes, BulkRatesRequestDetailDto>();
+            config.NewConfig<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
+            config.NewConfig<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
         }
     }
 }

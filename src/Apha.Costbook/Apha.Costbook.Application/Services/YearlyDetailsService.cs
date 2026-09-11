@@ -8,7 +8,7 @@ using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.Costbook.Application.Services;
 

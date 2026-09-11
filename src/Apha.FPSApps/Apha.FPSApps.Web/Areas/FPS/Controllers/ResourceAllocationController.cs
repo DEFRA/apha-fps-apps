@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.StateManagement;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -196,7 +196,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", BuildStaffJobsGridConfig(items, pagination, filters));
         }
 
-        // ─── Private helpers ─────────────────────────────────────────────────────
+        // --- Private helpers -----------------------------------------------------
 
         private PaginationModel BuildPaginationModel(object? pagination, PaginationFilter<string> request)
         {

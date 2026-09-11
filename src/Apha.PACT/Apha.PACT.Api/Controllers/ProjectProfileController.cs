@@ -2,7 +2,7 @@ using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

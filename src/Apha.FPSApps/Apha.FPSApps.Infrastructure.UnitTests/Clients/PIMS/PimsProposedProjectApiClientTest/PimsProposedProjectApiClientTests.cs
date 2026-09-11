@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
         {
             // Arrange
             var dto = new ProposedProjectDto { Parentproject = "PP001" };
-            _mapper.Map<ProposedProjectReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ProposedProjectReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.CreateProposedProjectAsync(dto);
@@ -273,7 +273,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string> { "Program A" } };
 
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectPrograms).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetProjectProgramsAsync();
@@ -400,7 +400,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string> { "Customer A" } };
 
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectCustomers).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetProjectCustomersAsync();
@@ -527,7 +527,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string> { "Active" } };
 
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectStatuses).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act
             var result = await _client.GetProjectStatusesAsync();

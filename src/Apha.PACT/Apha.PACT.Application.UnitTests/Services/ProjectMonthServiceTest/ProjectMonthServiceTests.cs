@@ -3,7 +3,7 @@ using Apha.PACT.Application.Services;
 using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

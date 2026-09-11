@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
 
 namespace Apha.PIMS.Core.Interfaces

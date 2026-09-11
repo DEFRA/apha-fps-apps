@@ -5,7 +5,7 @@ using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Core.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

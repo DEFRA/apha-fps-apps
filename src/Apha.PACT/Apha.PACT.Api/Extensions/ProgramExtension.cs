@@ -1,4 +1,4 @@
-﻿using Amazon;
+using Amazon;
 using Amazon.EventBridge;
 using Apha.Common.Contracts.Email;
 using Apha.Common.Helpers.Converter;
@@ -10,6 +10,8 @@ using Apha.PACT.Application.Mappings;
 using Apha.PACT.DataAccess.Data;
 using Asp.Versioning;
 using Azure.Identity;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -57,12 +59,11 @@ namespace Apha.PACT.Api.Extensions
             }
 
 
-            // AutoMapper
-            services.AddAutoMapper(config =>
-            {
-                config.AddMaps(typeof(EntityMapper).Assembly);
-                config.AddMaps(typeof(RequestMapper));
-            });
+            // Mapster
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Scan(typeof(EntityMapper).Assembly, typeof(RequestMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
 
             // MVC API
             services.AddControllers(options =>

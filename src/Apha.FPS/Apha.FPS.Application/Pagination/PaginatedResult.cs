@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Application.Pagination
+namespace Apha.FPS.Application.Pagination
 {
     public class PaginatedResult<T>
     {

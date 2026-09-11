@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Core.Entities
 {
     /// <summary>
     /// Keyless view entity for the Project Profitability VLA list.
@@ -42,7 +42,7 @@
         /// </summary>
         public string? Status { get; set; }
 
-        // ── Financial columns ─────────────────────────────────────────────────────
+        // -- Financial columns -----------------------------------------------------
         /// <summary>
         /// Total staff costs for the job code.
         /// Derived from <c>qryTotalStaffCosts</c> sub-query in the source Access query.
@@ -73,7 +73,7 @@
         /// </summary>
         public decimal? Budget { get; set; }
         /// <summary>
-        /// Actual profit (Budget − TotalCosts). Computed column in the source query.
+        /// Actual profit (Budget - TotalCosts). Computed column in the source query.
         /// </summary>
         public decimal Profit { get; set; }
         /// <summary>

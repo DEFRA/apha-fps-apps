@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 
 namespace Apha.PIMS.Application.Interfaces

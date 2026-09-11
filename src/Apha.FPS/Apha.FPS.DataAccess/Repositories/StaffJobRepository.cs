@@ -1,4 +1,4 @@
-ï»¿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -459,7 +459,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(g => g.First())
                 .ToList();
 
-            // Stage 2: aggregate in-memory â€” mirrors SQL GROUP BY + SUM(CASE WHEN â€¦).
+            // Stage 2: aggregate in-memory — mirrors SQL GROUP BY + SUM(CASE WHEN …).
             var result = rawData
                 .GroupBy(x => new
                 {

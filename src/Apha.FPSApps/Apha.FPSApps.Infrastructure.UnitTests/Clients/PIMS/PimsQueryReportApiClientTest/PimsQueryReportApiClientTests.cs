@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -123,7 +123,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
 
             _http.GetAsync<List<MonitoringReportDataRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<MonitoringReportDataDto>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("map failed"));
+                .Throws(new InvalidOperationException("map failed"));
 
             // Act
             var result = await _client.GetMonitoringReportDataAsync(query, 2025, 8);
@@ -224,7 +224,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
 
             _http.GetAsync<List<ProgramCustomerMonitoringReportDataRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramCustomerMonitoringReportDataDto>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("map failed"));
+                .Throws(new InvalidOperationException("map failed"));
 
             // Act
             var result = await _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2);

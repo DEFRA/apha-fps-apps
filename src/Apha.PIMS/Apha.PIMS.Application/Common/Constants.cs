@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Application.Common
+namespace Apha.PIMS.Application.Common
 {
     //Note : Define all constants in this class, and use nested static classes to group related constants together.
     public static class Constants 

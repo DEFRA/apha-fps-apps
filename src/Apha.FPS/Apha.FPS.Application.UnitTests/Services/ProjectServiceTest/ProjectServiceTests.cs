@@ -5,7 +5,7 @@ using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

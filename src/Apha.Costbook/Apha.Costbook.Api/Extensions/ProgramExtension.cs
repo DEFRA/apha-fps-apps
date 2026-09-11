@@ -5,6 +5,8 @@ using Apha.Costbook.Application.Mappings;
 using Apha.Costbook.DataAccess.Data;
 using Asp.Versioning;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -51,12 +53,11 @@ namespace Apha.Costbook.Api.Extensions
             }
 
 
-            // AutoMapper
-            services.AddAutoMapper(config =>
-            {
-                config.AddMaps(typeof(EntityMapper).Assembly);
-                config.AddMaps(typeof(RequestMapper));
-            });
+            // Mapster
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Scan(typeof(EntityMapper).Assembly, typeof(RequestMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
 
             // MVC API
             services.AddControllers(options =>

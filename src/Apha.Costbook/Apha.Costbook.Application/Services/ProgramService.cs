@@ -1,7 +1,7 @@
 ﻿using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Application.Dtos;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.Costbook.Application.Services
 {

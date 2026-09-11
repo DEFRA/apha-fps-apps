@@ -1,37 +1,37 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.FPSApps.Web.Mappings
 {
-    public class CostbookViewModelMapper : Profile
+    public class CostbookViewModelMapper : IRegister
     {
-        public CostbookViewModelMapper()
+        public void Register(TypeAdapterConfig config)
         {
 
-            CreateMap<PaginationDto, PaginationModel>().ReverseMap();
+            config.NewConfig<PaginationDto, PaginationModel>().TwoWays();
 
-            // ── Existing project view model mappings ──────────────────────────
-            CreateMap<ProjectDto, ProjectItemViewModel>().ReverseMap();
-            CreateMap<ProjectDto, ProjectDetailViewModel>().ReverseMap();
-            CreateMap<ProjectDto, ProjectCreateEditViewModel>().ReverseMap();
+            // -- Existing project view model mappings --------------------------
+            config.NewConfig<ProjectDto, ProjectItemViewModel>().TwoWays();
+            config.NewConfig<ProjectDto, ProjectDetailViewModel>().TwoWays();
+            config.NewConfig<ProjectDto, ProjectCreateEditViewModel>().TwoWays();
 
-            // ── Yearly details: Dto ↔ ViewModel/Item ─────────────────────────
-            CreateMap<ProjectYearDto, ProjectYearRateItem>().ReverseMap();
-            CreateMap<StaffRequirementDto, StaffRequirementItem>().ReverseMap();
-            CreateMap<StaffRequirementDto, StaffRequirementFormItem>().ReverseMap();
-            CreateMap<TestRequirementDto, TestRequirementItem>().ReverseMap();
-            CreateMap<AnimalRequirementDto, AnimalRequirementItem>().ReverseMap();
-            CreateMap<AdditionalCostDto, AdditionalCostItem>().ReverseMap();
+            // -- Yearly details: Dto ? ViewModel/Item -------------------------
+            config.NewConfig<ProjectYearDto, ProjectYearRateItem>().TwoWays();
+            config.NewConfig<StaffRequirementDto, StaffRequirementItem>().TwoWays();
+            config.NewConfig<StaffRequirementDto, StaffRequirementFormItem>().TwoWays();
+            config.NewConfig<TestRequirementDto, TestRequirementItem>().TwoWays();
+            config.NewConfig<AnimalRequirementDto, AnimalRequirementItem>().TwoWays();
+            config.NewConfig<AdditionalCostDto, AdditionalCostItem>().TwoWays();
             
-            CreateMap<InflationSettingsItem, MaintenanceSettingsDto>().ReverseMap();            
-            CreateMap<ProfitMarginsItem, MaintenanceSettingsDto>().ReverseMap();            
-            CreateMap<AccountCategoryItem, AccountCategoryMaintenanceDto>().ReverseMap();
-            CreateMap<Csg7GroupItem, AccountGroupDto>().ReverseMap();
-            CreateMap<CapsStaffItem, StaffDto>().ReverseMap();
+            config.NewConfig<InflationSettingsItem, MaintenanceSettingsDto>().TwoWays();            
+            config.NewConfig<ProfitMarginsItem, MaintenanceSettingsDto>().TwoWays();            
+            config.NewConfig<AccountCategoryItem, AccountCategoryMaintenanceDto>().TwoWays();
+            config.NewConfig<Csg7GroupItem, AccountGroupDto>().TwoWays();
+            config.NewConfig<CapsStaffItem, StaffDto>().TwoWays();
            
         }
     }
