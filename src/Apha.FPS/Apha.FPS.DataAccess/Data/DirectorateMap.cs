@@ -13,7 +13,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.ToTable("tbldirectorate", "fps");
 
             entity.Property(e => e.DirectorateName)
-                .HasMaxLength(100)
+                .HasMaxLength(15)
                 .HasColumnName("directorate");
         }
     }
