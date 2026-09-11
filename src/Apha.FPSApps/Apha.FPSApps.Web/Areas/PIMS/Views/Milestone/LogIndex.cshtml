@@ -11,8 +11,16 @@
         <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
             LOG Milestone Changes
         </h5>
-        <a asp-area="PIMS" asp-controller="Milestone" asp-action="Index"
-           class="govuk-back-link govuk-!-margin-top-0 govuk-!-margin-bottom-0 govuk-!-margin-right-3">Back</a>
+        @if (Model.FromSideNav)
+        {
+            <a asp-area="PIMS" asp-controller="Milestone" asp-action="Index" asp-route-parentproject="@selectedProject"
+               class="govuk-back-link govuk-!-margin-top-0 govuk-!-margin-bottom-0 govuk-!-margin-right-3">Back</a>
+        }
+        else
+        {
+            <a asp-area="PIMS" asp-controller="Milestone" asp-action="Index" asp-route-project="@selectedProject"
+               class="govuk-back-link govuk-!-margin-top-0 govuk-!-margin-bottom-0 govuk-!-margin-right-3">Back</a>
+        }
     </div>
 </div>
 

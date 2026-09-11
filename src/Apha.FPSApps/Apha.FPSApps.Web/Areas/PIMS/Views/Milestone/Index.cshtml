@@ -17,7 +17,7 @@
     <!-- ── Side Navigation ──────────────────────────────────── -->
     @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
     {
-        Parentproject = Model.NavigationProject
+        Parentproject = Model.IsSideNavContext ? Model.NavigationProject : string.Empty
     })
 
     <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
@@ -43,7 +43,7 @@
                             Import
                         </a>
                         <a id="logOfUpdatesBtn"
-                           href="@Url.Action("LogIndex", "Milestone", new { area = "PIMS", project = parentproject })"
+                           href="@Url.Action("LogIndex", "Milestone", new { area = "PIMS", project = parentproject, fromSideNav = Model.IsSideNavContext })"
                            class="govuk-button font-size-16 govuk-!-margin-bottom-1 govuk-!-margin-left-2">
                             Log of Updates
                         </a>
@@ -120,6 +120,7 @@
         // ── Shared state ─────────────────────────────────────────────────────
         var currentProject = '@Html.Raw(parentproject)';
         var navigationProject = '@Html.Raw(Model.NavigationProject)';
+        var logOfUpdatesFromSideNav = @(Model.IsSideNavContext ? "true" : "false");
         var mileMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.MileMessage) ?? string.Empty))';
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -148,7 +149,9 @@
 
              var logOfUpdatesBtn = document.getElementById('logOfUpdatesBtn');
              if (logOfUpdatesBtn) {
-                 logOfUpdatesBtn.href = '@Url.Action("LogIndex", "Milestone", new { area = "PIMS" })' + '?project=' + encodeURIComponent(project);
+                 logOfUpdatesBtn.href = '@Url.Action("LogIndex", "Milestone", new { area = "PIMS" })'
+                     + '?project=' + encodeURIComponent(project)
+                     + '&fromSideNav=' + logOfUpdatesFromSideNav;
              }
 
              $.get('@Url.Action("GetFormRequired", "Milestone", new { area = "PIMS" })',
