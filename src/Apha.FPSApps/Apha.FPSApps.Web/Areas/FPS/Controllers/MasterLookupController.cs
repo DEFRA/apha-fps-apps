@@ -1,5 +1,6 @@
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Enums;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class MasterLookupController : Controller
     {
         private readonly IMasterLookupService _masterLookupService;
+
+        /// <summary>
+        /// UI-only maximum input length per lookup table, matching the underlying
+        /// DB column size. Unknown tables fall back to the default length.
+        /// </summary>
+        private static int GetValueMaxLength(string tableName) =>
+            MasterLookupTableExtensions.GetValueMaxLength(tableName);
 
         public MasterLookupController(IMasterLookupService masterLookupService)
         {
@@ -83,6 +91,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             ViewData["TableName"] = tableName;
+            ViewData["ValueMaxLength"] = GetValueMaxLength(tableName);
             var model = new LookupItemViewModel();
             return PartialView("_AddEditLookupItem", model);
         }
@@ -99,6 +108,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             ViewData["TableName"] = tableName;
+            ViewData["ValueMaxLength"] = GetValueMaxLength(tableName);
             var model = new LookupItemViewModel { Value = value };
             return PartialView("_AddEditLookupItem", model);
         }
