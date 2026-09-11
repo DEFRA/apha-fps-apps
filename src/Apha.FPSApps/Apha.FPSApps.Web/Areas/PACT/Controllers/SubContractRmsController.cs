@@ -204,7 +204,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Import([FromForm] IFormFile file)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {

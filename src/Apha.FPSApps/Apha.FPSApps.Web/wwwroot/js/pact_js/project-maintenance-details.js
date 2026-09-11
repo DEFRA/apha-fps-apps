@@ -784,11 +784,11 @@ function initializeJobCodeWorkGroupDropdown(config) {
             labelText: 'Work Group',
             required: false,
             columns: [
-                { field: 'Value', header: 'Code', width: '100px' },
-                { field: 'Text', header: 'Work Group', width: '250px' }
+                { field: 'Value', header: 'Work Group', width: '100px' },
+                { field: 'Text', header: 'Profit Centre', width: '250px' }
             ],
             data: workGroupData,
-            displayField: 'Text',
+            displayField: 'Value',
             valueField: 'Value',
             clearButtonClearsSelection: true,
             callbacks: {
