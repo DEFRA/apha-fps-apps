@@ -189,8 +189,8 @@
         function updateNavLinks(programNo) {
             document.querySelectorAll('a.nav-updatable').forEach(function (link) {
                 var qs = programNo
-                    ? '?programNo=' + encodeURIComponent(programNo) + '&year=' + encodeURIComponent(fpsYear)
-                    : '?year=' + encodeURIComponent(fpsYear);
+                    ? '?programNo=' + encodeURIComponent(programNo) + '&fpsContextYear=' + encodeURIComponent(fpsYear)
+                    : '?fpsContextYear=' + encodeURIComponent(fpsYear);
                 link.href = link.pathname + qs;
             });
         }

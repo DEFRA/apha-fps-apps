@@ -3,7 +3,7 @@
     public class RequestHeadersHandler : DelegatingHandler
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private const string FpsYearHeader = "X-FPS-Year";
+        private const string FpsYearHeader = "X-FPS-Context-Year";
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestHeadersHandler(IHttpContextAccessor httpContextAccessor)

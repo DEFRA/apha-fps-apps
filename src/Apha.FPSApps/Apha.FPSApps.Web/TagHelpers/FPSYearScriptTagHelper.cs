@@ -18,9 +18,9 @@ namespace Apha.FPSApps.Web.TagHelpers
             output.TagName = "script";
             output.TagMode = TagMode.StartTagAndEndTag;
             output.Content.SetHtmlContent($@"
-        window.FPS_YEAR = {_fy.Year};
+        window.FPS_CONTEXT_YEAR = {_fy.Year};
                 jQuery(document).ajaxSend(function (e, xhr) {{
-                    xhr.setRequestHeader('X-FPS-Year', window.FPS_YEAR);
+                    xhr.setRequestHeader('X-FPS-Context-Year', window.FPS_CONTEXT_YEAR);
                 }});
                 (function () {{
                     if (!window.fetch || window.fetch.__fpsYearWrapped) {{
@@ -32,8 +32,8 @@ namespace Apha.FPSApps.Web.TagHelpers
                             (init && init.headers) ||
                             (input instanceof Request ? input.headers : undefined)
                         );
-                        if (!headers.has('X-FPS-Year')) {{
-                            headers.set('X-FPS-Year', window.FPS_YEAR);
+                        if (!headers.has('X-FPS-Context-Year')) {{
+                            headers.set('X-FPS-Context-Year', window.FPS_CONTEXT_YEAR);
                         }}
                         init = init || {{}};
                         init.headers = headers;
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Web.TagHelpers
                 }})();
                 window.fpsNavigateTo = function (url) {{
                     var separator = url.indexOf('?') !== -1 ? '&' : '?';
-                    window.location.href = url + separator + 'year=' + window.FPS_YEAR;
+                    window.location.href = url + separator + 'fpsContextYear=' + window.FPS_CONTEXT_YEAR;
                 }};
             ");
         }

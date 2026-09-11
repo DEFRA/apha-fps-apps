@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Web.TagHelpers
 
             // Append hidden field to form
             output.PostContent.AppendHtml(
-                $"<input type='hidden' id='FPSYear' name='FPSYear' value='{_fy.Year}' />");
+                $"<input type='hidden' id='FPSContextYear' name='FPSContextYear' value='{_fy.Year}' />");
 
             context.Items["FY_ADDED"] = true;
 
