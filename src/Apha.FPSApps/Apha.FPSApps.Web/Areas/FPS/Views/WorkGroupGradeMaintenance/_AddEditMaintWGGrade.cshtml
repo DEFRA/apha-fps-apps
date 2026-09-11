@@ -90,7 +90,7 @@
 
     function loadPcGrades() {
         var $select = $('#ProfitCentreGrade');
-        var current = '@Html.Raw(Model?.ProfitCentreGrade ?? string.Empty)';
+        var current = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.ProfitCentreGrade ?? string.Empty) : string.Empty));
         $.ajax({
             url: '@Url.Action("GetPcGrades", "WorkGroupGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
@@ -107,7 +107,7 @@
 
     function loadGradeCodes() {
         var $select = $('#GradeCode');
-        var current = '@Html.Raw(Model?.GradeCode ?? string.Empty)';
+        var current = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.GradeCode ?? string.Empty) : string.Empty));
         $.ajax({
             url: '@Url.Action("GetGradeCodes", "WorkGroupGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
@@ -124,7 +124,7 @@
 
     function loadWorkgroups() {
         var $select = $('#Workgroup');
-        var current = '@Html.Raw(Model?.Workgroup ?? string.Empty)';
+        var current = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.Workgroup ?? string.Empty) : string.Empty));
         $.ajax({
             url: '@Url.Action("GetWorkgroups", "WorkGroupGradeMaintenance", new { area = "FPS" })',
             type: 'GET',
