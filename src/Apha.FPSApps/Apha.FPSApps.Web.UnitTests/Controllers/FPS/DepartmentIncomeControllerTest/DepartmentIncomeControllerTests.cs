@@ -207,7 +207,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var items = new List<DepartmentIncomeTimeItem> { new() { Project = TestProject, Month = 1, TotalCost = 1000m } };
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
-            _departmentIncomeService.GetTimeIncomeAsync(TestProject, 1, 6)
+            _departmentIncomeService.GetTimeSnapshotIncomeAsync(TestProject, 1, 6)
                 .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeTimeItem>>(dtos).Returns(items);
 
@@ -244,7 +244,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetTimeIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetTimeSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(new List<DepartmentIncomeTimeDto>()));
             _mapper.Map<List<DepartmentIncomeTimeItem>>(Arg.Any<List<DepartmentIncomeTimeDto>>())
                 .Returns(new List<DepartmentIncomeTimeItem>());
@@ -264,7 +264,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetTimeIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetTimeSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
@@ -358,7 +358,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var items = new List<DepartmentIncomeAnimalItem> { new() { Project = TestProject, Month = 2, TotalCost = 750m } };
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
-            _departmentIncomeService.GetAnimalIncomeAsync(TestProject, 1, 12)
+            _departmentIncomeService.GetAnimalSnapshotIncomeAsync(TestProject, 1, 12)
                 .Returns(ApiResponseDto<List<DepartmentIncomeAnimalDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeAnimalItem>>(dtos).Returns(items);
 
@@ -375,7 +375,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetAnimalIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetAnimalSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeAnimalDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
@@ -395,7 +395,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var items = new List<DepartmentIncomeAdditionalItem> { new() { Project = TestProject, Month = 3, TotalCost = 300m } };
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
-            _departmentIncomeService.GetAdditionalIncomeAsync(TestProject, 1, 12)
+            _departmentIncomeService.GetExceptionalSnapshotIncomeAsync(TestProject, 1, 12)
                 .Returns(ApiResponseDto<List<DepartmentIncomeAdditionalDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeAdditionalItem>>(dtos).Returns(items);
 
@@ -412,7 +412,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetAdditionalIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetExceptionalSnapshotIncomeAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeAdditionalDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
@@ -432,7 +432,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             var items = new List<DepartmentIncomeTotalsItem> { new() { Project = TestProject, TotalCosts = 2500m } };
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
 
-            _departmentIncomeService.GetTotalsAsync(TestProject, 1, 12)
+            _departmentIncomeService.GetTotalsSnapshotAsync(TestProject, 1, 12)
                 .Returns(ApiResponseDto<List<DepartmentIncomeTotalsDto>>.SuccessResponse(dtos));
             _mapper.Map<List<DepartmentIncomeTotalsItem>>(dtos).Returns(items);
 
@@ -449,7 +449,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            _departmentIncomeService.GetTotalsAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
+            _departmentIncomeService.GetTotalsSnapshotAsync(Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(ApiResponseDto<List<DepartmentIncomeTotalsDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } }, new ApiMetaDto()));
 
@@ -459,6 +459,119 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
+        }
+
+        // ── Sorting: money/numeric columns must sort numerically, not lexically ───
+
+        [Fact]
+        public async Task LoadGrid_SortByMoneyColumn_Ascending_SortsNumericallyNotLexically()
+        {
+            // Arrange: string comparison would order 1000 before 140.94 before 3.00; numeric is correct.
+            var dtos = new List<DepartmentIncomeTimeDto>
+            {
+                new() { Project = TestProject, Month = 1, TotalCost = 1000m },
+                new() { Project = TestProject, Month = 2, TotalCost = 140.94m },
+                new() { Project = TestProject, Month = 3, TotalCost = 3m },
+            };
+            var items = new List<DepartmentIncomeTimeItem>
+            {
+                new() { Project = TestProject, Month = 1, TotalCost = 1000m },
+                new() { Project = TestProject, Month = 2, TotalCost = 140.94m },
+                new() { Project = TestProject, Month = 3, TotalCost = 3m },
+            };
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = nameof(DepartmentIncomeTimeItem.TotalCost),
+                Descending = false
+            };
+
+            _departmentIncomeService.GetTimeSnapshotIncomeAsync(TestProject, 1, 6)
+                .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(dtos));
+            _mapper.Map<List<DepartmentIncomeTimeItem>>(dtos).Returns(items);
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6, "snapshot");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
+            var order   = grid.Data.Select(r => decimal.Parse(r[nameof(DepartmentIncomeTimeItem.TotalCost)]!)).ToList();
+            Assert.Equal(new[] { 3m, 140.94m, 1000m }, order);
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByMoneyColumn_Descending_SortsNumericallyNotLexically()
+        {
+            // Arrange
+            var dtos = new List<DepartmentIncomeTimeDto>
+            {
+                new() { Project = TestProject, Month = 1, TotalCost = 1000m },
+                new() { Project = TestProject, Month = 2, TotalCost = 140.94m },
+                new() { Project = TestProject, Month = 3, TotalCost = 3m },
+            };
+            var items = new List<DepartmentIncomeTimeItem>
+            {
+                new() { Project = TestProject, Month = 1, TotalCost = 1000m },
+                new() { Project = TestProject, Month = 2, TotalCost = 140.94m },
+                new() { Project = TestProject, Month = 3, TotalCost = 3m },
+            };
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = nameof(DepartmentIncomeTimeItem.TotalCost),
+                Descending = true
+            };
+
+            _departmentIncomeService.GetTimeSnapshotIncomeAsync(TestProject, 1, 6)
+                .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(dtos));
+            _mapper.Map<List<DepartmentIncomeTimeItem>>(dtos).Returns(items);
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6, "snapshot");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
+            var order   = grid.Data.Select(r => decimal.Parse(r[nameof(DepartmentIncomeTimeItem.TotalCost)]!)).ToList();
+            Assert.Equal(new[] { 1000m, 140.94m, 3m }, order);
+        }
+
+        [Fact]
+        public async Task LoadGrid_SortByTextColumn_Ascending_SortsAlphabetically()
+        {
+            // Arrange
+            var dtos = new List<DepartmentIncomeTimeDto>
+            {
+                new() { Project = TestProject, Month = 1, Name = "Zwicker, Dougie", TotalCost = 1m },
+                new() { Project = TestProject, Month = 2, Name = "Attwoul, Aeriol", TotalCost = 2m },
+                new() { Project = TestProject, Month = 3, Name = "Osbaldeston, Prudy", TotalCost = 3m },
+            };
+            var items = new List<DepartmentIncomeTimeItem>
+            {
+                new() { Project = TestProject, Month = 1, Name = "Zwicker, Dougie", TotalCost = 1m },
+                new() { Project = TestProject, Month = 2, Name = "Attwoul, Aeriol", TotalCost = 2m },
+                new() { Project = TestProject, Month = 3, Name = "Osbaldeston, Prudy", TotalCost = 3m },
+            };
+            var request = new PaginationFilter<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = nameof(DepartmentIncomeTimeItem.Name),
+                Descending = false
+            };
+
+            _departmentIncomeService.GetTimeSnapshotIncomeAsync(TestProject, 1, 6)
+                .Returns(ApiResponseDto<List<DepartmentIncomeTimeDto>>.SuccessResponse(dtos));
+            _mapper.Map<List<DepartmentIncomeTimeItem>>(dtos).Returns(items);
+
+            // Act
+            var result = await _controller.LoadGrid(request, "qryDeptIncomeTime", TestProject, 1, 6, "snapshot");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid    = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
+            var order   = grid.Data.Select(r => r[nameof(DepartmentIncomeTimeItem.Name)]).ToList();
+            Assert.Equal(new[] { "Attwoul, Aeriol", "Osbaldeston, Prudy", "Zwicker, Dougie" }, order);
         }
 
         #endregion

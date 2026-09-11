@@ -32,6 +32,30 @@ namespace Apha.FPSApps.Application.Services.FPS
             int? endPeriod = null)
             => await _fpsClient.FpsDepartmentIncome.GetTestSnapshotIncomeAsync(project, startPeriod, endPeriod);
 
+        public async Task<ApiResponseDto<List<DepartmentIncomeTimeDto>>> GetTimeSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+            => await _fpsClient.FpsDepartmentIncome.GetTimeSnapshotIncomeAsync(project, startPeriod, endPeriod);
+
+        public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+            => await _fpsClient.FpsDepartmentIncome.GetAnimalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+
+        public async Task<ApiResponseDto<List<DepartmentIncomeAdditionalDto>>> GetExceptionalSnapshotIncomeAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+            => await _fpsClient.FpsDepartmentIncome.GetExceptionalSnapshotIncomeAsync(project, startPeriod, endPeriod);
+
+        public async Task<ApiResponseDto<List<DepartmentIncomeTotalsDto>>> GetTotalsSnapshotAsync(
+            string? project = null,
+            int? startPeriod = null,
+            int? endPeriod = null)
+            => await _fpsClient.FpsDepartmentIncome.GetTotalsSnapshotAsync(project, startPeriod, endPeriod);
+
         public async Task<ApiResponseDto<List<DepartmentIncomeAnimalDto>>> GetAnimalIncomeAsync(
             string? project = null,
             int? monthFrom = null,
