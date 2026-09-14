@@ -122,5 +122,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Error Message")]
         [GridColumn(Order = 6, Width = 300, Type = GridColumnType.Text)]
         public string? ErrorMessage { get; set; }
+
+        [Display(Name = "Remarks")]
+        [GridColumn(Order = 7, Width = 300, Type = GridColumnType.Text)]
+        public string? Remarks { get; set; }
     }
 }
