@@ -30,10 +30,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
 
+            var projectList = (projects ?? Enumerable.Empty<Project>()).ToList();
+
+            // The VLA query inner-joins Programs (matching the Access query), so a project only
+            // appears when its Program resolves. Tests that don't care about programme data pass
+            // none, so synthesise a matching programme for every referenced ProgramNo.
+            var programList = programs?.ToList() ?? projectList
+                .Select(p => p.Program)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(no => MakeProgram(no))
+                .ToList();
+
             mockContext.Setup(x => x.Projects)
-                .Returns(RepositoryTestHelper.CreateMockDbSet(projects ?? Enumerable.Empty<Project>()).Object);
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projectList).Object);
             mockContext.Setup(x => x.Programs)
-                .Returns(RepositoryTestHelper.CreateMockDbSet(programs ?? Enumerable.Empty<Program>()).Object);
+                .Returns(RepositoryTestHelper.CreateMockDbSet(programList).Object);
 
             // Empty cost tables — all computed costs will be 0 in these tests
             mockContext.Setup(x => x.StaffJobs)
@@ -61,12 +72,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             string status = "Approved",
             string program = "P001",
             string customer = "ACME",
-            decimal? budget = null) => new()
+            decimal? budget = null,
+            string? manager = null) => new()
         {
             ParentProject  = code,
             ProjectTitle   = code,
             Program        = program,
             Customer       = customer,
+            Manager        = manager,
             ProjectStatus  = status,
             BudgetCvl      = budget,
             Disease        = string.Empty,
@@ -162,26 +175,58 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetProjectProfitabilityVlaAsync_WithManagerFilter_FiltersOnManagerField()
+        public async Task GetProjectProfitabilityVlaAsync_WithManagerFilter_FiltersOnProjectManagerField()
         {
             var projects = new List<Project>
             {
-                MakeProject("PP001", program: "P001"),
-                MakeProject("PP002", program: "P002"),
-                MakeProject("PP003", program: "P001")
+                MakeProject("PP001", manager: "John Smith"),
+                MakeProject("PP002", manager: "Jane Doe"),
+                MakeProject("PP003", manager: "John Smith")
             };
-            var programs = new List<Program>
-            {
-                MakeProgram("P001", manager: "John Smith"),
-                MakeProgram("P002", manager: "Jane Doe")
-            };
-            var repo = CreateRepository(projects, programs);
+            var repo = CreateRepository(projects);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
             var result = await repo.GetProjectProfitabilityVlaAsync(query, manager: "John Smith");
 
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("John Smith", v.Manager));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_ManagerIsProjectManagerNotProgrammeManager()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", program: "P001", manager: "Project Owner")
+            };
+            var programs = new List<Program>
+            {
+                MakeProgram("P001", manager: "Programme Owner")
+            };
+            var repo = CreateRepository(projects, programs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal("Project Owner", Assert.Single(result.Data).Manager);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_ProjectWithoutMatchingProgramme_IsExcluded()
+        {
+            // Access inner-joins tlkpProgram, so orphaned projects never appear.
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", program: "P001"),
+                MakeProject("PP002", program: "P999")
+            };
+            var programs = new List<Program> { MakeProgram("P001") };
+            var repo = CreateRepository(projects, programs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal("PP001", Assert.Single(result.Data).JobCode);
         }
 
         [Fact]
@@ -338,6 +383,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     ProjectTitle   = "Test Project",
                     Program        = "P001",
                     Customer       = "ACME Ltd",
+                    Manager        = "John Smith",
                     ProjectStatus  = "Approved",
                     BudgetCvl      = 5000m,
                     Disease        = string.Empty,
@@ -348,7 +394,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             };
             var programs = new List<Program>
             {
-                MakeProgram("P001", manager: "John Smith", target: 3000m)
+                MakeProgram("P001", target: 3000m)
             };
             var repo = CreateRepository(projects, programs);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
@@ -488,19 +534,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetProjectProfitabilityVlaAsync_ProjectWithNoMatchingProgram_ManagerAndTargetAreDefault()
+        public async Task GetProjectProfitabilityVlaAsync_ProjectWithNoMatchingProgram_IsExcludedByInnerJoin()
         {
-            // Project refers to P999 which has no entry in Programs → pg is null
+            // Project refers to P999 which has no entry in Programs. The Access query inner-joins
+            // tlkpProgram, so the row is dropped rather than returned with default Manager/Target.
             var projects = new List<Project> { MakeProject("PP001", program: "P999", budget: 500m) };
             var repo = CreateRepository(projects, programs: new List<Program>());
             var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            var row = result.Data.First();
-            Assert.Null(row.Manager);
-            Assert.Equal(0m, row.TargetProfit);
-            Assert.Equal(500m, row.Profit);
+            Assert.Empty(result.Data);
         }
 
         #endregion
@@ -689,10 +733,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
 
+            var projectList = projects.ToList();
+
+            // The VLA query inner-joins Programs, so synthesise a matching programme for every
+            // referenced ProgramNo when the test supplies none.
+            var programList = programs?.ToList() ?? projectList
+                .Select(p => p.Program)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(no => MakeProgram(no))
+                .ToList();
+
             mockContext.Setup(x => x.Projects)
-                .Returns(RepositoryTestHelper.CreateMockDbSet(projects).Object);
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projectList).Object);
             mockContext.Setup(x => x.Programs)
-                .Returns(RepositoryTestHelper.CreateMockDbSet(programs ?? Enumerable.Empty<Program>()).Object);
+                .Returns(RepositoryTestHelper.CreateMockDbSet(programList).Object);
             mockContext.Setup(x => x.StaffJobs)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<StaffJob>()).Object);
             mockContext.Setup(x => x.WorkGroupEmployees)

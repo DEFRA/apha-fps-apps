@@ -25,7 +25,7 @@
                     </thead>
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
-                            <td class="govuk-table__cell govuk-!-padding-bottom-2 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
+                            <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
                                 @if (Model.IsProjectGroupMode)
                                 {
                                     <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isCustomLabels" for="projectGroupSelect">Project Group: </label>
@@ -35,7 +35,7 @@
                                 }
                                 else
                                 {
-                                    <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isCustomLabels" for="programmeSelect">Programme: </label>
+                                    <label class="govuk-label govuk-!-font-size-16 govuk-!-margin-right-1 govuk-!-font-weight-bold govuk-!-margin-bottom-0 isCustomLabels" for="programmeSelect">Programme: </label>
                                     <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo" class="govuk-select govuk-!-font-size-16 govuk-input--width-10">
                                         <option value="">-- Select Programme --</option>
                                     </select>
@@ -86,14 +86,15 @@
                                         <!-- Selected project bar -->
                                         <div class="govuk-grid-row">
                                             <div class="govuk-grid-column-full mt-2">
-                                                <div class="project-code-section">
-                                                    <label class="govuk-label--s" for="selected-project-input">Selected project: </label>
+                                                <div class="project-code-section sup_gap_7">
+
+                                                    <label class="govuk-label--s " for="selected-project-input">Selected project: </label>
                                                     <input type="text" id="selected-project-input" value="@Model.SelectedProjectCode"
                                                            placeholder="Project" readonly
                                                            class="govuk-input govuk-!-font-size-16"
                                                            style="width:160px;">
                                                     <input type="hidden" id="hdnSelectedProject" value="@Model.SelectedProjectCode" />
-                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="@(string.IsNullOrWhiteSpace(Model.SelectedProjectCode) ? "display:none;" : "")" allow-edit="@allowEdit" onclick="planThisProject()">
+                                                    <button type="button" id="btnPlan" class="govuk-button sup_margin_0 sup_padding_7" style="@(string.IsNullOrWhiteSpace(Model.SelectedProjectCode) ? "display:none;" : "")" allow-edit="@allowEdit" onclick="planThisProject()">
                                                         <i class="fa fa-cogs" aria-hidden="true"></i> Plan
                                                     </button>
                                                 </div>
@@ -110,43 +111,45 @@
                                         </div>
 
                                         <!-- Financial summary footer -->
-                                        <div class="govuk-grid-column-full mt-2">
-                                            <footer class="financial-summary">
-                                                <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0">
-                                                    <div class="summary-item">
-                                                        <label class="govuk-label--s" for="summary-total-budget">Total Budget:</label>
-                                                        <div class="govuk-input__wrapper">
-                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                                            <input type="text" id="summary-total-budget" readonly
-                                                                   class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
+                                        <div class="govuk-grid-row govuk-!-padding-left-1 govuk-!-padding-right-1">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <footer class="financial-summary">
+                                                    <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0">
+                                                        <div class="summary-item">
+                                                            <label class="govuk-label--s" for="summary-total-budget">Total Budget:</label>
+                                                            <div class="govuk-input__wrapper">
+                                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                                <input type="text" id="summary-total-budget" readonly
+                                                                       class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
+                                                            </div>
+                                                        </div>
+                                                        <div class="summary-item">
+                                                            <label class="govuk-label--s" for="summary-total-cost-inc">Total Cust Inc:</label>
+                                                            <div class="govuk-input__wrapper">
+                                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                                <input type="text" id="summary-total-cost-inc" readonly
+                                                                       class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
+                                                            </div>
+                                                        </div>
+                                                        <div class="summary-item">
+                                                            <label class="govuk-label--s" for="summary-total-trans-inc">Total Trans Inc:</label>
+                                                            <div class="govuk-input__wrapper">
+                                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                                <input type="text" id="summary-total-trans-inc" readonly
+                                                                       class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
+                                                            </div>
+                                                        </div>
+                                                        <div class="summary-item">
+                                                            <label class="govuk-label--s" for="summary-total-cw-debit">Total CW Debit:</label>
+                                                            <div class="govuk-input__wrapper">
+                                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                                                <input type="text" id="summary-total-cw-debit" readonly
+                                                                       class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="summary-item">
-                                                        <label class="govuk-label--s" for="summary-total-cost-inc">Total Cust Inc:</label>
-                                                        <div class="govuk-input__wrapper">
-                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                                            <input type="text" id="summary-total-cost-inc" readonly
-                                                                   class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
-                                                        </div>
-                                                    </div>
-                                                    <div class="summary-item">
-                                                        <label class="govuk-label--s" for="summary-total-trans-inc">Total Trans Inc:</label>
-                                                        <div class="govuk-input__wrapper">
-                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                                            <input type="text" id="summary-total-trans-inc" readonly
-                                                                   class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
-                                                        </div>
-                                                    </div>
-                                                    <div class="summary-item">
-                                                        <label class="govuk-label--s" for="summary-total-cw-debit">Total CW Debit:</label>
-                                                        <div class="govuk-input__wrapper">
-                                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                                            <input type="text" id="summary-total-cw-debit" readonly
-                                                                   class="govuk-input govuk-!-font-size-16 text-AlignRight" value="0">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </footer>
+                                                </footer>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

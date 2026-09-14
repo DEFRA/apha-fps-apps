@@ -3,13 +3,7 @@ using Apha.BatchJobs.Infrastructure.MabArchive.Repositories;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// Pure unit tests for MabArchiveYearSelectionService.Bucket/Validate
-/// (docs/mabarchive-year-selection-processing-spec.md §21).
-/// These require no database - "does not reference system date" is verified by
-/// inspection (Bucket/Validate take pre-read rows/years as parameters; neither
-/// touches DateTime.UtcNow or any clock).
-/// </summary>
+/// <summary>Pure unit tests for MabArchiveYearSelectionService.Bucket/Validate (docs/mabarchive-year-selection-processing-spec.md §21). These require no database - "does not reference system date" is verified by inspection (Bucket/Validate take pre-read rows/years as parameters; neither touches DateTime.UtcNow or any clock).</summary>
 public sealed class MabArchiveYearSelectionServiceTests
 {
     [Fact]

@@ -108,14 +108,12 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10" id="editMailCommentGroup">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="MailComment">
-                        Mail Comment: <span class="ra-required-star" aria-hidden="true">*</span>
+                        Mail Comment: <span class="ra-required-star js-email-required-star @(Model.Emailable ? "" : "ra-hidden")" aria-hidden="true">*</span>
                     </label>
                     <input class="govuk-input govuk-!-font-size-16"
                            asp-for="MailComment"
                            id="editMailComment"
                            type="text"
-                           required
-                           aria-required="true"
                            aria-label="Mail Comment"
                            aria-describedby="editMailCommentError" />
                     <span asp-validation-for="MailComment" data-valmsg-for="MailComment" class="govuk-error-message" id="editMailCommentError" style="display:none;"></span>
@@ -125,14 +123,12 @@
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10" id="editMailTitleGroup">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="MailTitle">
-                        Mail Title: <span class="ra-required-star" aria-hidden="true">*</span>
+                        Mail Title: <span class="ra-required-star js-email-required-star @(Model.Emailable ? "" : "ra-hidden")" aria-hidden="true">*</span>
                     </label>
                     <input class="govuk-input govuk-!-font-size-16"
                            asp-for="MailTitle"
                            id="editMailTitle"
                            type="text"
-                           required
-                           aria-required="true"
                            aria-label="Mail Title"
                            aria-describedby="editMailTitleError" />
                     <span asp-validation-for="MailTitle"

@@ -1030,7 +1030,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             {
                 new() { Year = TestYear, Subcontcounter = 2, Project = TestProject, Acctcode = "MISC", Month = 1d, Amount = 300m, Description = "Equipment", Supplier = "SupplierX" }
             };
+            var monthlyPactData = new List<ProjectMonthFinal>
+            {
+                new() { Year = TestYear, Project = TestProject, Monthno = 1d, Periodname = "Jan", Subcontracts = 1000m, Animals = 500m, Nonanimals = 200m, Timecosts = 3000m, Transfercosts = 500m, Totalcost = 5200m, Totalhours = 100d, Invoices = 5000m, Coiw = 100m }
+            };
 
+            _mockRepository.GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
+                .Returns(new PagedData<ProjectMonthFinal>(monthlyPactData, MakePaginationData(1)));
             _mockRepository.GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
                 .Returns(new PagedData<ProjectStaffPlan>(staffPlans, MakePaginationData(1)));
             _mockRepository.GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
@@ -1088,6 +1094,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             workbook.Worksheet("AdditionalActuals").Cell(2, 5).GetFormattedString().Should().StartWith("£");
             workbook.Worksheet("AdditionalActuals").Cell(3, 5).GetFormattedString().Should().StartWith("£");
 
+            await _mockRepository.Received(1).GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetTestPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
@@ -1102,6 +1109,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
         public async Task ExportProjectYearCostsToExcelAsync_WithEmptyData_ReturnsValidByteArray()
         {
             // Arrange
+            _mockRepository.GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
+                .Returns(new PagedData<ProjectMonthFinal>(new List<ProjectMonthFinal>(), EmptyPaginationData()));
             _mockRepository.GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
                 .Returns(new PagedData<ProjectStaffPlan>(new List<ProjectStaffPlan>(), EmptyPaginationData()));
             _mockRepository.GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
@@ -1126,6 +1135,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             result.Should().NotBeNull();
             result.Should().NotBeEmpty();
 
+            await _mockRepository.Received(1).GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetTestPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());

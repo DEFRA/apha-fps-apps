@@ -1,11 +1,6 @@
 namespace Apha.BatchJobs.Domain.Entities.MilestoneUpdateNotifications;
 
-/// <summary>
-/// Counters accumulated during a single MilestoneUpdateNotifications run.
-/// Passed to <c>INotificationDeliveryRepository.InsertRunSummaryAsync</c> once reporting-year
-/// resolution succeeds and updated incrementally during the send loop.
-/// Mirrors the <c>fps.notification_run_summary</c> schema (CR055).
-/// </summary>
+/// <summary>Counters accumulated during a single MilestoneUpdateNotifications run. Passed to <c>INotificationDeliveryRepository.InsertRunSummaryAsync</c> once reporting-year resolution succeeds and updated incrementally during the send loop. Mirrors the <c>fps.notification_run_summary</c> schema (CR055).</summary>
 public sealed class NotificationRunSummaryCounters
 {
     public int CandidateCount { get; set; }

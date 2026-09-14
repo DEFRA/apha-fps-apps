@@ -160,25 +160,25 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
         }
 
         [Fact]
-        public async Task Index_CallsGetMonthlyPactDataAsync_Once()
+        public async Task Index_WithNoParameters_DoesNotCallGetMonthlyPactDataAsync()
         {
             SetupDefaultIndexMocks();
             await _controller.Index(null, null);
-            await _yearCostsServiceMock.Received(1).GetMonthlyPactDataAsync(
+            await _yearCostsServiceMock.DidNotReceive().GetMonthlyPactDataAsync(
                 Arg.Any<string>(), Arg.Any<short>(), Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]
-        public async Task Index_WithNoParameters_SelectsFirstProjectFromOptions()
+        public async Task Index_WithNoParameters_LeavesParentprojectEmpty()
         {
             SetupDefaultIndexMocks(projects: [new ProjectListViewDto { Parentproject = "PP001" }]);
             var result = await _controller.Index(null, null);
             var model  = Assert.IsType<ProjectYearCostsViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal("PP001", model.Parentproject);
+            Assert.Equal(string.Empty, model.Parentproject);
         }
 
         [Fact]
-        public async Task Index_WithNoParameters_SelectsMaxYear()
+        public async Task Index_WithNoParameters_SetsSelectedYearToZero()
         {
             SetupDefaultIndexMocks(years:
             [
@@ -188,7 +188,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
             ]);
             var result = await _controller.Index(null, null);
             var model  = Assert.IsType<ProjectYearCostsViewModel>(Assert.IsType<ViewResult>(result).Model);
-            Assert.Equal((short)2024, model.SelectedYear);
+            Assert.Equal((short)0, model.SelectedYear);
         }
 
         [Fact]

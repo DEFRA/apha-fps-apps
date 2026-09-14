@@ -6,11 +6,11 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     public class TestCostActualItem
     {
         [Display(Name = "Month")]
-        [GridColumn(Width = 70, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Width = 70, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public double? Month { get; set; }
 
         [Display(Name = "Test Code")]
-        [GridColumn(Width = 130, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Width = 130, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? TestCode { get; set; }
 
         [Display(Name = "Buyer")]

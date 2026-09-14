@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             _projectListService = projectListService;
         }
 
-        public async Task<IActionResult> Index(string? parentproject = null)
+        public async Task<IActionResult> Index(string? parentproject = null, string? project = null)
         {
             MilestoneViewModel viewModel = new();
             ApiResponseDto<List<ProjectListMilestoneDto>> allProjects =
@@ -46,16 +46,26 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 .Select(p => new SelectListItem(p.Parentproject, p.Parentproject))
                 .ToList() ?? [];
 
-            string project = parentproject ?? viewModel.ProjectOptions.FirstOrDefault()?.Value ?? string.Empty;
-            viewModel.Parentproject = project;
+            string? requestedProject = parentproject ?? project;
+            string resolvedProject = !string.IsNullOrWhiteSpace(requestedProject)
+                && viewModel.ProjectOptions.Any(option => string.Equals(option.Value, requestedProject, StringComparison.OrdinalIgnoreCase))
+                    ? requestedProject
+                    : string.Empty;
+            viewModel.NavigationProject = requestedProject ?? string.Empty;
+            viewModel.Parentproject = resolvedProject;
 
-            var matchedProject = allProjects.Data?.FirstOrDefault(p => p.Parentproject == project);
+            if (!string.IsNullOrWhiteSpace(requestedProject) && string.IsNullOrWhiteSpace(resolvedProject))
+            {
+                ViewBag.MileMessage = $"Project not found: {requestedProject}";
+            }
+
+            var matchedProject = allProjects.Data?.FirstOrDefault(p => string.Equals(p.Parentproject, resolvedProject, StringComparison.OrdinalIgnoreCase));
             viewModel.FormRequired = matchedProject?.Formrequired ?? false;
             viewModel.TypeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
-            viewModel.MilestonesGrid = await BuildMilestonesGridAsync(project, defaultRequest);
-            viewModel.MilestoneFormDatesGrid = await BuildMilestoneFormDatesGridAsync(project, defaultRequest);
+            viewModel.MilestonesGrid = await BuildMilestonesGridAsync(resolvedProject, defaultRequest);
+            viewModel.MilestoneFormDatesGrid = await BuildMilestoneFormDatesGridAsync(resolvedProject, defaultRequest);
             return View(viewModel);
         }
 
@@ -104,6 +114,29 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             Dictionary<string, string> filterDict =
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
 
+            if (string.IsNullOrWhiteSpace(parentproject))
+            {
+                return new DataGridConfig<MilestoneItem>
+                {
+                    GridId = "milestonesGrid",
+                    ShowCheckboxColumn = false,
+                    ShowPagination = true,
+                    KeyProperty = "Number",
+                    AllowAdd = true,
+                    AllowEdit = true,
+                    AllowDelete = true,
+                    AddFunction = "addMilestone",
+                    EditFunction = "editMilestone",
+                    DeleteFunction = "deleteMilestone",
+                    ExtraFilterMethod = "getMilestoneExtraFilters",
+                    BindGridUrl = "/PIMS/Milestone/LoadMilestoneGrid",
+                    Data = [],
+                    Columns = GridDataProvider.GetColumnsDefination<MilestoneItem>(),
+                    Pagination = new PaginationModel(),
+                    CurrentFilters = filterDict
+                };
+            }
+
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var pagedData = await _milestoneService.GetAllMilestonesAsync(queryParameters, parentproject);
 
@@ -147,6 +180,28 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         private async Task<DataGridConfig<MilestoneFormDatesItem>> BuildMilestoneFormDatesGridAsync(
             string parentproject, PaginationFilter<string> request)
         {
+            if (string.IsNullOrWhiteSpace(parentproject))
+            {
+                return new DataGridConfig<MilestoneFormDatesItem>
+                {
+                    GridId = "milestoneFormDatesGrid",
+                    ShowCheckboxColumn = false,
+                    ShowPagination = true,
+                    KeyProperty = "Year",
+                    AllowAdd = true,
+                    AllowEdit = true,
+                    AllowDelete = true,
+                    AddFunction = "addMilestoneFormDates",
+                    EditFunction = "editMilestoneFormDates",
+                    DeleteFunction = "deleteMilestoneFormDates",
+                    ExtraFilterMethod = "getMilestoneFormDatesExtraFilters",
+                    BindGridUrl = "/PIMS/Milestone/LoadMilestoneFormDatesGrid",
+                    Data = [],
+                    Columns = GridDataProvider.GetColumnsDefination<MilestoneFormDatesItem>(),
+                    Pagination = new PaginationModel()
+                };
+            }
+
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var pagedData = await _milestoneService.GetAllMilestoneFormDatesAsync(parentproject, queryParameters);
 

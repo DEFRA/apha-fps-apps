@@ -74,7 +74,8 @@
 
     function loadAgencies() {
         var $select = $('#AgencyId');
-        var currentAgencyId = '@(Model?.AgencyId ?? 0)';
+       // var currentAgencyId = '@(Model?.AgencyId ?? 0)';
+        var currentAgencyId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.AgencyId ?? 0));
 
         // Load agencies from API
         $.ajax({

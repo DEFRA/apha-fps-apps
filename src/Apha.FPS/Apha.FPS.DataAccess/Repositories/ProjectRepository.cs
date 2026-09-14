@@ -1948,25 +1948,33 @@ namespace Apha.FPS.DataAccess.Repositories
             // Use an anonymous projection so EF Core can translate all Where predicates.
             // Projecting directly to a named record type (VlaProjectEntry) and then composing
             // Where clauses on it produces untranslatable expressions like new VlaProjectEntry(...).Program.
+            // The programme join is an INNER join, matching the Access query
+            // (FROM tlkpProgram INNER JOIN tlkpProject ON tlkpProgram.ProgramNo = tlkpProject.Program):
+            // projects whose Program has no matching programme row are excluded.
             var rawQuery = (from p in _dbContext.Projects.AsNoTracking()
-                            join pg in _dbContext.Programs on p.Program equals pg.ProgramNo into pgJoin
-                            from pg in pgJoin.DefaultIfEmpty()
+                            join pg in _dbContext.Programs on p.Program equals pg.ProgramNo
                             select new { p, pg }).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(projectStatus))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus, $"%{projectStatus}%"));
 
-            // Program and Customer are picked from dropdowns that supply the exact stored
-            // value, so they must match exactly. A contains-style ILike would wrongly include
-            // e.g. "P10" when "P1" is selected, or "ACME Ltd" when "ACME" is selected.
+            // Program, Manager and Customer are picked from dropdowns that supply the exact
+            // stored value, so they must match exactly. A contains-style ILike would wrongly
+            // include e.g. "P10" when "P1" is selected, or "Ace, Esra Jane" when "Ace, Esra" is.
             if (!string.IsNullOrWhiteSpace(programNo))
             {
                 var programFilter = programNo.Trim().ToLower();
                 rawQuery = rawQuery.Where(x => x.p.Program.ToLower() == programFilter);
             }
 
+            // Manager is the project's own manager (tlkpProject.Manager in the Access query),
+            // not the programme owner.
             if (!string.IsNullOrWhiteSpace(manager))
-                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
+            {
+                var managerFilter = manager.Trim().ToLower();
+                rawQuery = rawQuery.Where(x => x.p.Manager != null
+                                            && x.p.Manager.Trim().ToLower() == managerFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(customer))
             {
@@ -1995,8 +2003,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     x.p.ProjectStatus,
                     x.p.Program,
                     x.p.Customer,
-                    x.pg == null ? null : x.pg.Manager,
-                    x.pg == null ? (decimal?)null : x.pg.Target))
+                    x.p.Manager,
+                    x.pg.Target))
                 .ToListAsync();
 
             if (projects.Count == 0)

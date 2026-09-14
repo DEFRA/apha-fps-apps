@@ -182,8 +182,8 @@
    The script is therefore emitted inline — jQuery .html() executes inline <script> tags. *@
 <script>
         (function initWorkgroupModal() {
-            var currentProfitCentre = @Json.Serialize(Model?.ProfitCentre ?? string.Empty);
-            var currentCostCentre = @Json.Serialize(Model?.CostCentre.HasValue == true ? ((long)Model.CostCentre.Value).ToString() : string.Empty);
+            var currentProfitCentre = @Json.Serialize(isEditMode ? (Model?.ProfitCentre ?? string.Empty) : string.Empty);
+            var currentCostCentre = @Json.Serialize(isEditMode ? (Model?.CostCentre.HasValue == true ? ((long)Model.CostCentre.Value).ToString() : string.Empty) : string.Empty);
 
             // Load ProfitCentres (ResourceCentres), then cascade-load CostCentres for the
             // currently selected ProfitCentre so the CostCentre dropdown is populated on open.

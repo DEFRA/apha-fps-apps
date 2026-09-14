@@ -361,6 +361,46 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             Assert.False(element.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task SaveReport_NotEmailable_IgnoresMailFieldModelErrors_AndSavesSuccessfully()
+        {
+            // Arrange
+            var item = new ReportItem { Id = 0, ReportName = "New Report", Emailable = false };
+            var dto = new ReportDto { Id = 0, ReportName = "New Report", Type = "R", Emailable = false };
+            _mapper.Map<ReportDto>(item).Returns(dto);
+            _service.CreateReportAsync(dto).Returns(SuccessResponse(dto));
+
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailComment), "Mail Comment is required");
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailTitle), "Mail Title is required");
+
+            // Act
+            var result = await _controller.SaveReport(item);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            await _service.Received(1).CreateReportAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveReport_Emailable_WithMailFieldModelErrors_ReturnsValidationFailure()
+        {
+            // Arrange
+            var item = new ReportItem { Id = 0, ReportName = "New Report", Emailable = true };
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailComment), "Mail Comment is required");
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailTitle), "Mail Title is required");
+
+            // Act
+            var result = await _controller.SaveReport(item);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            await _service.DidNotReceive().CreateReportAsync(Arg.Any<ReportDto>());
+        }
+
         #endregion
 
         // ════════════════════════════════════════════════════════════════════════════

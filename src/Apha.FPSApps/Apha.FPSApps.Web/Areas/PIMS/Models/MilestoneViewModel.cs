@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     public class MilestoneViewModel
     {
         public string Parentproject { get; set; } = string.Empty;
+        public string NavigationProject { get; set; } = string.Empty;
         public List<SelectListItem> ProjectOptions { get; set; } = [];
         public List<SelectListItem> MilestoneTypeOptions { get; set; } = [];
         public DataGridConfig<MilestoneItem> MilestonesGrid { get; set; } = new();

@@ -8,8 +8,8 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 
 /// <summary>
-/// Year End Cutover batch job handler scaffold.
-/// Execution logic will be added in the service layer in a later slice.
+/// Batch job entry point for Year End Cutover — builds the execution context and delegates to
+/// <see cref="IYearEndCutoverService"/>.
 /// </summary>
 public sealed class YearEndCutoverJobHandler : IBatchJob
 {
