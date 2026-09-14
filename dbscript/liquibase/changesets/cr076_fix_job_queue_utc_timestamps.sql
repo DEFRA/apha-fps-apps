@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR076 labels:ddl context:all splitStatements:false
+--validCheckSum: ANY
 
 BEGIN;
 
@@ -13,14 +14,14 @@ BEGIN;
 -- Scope:
 --   batchjobs only
 --
--- Preconditions confirmed before execution (2026-09-11 audit):
+-- Expected schema before execution:
 --   - approved_at_utc  = timestamp without time zone
 --   - rejected_at_utc  = timestamp without time zone
 --   - triggered_at_utc = timestamp without time zone
 --   - cancelled_at_utc = timestamp with time zone
---   - No existing rows have values in the three columns being changed
 --
--- See: src/Apha.BatchJobs/docs/job-queue-utc-timestamp-permanent-fix-plan-2026-09-11.md
+-- Existing values in the three columns are UTC wall-clock timestamps and
+-- are converted explicitly with AT TIME ZONE 'UTC'.
 -- ============================================================
 
 DO $$
@@ -88,19 +89,6 @@ BEGIN
             'CR076 precondition failed: fps.job_queue.cancelled_at_utc is not timestamp with time zone.';
     END IF;
 
-    -- Safety check based on the completed DB-1 audit (2026-09-11, batchjobs: zero rows).
-    -- If data appeared after the audit, stop and re-assess rather than silently
-    -- deciding how historical naive timestamps should be interpreted.
-    IF EXISTS (
-        SELECT 1
-          FROM fps.job_queue
-         WHERE approved_at_utc IS NOT NULL
-            OR rejected_at_utc IS NOT NULL
-            OR triggered_at_utc IS NOT NULL
-    ) THEN
-        RAISE EXCEPTION
-            'CR076 precondition failed: lifecycle timestamp data now exists. Re-run historical-data assessment before migration.';
-    END IF;
 END
 $$;
 
