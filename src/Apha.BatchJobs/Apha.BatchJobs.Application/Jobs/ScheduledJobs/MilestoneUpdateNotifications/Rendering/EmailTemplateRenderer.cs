@@ -6,13 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Rendering;
 
-/// <summary>
-/// Implementation of <see cref="IEmailTemplateRenderer"/>, following spec section 13's
-/// suggested template. EditLink is never spliced into the template as raw HTML — each
-/// project's href is extracted and validated first (plan section 9.2), and projects that
-/// fail that check are reported back via <see cref="EmailTemplateRenderResult.ExcludedProjects"/>
-/// rather than silently dropped.
-/// </summary>
+/// <summary>Implementation of <see cref="IEmailTemplateRenderer"/>, following spec section 13's suggested template. EditLink is never spliced into the template as raw HTML — each project's href is extracted and validated first (plan section 9.2), and projects that fail that check are reported back via <see cref="EmailTemplateRenderResult.ExcludedProjects"/> rather than silently dropped.</summary>
 public sealed class EmailTemplateRenderer : IEmailTemplateRenderer
 {
     /// <inheritdoc />

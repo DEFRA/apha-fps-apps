@@ -9,10 +9,7 @@ using Xunit;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
-/// <summary>
-/// PostgreSQL-backed tests for RecreateSummaries step SQL translation and data-shaping behavior.
-/// Skips automatically when a test database is unavailable.
-/// </summary>
+/// <summary>PostgreSQL-backed tests for RecreateSummaries step SQL translation and data-shaping behavior. Skips automatically when a test database is unavailable.</summary>
 [Trait("Category", "Integration")]
 public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifetime
 {

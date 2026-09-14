@@ -1,10 +1,6 @@
 namespace Apha.BatchJobs.Domain.Entities.BulkRates;
 
-/// <summary>
-/// Write model for a single field-level row in fps.rate_change_history.
-/// One row per changed field per business key per request.
-/// Written before staging deletion to ensure audit outlives staging.
-/// </summary>
+/// <summary>Write model for a single field-level row in fps.rate_change_history. One row per changed field per business key per request. Written before staging deletion to ensure audit outlives staging.</summary>
 public sealed record RateChangeHistoryRow(
     Guid JobQueueId,
     Guid JobExecutionId,

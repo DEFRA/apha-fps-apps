@@ -28,14 +28,10 @@ public sealed class RecreateSummaryJob : IBatchJob
     /// <summary>Canonical job name.</summary>
     public string Name => "RecreateSummary";
 
-    /// <summary>
-    /// Idempotency strategy: full delete-and-rebuild per month with a single wrapping transaction.
-    /// </summary>
+    /// <summary>Idempotency strategy: full delete-and-rebuild per month with a single wrapping transaction.</summary>
     public string IdempotencyStrategy => "DeleteAndRebuildWithSingleTransaction";
 
-    /// <summary>
-    /// RecreateSummaries is a manually triggered job â€” no schedule expression.
-    /// </summary>
+    /// <summary>RecreateSummaries is a manually triggered job — no schedule expression.</summary>
     public string? ScheduleExpression => null;
 
     /// <summary>Human-readable schedule description.</summary>
@@ -44,9 +40,6 @@ public sealed class RecreateSummaryJob : IBatchJob
     /// <summary>Maximum execution timeout: 60 minutes.</summary>
     public int? MaxExecutionSeconds => 3600;
 
-    /// <summary>
-    /// Initializes a new instance of <see cref="RecreateSummaryJob"/>.
-    /// </summary>
     public RecreateSummaryJob(
         IRecreateSummariesExecutionRunner executionRunner,
         IRecreateSummariesStepCatalog stepCatalog,

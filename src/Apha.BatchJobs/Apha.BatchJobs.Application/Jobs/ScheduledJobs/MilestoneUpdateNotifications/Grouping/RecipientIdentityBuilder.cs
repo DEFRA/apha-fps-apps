@@ -3,13 +3,7 @@ using System.Text;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Grouping;
 
-/// <summary>
-/// Implementation of <see cref="IRecipientIdentityBuilder"/>. Grouping is always the
-/// MNumber+Name+Email composite — never MNumber alone, since tblprojectmanager's PK is
-/// the name column, not mnumber, so nothing enforces mnumber uniqueness; two rows
-/// sharing an MNumber but differing in email must legacy-group as separate recipients
-/// (plan section 9.1).
-/// </summary>
+/// <summary>Implementation of <see cref="IRecipientIdentityBuilder"/>. Grouping is always the MNumber+Name+Email composite — never MNumber alone, since tblprojectmanager's PK is the name column, not mnumber, so nothing enforces mnumber uniqueness; two rows sharing an MNumber but differing in email must legacy-group as separate recipients (plan section 9.1).</summary>
 public sealed class RecipientIdentityBuilder : IRecipientIdentityBuilder
 {
     private const string NoMNumberSentinel = "<NO_MNUMBER>";
