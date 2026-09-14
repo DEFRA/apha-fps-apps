@@ -5,13 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates.Services;
 
-/// <summary>
-/// Applies Staff profit-centre grade annual rate changes (PayRate, NPR, OHR)
-/// inside a single database transaction, writes permanent history, and
-/// clears request-scoped staging rows on success.
-/// Drift detection and revalidation are the responsibility of the FPS approval flow;
-/// the worker applies frozen effective values directly.
-/// </summary>
+/// <summary>Applies Staff profit-centre grade annual rate changes (PayRate, NPR, OHR) inside a single database transaction, writes permanent history, and clears request-scoped staging rows on success. Drift detection and revalidation are the responsibility of the FPS approval flow; the worker applies frozen effective values directly.</summary>
 public sealed class BulkStaffRatesService : IBulkStaffRatesService
 {
     private readonly IBulkRatesRepository _repository;

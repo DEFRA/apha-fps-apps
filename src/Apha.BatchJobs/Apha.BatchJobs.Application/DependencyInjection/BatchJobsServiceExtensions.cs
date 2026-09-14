@@ -7,10 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
 
-/// <summary>
-/// Top-level composition root for all batch job services.
-/// This method must remain short and contain no direct service registrations — composition only.
-/// </summary>
+/// <summary>Top-level composition root for all batch job services. This method must remain short and contain no direct service registrations — composition only.</summary>
 public static class BatchJobsServiceExtensions
 {
     public static IServiceCollection AddBatchJobs(

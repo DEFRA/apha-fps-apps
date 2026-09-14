@@ -6,13 +6,7 @@ using Apha.BatchJobs.Worker.Lifecycle;
 
 namespace Apha.BatchJobs.Worker.Execution;
 
-/// <summary>
-/// Single immutable representation of one worker invocation's outcome — replaces the separate
-/// mutable outcome/failureCategory/exitCode/correlation-id variables the old Program.cs kept in
-/// sync by hand. <c>IJobOrchestrator.RunAsync</c> only ever returns on success (see the
-/// regression test pinning that contract in <c>JobOrchestratorTests</c>), so there is no
-/// terminal-status-mapping branch here — a normal return is always <see cref="Success"/>.
-/// </summary>
+/// <summary>Single immutable representation of one worker invocation's outcome — replaces the separate mutable outcome/failureCategory/exitCode/correlation-id variables the old Program.cs kept in sync by hand. <c>IJobOrchestrator.RunAsync</c> only ever returns on success (see the regression test pinning that contract in <c>JobOrchestratorTests</c>), so there is no terminal-status-mapping branch here — a normal return is always <see cref="Success"/>.</summary>
 public sealed record BatchExecutionResult
 {
     public required BatchRunOutcome Outcome { get; init; }

@@ -266,7 +266,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var (rows, columns, title) = await BuildCrossTabRowsAsync(queryType, project, monthFrom, monthTo, source);
 
             // Apply filtering and sorting before paging
-            var filtered = ApplyFilterAndSort(rows, filterDict, request.SortBy, request.Descending);
+            var filtered = ApplyFilterAndSort(rows, columns, filterDict, request.SortBy, request.Descending);
 
             var isSnapshot = string.Equals(source, "snapshot", StringComparison.OrdinalIgnoreCase);
             var gridId     = isSnapshot ? "departmentIncomeSnapshotQueryGrid" : "departmentIncomeCurrentGrid";
@@ -351,7 +351,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     var result = isCurrent
                         ? await _departmentIncomeService.GetAnimalIncomeCurrentAsync(project, monthFrom, monthTo)
-                        : await _departmentIncomeService.GetAnimalIncomeAsync(project, monthFrom, monthTo);
+                        : await _departmentIncomeService.GetAnimalSnapshotIncomeAsync(project, monthFrom, monthTo);
                     var items  = result.Success && result.Data != null
                         ? _mapper.Map<List<DepartmentIncomeAnimalItem>>(result.Data)
                         : new List<DepartmentIncomeAnimalItem>();
@@ -377,7 +377,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     var result = isCurrent
                         ? await _departmentIncomeService.GetAdditionalIncomeCurrentAsync(project, monthFrom, monthTo)
-                        : await _departmentIncomeService.GetAdditionalIncomeAsync(project, monthFrom, monthTo);
+                        : await _departmentIncomeService.GetExceptionalSnapshotIncomeAsync(project, monthFrom, monthTo);
                     var items  = result.Success && result.Data != null
                         ? _mapper.Map<List<DepartmentIncomeAdditionalItem>>(result.Data)
                         : new List<DepartmentIncomeAdditionalItem>();
@@ -389,7 +389,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     var result = isCurrent
                         ? await _departmentIncomeService.GetTotalsCurrentAsync(project, monthFrom, monthTo)
-                        : await _departmentIncomeService.GetTotalsAsync(project, monthFrom, monthTo);
+                        : await _departmentIncomeService.GetTotalsSnapshotAsync(project, monthFrom, monthTo);
                     var items  = result.Success && result.Data != null
                         ? _mapper.Map<List<DepartmentIncomeTotalsItem>>(result.Data)
                         : new List<DepartmentIncomeTotalsItem>();
@@ -408,7 +408,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     var result = isCurrent
                         ? await _departmentIncomeService.GetTimeIncomeCurrentAsync(project, monthFrom, monthTo)
-                        : await _departmentIncomeService.GetTimeIncomeAsync(project, monthFrom, monthTo);
+                        : await _departmentIncomeService.GetTimeSnapshotIncomeAsync(project, monthFrom, monthTo);
                     var items  = result.Success && result.Data != null
                         ? _mapper.Map<List<DepartmentIncomeTimeItem>>(result.Data)
                         : new List<DepartmentIncomeTimeItem>();
@@ -442,6 +442,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // sortBy is a property name; descending controls direction.
         private static List<Dictionary<string, string?>> ApplyFilterAndSort(
             List<Dictionary<string, string?>> rows,
+            List<DataGridColumn> columns,
             Dictionary<string, string>? filterDict,
             string? sortBy,
             bool descending)
@@ -467,14 +468,62 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             // Apply sorting
             if (!string.IsNullOrWhiteSpace(sortBy))
             {
-                result = descending
-                    ? result.OrderByDescending(row => row.TryGetValue(sortBy, out var v) ? v : null,
-                          StringComparer.OrdinalIgnoreCase)
-                    : result.OrderBy(row => row.TryGetValue(sortBy, out var v) ? v : null,
-                          StringComparer.OrdinalIgnoreCase);
+                var column = columns.FirstOrDefault(c =>
+                    string.Equals(c.PropertyName, sortBy, StringComparison.OrdinalIgnoreCase));
+
+                if (column != null && IsNumericColumn(column.ColumnType))
+                {
+                    // Money/numeric columns are backed by string-formatted decimals
+                    // (e.g. "1355.68", "£1,009.44"); sort by their parsed numeric value.
+                    result = descending
+                        ? result.OrderByDescending(row => ParseNumericCell(row, sortBy))
+                        : result.OrderBy(row => ParseNumericCell(row, sortBy));
+                }
+                else
+                {
+                    result = descending
+                        ? result.OrderByDescending(row => row.TryGetValue(sortBy, out var v) ? v : null,
+                              StringComparer.OrdinalIgnoreCase)
+                        : result.OrderBy(row => row.TryGetValue(sortBy, out var v) ? v : null,
+                              StringComparer.OrdinalIgnoreCase);
+                }
             }
 
             return result.ToList();
+        }
+
+        // True for column types whose cell values represent numeric/money data
+        // and must be compared numerically rather than lexicographically.
+        private static bool IsNumericColumn(GridColumnType columnType) => columnType is
+            GridColumnType.Number or
+            GridColumnType.DecimalNumber or
+            GridColumnType.DoubleNumber or
+            GridColumnType.UsdValue or
+            GridColumnType.GbpValue or
+            GridColumnType.GbpValueRounded or
+            GridColumnType.Percentage or
+            GridColumnType.RoundTwoDecimal;
+
+        // Parses a dictionary cell into a comparable decimal, tolerating currency
+        // symbols, thousands separators and percentage signs. Missing/invalid values
+        // sort as the smallest value.
+        private static decimal ParseNumericCell(Dictionary<string, string?> row, string key)
+        {
+            if (!row.TryGetValue(key, out var raw) || string.IsNullOrWhiteSpace(raw))
+                return decimal.MinValue;
+
+            var cleaned = raw.Replace("£", string.Empty)
+                             .Replace("$", string.Empty)
+                             .Replace("%", string.Empty)
+                             .Replace(",", string.Empty)
+                             .Trim();
+
+            return decimal.TryParse(cleaned,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var value)
+                ? value
+                : decimal.MinValue;
         }
 
         // ── Private Grid Config Builders ──────────────────────────────────────────

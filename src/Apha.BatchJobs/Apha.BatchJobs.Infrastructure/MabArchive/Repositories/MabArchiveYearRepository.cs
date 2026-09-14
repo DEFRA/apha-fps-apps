@@ -156,12 +156,10 @@ public sealed class MabArchiveYearRepository : IMabArchiveYearRepository
 
                 _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Starting {LoaderName} for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, targetYear);
 
-                   // Validation hook: record load performance and results
                    var sw = System.Diagnostics.Stopwatch.StartNew();
                    var rowCount = await loader.LoadAsync(targetYear, cancellationToken);
                    sw.Stop();
 
-                   // Log performance and validate row count sanity
                    if (rowCount < 0)
                    {
                        _logger.LogWarning("[{LoaderNumber}] {LoaderName}: Unexpected negative row count {RowCount}. May indicate logic error.", loader.Sequence, loader.Name, rowCount);
