@@ -56,8 +56,15 @@ public sealed class JobExecutionRecord
     /// <summary>Number of records failed.</summary>
     public int? RecordsFailed { get; set; }
 
-    /// <summary>Error message if execution failed.</summary>
+    /// <summary>User-facing friendly message if execution failed. Never request/lifecycle context.</summary>
     public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Bounded, best-effort technical diagnostic for support — written only to the Failed-transition
+    /// <c>job_queue_log</c> row, never to <c>job_queue.errormessage</c>. Transient: not its own
+    /// persisted <c>job_queue</c> column.
+    /// </summary>
+    public string? DiagnosticSummary { get; set; }
 
     /// <summary>Stack trace if execution failed.</summary>
     public string? StackTrace { get; set; }

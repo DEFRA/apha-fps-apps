@@ -170,7 +170,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             StatusId = statusId,
             PerformedBy = record.UserId,
             LogTime = now,
-            Note = BuildStatusNote(record.Status)
+            Note = BuildStatusNote(record)
         });
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -550,11 +550,18 @@ public class JobExecutionRepository : IJobExecutionRepository
             "Status catalog must be provisioned via approved DBA migration/CR scripts before worker execution.");
     }
 
-    private static string BuildStatusNote(JobStatus status) => status switch
+    /// <summary>
+    /// On Failed, prefers the bounded diagnostic summary the orchestrator already built from the
+    /// classified exception (<see cref="JobExecutionRecord.DiagnosticSummary"/>) over the generic
+    /// literal — falls back to it only if the caller never set one.
+    /// </summary>
+    private static string BuildStatusNote(JobExecutionRecord record) => record.Status switch
     {
         JobStatus.Completed => "Execution completed",
-        JobStatus.Failed => "Execution failed",
-        _ => $"Status changed to {status}"
+        JobStatus.Failed => string.IsNullOrWhiteSpace(record.DiagnosticSummary)
+            ? "Execution failed"
+            : record.DiagnosticSummary,
+        _ => $"Status changed to {record.Status}"
     };
 
     private static string BuildStartTransitionNote(JobStatus previousStatus)

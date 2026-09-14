@@ -493,6 +493,7 @@ public sealed class JobOrchestratorTests
         SetupInitiatedExecution("FailingJob");
         var capturedUpdateStatus = new List<JobStatus>();
         var capturedErrorMessage = new List<string?>();
+        var capturedDiagnosticSummary = new List<string?>();
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("FailingJob");
@@ -505,7 +506,12 @@ public sealed class JobOrchestratorTests
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(99);
         _execRepo.UpdateExecutionRecordAsync(
-                     Arg.Do<JobExecutionRecord>(r => { capturedUpdateStatus.Add(r.Status); capturedErrorMessage.Add(r.ErrorMessage); }),
+                     Arg.Do<JobExecutionRecord>(r =>
+                     {
+                         capturedUpdateStatus.Add(r.Status);
+                         capturedErrorMessage.Add(r.ErrorMessage);
+                         capturedDiagnosticSummary.Add(r.DiagnosticSummary);
+                     }),
                      Arg.Any<CancellationToken>())
                  .Returns(Task.CompletedTask);
 
@@ -517,8 +523,19 @@ public sealed class JobOrchestratorTests
         // Assert — failure record written
         Assert.Single(capturedUpdateStatus);
         Assert.Equal(JobStatus.Failed, capturedUpdateStatus[0]);
+
+        // job_queue.errormessage is now the friendly, classifier-driven message — never the raw
+        // exception text. A plain InvalidOperationException classifies as Business (no special-case
+        // match), which maps to the generic fallback friendly message.
         Assert.Single(capturedErrorMessage);
-        Assert.Equal("Simulated failure", capturedErrorMessage[0]);
+        Assert.Equal("Job failed with a business or runtime exception.", capturedErrorMessage[0]);
+        Assert.DoesNotContain("Simulated failure", capturedErrorMessage[0]);
+
+        // The raw exception text lives only in DiagnosticSummary now (flows into the Failed
+        // job_queue_log row, never job_queue.errormessage) — this is the separation the Recreate
+        // Summaries grid-history design exists to enforce.
+        Assert.Single(capturedDiagnosticSummary);
+        Assert.Equal("Simulated failure", capturedDiagnosticSummary[0]);
 
         // Assert — lock still released even after failure
         await _lockRepo.Received(1).ReleaseLockAsync("FailingJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
@@ -929,6 +946,7 @@ public sealed class JobOrchestratorTests
         SetupInitiatedExecution("MissingJob");
         var capturedUpdateStatus = new List<JobStatus>();
         var capturedErrorMessage = new List<string?>();
+        var capturedDiagnosticSummary = new List<string?>();
 
         _factory.Create("MissingJob")
             .Returns(_ => throw new InvalidOperationException("Job 'MissingJob' is not registered."));
@@ -938,7 +956,12 @@ public sealed class JobOrchestratorTests
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(100);
         _execRepo.UpdateExecutionRecordAsync(
-                     Arg.Do<JobExecutionRecord>(r => { capturedUpdateStatus.Add(r.Status); capturedErrorMessage.Add(r.ErrorMessage); }),
+                     Arg.Do<JobExecutionRecord>(r =>
+                     {
+                         capturedUpdateStatus.Add(r.Status);
+                         capturedErrorMessage.Add(r.ErrorMessage);
+                         capturedDiagnosticSummary.Add(r.DiagnosticSummary);
+                     }),
                      Arg.Any<CancellationToken>())
                  .Returns(Task.CompletedTask);
 
@@ -950,8 +973,16 @@ public sealed class JobOrchestratorTests
         // Assert
         Assert.Single(capturedUpdateStatus);
         Assert.Equal(JobStatus.Failed, capturedUpdateStatus[0]);
+
+        // Friendly, classifier-driven message — never the raw "not registered" exception text.
         Assert.Single(capturedErrorMessage);
-        Assert.Equal("Job 'MissingJob' is not registered.", capturedErrorMessage[0]);
+        Assert.Equal("Job failed with a business or runtime exception.", capturedErrorMessage[0]);
+        Assert.DoesNotContain("MissingJob", capturedErrorMessage[0]);
+
+        // Raw detail preserved only in DiagnosticSummary.
+        Assert.Single(capturedDiagnosticSummary);
+        Assert.Equal("Job 'MissingJob' is not registered.", capturedDiagnosticSummary[0]);
+
         await _lockRepo.Received(1).ReleaseLockAsync("MissingJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
@@ -961,6 +992,7 @@ public sealed class JobOrchestratorTests
         // Arrange
         SetupInitiatedExecution("CancellableJob");
         var capturedUpdateStatus = new List<JobStatus>();
+        var capturedErrorMessage = new List<string?>();
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("CancellableJob");
@@ -973,7 +1005,7 @@ public sealed class JobOrchestratorTests
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(77);
         _execRepo.UpdateExecutionRecordAsync(
-                     Arg.Do<JobExecutionRecord>(r => capturedUpdateStatus.Add(r.Status)),
+                     Arg.Do<JobExecutionRecord>(r => { capturedUpdateStatus.Add(r.Status); capturedErrorMessage.Add(r.ErrorMessage); }),
                      Arg.Any<CancellationToken>())
                  .Returns(Task.CompletedTask);
 
@@ -985,6 +1017,11 @@ public sealed class JobOrchestratorTests
         // Assert — interrupted execution is persisted as failed in the 4-state model
         Assert.Single(capturedUpdateStatus);
         Assert.Equal(JobStatus.Failed, capturedUpdateStatus[0]);
+
+        // Cancellation must never reach BatchFailureClassifier.Classify (its own contract forbids
+        // OperationCanceledException) — it gets its own fixed friendly message instead.
+        Assert.Single(capturedErrorMessage);
+        Assert.Equal("Job execution was cancelled.", capturedErrorMessage[0]);
 
         // Assert — lock released
         await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());

@@ -226,6 +226,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         // Step 3 — Execute the job
         Exception? jobException = null;
+        // Computed once, inside the finally block below, only for a genuine (non-cancellation)
+        // failure — reused by ThrowWithStructuredLog afterward so the same exception is never
+        // classified twice at two different points in this method.
+        BatchFailureClassification? failureClassification = null;
 
         try
         {
@@ -268,8 +272,30 @@ public sealed class JobOrchestrator : IJobOrchestrator
             record.Status = finalStatus;
             record.CompletedAt = completedAt;
             record.DurationSeconds = (int)duration.TotalSeconds;
-            record.ErrorMessage = jobException?.Message;
             record.StackTrace = jobException?.StackTrace;
+
+            // job_queue.errormessage is user-facing and must never carry raw exception text — see
+            // the Recreate Summaries grid-history design. DiagnosticSummary (bounded, best-effort)
+            // is the only place the exception's own text goes; it flows into the Failed-transition
+            // job_queue_log row via JobExecutionRepository, never job_queue itself.
+            switch (jobException)
+            {
+                case null:
+                    record.ErrorMessage = null;
+                    break;
+
+                case OperationCanceledException:
+                    // BatchFailureClassifier.Classify explicitly must not receive a cancellation.
+                    record.ErrorMessage = "Job execution was cancelled.";
+                    record.DiagnosticSummary = DiagnosticSummaryBuilder.Build(jobException);
+                    break;
+
+                default:
+                    failureClassification = _failureClassifier.Classify(jobException);
+                    record.ErrorMessage = BatchFailureMessageProvider.GetHumanReadableMessage(failureClassification.Category);
+                    record.DiagnosticSummary = DiagnosticSummaryBuilder.Build(jobException);
+                    break;
+            }
 
             await MarkFailedSafelyAsync(record, finalStatus, jobException, jobQueueId);
 
@@ -330,7 +356,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, jobException.Message);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
             await TryNotifyExecutionOutcomeAsync(record);
-            ThrowWithStructuredLog(jobException, jobName, jobQueueId, jobExecutionId);
+
+            // failureClassification is always set here: this branch only runs for jobException !=
+            // null, and the OperationCanceledException case already returned above — so every path
+            // reaching this line went through the finally block's "default" classification arm.
+            ThrowWithStructuredLog(jobException, failureClassification!, jobName, jobQueueId, jobExecutionId);
         }
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
@@ -540,16 +570,18 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// Logs a structured error with the correct <c>[{ErrorType}]</c> token for the given exception type,
     /// then re-throws the exception preserving the original stack trace.
     /// </summary>
-    private void ThrowWithStructuredLog(Exception exception, string jobName, Guid jobQueueId, Guid jobExecutionId)
+    /// <param name="classification">
+    /// Already computed by the caller (in <see cref="RunAsync"/>'s <c>finally</c> block) — reused
+    /// here rather than re-classifying the same exception a second time.
+    /// </param>
+    private void ThrowWithStructuredLog(Exception exception, BatchFailureClassification classification, string jobName, Guid jobQueueId, Guid jobExecutionId)
     {
         // Only Sql and General have CloudWatch alarms wired up; Configuration and email
         // failures roll up into General rather than an unwatched alarm channel.
-        var errorType = _failureClassifier.Classify(exception).ErrorType;
-
         _logger.LogError(
             exception,
             "[{ErrorType}] Batch job failed | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId}",
-            errorType,
+            classification.ErrorType,
             jobName,
             jobQueueId,
             jobExecutionId);
@@ -619,7 +651,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 record.Status,
                 record.CompletedAt ?? DateTime.UtcNow,
                 record.DurationSeconds.HasValue ? TimeSpan.FromSeconds(record.DurationSeconds.Value) : null,
-                record.Status == JobStatus.Failed ? record.ErrorMessage : null);
+                // This is an operational alert, not the public grid — it wants the diagnostic
+                // detail (falls back to the friendly ErrorMessage only if none was built), not the
+                // now-friendly ErrorMessage a business user sees.
+                record.Status == JobStatus.Failed ? record.DiagnosticSummary ?? record.ErrorMessage : null);
 
             await _notificationService.SendExecutionNotificationAsync(notification, CancellationToken.None);
         }
