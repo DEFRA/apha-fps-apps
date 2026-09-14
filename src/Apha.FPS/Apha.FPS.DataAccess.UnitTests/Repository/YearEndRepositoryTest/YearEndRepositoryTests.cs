@@ -1069,7 +1069,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
 
             // Assert
             queueSet.Verify(x => x.Add(It.IsAny<BatchJobQueue>()), Times.Once);
-            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+
+            // The note is preserved in job_queue_log — it no longer goes into ErrorMessage, but it
+            // must still reach the audit trail so nothing is lost.
+            logSet.Verify(x => x.Add(It.Is<BatchJobQueueLog>(l => l.Note == "init note")), Times.Once);
         }
 
         [Fact]
@@ -1110,7 +1113,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.Equal(10,              result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
             Assert.Equal(Guid.Parse(correlationId), result.JobExecutionId);
-            Assert.Equal("test note",     result.ErrorMessage);
+
+            // ErrorMessage is reserved for execution failure text — the lifecycle note lives only
+            // in job_queue_log now (see EnqueueDataSetupInitiationBatchJobAsync_AddsQueueEntryAndLog_OnSuccess).
+            Assert.Null(result.ErrorMessage);
         }
 
         [Fact]
@@ -1276,8 +1282,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             await repo.EnqueueDataSetupApprovalBatchJobAsync(
                 DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "approve note");
 
-            // Assert
-            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+            // Assert — the note is preserved in job_queue_log, not ErrorMessage.
+            logSet.Verify(x => x.Add(It.Is<BatchJobQueueLog>(l => l.Note == "approve note")), Times.Once);
         }
 
         [Fact]
@@ -1326,7 +1332,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.NotNull(result);
             Assert.Equal(20,              result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
-            Assert.Equal("approve note",  result.ErrorMessage);
+
+            // ErrorMessage is reserved for execution failure text — the note lives only in
+            // job_queue_log now.
+            Assert.Null(result.ErrorMessage);
         }
 
         [Fact]
@@ -1446,8 +1455,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             await repo.EnqueueDataSetupRejectBatchJobAsync(
                 DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
 
-            // Assert
-            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+            // Assert — the note is preserved in job_queue_log, not ErrorMessage.
+            logSet.Verify(x => x.Add(It.Is<BatchJobQueueLog>(l => l.Note == "reject note")), Times.Once);
         }
 
         [Fact]
@@ -1496,7 +1505,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.NotNull(result);
             Assert.Equal(30,               result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
-            Assert.Equal("reject note",    result.ErrorMessage);
+
+            // ErrorMessage is reserved for execution failure text — the note lives only in
+            // job_queue_log now.
+            Assert.Null(result.ErrorMessage);
         }
 
         [Fact]
@@ -1708,7 +1720,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             // Assert
             Assert.NotNull(result);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
-            Assert.Equal("initiation note",  result.ErrorMessage);
+
+            // ErrorMessage is reserved for execution failure text — the note lives only in
+            // job_queue_log now.
+            Assert.Null(result.ErrorMessage);
         }
 
         [Fact]
@@ -1766,8 +1781,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             await repo.EnqueueCutOverInitiationBatchJobAsync(
                 DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
 
-            // Assert
-            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+            // Assert — the note is preserved in job_queue_log, not ErrorMessage.
+            logSet.Verify(x => x.Add(It.Is<BatchJobQueueLog>(l => l.Note == "note")), Times.Once);
         }
 
         [Fact]
@@ -1869,8 +1884,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             await repo.EnqueueCutOverApprovalBatchJobAsync(
                 DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "note");
 
-            // Assert
-            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+            // Assert — the note is preserved in job_queue_log, not ErrorMessage.
+            logSet.Verify(x => x.Add(It.Is<BatchJobQueueLog>(l => l.Note == "note")), Times.Once);
         }
 
         [Fact]
@@ -1923,7 +1938,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             Assert.NotNull(result);
             Assert.Equal(30,               result.StatusId);
             Assert.Equal(DefaultUserEmail, result.RequestedBy);
-            Assert.Equal("reject note",    result.ErrorMessage);
+
+            // ErrorMessage is reserved for execution failure text — the note lives only in
+            // job_queue_log now.
+            Assert.Null(result.ErrorMessage);
         }
 
         [Fact]
@@ -1980,8 +1998,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             await repo.EnqueueCutOverRejectBatchJobAsync(
                 DefaultJobName, DefaultUserEmail, Guid.NewGuid().ToString(), "reject note");
 
-            // Assert
-            logSet.Verify(x => x.Add(It.IsAny<BatchJobQueueLog>()), Times.Once);
+            // Assert — the note is preserved in job_queue_log, not ErrorMessage.
+            logSet.Verify(x => x.Add(It.Is<BatchJobQueueLog>(l => l.Note == "reject note")), Times.Once);
         }
 
         [Fact]

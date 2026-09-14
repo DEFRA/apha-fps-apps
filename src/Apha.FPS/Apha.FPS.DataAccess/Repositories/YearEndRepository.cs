@@ -209,7 +209,10 @@ namespace Apha.FPS.DataAccess.Repositories
                     queueRow.RequestedBy = requestedBy;
                     queueRow.RequestedAtUtc = DateTime.UtcNow;
                     queueRow.StartDateTime = DateTime.UtcNow;
-                    queueRow.ErrorMessage = note;
+                    // ErrorMessage is reserved for execution failure text, never lifecycle/request
+                    // context — the approve/reject note still goes into job_queue_log below,
+                    // unchanged, so nothing is lost.
+                    queueRow.ErrorMessage = null;
                     _context.BatchJobQueues.Update(queueRow);
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);
@@ -309,7 +312,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 RequestedBy = requestedBy,
                 RequestedAtUtc = DateTime.UtcNow,
                 StartDateTime = DateTime.UtcNow,
-                ErrorMessage = note,
+                // ErrorMessage is reserved for execution failure text, never lifecycle/request
+                // context — the initiation note still goes into job_queue_log below, unchanged.
+                ErrorMessage = null,
                 FpsYear = contextYear
             };
         }
