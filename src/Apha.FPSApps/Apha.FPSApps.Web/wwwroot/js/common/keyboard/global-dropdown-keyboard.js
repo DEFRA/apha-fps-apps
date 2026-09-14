@@ -100,6 +100,23 @@
         try { sessionStorage.removeItem(FOCUS_STORAGE_KEY); } catch (ignored) { /* ignore */ }
     }
 
+    // Make the page's top heading reachable and announced by keyboard/screen
+    // readers AFTER the top navigation menus, rather than grabbing focus on
+    // load (which would skip past the menu options). The heading appears after
+    // the nav in the DOM, so giving it tabindex="0" places it in the natural
+    // Tab order right after the top menus: once the user tabs past the menus,
+    // focus lands on the heading and it is read out. Applied globally via this
+    // shared script, which is loaded on every area layout.
+    // Additive: does not modify the existing restoreFocusAfterRefresh logic.
+    function makePageHeadingFocusable() {
+        var heading = document.querySelector('main h1, .content-wrapper h1, h1');
+        if (!heading || !isVisible(heading)) return;
+        if (!heading.hasAttribute('tabindex')) {
+            heading.setAttribute('tabindex', '0');
+        }
+    }
+
+
     // Track user-initiated focus AND clicks on any interactive element so a
     // subsequent page refresh can restore focus/context to the same element,
     // regardless of what triggered the refresh (dropdown selection, form
@@ -116,8 +133,10 @@
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restoreFocusAfterRefresh);
+        document.addEventListener('DOMContentLoaded', makePageHeadingFocusable);
     } else {
         restoreFocusAfterRefresh();
+        makePageHeadingFocusable();
     }
 
     // Resolve the flyout panel + row-container ("body") associated with a trigger input.
