@@ -74,10 +74,19 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         const int currentYear = 9801;
         const int targetYear = 9802;
         var dataSetupJobQueueId = Guid.NewGuid();
+        int? seededInvoiceStagingId = null;
+        int? insertedInvoiceStagingId = null;
 
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
         await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
+
+        // Proves proj_invoice_staging actually participates in cutover cleanup, rather than the
+        // test merely re-copying the production array without exercising the table. Tracked by id
+        // and always deleted in the finally block below — if cutover succeeds this row is already
+        // gone (truncated) and the delete is a harmless no-op, but if cutover throws before reaching
+        // the truncate, this seed must not leak into the shared dev database.
+        seededInvoiceStagingId = await InsertInvoiceStagingRowAndGetIdAsync();
 
         try
         {
@@ -108,9 +117,26 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
                 var remaining = await CountRowsAsync(table);
                 Assert.Equal(0, remaining);
             }
+
+            // Sequence-reset proof: RESTART IDENTITY must actually reset the owned sequence, not
+            // just empty the table — a plain DELETE would leave the count assertion above passing
+            // while the next id kept climbing from wherever the seeded row (or prior activity)
+            // left it.
+            insertedInvoiceStagingId = await InsertInvoiceStagingRowAndGetIdAsync();
+            Assert.Equal(1, insertedInvoiceStagingId);
         }
         finally
         {
+            if (seededInvoiceStagingId.HasValue)
+            {
+                await DeleteInvoiceStagingRowAsync(seededInvoiceStagingId.Value);
+            }
+
+            if (insertedInvoiceStagingId.HasValue)
+            {
+                await DeleteInvoiceStagingRowAsync(insertedInvoiceStagingId.Value);
+            }
+
             await DeleteYearAsync(currentYear);
             await DeleteYearAsync(targetYear);
             await DeleteJobQueueRowAsync(dataSetupJobQueueId);
@@ -459,12 +485,13 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         }
     }
 
-    /// <summary>The three PACT-owned staging tables Phase 6 hardening locks/truncates during cutover.</summary>
+    /// <summary>The four PACT-owned staging tables Phase 6 hardening locks/truncates during cutover.</summary>
     private static readonly string[] StagingTables =
     {
         "fps.proj_subcontract_staging",
         "fps.tblstagingmonthlyoutput",
-        "fps.tblstagingmonthlytime"
+        "fps.tblstagingmonthlytime",
+        "fps.proj_invoice_staging"
     };
 
     private async Task<long> CountRowsAsync(string qualifiedTableName)
@@ -473,6 +500,29 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         return await context.Database
             .SqlQueryRaw<long>($@"SELECT COUNT(*)::bigint AS ""Value"" FROM {qualifiedTableName}")
             .SingleAsync();
+    }
+
+    /// <summary>
+    /// <c>INSERT ... RETURNING</c> isn't composable SQL, so this can't go through EF's
+    /// <c>SqlQuery&lt;T&gt;().SingleAsync()</c> (which wraps the SQL in a subquery) — it needs the raw
+    /// ADO connection directly.
+    /// </summary>
+    private async Task<int> InsertInvoiceStagingRowAndGetIdAsync()
+    {
+        await using var context = CreateDbContext();
+        var connection = context.Database.GetDbConnection();
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "INSERT INTO fps.proj_invoice_staging DEFAULT VALUES RETURNING id;";
+        var result = await command.ExecuteScalarAsync();
+        return (int)result!;
+    }
+
+    private async Task DeleteInvoiceStagingRowAsync(int id)
+    {
+        await using var context = CreateDbContext();
+        await context.Database.ExecuteSqlInterpolatedAsync($@"
+            DELETE FROM fps.proj_invoice_staging WHERE id = {id};");
     }
 
     /// <summary>

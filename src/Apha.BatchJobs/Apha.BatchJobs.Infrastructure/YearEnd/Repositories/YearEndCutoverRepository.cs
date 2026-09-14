@@ -10,7 +10,7 @@ namespace Apha.BatchJobs.Infrastructure.YearEnd.Repositories;
 
 /// <summary>
 /// Executes the year-status transition for Year End Cutover inside a single transaction: closes the
-/// current year, activates the target year, and clears the three PACT-owned staging tables — all
+/// current year, activates the target year, and clears the four PACT-owned staging tables — all
 /// atomically. Every mutable precondition (target-Planned, current-Open, latest Data Setup Completed)
 /// is revalidated from inside this same transaction rather than trusting a pre-transaction read, so
 /// the guarantee doesn't lean on the shared YearEnd lock as an implicit second mechanism.
@@ -23,7 +23,7 @@ public sealed class YearEndCutoverRepository : IYearEndCutoverRepository
     private const string CompletedStatus = "Completed";
 
     /// <summary>
-    /// The three PACT-owned import-validation staging tables Cutover clears as part of its own
+    /// The four PACT-owned import-validation staging tables Cutover clears as part of its own
     /// transaction. None has an <c>fpsyear</c> column, so clearing is necessarily whole-table, not
     /// year-scoped.
     /// </summary>
@@ -31,7 +31,8 @@ public sealed class YearEndCutoverRepository : IYearEndCutoverRepository
     {
         "fps.proj_subcontract_staging",
         "fps.tblstagingmonthlyoutput",
-        "fps.tblstagingmonthlytime"
+        "fps.tblstagingmonthlytime",
+        "fps.proj_invoice_staging"
     };
 
     private readonly IDbContextFactory<BatchJobsDbContext> _dbContextFactory;
