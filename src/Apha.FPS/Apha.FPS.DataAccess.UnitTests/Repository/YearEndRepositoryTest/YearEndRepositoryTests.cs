@@ -88,6 +88,18 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
         private static BatchJobStatus BuildStatus(int statusId, int jobId, string status) =>
             new() { StatusId = statusId, JobId = jobId, Status = status };
 
+        private static BatchJobQueueLog BuildLog(
+            Guid jobqueueId, int statusId, string? note, DateTime? logTime = null, int? logId = null) =>
+            new()
+            {
+                JobqueueLogId = logId ?? Random.Shared.Next(1, int.MaxValue),
+                JobqueueId    = jobqueueId,
+                StatusId      = statusId,
+                PerformedBy   = DefaultUserEmail,
+                LogTime       = logTime ?? DateTime.UtcNow,
+                Note          = note
+            };
+
         private static PaginationParameters<string> BuildQuery(
             int page = 1, int pageSize = 10,
             string? sortBy = null, bool descending = false) =>
@@ -708,6 +720,157 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.YearEndRepositoryTest
             var list = result.Data.ToList();
             Assert.Equal(2, list.Count);
             Assert.True(string.Compare(list[0].Status, list[1].Status, StringComparison.Ordinal) >= 0);
+        }
+
+        // -----------------------------------------------------------------------
+        // Remarks — sourced from the Initiated job_queue_log row only. This is the
+        // regression-test-worthy contract: Remarks must survive every later status
+        // transition (Approved/Running/Completed/Failed) unchanged, and must never
+        // pick up a later transition's own note instead.
+        // -----------------------------------------------------------------------
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WhenCompleted_RemarksReturnsInitiatedNote()
+        {
+            // Arrange — job is now Completed, but the Initiated log row is still there.
+            var job              = BuildJob(1, DefaultJobName);
+            var initiatedStatus  = BuildStatus(10, 1, "initiated");
+            var completedStatus  = BuildStatus(20, 1, "completed");
+            var queueId          = Guid.NewGuid();
+            var queue            = BuildQueue(1, 20, queueId); // current status: Completed
+            var initiatedLog     = BuildLog(queueId, 10, "Recreate Summary for January 2025");
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [queue], statuses: [initiatedStatus, completedStatus], logs: [initiatedLog]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(BuildQuery(), DefaultJobName);
+
+            // Assert
+            var item = Assert.Single(result.Data);
+            Assert.Equal("Recreate Summary for January 2025", item.Remarks);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WhenFailed_RemarksReturnsInitiatedNote_NeverTheFailedNote()
+        {
+            // Arrange — both an Initiated log row (request context) and a Failed log row
+            // (diagnostic detail) exist for the same request. Remarks must resolve to the
+            // Initiated one, structurally — never the Failed diagnostic, regardless of timing.
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var failedStatus    = BuildStatus(40, 1, "failed");
+            var queueId         = Guid.NewGuid();
+            var queue           = BuildQueue(1, 40, queueId); // current status: Failed
+            var initiatedLog    = BuildLog(queueId, 10, "Recreate Summary for January 2025",
+                logTime: new DateTime(2025, 1, 1, 9, 0, 0, DateTimeKind.Utc));
+            var failedLog       = BuildLog(queueId, 40, "RecreateSummaries step 'X' failed: diagnostic detail",
+                logTime: new DateTime(2025, 1, 1, 9, 5, 0, DateTimeKind.Utc));
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [queue], statuses: [initiatedStatus, failedStatus],
+                logs: [initiatedLog, failedLog]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(BuildQuery(), DefaultJobName);
+
+            // Assert
+            var item = Assert.Single(result.Data);
+            Assert.Equal("Recreate Summary for January 2025", item.Remarks);
+            Assert.DoesNotContain("diagnostic detail", item.Remarks);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WhenNoInitiatedLogRow_RemarksIsNull()
+        {
+            // Arrange — a legacy/malformed row with no Initiated log at all. The query must
+            // still return a valid result with Remarks = null, not throw or drop the row.
+            var (job, queue, status) = BuildJoinSeed(statusText: "completed", statusId: 20);
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [queue], statuses: [status], logs: []);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(BuildQuery(), DefaultJobName);
+
+            // Assert
+            var item = Assert.Single(result.Data);
+            Assert.Null(item.Remarks);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WhenOnlyNonInitiatedLogRowsExist_RemarksIsNull()
+        {
+            // Arrange — Approved/Running/Failed log rows exist, but no Initiated row. Proves
+            // the query is filtered by status, not merely "earliest by time" — an unfiltered
+            // or wrongly-filtered query could pick one of these up instead.
+            var job             = BuildJob(1, DefaultJobName);
+            var approvedStatus  = BuildStatus(20, 1, "approved");
+            var runningStatus   = BuildStatus(30, 1, "running");
+            var failedStatus    = BuildStatus(40, 1, "failed");
+            var queueId         = Guid.NewGuid();
+            var queue           = BuildQueue(1, 40, queueId);
+            var approvedLog     = BuildLog(queueId, 20, "approved note", logTime: DateTime.UtcNow.AddMinutes(-10));
+            var runningLog      = BuildLog(queueId, 30, "running note", logTime: DateTime.UtcNow.AddMinutes(-5));
+            var failedLog       = BuildLog(queueId, 40, "failed note", logTime: DateTime.UtcNow);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [queue], statuses: [approvedStatus, runningStatus, failedStatus],
+                logs: [approvedLog, runningLog, failedLog]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(BuildQuery(), DefaultJobName);
+
+            // Assert
+            var item = Assert.Single(result.Data);
+            Assert.Null(item.Remarks);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WhenTwoInitiatedLogRowsShareATimestamp_ResolvesDeterministicallyByLogId()
+        {
+            // Arrange — a timestamp tie between two Initiated-status rows. The lower
+            // JobqueueLogId must win, deterministically, every time — not whichever the
+            // in-memory/SQL ordering happens to return first on a given run.
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var queueId         = Guid.NewGuid();
+            var queue           = BuildQueue(1, 10, queueId);
+            var sameTime        = new DateTime(2025, 1, 1, 9, 0, 0, DateTimeKind.Utc);
+            var firstLog        = BuildLog(queueId, 10, "first note",  logTime: sameTime, logId: 100);
+            var secondLog       = BuildLog(queueId, 10, "second note", logTime: sameTime, logId: 200);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [queue], statuses: [initiatedStatus], logs: [secondLog, firstLog]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(BuildQuery(), DefaultJobName);
+
+            // Assert
+            var item = Assert.Single(result.Data);
+            Assert.Equal("first note", item.Remarks);
+        }
+
+        [Fact]
+        public async Task GetBatchJobsHistoryAsync_WithMultipleInitiatedLogRowsForOneRequest_ReturnsExactlyOneRowNotAFanOut()
+        {
+            // Arrange — proves the correlated subquery shape (LIMIT 1) never multiplies the
+            // outer history row, even if more than one Initiated-status log row somehow exists
+            // for the same JobqueueId.
+            var job             = BuildJob(1, DefaultJobName);
+            var initiatedStatus = BuildStatus(10, 1, "initiated");
+            var queueId         = Guid.NewGuid();
+            var queue           = BuildQueue(1, 10, queueId);
+            var log1            = BuildLog(queueId, 10, "note one",  logTime: DateTime.UtcNow.AddMinutes(-1));
+            var log2            = BuildLog(queueId, 10, "note two",  logTime: DateTime.UtcNow);
+
+            var (repo, _, _, _) = CreateRepository(
+                jobs: [job], queues: [queue], statuses: [initiatedStatus], logs: [log1, log2]);
+
+            // Act
+            var result = await repo.GetBatchJobsHistoryAsync(BuildQuery(), DefaultJobName);
+
+            // Assert — exactly one history row, not two
+            Assert.Single(result.Data);
         }
 
         #endregion

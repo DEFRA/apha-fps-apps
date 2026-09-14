@@ -33,7 +33,19 @@ namespace Apha.FPS.DataAccess.Repositories
                     StartDateTime = jq.StartDateTime,
                     EndDateTime = jq.EndDateTime,
                     ErrorMessage = jq.ErrorMessage,
-                    Status = js.Status
+                    Status = js.Status,
+                    // Deterministic, status-filtered: the Initiated row's own note only, never
+                    // "whichever log row happens to be earliest" and never a later transition's
+                    // note (e.g. a Failed diagnostic). ORDER BY LogTime, JobqueueLogId breaks a
+                    // timestamp tie deterministically.
+                    Remarks = (
+                        from l in _context.BatchJobQueueLogs.AsNoTracking()
+                        join ls in _context.BatchJobStatuses.AsNoTracking()
+                            on new { l.StatusId, jq.JobId } equals new { ls.StatusId, ls.JobId }
+                        where l.JobqueueId == jq.JobqueueId && ls.Status.ToLower() == "initiated"
+                        orderby l.LogTime, l.JobqueueLogId
+                        select l.Note
+                    ).FirstOrDefault()
                 };
 
             jobHistoriesQuery = (IQueryable<BatchJobHistory>)ApplySorting(jobHistoriesQuery, query.SortBy?.ToLower(), query.Descending);
