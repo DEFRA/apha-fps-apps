@@ -77,6 +77,46 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BatchJobRepositoryTest
             await Task.CompletedTask;
         }
 
+        // NOTE: the following document the required behaviour of the Remarks correlated
+        // subquery (mirrors Apha.FPS.DataAccess.Repositories.YearEndRepositoryTests). Same
+        // PostgreSQL-provider limitation as above — covered by integration tests, not here.
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_CompletedJob_RemarksReturnsInitiatedNote()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_FailedJobWithInitiatedAndFailedLogs_RemarksReturnsInitiatedNoteOnly()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_NoInitiatedLogRow_RemarksIsNull()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_NonInitiatedLogRowsOnly_RemarksIsNull()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_TimestampTieOnInitiatedRows_RemarksResolvesByJobqueueLogId()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_MultipleInitiatedLogRows_DoesNotFanOutHistoryRow()
+        {
+            await Task.CompletedTask;
+        }
+
         #endregion
 
         #region CanRunBatchJobAsync

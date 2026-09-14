@@ -32,7 +32,15 @@ namespace Apha.PACT.DataAccess.Repository
                     StartDateTime = jq.StartDateTime,
                     EndDateTime = jq.EndDateTime,
                     ErrorMessage = jq.ErrorMessage,
-                    Status = js.Status
+                    Status = js.Status,
+                    Remarks = (
+                        from l in _context.BatchJobQueueLogs.AsNoTracking()
+                        join ls in _context.BatchJobStatuses.AsNoTracking()
+                            on new { l.StatusId, jq.JobId } equals new { ls.StatusId, ls.JobId }
+                        where l.JobqueueId == jq.JobqueueId && ls.Status.ToLower() == "initiated"
+                        orderby l.LogTime, l.JobqueueLogId
+                        select l.Note
+                    ).FirstOrDefault()
                 };
 
             jobHistoriesQuery = (IQueryable<BatchJobHistory>)ApplySorting(jobHistoriesQuery, query.SortBy?.ToLower(), query.Descending);
@@ -133,7 +141,9 @@ namespace Apha.PACT.DataAccess.Repository
                 RequestedBy = requestedBy,
                 RequestedAtUtc = DateTime.UtcNow,
                 StartDateTime = DateTime.UtcNow,
-                ErrorMessage = note,
+                // ErrorMessage is reserved for execution failure text, never lifecycle/request
+                // context — the initiation note still goes into job_queue_log below, unchanged.
+                ErrorMessage = null,
                 FpsYear = contextYear
             };
         }
