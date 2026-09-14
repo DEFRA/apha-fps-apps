@@ -7,24 +7,20 @@ using Serilog.Formatting.Compact;
 namespace Apha.BatchJobs.Worker.Logging;
 
 /// <summary>
-/// Serilog creation, enrichment and provider registration for the batch worker host.
-/// Sink/formatter selection is hardcoded here per environment — matching the pattern already
-/// used by the sibling Apha.PACT/Apha.PIMS/Apha.FPS APIs (see their own SerilogExtensions /
-/// Program.cs) — rather than expressed as a <c>Serilog:WriteTo</c> array in appsettings.json.
-/// <c>ReadFrom.Configuration</c> is still used, but only for <c>MinimumLevel</c>/overrides.
+/// Serilog setup for the batch worker host. Sinks are hardcoded per environment (matching the
+/// sibling Apha.PACT/Apha.PIMS/Apha.FPS APIs) instead of a <c>Serilog:WriteTo</c> array in
+/// appsettings.json. <c>ReadFrom.Configuration</c> is still used for MinimumLevel/overrides.
 /// </summary>
 public static class SerilogConfigurationExtensions
 {
     /// <summary>
-    /// Creates the Serilog logger and wires it into the host's logging pipeline. Must run after
-    /// <c>ConfigureWorkerConfiguration</c> so the legacy <c>BATCH_LOG_STREAM_PREFIX</c> compat
-    /// mapping has already resolved into <c>Logging:LogStreamPrefix</c> — this method reads that
-    /// key directly rather than re-checking the legacy environment variable itself.
+    /// Creates the Serilog logger and wires it into the host pipeline. Must run after
+    /// <c>ConfigureWorkerConfiguration</c>, which resolves the legacy
+    /// <c>BATCH_LOG_STREAM_PREFIX</c> variable into <c>Logging:LogStreamPrefix</c>.
     /// </summary>
     public static void ConfigureWorkerLogging(this HostApplicationBuilder builder)
     {
-        // SelfLog is diagnostic noise in production; only worth the console clutter locally or
-        // when explicitly opted into for troubleshooting a specific deployed environment.
+        // Diagnostic noise in production; only enable locally or when explicitly opted in.
         var selfLogEnabled = builder.Environment.IsDevelopment()
             || builder.Configuration.GetValue<bool>("Serilog:SelfLogEnabled");
 
@@ -40,8 +36,7 @@ public static class SerilogConfigurationExtensions
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Application", "FPSBatchJobs")
             .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
-            // Named "Configured..." because this is metadata describing intent, not the literal
-            // CloudWatch log stream identifier ECS assigns at runtime.
+            // "Configured" because this is intent metadata, not the actual ECS-assigned log stream id.
             .Enrich.WithProperty("ConfiguredLogStreamPrefix", configuredLogStreamPrefix);
 
         if (builder.Environment.IsEnvironment("local"))

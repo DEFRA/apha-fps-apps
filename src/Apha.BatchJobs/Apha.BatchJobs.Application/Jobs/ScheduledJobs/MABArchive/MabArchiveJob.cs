@@ -55,10 +55,7 @@ public sealed class MabArchiveJob : IBatchJob
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Executes the MABArchive load job.
-    /// Lock acquisition/release and failure notification are handled by JobOrchestrator.
-    /// </summary>
+    /// <summary>Executes the MABArchive load job. Lock acquisition/release and failure notification are handled by JobOrchestrator.</summary>
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
         var startedAt = DateTime.UtcNow;

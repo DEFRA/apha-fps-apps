@@ -4,9 +4,7 @@ using Apha.BatchJobs.Domain.Enums;
 
 namespace Apha.BatchJobs.Infrastructure.RecreateSummaries;
 
-/// <summary>
-/// Base class for .NET RecreateSummaries steps.
-/// </summary>
+/// <summary>Base class for .NET RecreateSummaries steps.</summary>
 internal abstract class RecreateSummariesExecutionStepBase : IRecreateSummariesExecutionStep
 {
     public abstract string StepName { get; }

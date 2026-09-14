@@ -4,12 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// Validates that the EF Core model configuration mirrors the SQL schema:
-/// column names, required constraints, max-lengths, FK navigation, delete behavior.
-/// No DB connection required â€” these assertions run entirely against the in-memory model metadata.
-/// Internal entity types are accessed by table-name lookup to avoid visibility constraints.
-/// </summary>
+/// <summary>Validates that the EF Core model configuration mirrors the SQL schema: column names, required constraints, max-lengths, FK navigation, delete behavior. No DB connection required â€” these assertions run entirely against the in-memory model metadata. Internal entity types are accessed by table-name lookup to avoid visibility constraints.</summary>
 public sealed class EfCoreMappingTests
 {
     private static readonly DbContextOptions<BatchJobsDbContext> _options =

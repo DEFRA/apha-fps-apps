@@ -13,16 +13,14 @@ using Serilog;
 namespace Apha.BatchJobs.Worker.Bootstrap;
 
 /// <summary>
-/// Configuration layering, typed option registration, and service registration for the batch
-/// worker host. Serilog setup lives in <c>Logging/SerilogConfigurationExtensions.cs</c> instead —
-/// kept separate so logging can be wired up before <c>host.Build()</c> independently of DI.
+/// Configuration, options, and service registration for the batch worker host.
+/// Serilog setup lives separately in <c>Logging/SerilogConfigurationExtensions.cs</c>.
 /// </summary>
 public static class WorkerHostExtensions
 {
     /// <summary>
-    /// Layers <c>appsettings.Local.json</c> in over what <see cref="Host.CreateApplicationBuilder(string[])"/>
-    /// already loaded (appsettings.json, appsettings.{Environment}.json, environment variables),
-    /// then re-asserts environment variables so they retain top precedence.
+    /// Layers <c>appsettings.Local.json</c> over the defaults, then re-adds environment
+    /// variables so they still win.
     /// </summary>
     public static void ConfigureWorkerConfiguration(this HostApplicationBuilder builder)
     {
@@ -31,10 +29,6 @@ public static class WorkerHostExtensions
             .AddEnvironmentVariables();
     }
 
-    /// <summary>
-    /// Registers worker dependencies: the existing batch job services (unchanged), the new
-    /// validated <see cref="BatchRuntimeOptions"/>, and the shared <see cref="BatchFailureClassifier"/>.
-    /// </summary>
     public static void ConfigureWorkerServices(this HostApplicationBuilder builder)
     {
         builder.Services.AddBatchInfrastructure(builder.Configuration);
@@ -53,11 +47,9 @@ public static class WorkerHostExtensions
     }
 
     /// <summary>
-    /// Stops the host bounded by <see cref="BatchRuntimeOptions.GracefulShutdownWindowSeconds"/>,
-    /// leaving a safety margin below the ECS SIGTERM→forced-stop deadline. Reads configuration
-    /// directly (not through DI) so it still works if the host is in a partially-failed state.
-    /// Shutdown failure is logged but never replaces the primary batch exit code — the caller's
-    /// `finally` block calls this after the exit code has already been decided.
+    /// Stops the host within <see cref="BatchRuntimeOptions.GracefulShutdownWindowSeconds"/>,
+    /// ahead of ECS's SIGTERM deadline. Reads config directly (not DI) so it still works if the
+    /// host is in a partially-failed state; a shutdown failure never overrides the exit code.
     /// </summary>
     public static async Task StopSafelyAsync(this IHost host, IConfiguration configuration)
     {
