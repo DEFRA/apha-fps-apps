@@ -167,6 +167,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             // Assert
             var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal("PP001", model.Parentproject);
+            Assert.True(model.IsSideNavContext);
         }
 
         [Fact]
@@ -1025,6 +1026,21 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             // Assert
             var model = Assert.IsType<LogMilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal("PP001", model.Parentproject);
+            Assert.False(model.FromSideNav);
+        }
+
+        [Fact]
+        public async Task LogIndex_WithSideNavFlag_SetsFromSideNavTrue()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            var result = await _controller.LogIndex("PP001", fromSideNav: true);
+
+            // Assert
+            var model = Assert.IsType<LogMilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.True(model.FromSideNav);
         }
 
         [Fact]

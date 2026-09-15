@@ -51,6 +51,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 && viewModel.ProjectOptions.Any(option => string.Equals(option.Value, requestedProject, StringComparison.OrdinalIgnoreCase))
                     ? requestedProject
                     : string.Empty;
+            viewModel.IsSideNavContext = !string.IsNullOrWhiteSpace(parentproject);
             viewModel.NavigationProject = requestedProject ?? string.Empty;
             viewModel.Parentproject = resolvedProject;
 
@@ -70,9 +71,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> LogIndex(string? project = null)
+        public async Task<IActionResult> LogIndex(string? project = null, bool fromSideNav = false)
         {
-            LogMilestoneViewModel viewModel = new();
+            LogMilestoneViewModel viewModel = new()
+            {
+                FromSideNav = fromSideNav
+            };
             ApiResponseDto<List<ProjectListMilestoneDto>> allProjects =
                 await _projectListService.GetAllProjectsForMilestoneAsync();
 

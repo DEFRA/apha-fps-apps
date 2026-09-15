@@ -444,5 +444,83 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.MonthHourServiceTest
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // SaveYearEndMonthHourAsync
+        // -----------------------------------------------------------------------
+
+        #region SaveYearEndMonthHourAsync
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenApiReturnsSuccess_ReturnsSavedDto()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2025, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+            var saved = new MonthHourDto { Year = 2025, Month = 3, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+            var expectedResponse = ApiResponseDto<MonthHourDto>.SuccessResponse(saved);
+            _fpsMonthHourApiClient.SaveYearEndMonthHourAsync(dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.SaveYearEndMonthHourAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal((short)3, result.Data?.Month);
+            await _fpsMonthHourApiClient.Received(1).SaveYearEndMonthHourAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2025, Month = 1, Days = -1 };
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Validation error", Code = "VALIDATION_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<MonthHourDto>.FailureResponse(errors, new ApiMetaDto());
+            _fpsMonthHourApiClient.SaveYearEndMonthHourAsync(dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.SaveYearEndMonthHourAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+            await _fpsMonthHourApiClient.Received(1).SaveYearEndMonthHourAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_PassesDtoToApiClient()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2025, Month = 6, Days = 21, FpsYear = 2025 };
+            var expectedResponse = ApiResponseDto<MonthHourDto>.SuccessResponse(dto);
+            _fpsMonthHourApiClient.SaveYearEndMonthHourAsync(dto).Returns(expectedResponse);
+
+            // Act
+            await _sut.SaveYearEndMonthHourAsync(dto);
+
+            // Assert
+            await _fpsMonthHourApiClient.Received(1).SaveYearEndMonthHourAsync(
+                Arg.Is<MonthHourDto>(d => d.Year == 2025 && d.Month == 6 && d.Days == 21));
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenApiClientThrowsException_PropagatesException()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2025, Month = 1, Days = 20 };
+            _fpsMonthHourApiClient.SaveYearEndMonthHourAsync(dto).ThrowsAsync(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            Assert.Equal("Save failed", exception.Message);
+            await _fpsMonthHourApiClient.Received(1).SaveYearEndMonthHourAsync(dto);
+        }
+
+        #endregion
     }
 }

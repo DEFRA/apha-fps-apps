@@ -29,14 +29,8 @@
 
                 
                 <div class="yfd-toolbar__item">
-                    <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdProject">Project</label>
-                    <select id="yfdProject"
-                            asp-for="SelectedProject"
-                            class="govuk-select tab-font-size sup_select_option_width_100"
-                            asp-items="Model.ProjectList"
-                            onchange="onProjectChanged()"
-                            aria-label="Select project">
-                    </select>
+                    <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdProjectSelectMulti_input">Project</label>
+                    <div id="yfdProjectSelectMultiDropdown" class="sup_select_option_width_100"></div>
                 </div>
 
                 <div class="yfd-toolbar__item">
@@ -148,34 +142,64 @@
 
 @Html.AntiForgeryToken()
 
-<style>
-    /* Style to make select appear empty when no value is selected (matches MS Access behavior) */
-    #yfdProject:empty,
-    #yfdProject[value=""],
-    #yfdProject:invalid {
-        color: #999;
-    }
-
-    #yfdProject option {
-        color: black;
-    }
-</style>
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
 
 @section Scripts {
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
+        const yfdProjectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectList));
+        const yfdPreselectedProject = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.SelectedProject ?? string.Empty));
+        var yfdProjectSelectDropdown = null;
+        var selectedYfdProjectValue = yfdPreselectedProject || '';
+
         // ── Sidebar ──────────────────────────────────────────────────────
         function toggleSidebar() {
             document.querySelector('.sidenav').classList.toggle('collapsed');
         }
 
+        function getSelectedYfdProjectValue() {
+            if (yfdProjectSelectDropdown) {
+                return yfdProjectSelectDropdown.getValue() || '';
+            }
+            return selectedYfdProjectValue || '';
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-            var initialProject = '@(Model.SelectedProject ?? string.Empty)';
+            var initialProject = yfdPreselectedProject;
             var navigationProject = '@(Model.NavigationProject ?? string.Empty)';
             var yfdMessage = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(ViewBag.YfdMessage) ?? string.Empty))';
-            var projectSelect = document.getElementById('yfdProject');
 
-            if (!initialProject.trim() && projectSelect) {
-                projectSelect.selectedIndex = -1;
+            yfdProjectSelectDropdown = new MultiColumnDropdownComponent({
+                dropdownId: 'yfdProjectSelectMulti',
+                containerSelector: '#yfdProjectSelectMultiDropdown',
+                placeholder: 'Select a Project',
+                searchPlaceholder: 'Search by project',
+                showSerialNumber: false,
+                columns: [
+                    { field: 'Text', header: 'Project', width: '320px' }
+                ],
+                data: yfdProjectOptionsListData || [],
+                displayField: 'Text',
+                valueField: 'Value',
+                clearButtonClearsSelection: false,
+                callbacks: {
+                    onSelect: function (selectedItem) {
+                        if (!selectedItem) return;
+                        onProjectChanged(selectedItem.Value || '');
+                    }
+                }
+            });
+
+            if (initialProject.trim()) {
+                selectedYfdProjectValue = initialProject;
+                yfdProjectSelectDropdown.setValue(initialProject);
+            } else {
+                selectedYfdProjectValue = '';
+                if (yfdProjectSelectDropdown && typeof yfdProjectSelectDropdown.clear === 'function') {
+                    yfdProjectSelectDropdown.clear();
+                }
                 document.getElementById('yfdStartDate').value = '';
                 document.getElementById('yfdEndDate').value = '';
             }
@@ -186,31 +210,31 @@
 
             if (typeof updatePimsSideNavProject === 'function') {
                 updatePimsSideNavProject(initialProject.trim()
-                    ? (projectSelect?.value || '')
+                    ? getSelectedYfdProjectValue()
                     : navigationProject);
             }
         });
 
         function getYearlyFinancialDataExtraFilters() {
             return {
-                project: document.getElementById('yfdProject')?.value || ''
+                project: getSelectedYfdProjectValue()
             };
         }
 
         // ── Grid reload ──────────────────────────────────────────────────────────────────
-       
+
         function reloadYearlyFinancialDataGrid() {
             var gm = window['gridManager_costCenterListGrid'];
             if (gm) { gm.reloadGrid({ page: 1 }); }
         }
 
         // ── Project change handler ───────────────────────────────────────────────────────
-        function onProjectChanged() {
-            var project = document.getElementById('yfdProject')?.value || '';
+        function onProjectChanged(project) {
+            selectedYfdProjectValue = (project || '').trim();
             if (typeof updatePimsSideNavProject === 'function') {
-                updatePimsSideNavProject(project);
+                updatePimsSideNavProject(selectedYfdProjectValue);
             }
-            if (!project) {
+            if (!selectedYfdProjectValue) {
                 document.getElementById('yfdStartDate').value = '';
                 document.getElementById('yfdEndDate').value = '';
                 reloadYearlyFinancialDataGrid();
@@ -219,7 +243,7 @@
             // Reload grid with new project
             reloadYearlyFinancialDataGrid();
             // Fetch project dates directly from the dedicated JSON endpoint
-            $.get('/PIMS/YearlyFinancialData/GetProjectDates', { project: project }, function (data) {
+            $.get('/PIMS/YearlyFinancialData/GetProjectDates', { project: selectedYfdProjectValue }, function (data) {
                 document.getElementById('yfdStartDate').value = (data && data.startDate) ? data.startDate : '';
                 document.getElementById('yfdEndDate').value = (data && data.endDate) ? data.endDate : '';
             }).fail(function () {
@@ -309,7 +333,7 @@
         // ── Add ──────────────────────────────────────────────────────────────────────────
         
         function addYearlyFinancialData() {
-            var project = document.getElementById('yfdProject')?.value || '';
+            var project = getSelectedYfdProjectValue();
             if (!project) {
                 showAlertMessage('Please select a project first.', AlertType.ERROR);
                 return;
@@ -326,7 +350,7 @@
        
         function editYearlyFinancialData(btn) {
             var year = $(btn).data('id');
-            var project = document.getElementById('yfdProject')?.value || '';
+            var project = getSelectedYfdProjectValue();
             $.get('/PIMS/YearlyFinancialData/Edit', { year: year, project: project }, function (html) {
                 openYFDModalContent(html, '#editYFDModal');
             }).fail(function () {
@@ -338,7 +362,7 @@
         
         function deleteYearlyFinancialData(btn) {
             var year = $(btn).data('id');
-            var project = document.getElementById('yfdProject')?.value || '';
+            var project = getSelectedYfdProjectValue();
 
             showGovukConfirm('Are you sure you want to delete this yearly financial record? This action cannot be undone.').then(function (result) {
                 if (!result) return;
@@ -381,7 +405,7 @@
         }
 
         function getCurrentYfdProject() {
-            return (($('#hdnYfdProject').val() || document.getElementById('yfdProject')?.value || '') + '').trim();
+            return (($('#hdnYfdProject').val() || getSelectedYfdProjectValue() || '') + '').trim();
         }
 
         function getYearFromDisplayDate(value) {
