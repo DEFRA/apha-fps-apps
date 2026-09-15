@@ -131,6 +131,9 @@ namespace Apha.FPS.DataAccess.Data
                        
         public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
         public virtual DbSet<Period> Periods { get; set; }
+        public virtual DbSet<FpsSettingStaging> TblStagingSettings { get; set; }
+        public virtual DbSet<MonthHourStaging> MonthHourStagings { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -404,6 +407,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PeriodMap());
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new FpsSettingStagingMap());
+            modelBuilder.ApplyConfiguration(new MonthHourStagingMap());
+         
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
             
 

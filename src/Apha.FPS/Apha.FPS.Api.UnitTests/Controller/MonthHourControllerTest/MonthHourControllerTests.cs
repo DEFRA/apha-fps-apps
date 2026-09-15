@@ -359,5 +359,69 @@ namespace Apha.FPS.Api.UnitTests.Controller.MonthHourControllerTest
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // SaveYearEndMonthHour
+        // -----------------------------------------------------------------------
+
+        #region SaveYearEndMonthHour
+
+        [Fact]
+        public async Task SaveYearEndMonthHour_WhenRequestIsValid_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var request = new MonthHourReq { Year = 2025, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+            var dto = new MonthHourDto { Year = 2025, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+            var serviceResult = new MonthHourDto { Year = 2025, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+            var mappedRes = new MonthHourRes { Year = 2025, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+
+            _mapper.Map<MonthHourDto>(request).Returns(dto);
+            _service.SaveYearEndMonthHourAsync(dto).Returns(serviceResult);
+            _mapper.Map<MonthHourRes>(serviceResult).Returns(mappedRes);
+
+            // Act
+            var result = await _sut.SaveYearEndMonthHour(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.StatusCode.Should().Be(200);
+            okResult.Value.Should().BeEquivalentTo(mappedRes);
+
+            await _service.Received(1).SaveYearEndMonthHourAsync(dto);
+            _mapper.Received(1).Map<MonthHourDto>(request);
+            _mapper.Received(1).Map<MonthHourRes>(serviceResult);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHour_WhenServiceThrowsBusinessValidationException_PropagatesException()
+        {
+            // Arrange
+            var request = new MonthHourReq { Year = 2025, Month = 1, Days = -1 };
+            var dto = new MonthHourDto { Year = 2025, Month = 1, Days = -1 };
+            _mapper.Map<MonthHourDto>(request).Returns(dto);
+            _service.SaveYearEndMonthHourAsync(dto)
+                .Throws(new BusinessValidationErrorException([new BusinessValidationError("Invalid value", "Missing_Config")]));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHour(request));
+            await _service.Received(1).SaveYearEndMonthHourAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHour_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var request = new MonthHourReq { Year = 2025, Month = 1, Days = 20 };
+            var dto = new MonthHourDto { Year = 2025, Month = 1, Days = 20 };
+            _mapper.Map<MonthHourDto>(request).Returns(dto);
+            _service.SaveYearEndMonthHourAsync(dto).Throws(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveYearEndMonthHour(request));
+            exception.Message.Should().Be("Save failed");
+            await _service.Received(1).SaveYearEndMonthHourAsync(dto);
+        }
+
+        #endregion
     }
 }

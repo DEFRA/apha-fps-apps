@@ -407,5 +407,69 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
         }
 
         #endregion
+
+        // -----------------------------------------------------------------------
+        // SaveYearEndSettingAsync
+        // -----------------------------------------------------------------------
+
+        #region SaveYearEndSettingAsync
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenRequestIsValid_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var request = new FpsSettingReq { Id = "HoursInDay", Setting = "8" };
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "8" };
+            var serviceResult = new FpsSettingDto { Id = "HoursInDay", Setting = "8" };
+            var mappedRes = new FpsSettingRes { Id = "HoursInDay", Setting = "8" };
+
+            _mapper.Map<FpsSettingDto>(request).Returns(dto);
+            _fpsSettingService.SaveYearEndSettingAsync(dto).Returns(serviceResult);
+            _mapper.Map<FpsSettingRes>(serviceResult).Returns(mappedRes);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.StatusCode.Should().Be(200);
+            okResult.Value.Should().BeEquivalentTo(mappedRes);
+
+            await _fpsSettingService.Received(1).SaveYearEndSettingAsync(dto);
+            _mapper.Received(1).Map<FpsSettingDto>(request);
+            _mapper.Received(1).Map<FpsSettingRes>(serviceResult);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenServiceThrowsBusinessValidationException_PropagatesException()
+        {
+            // Arrange
+            var request = new FpsSettingReq { Id = "HoursInDay", Setting = "invalid" };
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "invalid" };
+            _mapper.Map<FpsSettingDto>(request).Returns(dto);
+            _fpsSettingService.SaveYearEndSettingAsync(dto)
+                .Throws(new BusinessValidationErrorException([new BusinessValidationError("Invalid value", "Missing_HoursInDay")]));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndSettingAsync(request));
+            await _fpsSettingService.Received(1).SaveYearEndSettingAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var request = new FpsSettingReq { Id = "OtherKey", Setting = "value" };
+            var dto = new FpsSettingDto { Id = "OtherKey", Setting = "value" };
+            _mapper.Map<FpsSettingDto>(request).Returns(dto);
+            _fpsSettingService.SaveYearEndSettingAsync(dto).Throws(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveYearEndSettingAsync(request));
+            exception.Message.Should().Be("Save failed");
+            await _fpsSettingService.Received(1).SaveYearEndSettingAsync(dto);
+        }
+
+        #endregion
     }
 }
