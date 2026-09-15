@@ -1,9 +1,12 @@
 ﻿using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Infrastructure.DependencyInjection;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Steps;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Ports;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Grouping;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Rendering;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
@@ -129,12 +132,51 @@ public sealed class ServiceCollectionSetupTests
         var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
         Assert.Contains("HealthCheck", jobFactory.GetAvailableJobs());
         Assert.Equal("HealthCheck", jobFactory.Create("HealthCheck").Name);
-        Assert.Contains("YearEndDataSetup", jobFactory.GetAvailableJobs());
-        Assert.Contains("YearEndCutover", jobFactory.GetAvailableJobs());
+        Assert.Contains(BatchJobNames.YearEndDataSetup, jobFactory.GetAvailableJobs());
+        Assert.Contains(BatchJobNames.YearEndCutover, jobFactory.GetAvailableJobs());
+    }
+
+    /// <summary>
+    /// Phase 7F regression proof: the real production composition root
+    /// (<see cref="BatchJobsServiceExtensions.AddBatchJobs"/> → <c>RegisterBatchJobImplementations</c>)
+    /// must actually be able to construct both Year End handlers through
+    /// <see cref="IBatchJobFactory"/>, not just report their names via
+    /// <see cref="IBatchJobFactory.GetAvailableJobs"/>. The Phase 7D
+    /// <c>BatchJobFactoryTests</c> dispatch tests registered their own hand-built
+    /// <see cref="IYearEndDataSetupService"/>/<see cref="IYearEndCutoverService"/> fakes directly
+    /// into a test-local <c>ServiceCollection</c> and so could not have caught the Phase 7F gap
+    /// (the handler type itself was never registered in the real composition root) — this test uses
+    /// the same <see cref="CreateServices"/> real composition path as
+    /// <see cref="AddBatchJobs_ShouldRegisterExpectedFoundationServices"/> instead.
+    /// </summary>
+    [Fact]
+    public void AddBatchJobs_ShouldResolveBothYearEndHandlersThroughTheRealCompositionRoot()
+    {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"plannedYear\":2026}");
+        var services = CreateServices(GetBatchJobsRoot());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
+
+        Assert.IsType<YearEndDataSetupJobHandler>(jobFactory.Create(BatchJobNames.YearEndDataSetup));
+        Assert.IsType<YearEndCutoverJobHandler>(jobFactory.Create(BatchJobNames.YearEndCutover));
+    }
+
+    // Same gap class as the Year End regression above (unregistered job type), found live in DEV.
+    [Fact]
+    public void AddBatchJobs_ShouldResolveMilestoneUpdateNotificationsJobThroughTheRealCompositionRoot()
+    {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{}");
+        var services = CreateServices(GetBatchJobsRoot());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
+
+        Assert.IsType<MilestoneUpdateNotificationsJob>(jobFactory.Create(BatchJobNames.MilestoneUpdateNotifications));
     }
 
     [Fact]
-    public void AddBatchJobs_ShouldRegisterExactlySixSupportedJobs()
+    public void AddBatchJobs_ShouldRegisterExactlyNineSupportedJobs()
     {
         // Regression guard: adding, removing, or deferring a job must force a deliberate update here.
         using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
@@ -148,7 +190,8 @@ public sealed class ServiceCollectionSetupTests
 
         Assert.Equal(
             new[] { "BulkAnimalRatesUpdate", "BulkStaffRatesUpdate", "BulkTestRatesUpdate",
-                    "HealthCheck", "MABArchive", "RecreateSummary" },
+                    "HealthCheck", "MABArchive", BatchJobNames.MilestoneUpdateNotifications, "RecreateSummary",
+                    BatchJobNames.YearEndCutover, BatchJobNames.YearEndDataSetup },
             registeredNames);
     }
 
@@ -264,13 +307,13 @@ public sealed class ServiceCollectionSetupTests
                 "ValidateYearEndContextStep",
                 "ValidateYearScopedSchemaStep",
                 "CreatePlannedYearStep",
+                "MaterializeYearEndConfigurationStep",
                 "CopyFpsYearScopedTablesStep",
-                "CopyMabArchiveYearScopedTablesStep",
+                "ConditionalMabArchiveYearSetupStep",
                 "PeriodSetupStep",
                 "ProjectFinancialResetStep",
                 "ConfiguredPlanningResetStep",
                 "InactiveEmployeeCleanupStep",
-                "TargetYearEmptyTablesStep",
                 "FinalValidationStep"
             },
             steps.Select(s => s.Name));
