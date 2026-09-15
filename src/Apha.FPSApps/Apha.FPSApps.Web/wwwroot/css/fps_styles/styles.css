@@ -5670,13 +5670,6 @@ input.govuk-input.ssr-total-input[readonly] {
         left: -154px !important;
     }
 }
-#gridContainer_testListVlaGrid {
-    .editable-grid-container {
-        .sup_border_bottom_0 {
-            display: none;
-        }
-    }
-}
 #ProjectDropdownPanel {
     position: absolute;
     top: 100%;
