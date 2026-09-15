@@ -7,11 +7,7 @@ using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// PostgreSQL-backed integration tests for <see cref="JobExecutionRepository.GetApprovalMetadataAsync"/>.
-/// CR025 (fps.job_queue approval metadata columns) is assumed universally deployed — there is no
-/// compatibility path for a database that predates it.
-/// </summary>
+/// <summary>PostgreSQL-backed integration tests for <see cref="JobExecutionRepository.GetApprovalMetadataAsync"/>. CR025 (fps.job_queue approval metadata columns) is assumed universally deployed — there is no compatibility path for a database that predates it.</summary>
 [Trait("Category", "Integration")]
 public sealed class JobExecutionRepositoryApprovalMetadataIntegrationTests : IAsyncLifetime
 {

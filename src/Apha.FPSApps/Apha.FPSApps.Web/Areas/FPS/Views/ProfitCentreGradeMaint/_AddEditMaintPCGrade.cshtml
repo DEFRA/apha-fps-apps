@@ -163,9 +163,9 @@
 </div>
 
 <script>
-    var _currentDivisionGrade = '@Html.Raw(Model?.DivisionGrade ?? string.Empty)';
-    var _currentGradeCode = '@Html.Raw(Model?.GradeCode ?? string.Empty)';
-    var _currentProfitCentre = '@Html.Raw(Model?.ProfitCentre ?? string.Empty)';
+    var _currentDivisionGrade = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.DivisionGrade ?? string.Empty) : string.Empty));
+    var _currentGradeCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.GradeCode ?? string.Empty) : string.Empty));
+    var _currentProfitCentre = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.ProfitCentre ?? string.Empty) : string.Empty));
 
     $(document).ready(function () {
         loadMaintPCGradeDropdowns();

@@ -26,11 +26,7 @@ internal static class MabArchiveInfrastructureExtensions
         return services;
     }
 
-    /// <summary>
-    /// Discovers all concrete, non-abstract <see cref="IMabArchiveLoader"/> implementations
-    /// that subclass <see cref="MabArchiveExecutionLoaderBase"/>, sorted deterministically by
-    /// full type name, and registers each as <see cref="IMabArchiveLoader"/>.
-    /// </summary>
+    /// <summary>Discovers all concrete, non-abstract <see cref="IMabArchiveLoader"/> implementations that subclass <see cref="MabArchiveExecutionLoaderBase"/>, sorted deterministically by full type name, and registers each as <see cref="IMabArchiveLoader"/>.</summary>
     private static void RegisterMabArchiveLoaders(IServiceCollection services)
     {
         var loaderType = typeof(IMabArchiveLoader);

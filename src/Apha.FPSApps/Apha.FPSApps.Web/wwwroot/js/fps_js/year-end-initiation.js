@@ -126,7 +126,7 @@
 
         var row         = $(btn).closest('tr')[0];
         var id          = getCellValue(row, 'Id');
-        var value       = getCellValue(row, 'Value') || '';
+        var value       = getCellValue(row, 'Setting') || '';
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var fpsyear = getCellValue(row, 'FpsYear');
  
@@ -178,7 +178,7 @@
         $.ajax({
             url: cfg.editMonthHourUrl,
             type: 'GET',
-            data: { year: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
+            data: { mhyear: year, month: month, fpsyear: fpsyear, fmonth: fmonth },
             success: function (html) {
                 openModalWithHtml(html);
             },

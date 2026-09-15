@@ -8,12 +8,10 @@ using Npgsql;
 namespace Apha.BatchJobs.Application.FailureHandling;
 
 /// <summary>
-/// Single source of truth for mapping a non-cancellation exception to an exit code, failure
-/// category, and CloudWatch <c>ErrorType</c> marker. Used by both <see cref="Apha.BatchJobs.Application.Orchestration.JobOrchestrator"/>
-/// (which logs the marker once, at the point of failure, before re-throwing) and the Worker's
-/// run summary (which reuses the same classification without re-logging the exception).
-/// <c>OperationCanceledException</c> is handled separately by cancellation-context logic, not
-/// this classifier.
+/// Maps a non-cancellation exception to an exit code, failure category, and CloudWatch
+/// <c>ErrorType</c> marker. Shared by <c>JobOrchestrator</c> and the Worker's run summary so
+/// both use the same classification without re-logging. <c>OperationCanceledException</c> is
+/// handled elsewhere, not here.
 /// </summary>
 public sealed class BatchFailureClassifier
 {

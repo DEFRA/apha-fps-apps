@@ -100,6 +100,23 @@
         try { sessionStorage.removeItem(FOCUS_STORAGE_KEY); } catch (ignored) { /* ignore */ }
     }
 
+    // Make the page's top heading reachable and announced by keyboard/screen
+    // readers AFTER the top navigation menus, rather than grabbing focus on
+    // load (which would skip past the menu options). The heading appears after
+    // the nav in the DOM, so giving it tabindex="0" places it in the natural
+    // Tab order right after the top menus: once the user tabs past the menus,
+    // focus lands on the heading and it is read out. Applied globally via this
+    // shared script, which is loaded on every area layout.
+    // Additive: does not modify the existing restoreFocusAfterRefresh logic.
+    function makePageHeadingFocusable() {
+        var heading = document.querySelector('main h1, .content-wrapper h1, h1');
+        if (!heading || !isVisible(heading)) return;
+        if (!heading.hasAttribute('tabindex')) {
+            heading.setAttribute('tabindex', '0');
+        }
+    }
+
+
     // Track user-initiated focus AND clicks on any interactive element so a
     // subsequent page refresh can restore focus/context to the same element,
     // regardless of what triggered the refresh (dropdown selection, form
@@ -116,8 +133,10 @@
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restoreFocusAfterRefresh);
+        document.addEventListener('DOMContentLoaded', makePageHeadingFocusable);
     } else {
         restoreFocusAfterRefresh();
+        makePageHeadingFocusable();
     }
 
     // Resolve the flyout panel + row-container ("body") associated with a trigger input.
@@ -391,13 +410,28 @@
 
     var trackedModals = new WeakSet();
 
+    // When openClass is falsy, the modal doesn't toggle a class to show/hide
+    // (e.g. #modalContainer in BudgetResourceLevel/Index.cshtml, which is
+    // shown/hidden purely via inline style - $(...).css('display','flex') /
+    // $(...).hide()). In that case fall back to checking computed visibility
+    // so the same focus-management logic still applies.
+    function isModalVisible(modal) {
+        var style = window.getComputedStyle(modal);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    function isModalOpen(modal, openClass) {
+        if (openClass) return modal.classList.contains(openClass);
+        return isModalVisible(modal);
+    }
+
     function attachModal(modal, openClass, focusScopeSelector, toggleDisplay) {
         if (!modal || trackedModals.has(modal)) return;
         trackedModals.add(modal);
 
         var focusScope = focusScopeSelector ? modal.querySelector(focusScopeSelector) : null;
         var previouslyFocused = null;
-        var isOpen = modal.classList.contains(openClass);
+        var isOpen = isModalOpen(modal, openClass);
 
         function getFocusableElements() {
             var scope = focusScope || modal;
@@ -406,6 +440,23 @@
             ).filter(function (el) {
                 return !el.hasAttribute('disabled') && el.offsetParent !== null;
             });
+        }
+
+        // When a modal opens, focus should land on its close ("X") button
+        // rather than the first form field, so keyboard/screen-reader users
+        // land on a predictable, always-available control (form fields can be
+        // disabled/hidden depending on modal state, the close button is not).
+        // The close button often lives in the modal header, outside the
+        // narrower focusScope used for Tab-trapping, so it is looked up
+        // against the whole modal rather than the getFocusableElements() list.
+        function getInitialFocusTarget(focusable) {
+            var closeButton = modal.querySelector(
+                '.btn-close, [data-bs-dismiss="modal"], [aria-label="Close"], [aria-label="close"]'
+            );
+            if (closeButton && !closeButton.hasAttribute('disabled') && closeButton.offsetParent !== null) {
+                return closeButton;
+            }
+            return focusable.length ? focusable[0] : null;
         }
 
         // Keep focus trapped inside the modal while it's open. Buttons like
@@ -450,7 +501,7 @@
         });
 
         var observer = new MutationObserver(function () {
-            var nowOpen = modal.classList.contains(openClass);
+            var nowOpen = isModalOpen(modal, openClass);
             if (nowOpen && !isOpen) {
                 if (toggleDisplay) {
                     modal.style.display = 'flex';
@@ -462,8 +513,9 @@
 
                 setTimeout(function () {
                     var focusable = getFocusableElements();
-                    if (focusable.length) {
-                        focusable[0].focus();
+                    var initialTarget = getInitialFocusTarget(focusable);
+                    if (initialTarget) {
+                        initialTarget.focus();
                     } else {
                         modal.focus();
                     }
@@ -482,7 +534,7 @@
                 previouslyFocused = null;
             }
         });
-        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(modal, { attributes: true, attributeFilter: openClass ? ['class'] : ['class', 'style'] });
 
         // Handle the case where the modal is already "open" the moment we
         // first attach to it. This happens for dynamically-injected dialogs
@@ -498,8 +550,9 @@
 
             setTimeout(function () {
                 var focusable = getFocusableElements();
-                if (focusable.length) {
-                    focusable[0].focus();
+                var initialTarget = getInitialFocusTarget(focusable);
+                if (initialTarget) {
+                    initialTarget.focus();
                 } else {
                     modal.focus();
                 }
@@ -530,10 +583,25 @@
         });
     }
 
+    // Attaches focus management to modals that show/hide purely via inline
+    // style (e.g. $('#modalContainer').css('display', 'flex') / .hide()) and
+    // never toggle a class - such as #modalContainer in
+    // BudgetResourceLevel/Index.cshtml. openClass is omitted so attachModal
+    // tracks visibility instead of a class.
+    function scanStyleToggledModals(root) {
+        var scope = root || document;
+        if (!scope.querySelectorAll) return;
+        Array.prototype.forEach.call(scope.querySelectorAll('.brl-modal-container'), function (modal) {
+            attachModal(modal, null, '.modal-dialog', false);
+        });
+    }
+
     function init() {
         scanLegacyModalPopups(document);
 
         scanEditModals(document);
+
+        scanStyleToggledModals(document);
 
         // Watch for .govuk-edit-modal dialogs injected/replaced dynamically
         // (AJAX-loaded partials such as _AddEditMilestone.cshtml,
@@ -831,6 +899,20 @@
 
         table.setAttribute('role', 'grid');
 
+        // Screen readers run pages in "browse mode", where they capture the
+        // arrow keys for their own virtual cursor - the keydown never reaches
+        // the page, so the arrow-key navigation below appears dead whenever
+        // NVDA is running. Exposing the grid's wrapper as an application
+        // region makes the screen reader switch to focus mode while focus is
+        // inside the grid, so arrow keys are passed straight through. The
+        // table keeps its grid/row/gridcell semantics, so rows, columns and
+        // cell values are still announced.
+        var appRegion = table.closest('.grid-scroll-container') || table.parentElement;
+        if (appRegion && appRegion.getAttribute('role') !== 'application') {
+            appRegion.setAttribute('role', 'application');
+            appRegion.setAttribute('aria-roledescription', 'data grid');
+        }
+
         var columnNames = getColumnNames(table);
         var rows = getDataRows(table);
 
@@ -1066,15 +1148,34 @@
             btn.setAttribute('role', 'menuitem');
             var dropdownId = btn.getAttribute('data-dropdown');
             if (dropdownId) {
+                var menu = document.getElementById(dropdownId);
+                // An empty popup is not a menu, so the button must not advertise
+                // one - aria-haspopup / aria-controls / aria-expanded are dropped
+                // and the item is exposed as unavailable instead.
+                if (!menu || !menu.querySelector('a.dropdown-item, .sub-dropdown-toggle')) {
+                    btn.removeAttribute('aria-haspopup');
+                    btn.removeAttribute('aria-controls');
+                    btn.removeAttribute('aria-expanded');
+                    btn.setAttribute('aria-disabled', 'true');
+                    return;
+                }
+                btn.removeAttribute('aria-disabled');
                 btn.setAttribute('aria-haspopup', 'true');
                 btn.setAttribute('aria-controls', dropdownId);
-                var menu = document.getElementById(dropdownId);
-                btn.setAttribute('aria-expanded', menu && menu.classList.contains('show') ? 'true' : 'false');
+                btn.setAttribute('aria-expanded', menu.classList.contains('show') ? 'true' : 'false');
             }
         });
 
         // Level-2 / level-3 menus and their entries.
+        // A role="menu" with no menuitem descendants is an invalid ARIA menu, so
+        // containers that render empty (config- or role-gated links) are left as
+        // plain markup rather than being given menu semantics.
         document.querySelectorAll('.dropdown-menu, .sub-dropdown-menu').forEach(function (menu) {
+            if (!menu.querySelector('a.dropdown-item, .sub-dropdown-toggle')) {
+                menu.removeAttribute('role');
+                menu.removeAttribute('aria-orientation');
+                return;
+            }
             menu.setAttribute('role', 'menu');
             menu.setAttribute('aria-orientation', 'vertical');
         });
@@ -1087,10 +1188,21 @@
         });
         document.querySelectorAll('.sub-dropdown-toggle').forEach(function (toggle) {
             toggle.setAttribute('role', 'menuitem');
-            toggle.setAttribute('aria-haspopup', 'true');
             var subDropdown = toggle.closest('.sub-dropdown');
             var subMenu = subDropdown ? subDropdown.querySelector(':scope > .sub-dropdown-menu') : null;
-            toggle.setAttribute('aria-expanded', subMenu && subMenu.classList.contains('show') ? 'true' : 'false');
+            if (!subMenu || !subMenu.querySelector('a.dropdown-item, .sub-dropdown-toggle')) {
+                toggle.removeAttribute('aria-haspopup');
+                toggle.removeAttribute('aria-controls');
+                toggle.removeAttribute('aria-expanded');
+                toggle.setAttribute('aria-disabled', 'true');
+                return;
+            }
+            toggle.removeAttribute('aria-disabled');
+            toggle.setAttribute('aria-haspopup', 'true');
+            if (subMenu.id) {
+                toggle.setAttribute('aria-controls', subMenu.id);
+            }
+            toggle.setAttribute('aria-expanded', subMenu.classList.contains('show') ? 'true' : 'false');
         });
 
         // The user-profile dropdown is the same kind of widget.
@@ -1178,5 +1290,57 @@
         } else {
             dialog.focus();
         }
+    });
+})();
+
+// ── Reset focus to the top of the page after Back/Forward navigation ───────
+// Going Back (browser button, a govuk-back-link or history.back()) restores
+// the previous page along with its scroll position, and the browser leaves
+// focus on <body> wherever the user was. Screen readers therefore carry on
+// reading from the middle of the restored page instead of announcing it from
+// the start. Moving focus to the application logo/title in the header puts
+// the reading position back at the top of the page, exactly as it is on a
+// fresh page load.
+(function () {
+    'use strict';
+
+    var HEADER_TARGETS = ['.app-log', 'header .app-log-wrapper', 'header'];
+
+    function getHeaderTarget() {
+        for (var i = 0; i < HEADER_TARGETS.length; i++) {
+            var el = document.querySelector(HEADER_TARGETS[i]);
+            if (el) return el;
+        }
+        return null;
+    }
+
+    function isBackForwardNavigation(persisted) {
+        // Restored from the back/forward cache.
+        if (persisted) return true;
+
+        if (window.performance && typeof window.performance.getEntriesByType === 'function') {
+            var entries = window.performance.getEntriesByType('navigation');
+            if (entries && entries.length) return entries[0].type === 'back_forward';
+        }
+        // Legacy fallback: 2 === TYPE_BACK_FORWARD.
+        return !!(window.performance && window.performance.navigation &&
+                  window.performance.navigation.type === 2);
+    }
+
+    function focusPageTop() {
+        var target = getHeaderTarget();
+        if (!target) return;
+
+        if (!target.hasAttribute('tabindex')) {
+            target.setAttribute('tabindex', '-1');
+        }
+        window.scrollTo(0, 0);
+        target.focus();
+    }
+
+    window.addEventListener('pageshow', function (e) {
+        if (!isBackForwardNavigation(e.persisted)) return;
+        // Let the browser finish restoring scroll/focus first, then override.
+        window.setTimeout(focusPageTop, 0);
     });
 })();

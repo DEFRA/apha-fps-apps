@@ -51,7 +51,7 @@
             </div>
             <div class="govuk-grid-row">
                 <div class="govuk-grid-column-full mt-2">
-                    <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
+                    <div id="gridContainer_@Model.ProjectsGrid.GridId">
                         @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
                     </div>
                 </div>
@@ -71,7 +71,7 @@
             </div>
             <div class="govuk-grid-row">
                 <div class="govuk-grid-column-full mt-2">
-                    <div id="gridContainer_@Model.AdditionalCostGrid.GridId" style="padding: 5px;">
+                    <div id="gridContainer_@Model.AdditionalCostGrid.GridId">
                         @await Html.PartialAsync("_DataGrid", Model.AdditionalCostGrid)
                     </div>
                 </div>
@@ -260,13 +260,10 @@
         function setRemainder(value) {
             var num = parseFloat(value) || 0;
             var el = document.getElementById('Remainder');
-            if (num < 0) {
-                el.value = '-(' + formatCurrency(Math.abs(num)) + ')';
-                el.style.color = 'red';
-            } else {
-                el.value = formatCurrency(num);
-                el.style.color = 'blue';
-            }
+            // Remainder follows the standard summary styling - negatives are shown
+            // with a leading minus sign only, never with colour or brackets.
+            el.style.color = '';
+            el.value = formatCurrency(num);
         }
     </script>
 }

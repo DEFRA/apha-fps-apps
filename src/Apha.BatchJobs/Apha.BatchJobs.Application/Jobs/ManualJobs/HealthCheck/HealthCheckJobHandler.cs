@@ -6,14 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 
-/// <summary>
-/// Container liveness check. Exercises the full ECS batch dispatch path (host build → DI
-/// resolution → job execution → exit 0) without touching the database.
-/// Trigger: deployment pipeline or operator passes "HealthCheck" as the CLI argument.
-/// Checks: environment name readable, BatchJobSettings resolves from DI, synthetic
-/// 50-iteration loop completes without exception.
-/// Consumer: deployment automation verifying that the ECS task launch works end-to-end.
-/// </summary>
+/// <summary>Container liveness check. Exercises the full ECS batch dispatch path (host build → DI resolution → job execution → exit 0) without touching the database. Trigger: deployment pipeline or operator passes "HealthCheck" as the CLI argument. Checks: environment name readable, BatchJobSettings resolves from DI, synthetic 50-iteration loop completes without exception. Consumer: deployment automation verifying that the ECS task launch works end-to-end.</summary>
 public sealed class HealthCheckJobHandler : IBatchJob
 {
     private readonly ILogger<HealthCheckJobHandler> _logger;

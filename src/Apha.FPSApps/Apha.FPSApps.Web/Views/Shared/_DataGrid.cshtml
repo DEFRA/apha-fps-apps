@@ -17,7 +17,7 @@
         {
             <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
                 <div class="sup_flex_space_between">
-                        @Model.Title
+                        <span id="@($"{Model.GridId}_title")" tabindex="0">@Model.Title</span>
                         <div style="margin-left:auto; display:flex; justify-content:flex-end; align-items:center; gap:10px">
                             @if (Model.AllowExport)
                             {

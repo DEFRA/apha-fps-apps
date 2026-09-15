@@ -43,5 +43,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsSetting.SaveSettingAsync(dto);
         }
+
+        public async Task<ApiResponseDto<SettingDto>> SaveYearEndSettingAsync(SettingDto dto)
+        {
+            return await _fpsClient.FpsSetting.SaveYearEndSettingAsync(dto);
+        }
     }
 }
