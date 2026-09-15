@@ -92,6 +92,7 @@ namespace Apha.Common.Constants
 
         // Project
         public const string GetAllProjects = "api/v1/project";
+        public const string GetDistinctParentProjects = "api/v1/project/distinct";
         public const string GetPagedProjects = "api/v1/project/paged";
         public const string GetPagedProjectsByUser = "api/v1/project/paged/by-user";
         public const string GetAllProjectsForAllUsers = "api/v1/project/all";
