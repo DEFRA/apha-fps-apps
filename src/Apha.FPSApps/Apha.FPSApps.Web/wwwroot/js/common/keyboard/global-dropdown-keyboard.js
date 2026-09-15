@@ -100,6 +100,23 @@
         try { sessionStorage.removeItem(FOCUS_STORAGE_KEY); } catch (ignored) { /* ignore */ }
     }
 
+    // Make the page's top heading reachable and announced by keyboard/screen
+    // readers AFTER the top navigation menus, rather than grabbing focus on
+    // load (which would skip past the menu options). The heading appears after
+    // the nav in the DOM, so giving it tabindex="0" places it in the natural
+    // Tab order right after the top menus: once the user tabs past the menus,
+    // focus lands on the heading and it is read out. Applied globally via this
+    // shared script, which is loaded on every area layout.
+    // Additive: does not modify the existing restoreFocusAfterRefresh logic.
+    function makePageHeadingFocusable() {
+        var heading = document.querySelector('main h1, .content-wrapper h1, h1');
+        if (!heading || !isVisible(heading)) return;
+        if (!heading.hasAttribute('tabindex')) {
+            heading.setAttribute('tabindex', '0');
+        }
+    }
+
+
     // Track user-initiated focus AND clicks on any interactive element so a
     // subsequent page refresh can restore focus/context to the same element,
     // regardless of what triggered the refresh (dropdown selection, form
@@ -116,8 +133,10 @@
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restoreFocusAfterRefresh);
+        document.addEventListener('DOMContentLoaded', makePageHeadingFocusable);
     } else {
         restoreFocusAfterRefresh();
+        makePageHeadingFocusable();
     }
 
     // Resolve the flyout panel + row-container ("body") associated with a trigger input.
@@ -880,6 +899,20 @@
 
         table.setAttribute('role', 'grid');
 
+        // Screen readers run pages in "browse mode", where they capture the
+        // arrow keys for their own virtual cursor - the keydown never reaches
+        // the page, so the arrow-key navigation below appears dead whenever
+        // NVDA is running. Exposing the grid's wrapper as an application
+        // region makes the screen reader switch to focus mode while focus is
+        // inside the grid, so arrow keys are passed straight through. The
+        // table keeps its grid/row/gridcell semantics, so rows, columns and
+        // cell values are still announced.
+        var appRegion = table.closest('.grid-scroll-container') || table.parentElement;
+        if (appRegion && appRegion.getAttribute('role') !== 'application') {
+            appRegion.setAttribute('role', 'application');
+            appRegion.setAttribute('aria-roledescription', 'data grid');
+        }
+
         var columnNames = getColumnNames(table);
         var rows = getDataRows(table);
 
@@ -1257,5 +1290,57 @@
         } else {
             dialog.focus();
         }
+    });
+})();
+
+// ── Reset focus to the top of the page after Back/Forward navigation ───────
+// Going Back (browser button, a govuk-back-link or history.back()) restores
+// the previous page along with its scroll position, and the browser leaves
+// focus on <body> wherever the user was. Screen readers therefore carry on
+// reading from the middle of the restored page instead of announcing it from
+// the start. Moving focus to the application logo/title in the header puts
+// the reading position back at the top of the page, exactly as it is on a
+// fresh page load.
+(function () {
+    'use strict';
+
+    var HEADER_TARGETS = ['.app-log', 'header .app-log-wrapper', 'header'];
+
+    function getHeaderTarget() {
+        for (var i = 0; i < HEADER_TARGETS.length; i++) {
+            var el = document.querySelector(HEADER_TARGETS[i]);
+            if (el) return el;
+        }
+        return null;
+    }
+
+    function isBackForwardNavigation(persisted) {
+        // Restored from the back/forward cache.
+        if (persisted) return true;
+
+        if (window.performance && typeof window.performance.getEntriesByType === 'function') {
+            var entries = window.performance.getEntriesByType('navigation');
+            if (entries && entries.length) return entries[0].type === 'back_forward';
+        }
+        // Legacy fallback: 2 === TYPE_BACK_FORWARD.
+        return !!(window.performance && window.performance.navigation &&
+                  window.performance.navigation.type === 2);
+    }
+
+    function focusPageTop() {
+        var target = getHeaderTarget();
+        if (!target) return;
+
+        if (!target.hasAttribute('tabindex')) {
+            target.setAttribute('tabindex', '-1');
+        }
+        window.scrollTo(0, 0);
+        target.focus();
+    }
+
+    window.addEventListener('pageshow', function (e) {
+        if (!isBackForwardNavigation(e.persisted)) return;
+        // Let the browser finish restoring scroll/focus first, then override.
+        window.setTimeout(focusPageTop, 0);
     });
 })();
