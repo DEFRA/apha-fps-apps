@@ -274,6 +274,14 @@ function getTimeCodeExtraFilters() {
 $(document).ready(function () {
     enableTimeCodeActiveCheckboxes();
 
+    // Re-enable Active checkboxes whenever the time code grid reloads
+    // (e.g. sorting, paging, filtering), because grid HTML is re-rendered.
+    document.addEventListener('gridReloaded', function (e) {
+        if (e.detail && e.detail.gridId === (timeCodeGridId || 'timeCodeGrid')) {
+            enableTimeCodeActiveCheckboxes();
+        }
+    });
+
     $(document).on('change', 'td.checkbox-cell[data-property="Active"] input[type="checkbox"]', function () {
         if ($(this).closest('table').attr('id') === 'tbl_' + (timeCodeGridId || 'timeCodeGrid')) {
             toggleTimeCodeActive(this);
