@@ -282,6 +282,33 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             await _http.Received(1).GetAsync<ProjectDetailsMilestoneRes>(url);
         }
 
+        [Fact]
+        public async Task GetProjectsDetailsForMilestoneAsync_WhenSuccessResponseHasNullData_ReturnsMappedDto()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            var url = string.Format(PimsApiEndpoints.GetProjectsDetailsForMilestone, parentproject);
+            var httpResponse = new ApiResponse<ProjectDetailsMilestoneRes>
+            {
+                Success = true,
+                Data = null
+            };
+            var expectedDto = ApiResponseDto<ProjectDetailsMilestoneDto>.SuccessResponse(null);
+
+            _http.GetAsync<ProjectDetailsMilestoneRes>(url).Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(httpResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetProjectsDetailsForMilestoneAsync(parentproject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Null(result.Data);
+            await _http.Received(1).GetAsync<ProjectDetailsMilestoneRes>(url);
+            _mapper.Received(1).Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(httpResponse);
+        }
+
         #endregion
 
         #region GetFpsProjectByIdAsync Tests
@@ -334,19 +361,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
         }
 
         [Fact]
-        public async Task GetFpsProjectByIdAsync_WhenHttpThrows_ReturnsInternalErrorResponse()
+        public async Task GetFpsProjectByIdAsync_WhenHttpThrows_PropagatesException()
         {
             // Arrange
             var parentproject = "PP001";
             _http.GetAsync<ProjectRes>(Arg.Any<string>()).Throws(new Exception("Network failure"));
 
-            // Act
-            var result = await _client.GetFpsProjectByIdAsync(parentproject);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Contains(result.Errors, e => e.Code == "INTERNAL_ERROR");
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetFpsProjectByIdAsync(parentproject));
+            Assert.Equal("Network failure", ex.Message);
         }
 
         #endregion
@@ -401,19 +424,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
         }
 
         [Fact]
-        public async Task GetProposedProjectByIdAsync_WhenHttpThrows_ReturnsInternalErrorResponse()
+        public async Task GetProposedProjectByIdAsync_WhenHttpThrows_PropagatesException()
         {
             // Arrange
             var parentproject = "PP001";
             _http.GetAsync<ProposedProjectRes>(Arg.Any<string>()).Throws(new Exception("Network failure"));
 
-            // Act
-            var result = await _client.GetProposedProjectByIdAsync(parentproject);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Contains(result.Errors, e => e.Code == "INTERNAL_ERROR");
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetProposedProjectByIdAsync(parentproject));
+            Assert.Equal("Network failure", ex.Message);
         }
 
         #endregion
@@ -470,19 +489,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
         }
 
         [Fact]
-        public async Task GetYearlyDetailsByProjectAsync_WhenHttpThrows_ReturnsInternalErrorResponse()
+        public async Task GetYearlyDetailsByProjectAsync_WhenHttpThrows_PropagatesException()
         {
             // Arrange
             var parentproject = "PP001";
             _http.GetAsync<List<ProjectsRes>>(Arg.Any<string>()).Throws(new Exception("Network failure"));
 
-            // Act
-            var result = await _client.GetYearlyDetailsByProjectAsync(parentproject);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Contains(result.Errors, e => e.Code == "INTERNAL_ERROR");
+            // Act / Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _client.GetYearlyDetailsByProjectAsync(parentproject));
+            Assert.Equal("Network failure", ex.Message);
         }
 
         #endregion

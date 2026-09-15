@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
         }
 
         [Fact]
-        public async Task CreateProjectAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task CreateProjectAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var dto = new ProposedProjectDto { Parentproject = "PP001" };
@@ -112,37 +112,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             _http.PostAsync<ProposedProjectReq, ProposedProjectRes>(PimsApiEndpoints.CreateProject, request)
                 .ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.CreateProposedProjectAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to create project", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.CreateProposedProjectAsync(dto));
         }
 
         [Fact]
-        public async Task CreateProjectAsync_WhenMapperThrowsExceptionOnRequestMapping_ReturnsInternalError()
+        public async Task CreateProjectAsync_WhenMapperThrowsExceptionOnRequestMapping_PropagatesException()
         {
             // Arrange
             var dto = new ProposedProjectDto { Parentproject = "PP001" };
             _mapper.Map<ProposedProjectReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.CreateProposedProjectAsync(dto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to create project", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.CreateProposedProjectAsync(dto));
         }
 
         [Fact]
@@ -252,22 +234,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
         }
 
         [Fact]
-        public async Task GetProjectProgramsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetProjectProgramsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectPrograms).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetProjectProgramsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve programs", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProjectProgramsAsync());
         }
 
         [Fact]
-        public async Task GetProjectProgramsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetProjectProgramsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string> { "Program A" } };
@@ -275,13 +252,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectPrograms).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetProjectProgramsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve programs", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProjectProgramsAsync());
         }
 
         [Fact]
@@ -379,22 +351,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
         }
 
         [Fact]
-        public async Task GetProjectCustomersAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetProjectCustomersAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectCustomers).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetProjectCustomersAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve customers", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProjectCustomersAsync());
         }
 
         [Fact]
-        public async Task GetProjectCustomersAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetProjectCustomersAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string> { "Customer A" } };
@@ -402,13 +369,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectCustomers).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetProjectCustomersAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve customers", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProjectCustomersAsync());
         }
 
         [Fact]
@@ -506,22 +468,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
         }
 
         [Fact]
-        public async Task GetProjectStatusesAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetProjectStatusesAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectStatuses).ThrowsAsync(new Exception("Network error"));
 
-            // Act
-            var result = await _client.GetProjectStatusesAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve statuses", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProjectStatusesAsync());
         }
 
         [Fact]
-        public async Task GetProjectStatusesAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetProjectStatusesAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string> { "Active" } };
@@ -529,13 +486,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProposedProject
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetProjectStatuses).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetProjectStatusesAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("Failed to retrieve statuses", result.Errors![0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProjectStatusesAsync());
         }
 
         [Fact]

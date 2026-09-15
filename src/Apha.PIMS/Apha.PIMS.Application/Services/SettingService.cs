@@ -1,5 +1,6 @@
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
+using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using AutoMapper;
@@ -33,7 +34,12 @@ namespace Apha.PIMS.Application.Services
         public async Task<SettingDto?> GetSettingByIdAsync(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("Setting id is required.", nameof(id));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Setting id is required.",
+                        "SETTING_ID_REQUIRED")
+                ]);
 
             Settings? entity = await _repository.GetSettingByIdAsync(id);
             return entity is null ? null : _mapper.Map<SettingDto>(entity);
@@ -44,7 +50,12 @@ namespace Apha.PIMS.Application.Services
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
             if (string.IsNullOrWhiteSpace(dto.Id))
-                throw new ArgumentException("Setting id is required.", nameof(dto));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Setting id is required.",
+                        "SETTING_ID_REQUIRED")
+                ]);
 
             Settings? existing = await _repository.GetSettingByIdAsync(dto.Id);
             if (existing is null)
@@ -69,7 +80,12 @@ namespace Apha.PIMS.Application.Services
         public async Task<bool> SettingExistsAsync(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("Setting id is required.", nameof(id));
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Setting id is required.",
+                        "SETTING_ID_REQUIRED")
+                ]);
 
             return await _repository.SettingExistsAsync(id);
         }
