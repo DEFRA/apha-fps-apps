@@ -17,6 +17,7 @@
     <PackageReference Include="Serilog.Sinks.AwsCloudWatch" Version="4.4.42" />
 	<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.5" />
 	<PackageReference Include="ClosedXML" Version="0.105.0" />
+	<PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.436" />
   </ItemGroup>
 
   <ItemGroup>

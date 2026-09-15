@@ -11,14 +11,7 @@
         ViewData["Title"] = $"{fpsYearCode} : {pageTitle}";
     }
     <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
-    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/fps_styles/styles.css" />
-    <link rel="stylesheet" href="~/DataGrid/datagrid.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
+    <link rel="stylesheet" href="~/css/bundles/fps.css" asp-append-version="true" />
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -48,11 +41,7 @@
     </div>
 
     <!-- ── Scripts ───────────────────────────────────────────────────── -->
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
-    <script src="~/js/common/keyboard/global-dropdown-keyboard.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
-    <script src="~/js/govuk-modal-dialog.js"></script>
+    <script src="~/js/bundles/fps-scripts.js" asp-append-version="true"></script>
     <fps-year-script></fps-year-script>
 
     <script>
@@ -95,9 +84,7 @@
             };
     </script>
 
-    <script src="~/js/common/headernav/navmenu.js"></script>
-    <script src="~/js/common/numeric-decimal-input.js"></script>
-    <script src="~/js/common/js-alphanumeric-field.js"></script>
+    <script src="~/js/bundles/fps-common.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

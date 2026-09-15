@@ -74,6 +74,9 @@ namespace Apha.FPSApps.Web.Extensions
             // Application services
             services.AddApplicationServices();
 
+            // CSS/JS bundling and minification (LigerShark.WebOptimizer)
+            services.AddAssetBundling();
+
             // AWS S3 client
             var regionName = configuration["S3Storage:Region"]
                 ?? throw new InvalidOperationException("S3Storage:Region is not configured.");
@@ -136,6 +139,21 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Use forwarded headers - must be before authentication
             app.UseForwardedHeaders();
+
+            // Bundling/minification must run before static files so bundle
+            // requests are intercepted and generated assets can be served.
+            // WebOptimizer replaces WebRootFileProvider with a plain physical
+            // provider over wwwroot, which drops the StaticWebAssetsFileProvider
+            // used to serve compiled scoped CSS (e.g. Apha.FPSApps.Web.styles.css
+            // from _Layout.cshtml.css). Capture the original composite provider
+            // first, then restore it afterwards so those virtual assets still resolve.
+            var originalWebRootFileProvider = app.Environment.WebRootFileProvider;
+
+            app.UseWebOptimizer();
+
+            app.Environment.WebRootFileProvider = new Microsoft.Extensions.FileProviders.CompositeFileProvider(
+                app.Environment.WebRootFileProvider,
+                originalWebRootFileProvider);
 
             app.UseStaticFiles();
             app.UseRouting();

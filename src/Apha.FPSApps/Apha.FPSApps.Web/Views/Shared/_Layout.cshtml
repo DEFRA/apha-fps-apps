@@ -13,20 +13,14 @@
     <meta property="og:description" content="FPS Apps - Department for Environment, Food & Rural Affairs">
     <meta property="og:type" content="website">
 
-    <!-- CSS Load Order: Bootstrap → GOV.UK → Custom (Important!) -->
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/css/suppliement_style_over_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- CSS Load Order: Bootstrap → GOV.UK → Custom (bundled & minified) -->
+    <link rel="stylesheet" href="~/css/bundles/root.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Apha.FPSApps.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
     @RenderBody()
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/bundles/root.js" asp-append-version="true"></script>
     <fps-year-script></fps-year-script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

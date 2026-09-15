@@ -3,6 +3,14 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Static Web Assets (e.g. scoped CSS bundle Apha.FPSApps.Web.styles.css generated
+// from *.cshtml.css) are auto-enabled only in the Development environment. This app
+// also runs under the "local" environment, so enable them explicitly there.
+if (builder.Environment.IsEnvironment("local"))
+{
+    builder.WebHost.UseStaticWebAssets();
+}
+
 if (builder.Environment.IsEnvironment("local"))
 {
     builder.Host.UseSerilog((ctx, lc) =>
