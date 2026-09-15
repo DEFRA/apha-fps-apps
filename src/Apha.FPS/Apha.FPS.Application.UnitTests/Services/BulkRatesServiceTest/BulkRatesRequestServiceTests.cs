@@ -123,7 +123,6 @@ public class BulkRatesRequestServiceTests
         repo.GetFecRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupRowsForExportAsync(FpsYear, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetExistingProjectCodesAsync(Arg.Any<IEnumerable<string>>(), FpsYear, Arg.Any<CancellationToken>()).Returns(new HashSet<string>(StringComparer.OrdinalIgnoreCase) as IReadOnlySet<string>);
-        repo.GetExistingCapabilityPairsAsync(Arg.Any<IEnumerable<(string, string)>>(), FpsYear, Arg.Any<CancellationToken>()).Returns(new HashSet<(string, string)>() as IReadOnlySet<(string, string)>);
         repo.GetFecSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);
         repo.GetAgrupSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<TestRequirementStagingRow>() as IReadOnlyList<TestRequirementStagingRow>);
         repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>()).Returns(Array.Empty<TestOrProductStagingRow>() as IReadOnlyList<TestOrProductStagingRow>);

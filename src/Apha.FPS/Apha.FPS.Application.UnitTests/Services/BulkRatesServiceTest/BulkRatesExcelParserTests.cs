@@ -54,9 +54,6 @@ public class BulkRatesExcelParserTests
         ws.Cell(1, 7).Value = "Date Created";
         ws.Cell(1, 8).Value = "Active";
         ws.Cell(1, 9).Value = "Comments";
-        ws.Cell(1, 10).Value = "Project Buyer Code";
-        ws.Cell(1, 11).Value = "Test Buyer Code";
-        ws.Cell(1, 12).Value = "Test Buyer Work Group";
         return ws;
     }
 
@@ -238,49 +235,26 @@ public class BulkRatesExcelParserTests
         result.AgrupRows.Should().ContainSingle(r => r.AgrupNew == null);
     }
 
-    // ── AGRUP routing columns ──────────────────────────────────────────────────
+    // ── AGRUP routing: ProjectBuyerCode is derived from Buyer, not a separate column ──
 
     [Fact]
-    public void Parse_AgrupSheet_ParsesRoutingColumns()
+    public void Parse_AgrupSheet_DerivesProjectBuyerCodeFromBuyer()
     {
         var bytes = BuildWorkbook(wb =>
         {
             AddFecSheet(wb);
             var agrup = AddAgrupSheet(wb);
             agrup.Cell(2, 1).Value = "TC001";
-            agrup.Cell(2, 2).Value = "NEWBUYER";
+            agrup.Cell(2, 2).Value = "EXOR1051";
             agrup.Cell(2, 4).Value = 55.50;
-            agrup.Cell(2, 10).Value = "PRJ001";  // Project Buyer Code
-            agrup.Cell(2, 11).Value = "TBC001";  // Test Buyer Code
-            agrup.Cell(2, 12).Value = "WG01";    // Test Buyer Work Group
         });
 
         var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
 
         result.HasParseErrors.Should().BeFalse();
         var row = result.AgrupRows.Should().ContainSingle().Which;
-        row.ProjectBuyerCode.Should().Be("PRJ001");
-        row.TestBuyerCode.Should().Be("TBC001");
-        row.TestBuyerWorkGroup.Should().Be("WG01");
-    }
-
-    [Fact]
-    public void Parse_AgrupSheet_WhenRoutingColumnsBlank_ReturnsNull()
-    {
-        var bytes = BuildWorkbook(wb =>
-        {
-            AddFecSheet(wb);
-            var agrup = AddAgrupSheet(wb);
-            agrup.Cell(2, 1).Value = "TC001";
-            agrup.Cell(2, 2).Value = "VET";
-            agrup.Cell(2, 4).Value = 55.50;
-            // Routing columns left blank — existing-row re-upload with no routing change.
-        });
-
-        var result = _parser.Parse(bytes, "rates.xlsx", "BulkTestRatesUpdate", QueueId);
-
-        var row = result.AgrupRows.Should().ContainSingle().Which;
-        row.ProjectBuyerCode.Should().BeNull();
+        row.Buyer.Should().Be("EXOR1051");
+        row.ProjectBuyerCode.Should().Be("EXOR1051");
         row.TestBuyerCode.Should().BeNull();
         row.TestBuyerWorkGroup.Should().BeNull();
     }
