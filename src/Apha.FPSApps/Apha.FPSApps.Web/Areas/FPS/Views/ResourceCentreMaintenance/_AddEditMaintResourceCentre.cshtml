@@ -99,7 +99,7 @@
 
     function loadDivisions() {
         var $select = $('#Division');
-        var currentDivision = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.Division ?? string.Empty));
+        var currentDivision = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.Division ?? string.Empty) : string.Empty));
 
         // Remove any existing change handlers to prevent accumulation
         $select.off('change');

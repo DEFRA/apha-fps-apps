@@ -76,13 +76,13 @@
                                 <div class="govuk-grid-column-full mt-2">
                                     <div class="financial-summary mt-1">
                                         <div class="summary-row govuk-!-margin-0 pva-inline-summary">
-                                            <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label" for="project-total-cost">Totals:</label>
+                                            <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label" for="project-total-cost">Total &nbsp;Amount:</label>
                                             <div class="govuk-input__wrapper">
                                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                                 <input type="text" id="project-total-cost" asp-for="TotalActualCost" readonly
                                                        class="govuk-input text-AlignRight pva-input-160"
                                                        value="@(Model.TotalActualCost.ToString("N2"))"
-                                                       aria-label="Total Actual Cost">
+                                                       aria-label="Total Amount">
                                             </div>
                                                 <label class="govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label" for="project-percent-plan">Percent of Plan:</label>
                                                 <input type="text" id="project-percent-plan" asp-for="PercentOfPlan" readonly

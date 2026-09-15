@@ -1317,11 +1317,25 @@ label.required::after {
   color: #fff;
   background: #ff4239;
 }
- 
+
 .modal-header .btn-close {
   margin: 0;
 }
- 
+
+/* Bootstrap's .btn-close:focus sets its own blue box-shadow ring, which wins
+   over the shared :focus-visible outline rule above. Override it here so the
+   modal close button gets the same standard yellow focus indicator as every
+   other focusable control. */
+.btn-close:focus {
+  box-shadow: none !important;
+}
+
+.btn-close:focus-visible {
+  outline: 3px solid #fd0 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+
 .dropdown-item:focus,
 .dropdown-item:hover {
   background-color: #003078;
@@ -1960,6 +1974,7 @@ summary:focus-visible,
 select.app-log:focus-visible,
 .custom-table :focus-visible,
 .editable-grid-table :focus-visible,
+.btn-close:focus-visible,
 /* Forces the visible focus ring for elements focused programmatically via
    JavaScript (e.g. re-focusing a dropdown trigger after selection), since
    some browsers don't apply :focus-visible to script-driven .focus() calls. */

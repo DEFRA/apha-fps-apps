@@ -6,6 +6,9 @@
     var formId = isEditMode ? "editLookupItemForm" : "addLookupItemForm";
     var saveLabel = isEditMode ? "Update" : "Save";
     var saveAction = isEditMode ? "updateLookupItem()" : "saveLookupItem()";
+
+    // UI-only max length is resolved in the controller (per lookup table).
+    var valueMaxLength = ViewData["ValueMaxLength"] as int? ?? 50;
 }
 
 <div class="modal-header">
@@ -33,7 +36,7 @@
 
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Value">Value <span class="sup_color_red">*</span></label>
-                <input type="text" asp-for="Value" required class="govuk-input" maxlength="50">
+                <input type="text" asp-for="Value" required class="govuk-input" maxlength="@valueMaxLength">
                 <span asp-validation-for="Value" class="govuk-error-message" style="display:none;"></span>
             </div>
         </form>

@@ -107,12 +107,7 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
         return inserted;
     }
 
-    /// <summary>
-    /// Resolves the set of WorkGroupGrade values authorized for the configured batch identity, mirroring the
-    /// legacy nested IN clauses. Returns null (meaning "no filter") if the identity can't be resolved to a
-    /// non-empty permitted set, so a misconfiguration degrades to the safe pre-CR-028 unfiltered behavior
-    /// instead of silently archiving zero staff rows.
-    /// </summary>
+    /// <summary>Resolves the set of WorkGroupGrade values authorized for the configured batch identity, mirroring the legacy nested IN clauses. Returns null (meaning "no filter") if the identity can't be resolved to a non-empty permitted set, so a misconfiguration degrades to the safe pre-CR-028 unfiltered behavior instead of silently archiving zero staff rows.</summary>
     private async Task<HashSet<string>?> ResolvePermittedWorkGroupGradesAsync(
         BatchJobsDbContext context,
         int year,

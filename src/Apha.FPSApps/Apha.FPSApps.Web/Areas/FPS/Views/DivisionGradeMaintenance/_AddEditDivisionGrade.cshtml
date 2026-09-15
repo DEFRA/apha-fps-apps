@@ -121,8 +121,8 @@
 </div>
 
 <script>
-    var _currentGradeCode = '@Html.Raw(Model?.GradeCode ?? string.Empty)';
-    var _currentDivision = '@Html.Raw(Model?.Division ?? string.Empty)';
+    var _currentGradeCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.GradeCode ?? string.Empty) : string.Empty));
+    var _currentDivision = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isEditMode ? (Model?.Division ?? string.Empty) : string.Empty));
 
     $(document).ready(function () {
         loadMaintDGDropdowns();

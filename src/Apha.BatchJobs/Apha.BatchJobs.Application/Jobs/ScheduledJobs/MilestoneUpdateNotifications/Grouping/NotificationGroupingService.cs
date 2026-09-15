@@ -2,13 +2,7 @@ using Apha.BatchJobs.Domain.Entities.MilestoneUpdateNotifications;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Grouping;
 
-/// <summary>
-/// Implementation of <see cref="INotificationGroupingService"/>. Groups every
-/// classified candidate — including disabled and missing-email ones — by the composite
-/// recipient identity, deduplicating project links by project identity (Year +
-/// ParentProject) rather than by comparing raw EditLink text, and ordering links by
-/// project code ascending (plan section 9.1).
-/// </summary>
+/// <summary>Implementation of <see cref="INotificationGroupingService"/>. Groups every classified candidate — including disabled and missing-email ones — by the composite recipient identity, deduplicating project links by project identity (Year + ParentProject) rather than by comparing raw EditLink text, and ordering links by project code ascending (plan section 9.1).</summary>
 public sealed class NotificationGroupingService : INotificationGroupingService
 {
     private readonly IRecipientIdentityBuilder _recipientIdentityBuilder;

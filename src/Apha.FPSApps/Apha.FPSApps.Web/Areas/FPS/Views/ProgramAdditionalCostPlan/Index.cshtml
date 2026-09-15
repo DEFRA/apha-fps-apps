@@ -51,7 +51,7 @@
             </div>
             <div class="govuk-grid-row">
                 <div class="govuk-grid-column-full mt-2">
-                    <div id="gridContainer_@Model.ProjectsGrid.GridId" style="padding: 5px;">
+                    <div id="gridContainer_@Model.ProjectsGrid.GridId">
                         @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
                     </div>
                 </div>
@@ -71,7 +71,7 @@
             </div>
             <div class="govuk-grid-row">
                 <div class="govuk-grid-column-full mt-2">
-                    <div id="gridContainer_@Model.AdditionalCostGrid.GridId" style="padding: 5px;">
+                    <div id="gridContainer_@Model.AdditionalCostGrid.GridId">
                         @await Html.PartialAsync("_DataGrid", Model.AdditionalCostGrid)
                     </div>
                 </div>
