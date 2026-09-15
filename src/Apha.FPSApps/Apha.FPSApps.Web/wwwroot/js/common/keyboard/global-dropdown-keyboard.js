@@ -899,6 +899,20 @@
 
         table.setAttribute('role', 'grid');
 
+        // Screen readers run pages in "browse mode", where they capture the
+        // arrow keys for their own virtual cursor - the keydown never reaches
+        // the page, so the arrow-key navigation below appears dead whenever
+        // NVDA is running. Exposing the grid's wrapper as an application
+        // region makes the screen reader switch to focus mode while focus is
+        // inside the grid, so arrow keys are passed straight through. The
+        // table keeps its grid/row/gridcell semantics, so rows, columns and
+        // cell values are still announced.
+        var appRegion = table.closest('.grid-scroll-container') || table.parentElement;
+        if (appRegion && appRegion.getAttribute('role') !== 'application') {
+            appRegion.setAttribute('role', 'application');
+            appRegion.setAttribute('aria-roledescription', 'data grid');
+        }
+
         var columnNames = getColumnNames(table);
         var rows = getDataRows(table);
 
