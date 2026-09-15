@@ -51,6 +51,9 @@ function attachButtonEventListeners() {
     var addYearBtn = document.getElementById('add_year');
     if (addYearBtn) addYearBtn.addEventListener('click', function () { addProjectYear(projectId); });
 
+    var openCopyDataBtn = document.getElementById('openCopyDataModal');
+    if (openCopyDataBtn) openCopyDataBtn.addEventListener('click', function () { openCopyYearDataModal(); });
+
     var addStaffBtn = document.getElementById('addstaffbookedBtn');
     if (addStaffBtn) addStaffBtn.addEventListener('click', function () { openAddStaffModal(projectId, selectedYear); });
 
@@ -217,7 +220,100 @@ function bindAddYearForm(pid, year) {
             })
             .catch(function (err) { console.error('Add project year error:', err); showAlertMessage('Failed to add project year.', AlertType.ERROR); });
     });
+}
+function openCopyYearDataModal() {
+    var html = document.getElementById('copyYearModalContentHidden').innerHTML;
+    document.getElementById('project1ModalContent').innerHTML = html;
+    openModal();
+    bindCopyYearDataForm();
+}
+
+function bindCopyYearDataForm() {
+    var modalContent = document.getElementById('project1ModalContent');
+    if (!modalContent) return;
+
+    var selectedYearFromGlobal = parseInt(selectedYear, 10);
+    var selectedYearFromRow = NaN;
+    var selectedYearRow = document.querySelector('.project-year-row.selected-table-rowbg');
+    if (selectedYearRow) {
+        selectedYearFromRow = parseInt(selectedYearRow.getAttribute('data-year'), 10);
     }
+
+    var selectedYearFromHeading = NaN;
+    var selectedYearHeading = document.querySelector('.project-year-costs-header h3');
+    if (selectedYearHeading && selectedYearHeading.textContent) {
+        var headingMatch = selectedYearHeading.textContent.match(/\d{4}/);
+        if (headingMatch && headingMatch[0]) {
+            selectedYearFromHeading = parseInt(headingMatch[0], 10);
+        }
+    }
+
+    var currentSelectedYear = !isNaN(selectedYearFromRow)
+        ? selectedYearFromRow
+        : (!isNaN(selectedYearFromHeading) ? selectedYearFromHeading : selectedYearFromGlobal);
+
+    var yearSelect = modalContent.querySelector('#copyFromYearSelect');
+    if (yearSelect) {
+        yearSelect.innerHTML = '';
+
+        var years = (Array.isArray(projectYears) ? projectYears : [])
+            .map(function (y) { return parseInt(y, 10); })
+            .filter(function (y) { return !isNaN(y) && !isNaN(currentSelectedYear) && y < currentSelectedYear; })
+            .sort(function (a, b) { return b - a; });
+
+        years.forEach(function (y) {
+            var option = document.createElement('option');
+            option.value = y;
+            option.textContent = y;
+            yearSelect.appendChild(option);
+        });
+    }
+
+    var doCopyBtn = modalContent.querySelector('#btnDoCopy');
+    if (!doCopyBtn) return;
+
+    doCopyBtn.addEventListener('click', function () {
+        var form = modalContent.querySelector('#copyDataForm');
+        var $form = $(form);
+        var $modal = $('#project1ModalContent');
+        clearValidationErrors($modal);
+        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+
+        var sourceYear = yearSelect ? parseInt(yearSelect.value, 10) : NaN;
+        if (isNaN(sourceYear)) {
+            showAlertMessage('Please select a year to copy from.', AlertType.ERROR);
+            return;
+        }
+
+        showGovukConfirm('Copying will first delete all existing data for the selected year, then copy data from the selected source year. Do you want to continue?')
+            .then(function (result) {
+                if (!result) return;
+
+                fetch(yearlyDetailsUrls.copyYearData, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: 'projectId=' + encodeURIComponent(projectId)
+                        + '&sourceYear=' + encodeURIComponent(sourceYear)
+                        + '&targetYear=' + encodeURIComponent(currentSelectedYear)
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            closeModal();
+                            selectYear(projectId, currentSelectedYear);
+                        } else if (data.errors) {
+                            _showModalErrors(data.errors, $modal);
+                        } else {
+                            showAlertMessage(data.message || 'Failed to copy year data.', AlertType.ERROR);
+                        }
+                    })
+                    .catch(function (err) {
+                        console.error('Copy year data error:', err);
+                        showAlertMessage('Failed to copy year data.', AlertType.ERROR);
+                    });
+            });
+    });
+}
 
 // ── DataGrid bridge functions ──────────────────────────────────────
 function gridAddStaff() { openAddStaffModal(projectId, selectedYear); }
@@ -709,7 +805,16 @@ function onYearRowClick(row) {
     var totalsTitle = document.querySelector('.project-year-totals-title');
     if (totalsTitle) totalsTitle.textContent = year + ' Year Totals:';
 }
+function clearNonActiveGridContainers(activeTabId) {
+    var activeGridId = tabGridIds[activeTabId];
+    if (!activeGridId) return;
 
+    ['staffGrid', 'testGrid', 'animalGrid', 'additionalCostGrid', 'markupAndProfitGrid'].forEach(function(gridId) {
+        if (gridId === activeGridId) return;
+        var gridContainer = document.getElementById('gridContainer_' + gridId);
+        if (gridContainer) gridContainer.innerHTML = '';
+    });
+}
 (function initTabClickHandlers() {
     document.addEventListener('DOMContentLoaded', function () {
         var tabLinks = document.querySelectorAll('.govuk-tabs__tab');
@@ -718,6 +823,7 @@ function onYearRowClick(row) {
                 var href = link.getAttribute('href');
                 if (!href) return;
                 var tabId = href.replace('#', '');
+                clearNonActiveGridContainers(tabId);
                 if (tabGridEndpoints[tabId]) loadTabGrid(tabId);
                 loadYearTotals();
                 document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) { li.classList.remove('govuk-tabs__list-item--selected'); });

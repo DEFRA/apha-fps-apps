@@ -228,6 +228,23 @@ public class YearlyDetailsController : Controller
         return Json(new { success = true });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> CopyYearData(string projectId, int sourceYear, int targetYear)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var response = await _service.CopyYearDataAsync(decodedProjectId, sourceYear, targetYear);
+
+        if (!response.Success)
+        {
+            if (response.Errors is not null && response.Errors.Count > 0)
+                return Json(new { success = false, errors = MapApiErrors(response.Errors) });
+
+            return Json(new { success = false, message = "Failed to copy year data." });
+        }
+
+        return Json(new { success = true });
+    }
+
     // ── STAFF CRUD ────────────────────────────────────────────────────────
 
     [HttpGet]

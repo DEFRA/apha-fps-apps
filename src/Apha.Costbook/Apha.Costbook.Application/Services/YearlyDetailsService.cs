@@ -72,6 +72,9 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string projectId, int year)
         => await _projectYearRepo.DeleteProjectYearAsync(projectId, year);
 
+    public async Task<(bool Copied, IReadOnlyList<string> Errors)> CopyYearDataAsync(string projectId, int sourceYear, int targetYear)
+        => await _projectYearRepo.CopyYearDataAsync(projectId, sourceYear, targetYear);
+
     // ── Staff ─────────────────────────────────────────────────────────────────────
 
     public async Task<PaginatedResult<StaffRequirementDto>> GetStaffRequirementsAsync(

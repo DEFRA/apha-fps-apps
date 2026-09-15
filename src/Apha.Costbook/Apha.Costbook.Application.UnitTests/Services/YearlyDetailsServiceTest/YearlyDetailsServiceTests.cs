@@ -1380,6 +1380,23 @@ public class YearlyDetailsServiceTests
 
     #endregion
 
+    #region CopyYearDataAsync
+
+    [Fact]
+    public async Task CopyYearDataAsync_ReturnsSuccessResult_WhenCopiedSuccessfully()
+    {
+        var expected = (Copied: true, Errors: (IReadOnlyList<string>)new List<string>());
+        _projectYearRepo.CopyYearDataAsync("2024/001", 2024, 2025).Returns(expected);
+
+        var result = await _sut.CopyYearDataAsync("2024/001", 2024, 2025);
+
+        Assert.True(result.Copied);
+        Assert.Empty(result.Errors);
+        await _projectYearRepo.Received(1).CopyYearDataAsync("2024/001", 2024, 2025);
+    }
+
+    #endregion
+
     #region GetProjectYearsAsync - empty result
 
     [Fact]

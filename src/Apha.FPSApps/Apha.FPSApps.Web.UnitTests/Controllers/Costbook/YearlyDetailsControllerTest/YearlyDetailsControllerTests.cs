@@ -1159,6 +1159,24 @@ public class YearlyDetailsControllerTests
 
     #endregion
 
+    #region CopyYearData
+
+    [Fact]
+    public async Task CopyYearData_ReturnsSuccess_WhenServiceSucceeds()
+    {
+        _service.CopyYearDataAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+        var result = await _controller.CopyYearData("2024%2F001", 1, 2);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var element = GetJsonResultElement(jsonResult);
+        Assert.True(element.GetProperty("success").GetBoolean());
+        await _service.Received(1).CopyYearDataAsync("2024/001", 1, 2);
+    }
+
+    #endregion
+
     #region GetYearTotals
 
     [Fact]
