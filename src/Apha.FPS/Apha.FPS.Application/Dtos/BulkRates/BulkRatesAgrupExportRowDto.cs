@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPS.Application.Dtos.BulkRates
 {
+    /// <summary>AGRUP row shape for the Bulk Rates Excel export — see BuildFecAgrupSheets.</summary>
     public class BulkRatesAgrupExportRowDto
     {
         [Display(Name = "Test Code")]
