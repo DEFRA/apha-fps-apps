@@ -18,6 +18,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IProjectService _projectService;
+        private readonly IMasterLookupService _masterLookupService;
         private readonly ProgramMaintenanceController _controller;
 
         public ProgramMaintenanceControllerTests()
@@ -25,7 +26,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
             _mapper = Substitute.For<IMapper>();
             _programService = Substitute.For<IProgramService>();
             _projectService = Substitute.For<IProjectService>();
-            _controller = new ProgramMaintenanceController(_mapper, _programService, _projectService);
+            _masterLookupService = Substitute.For<IMasterLookupService>();
+            _controller = new ProgramMaintenanceController(_mapper, _programService, _projectService, _masterLookupService);
 
             // Setup TempData
             _controller.TempData = Substitute.For<ITempDataDictionary>();
@@ -137,7 +139,56 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
             Assert.Equal("P001", model.ProgramList[0].Value);
             Assert.Equal("P001 - One", model.ProgramList[0].Text);
         }
- 
+
+        [Fact]
+        public async Task Index_PopulatesDirectorateList_FromMasterLookupService()
+        {
+            // Arrange
+            SetupProgramList();
+            SetupProjectsGridMapper();
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
+            _masterLookupService.GetLookupItemsAsync(Arg.Any<string>())
+                .Returns(ApiResponseDto<IEnumerable<LookupItemDto>>.SuccessResponse(
+                [
+                    new LookupItemDto { Value = "DIR1" },
+                    new LookupItemDto { Value = "DIR2" }
+                ]));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<PactProgramMaintenanceViewModel>(viewResult.Model);
+            Assert.Equal(2, model.DirectorateList.Count);
+            Assert.Equal("DIR1", model.DirectorateList[0].Value);
+            Assert.Equal("DIR1", model.DirectorateList[0].Text);
+            Assert.Equal("DIR2", model.DirectorateList[1].Value);
+            await _masterLookupService.Received(1).GetLookupItemsAsync("Directorate");
+        }
+
+        [Fact]
+        public async Task Index_WhenLookupReturnsNoDirectorates_SetsEmptyDirectorateList()
+        {
+            // Arrange
+            SetupProgramList();
+            SetupProjectsGridMapper();
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
+                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
+            _masterLookupService.GetLookupItemsAsync(Arg.Any<string>())
+                .Returns(ApiResponseDto<IEnumerable<LookupItemDto>>.SuccessResponse([]));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<PactProgramMaintenanceViewModel>(viewResult.Model);
+            Assert.Empty(model.DirectorateList);
+            await _masterLookupService.Received(1).GetLookupItemsAsync("Directorate");
+        }
+
 
         [Fact]
         public async Task GetProgram_ProgramFound_ReturnsSuccessJson()
@@ -344,6 +395,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
                 .Returns(new PaginationModel());
             _projectService.GetAllCustomersAsync()
                 .Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse([]));
+            _masterLookupService.GetLookupItemsAsync(Arg.Any<string>())
+                .Returns(ApiResponseDto<IEnumerable<LookupItemDto>>.SuccessResponse([]));
         }
     }
 }

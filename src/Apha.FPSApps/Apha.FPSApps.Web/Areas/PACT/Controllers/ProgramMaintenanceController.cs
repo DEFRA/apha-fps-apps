@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Enums;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -21,12 +22,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IProjectService _projectService;
+        private readonly IMasterLookupService _masterLookupService;
 
-        public ProgramMaintenanceController( IMapper mapper, IProgramService programService, IProjectService projectService)
+        public ProgramMaintenanceController(IMapper mapper, IProgramService programService, IProjectService projectService, IMasterLookupService masterLookupService)
         {
             _mapper = mapper;
             _programService = programService;
             _projectService = projectService;
+            _masterLookupService = masterLookupService;
         }
 
         public async Task<IActionResult> Index(string? programNo = null)
@@ -45,12 +48,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var grid = await BuildProjectsGrid(defaultRequest, string.IsNullOrEmpty(programNo) ? selectedProgramNo : programNo);
 
             var customers = await _projectService.GetAllCustomersAsync();
+            var directorates = await _masterLookupService.GetLookupItemsAsync(MasterLookupTable.Directorate.ToString());
 
             var model = new PactProgramMaintenanceViewModel
             {
                 SelectedProgramNo = selectedProgramNo,
                 ProgramList = programList,
                 CustomerList = customers.Data?.Select(c => new SelectListItem(c.Customer, c.Customer)).ToList() ?? [],
+                DirectorateList = directorates.Data?.Select(d => new SelectListItem(d.Value, d.Value)).ToList() ?? [],
                 ProjectsGrid = grid
             };
 
