@@ -45,10 +45,10 @@ namespace Apha.PIMS.Application.Services
             return entity is null ? null : _mapper.Map<SettingDto>(entity);
         }
 
-       
+
         public async Task<SettingDto> UpdateSettingAsync(SettingDto dto)
         {
-            if (dto is null) throw new ArgumentNullException(nameof(dto));
+            ArgumentNullException.ThrowIfNull(dto);
             if (string.IsNullOrWhiteSpace(dto.Id))
                 throw new BusinessValidationErrorException(
                 [

@@ -621,7 +621,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectYearCostsControllerTest
         public async Task GetProjectYearDetails_WhenServiceReturnsNull_ReturnsSuccessResponseWithNullData()
         {
             // Arrange
-            _service.GetProjectYearDetailsAsync(Project, Year).Returns((ProjectYearDetailsDto?)null);
+            _service.GetProjectYearDetailsAsync(Project, Year).Returns((ProjectYearDetailsDto)null!);
 
             // Act
             var result = await _controller.GetProjectYearDetails(Project, Year);
