@@ -141,9 +141,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProfitCentre, profitCentreId));
+                // The API wraps the delete result in an envelope whose "data" payload is not
+                // guaranteed to be a primitive boolean, so it is read as object and the outcome
+                // is derived from the envelope's Success flag.
+                var response = await _http.DeleteAsync<object>(string.Format(FpsApiEndpoints.DeleteProfitCentre, profitCentreId));
                 if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+                    return ApiResponseDto<bool>.SuccessResponse(true);
 
                 var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
                 return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
