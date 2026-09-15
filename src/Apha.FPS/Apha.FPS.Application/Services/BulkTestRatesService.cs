@@ -402,24 +402,16 @@ namespace Apha.FPS.Application.Services
                 {
                     TestCode = r.TestCode,
                     Buyer = r.Buyer,
-                    UnitPrice = r.Agrup,
-                    ProjectBuyerCode = r.ProjectBuyerCode,
-                    TestBuyerCode = r.TestBuyerCode
+                    UnitPrice = r.Agrup
                 });
 
-            // Project/capability lookups are bulk but scoped to only the routing values this
-            // upload actually supplies — not the entire reference table.
+            // Project lookup is bulk but scoped to only the Buyer values this upload actually
+            // supplies — not the entire projects table. Buyer doubles as the routing project code.
             var projectCodes = agrupRows
-                .Where(r => !string.IsNullOrWhiteSpace(r.ProjectBuyerCode))
-                .Select(r => r.ProjectBuyerCode!)
+                .Where(r => !string.IsNullOrWhiteSpace(r.Buyer))
+                .Select(r => r.Buyer)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var projectLookup = await _repository.GetExistingProjectCodesAsync(projectCodes, fpsYear, ct);
-
-            var capabilityPairs = agrupRows
-                .Where(r => !string.IsNullOrWhiteSpace(r.TestBuyerWorkGroup))
-                .Select(r => (r.TestCode, r.TestBuyerWorkGroup!))
-                .ToHashSet();
-            var capabilityLookup = await _repository.GetExistingCapabilityPairsAsync(capabilityPairs, fpsYear, ct);
 
             IReadOnlyList<DownloadedSnapshotKey> frozenSnapshot = [];
             if (downloadVersion.HasValue)
@@ -443,26 +435,13 @@ namespace Apha.FPS.Application.Services
                 SourceRow = i + 2
             }).ToList();
 
-            var stagedAgrup = agrupRows.Select((r, i) =>
+            var stagedAgrup = agrupRows.Select((r, i) => new ValidationAgrupRow
             {
-                liveAgrupLookup.TryGetValue(BulkRatesValidationKeys.AgrupKey(r.TestCode, r.Buyer), out var live);
-                return new ValidationAgrupRow
-                {
-                    TestCode = r.TestCode,
-                    Buyer = r.Buyer,
-                    AgrupNew = r.AgrupNew,
-                    // Existing rows: the workbook has no column yet to assert a routing value.
-                    // Until then, an absent staged value must echo the live one rather than read
-                    // as "blanked out" — otherwise every ordinary rate-only update on a row that
-                    // already has routing data would falsely trip the immutability check below.
-                    // New rows have no live value to echo, so they correctly stay null and fall
-                    // through to MISSING_ROUTING_FIELD until a workbook can actually supply one.
-                    ProjectBuyerCode = r.ProjectBuyerCode ?? live?.ProjectBuyerCode,
-                    TestBuyerCode = r.TestBuyerCode ?? live?.TestBuyerCode,
-                    TestBuyerWorkGroup = r.TestBuyerWorkGroup,
-                    Comments = r.Comments,
-                    SourceRow = i + 2
-                };
+                TestCode = r.TestCode,
+                Buyer = r.Buyer,
+                AgrupNew = r.AgrupNew,
+                Comments = r.Comments,
+                SourceRow = i + 2
             }).ToList();
 
             return new ValidationContext
@@ -474,7 +453,6 @@ namespace Apha.FPS.Application.Services
                 LiveFecLookup = liveFecLookup,
                 LiveAgrupLookup = liveAgrupLookup,
                 ProjectLookup = projectLookup,
-                CapabilityLookup = capabilityLookup,
                 StagedFecRows = stagedFec,
                 StagedAgrupRows = stagedAgrup,
                 FrozenSnapshot = frozenSnapshot,
@@ -628,30 +606,16 @@ namespace Apha.FPS.Application.Services
             }
             else if (row.AgrupNew.Value == 0)
             {
-                // BC-01 temporary rule: block a new AGRUP row at zero until business confirms
-                // permanent behaviour.
+                // Temporary rule: block a new AGRUP row at zero until business confirms permanent behaviour.
                 findings.Add(Error("NEW_AGRUP_ZERO_RATE_BLOCKED", "AGRUP", businessKey, row.SourceRow,
                     "New AGRUP rows with a zero rate are not currently permitted, pending business confirmation (BC-01).", "agrupnew"));
             }
 
-            var hasProjectBuyerCode = !string.IsNullOrWhiteSpace(row.ProjectBuyerCode);
-            var hasWorkGroup = !string.IsNullOrWhiteSpace(row.TestBuyerWorkGroup);
-
-            if (!hasProjectBuyerCode && !hasWorkGroup)
-            {
-                findings.Add(Error("MISSING_ROUTING_FIELD", "AGRUP", businessKey, row.SourceRow,
-                    "At least one of ProjectBuyerCode or TestBuyerWorkGroup must be supplied for a new AGRUP row (BC-02)."));
-            }
-            else
-            {
-                if (hasProjectBuyerCode && !ctx.ProjectLookup.Contains(BulkRatesValidationKeys.TestCode(row.ProjectBuyerCode!)))
-                    findings.Add(Error("INVALID_PROJECT_BUYER_CODE", "AGRUP", businessKey, row.SourceRow,
-                        $"ProjectBuyerCode '{row.ProjectBuyerCode}' does not exist for FPS year {ctx.FpsYear}.", "projectbuyercode"));
-
-                if (hasWorkGroup && !ctx.CapabilityLookup.Contains(BulkRatesValidationKeys.CapabilityKey(row.TestCode, row.TestBuyerWorkGroup!)))
-                    findings.Add(Error("INVALID_TEST_BUYER_WORKGROUP", "AGRUP", businessKey, row.SourceRow,
-                        $"TestCode '{row.TestCode}' / WorkGroup '{row.TestBuyerWorkGroup}' is not a recognised capability for FPS year {ctx.FpsYear}.", "testbuyerworkgroup"));
-            }
+            // Buyer doubles as the routing project code (ProjectBuyerCode = Buyer, derived at
+            // parse time) — a new row routes correctly iff Buyer is a real project.
+            if (!ctx.ProjectLookup.Contains(BulkRatesValidationKeys.TestCode(row.Buyer)))
+                findings.Add(Error("INVALID_BUYER_PROJECT", "AGRUP", businessKey, row.SourceRow,
+                    "Buyer must be a valid existing project for the selected FPS year.", "buyer"));
 
             if (row.AgrupNew is not null and not 0)
                 findings.Add(Classification("AGRUP", businessKey, row.SourceRow, ValidationCalculatedAction.Insert, row.AgrupNew));
@@ -660,20 +624,6 @@ namespace Apha.FPS.Application.Services
         private static void ValidateExistingAgrupRow(
             ValidationAgrupRow row, LiveAgrupRow live, string businessKey, ICollection<ValidationFinding> findings)
         {
-            // Existing-key routing-field immutability, Bulk-Rates-scoped — not a system-wide
-            // tlkptestreqmt rule; other writers (e.g. the PACT maintenance path) may still permit
-            // controlled changes. Comparison matches the citext columns' own case-insensitivity
-            // and adds no extra trimming — Excel-introduced whitespace on an otherwise-unedited
-            // protected cell is a known, accepted risk, not silently "fixed" here without
-            // business confirmation.
-            if (RoutingFieldChanged(row.ProjectBuyerCode, live.ProjectBuyerCode))
-                findings.Add(Error("ROUTING_FIELD_CHANGED", "AGRUP", businessKey, row.SourceRow,
-                    $"ProjectBuyerCode cannot be changed for an existing AGRUP row (was '{live.ProjectBuyerCode}').", "projectbuyercode"));
-
-            if (RoutingFieldChanged(row.TestBuyerCode, live.TestBuyerCode))
-                findings.Add(Error("ROUTING_FIELD_CHANGED", "AGRUP", businessKey, row.SourceRow,
-                    $"TestBuyerCode cannot be changed for an existing AGRUP row (was '{live.TestBuyerCode}').", "testbuyercode"));
-
             // Null/zero = withdrawal, unless the live rate is already 0 (then NoChange).
             if (row.AgrupNew is null or 0)
             {
@@ -690,9 +640,6 @@ namespace Apha.FPS.Application.Services
                     row.AgrupNew));
             }
         }
-
-        private static bool RoutingFieldChanged(string? staged, string? live)
-            => !string.Equals(staged ?? string.Empty, live ?? string.Empty, StringComparison.OrdinalIgnoreCase);
 
         /// <summary>Worker-only: catches a live non-zero AGRUP row for a withdrawn FEC TestCode that wasn't in the frozen download snapshot, so the staged-row check above couldn't see it.</summary>
         private static void ValidateLiveWithdrawalConflicts(
@@ -907,10 +854,7 @@ namespace Apha.FPS.Application.Services
                 NoRequired = r.NoRequired,
                 DateCreated = r.DateCreated,
                 Active = r.Active,
-                Comments = r.Comments,
-                ProjectBuyerCode = r.ProjectBuyerCode,
-                TestBuyerCode = r.TestBuyerCode,
-                TestBuyerWorkGroup = r.TestBuyerWorkGroup
+                Comments = r.Comments
             }).ToList();
 
             // Change is a live Excel formula, not the stored value above — for the user's
@@ -944,17 +888,11 @@ namespace Apha.FPS.Application.Services
             ];
         }
 
-        // Column references below are kept in lockstep with BulkRatesFecExportRowDto/
-        // BulkRatesAgrupExportRowDto's actual property order (= actual Excel column letters)
-        // rather than copied from the legacy process this replaces — the two have drifted
-        // (e.g. AGRUP's routing columns J/K/L did not exist in the legacy workbook).
+        // Column letters below match BulkRatesFecExportRowDto/BulkRatesAgrupExportRowDto's property order.
         private static ExcelSheetDefinition BuildFecAgrupInstructionsSheet()
         {
-            // This same builder feeds three downloads with different purposes — an open request's
-            // editable workbook (meant to be edited and re-uploaded), an ad-hoc year-level
-            // reference dump, and a read-only staging-review export. The instructions below
-            // describe how to fill in an editable copy; the preamble scopes that so a reference/
-            // review copy of this same sheet doesn't read as "edit and upload this".
+            // Feeds three downloads (editable request workbook, reference dump, staging-review
+            // export) — preamble below scopes the edit/upload instructions to the editable case.
             var rows = new List<BulkRatesFecAgrupInstructionRowDto>
             {
                 new() { Text = "These instructions apply if this workbook was downloaded from an open Bulk Rates request for editing and re-upload. If this copy was downloaded for reference or for staging review, it is read-only — do not edit or upload it." },
@@ -975,11 +913,10 @@ namespace Apha.FPS.Application.Services
                 new() { SubItem = "c", Text = "If the Agrup value does not change, then do nothing. If, as a result, it is no longer the same as the FEC value, ensure Column I (Comments) is blank." },
                 new() { SubItem = "d", Text = "If there is a new Agrup record to be added, it can either be appended or inserted into a new row at the appropriate place in the worksheet. Ensure that the following columns are completed:" },
                 new() { ColumnRef = "A", Text = "Test Code" },
-                new() { ColumnRef = "B", Text = "Buyer" },
+                new() { ColumnRef = "B", Text = "Buyer — must be a valid, existing project code for the FPS year." },
                 new() { ColumnRef = "D", Text = "Agrup New" },
                 new() { ColumnRef = "I", Text = "Comments — should be \"Same as FEC\" or left empty." },
                 new() { ColumnRef = "F, G, H", Text = "Can be completed if the information is known. If Column G (Date Created) is left empty, it will default to the date the request is uploaded." },
-                new() { ColumnRef = "J and/or L", Text = "At least one of Project Buyer Code (J) or Test Buyer Work Group (L) must be completed for a new Agrup record, to establish routing. Test Buyer Code (K) is reference-only and does not need to be set." },
             };
 
             return new ExcelSheetDefinition
@@ -1002,7 +939,6 @@ namespace Apha.FPS.Application.Services
             public required IReadOnlyDictionary<string, LiveFecRow> LiveFecLookup { get; init; }
             public required IReadOnlyDictionary<(string TestCode, string Buyer), LiveAgrupRow> LiveAgrupLookup { get; init; }
             public required IReadOnlySet<string> ProjectLookup { get; init; }
-            public required IReadOnlySet<(string TestCode, string WorkGroup)> CapabilityLookup { get; init; }
             public required IReadOnlyList<ValidationFecRow> StagedFecRows { get; init; }
             public required IReadOnlyList<ValidationAgrupRow> StagedAgrupRows { get; init; }
             public required IReadOnlyList<DownloadedSnapshotKey> FrozenSnapshot { get; init; }
@@ -1025,9 +961,6 @@ namespace Apha.FPS.Application.Services
             public required string TestCode { get; init; }
             public required string Buyer { get; init; }
             public decimal? AgrupNew { get; init; }
-            public string? ProjectBuyerCode { get; init; }
-            public string? TestBuyerCode { get; init; }
-            public string? TestBuyerWorkGroup { get; init; }
             public string? Comments { get; init; }
             public required int SourceRow { get; init; }
         }
@@ -1044,8 +977,6 @@ namespace Apha.FPS.Application.Services
             public required string TestCode { get; init; }
             public required string Buyer { get; init; }
             public decimal? UnitPrice { get; init; }
-            public string? ProjectBuyerCode { get; init; }
-            public string? TestBuyerCode { get; init; }
             public double? NoRequired { get; init; }
             public short? Active { get; init; }
         }
@@ -1072,9 +1003,6 @@ namespace Apha.FPS.Application.Services
 
             public static (string TestCode, string Buyer) AgrupKey(string testCode, string buyer)
                 => (testCode.ToUpperInvariant(), buyer.ToUpperInvariant());
-
-            public static (string TestCode, string WorkGroup) CapabilityKey(string testCode, string workGroup)
-                => (testCode.ToUpperInvariant(), workGroup.ToUpperInvariant());
         }
     }
 }
