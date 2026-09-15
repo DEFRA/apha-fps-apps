@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     public class LogMilestoneViewModel
     {
         public string Parentproject { get; set; } = string.Empty;
+        public bool FromSideNav { get; set; }
         public List<SelectListItem> ProjectOptions { get; set; } = [];
         public DataGridConfig<LogMilestoneItem> LogMilestonesGrid { get; set; } = new();
     }
