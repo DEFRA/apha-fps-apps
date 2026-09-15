@@ -239,7 +239,7 @@ function initializeCustomerDropdown() {
         placeholder: 'Select a Customer',
         showSerialNumber: false,
         searchPlaceholder: 'Search by customer',
-        labelText: 'Customer',
+        labelText: 'Customer:',
         required: false,
         columns: [
             { field: 'Text', header: 'Customer', width: '200px' }
