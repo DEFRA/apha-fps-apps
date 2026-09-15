@@ -236,13 +236,15 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<TblJobQueueLog>(entity =>
         {
             entity.ToTable("job_queue_log", schema: "fps");
-            entity.HasKey(e => e.JobQueueLogId);
+            // Composite PK: Postgres requires the partition key in a partitioned table's own PK.
+            entity.HasKey(e => new { e.JobQueueLogId, e.FpsYear });
             entity.Property(e => e.JobQueueLogId).HasColumnName("jobqueuelogid").UseIdentityAlwaysColumn();
             entity.Property(e => e.JobQueueId).HasColumnName("jobqueueid").IsRequired();
             entity.Property(e => e.StatusId).HasColumnName("statusid").IsRequired();
             entity.Property(e => e.PerformedBy).HasColumnName("performedby").IsRequired().HasMaxLength(100);
             entity.Property(e => e.LogTime).HasColumnName("logtime").IsRequired().HasDefaultValueSql("NOW()");
             entity.Property(e => e.Note).HasColumnName("note").HasMaxLength(500);
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear").IsRequired();
             entity.HasOne<TblJobQueue>()
                   .WithMany()
                   .HasForeignKey(e => e.JobQueueId)

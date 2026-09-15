@@ -276,6 +276,181 @@ public sealed class JobExecutionRepositoryFpsYearIntegrationTests : IAsyncLifeti
         }
     }
 
+    [SkippableFact]
+    public async Task CreateExecutionRecordAsync_OnApprovedToRunningTransition_WritesFpsYearToJobQueueLog()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndCatalogAvailable,
+            $"job_status seed for '{BatchJobNames.YearEndDataSetup}' Approved/Running is not yet provisioned on this database.");
+
+        var jobExecutionId = Guid.NewGuid();
+        var jobQueueId = Guid.NewGuid();
+        const int currentFpsYear = 2025;
+
+        await using (var context = CreateDbContext())
+        {
+            var jobId = await context.Database
+                .SqlQuery<int>($@"SELECT jobid AS ""Value"" FROM fps.job_master WHERE jobname = {BatchJobNames.YearEndDataSetup}")
+                .SingleAsync();
+
+            var approvedStatusId = await context.Database
+                .SqlQuery<int>($@"SELECT statusid AS ""Value"" FROM fps.job_status WHERE jobid = {jobId} AND status = 'Approved'")
+                .SingleAsync();
+
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                INSERT INTO fps.job_queue
+                    (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, fpsyear)
+                VALUES
+                    ({jobQueueId}, {jobExecutionId}, {jobId}, {approvedStatusId}, 'fpsyear-log-test', NOW(), NOW(), {currentFpsYear});");
+        }
+
+        try
+        {
+            var repository = CreateRepository();
+
+            var record = new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = BatchJobNames.YearEndDataSetup,
+                JobExecutionId = jobExecutionId,
+                JobQueueId = jobQueueId,
+                UserId = "fpsyear-log-test-worker",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Running,
+                StartedAt = DateTime.UtcNow,
+                FpsYear = currentFpsYear
+            };
+
+            await repository.CreateExecutionRecordAsync(record);
+
+            await using var assertContext = CreateDbContext();
+            var logFpsYear = await assertContext.Database
+                .SqlQuery<int>($@"
+                    SELECT fpsyear AS ""Value"" FROM fps.job_queue_log
+                    WHERE jobqueueid = {jobQueueId} ORDER BY logtime DESC LIMIT 1")
+                .SingleAsync();
+
+            Assert.Equal(currentFpsYear, logFpsYear);
+        }
+        finally
+        {
+            await using var context = CreateDbContext();
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                DELETE FROM fps.job_queue_log WHERE jobqueueid = {jobQueueId};");
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                DELETE FROM fps.job_queue WHERE jobqueueid = {jobQueueId};");
+        }
+    }
+
+    [SkippableFact]
+    public async Task UpdateExecutionRecordAsync_WritesResolvedFpsYearToJobQueueLog()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+
+        var jobExecutionId = Guid.NewGuid();
+        Guid jobQueueId;
+        const int currentFpsYear = 2025;
+
+        await using (var context = CreateDbContext())
+        {
+            var jobId = await context.Database
+                .SqlQuery<int>($@"SELECT jobid AS ""Value"" FROM fps.job_master WHERE jobname = {BatchJobNames.YearEndDataSetup}")
+                .SingleAsync();
+
+            var initiatedStatusId = await context.Database
+                .SqlQuery<int>($@"SELECT statusid AS ""Value"" FROM fps.job_status WHERE jobid = {jobId} AND status = 'Initiated'")
+                .SingleAsync();
+
+            jobQueueId = Guid.NewGuid();
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                INSERT INTO fps.job_queue
+                    (jobqueueid, jobexecutionid, jobid, statusid, requestedby, requested_at_utc, startdatetime, fpsyear)
+                VALUES
+                    ({jobQueueId}, {jobExecutionId}, {jobId}, {initiatedStatusId}, 'fpsyear-update-log-test', NOW(), NOW(), {currentFpsYear});");
+        }
+
+        try
+        {
+            var repository = CreateRepository();
+
+            var record = new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = BatchJobNames.YearEndDataSetup,
+                JobExecutionId = jobExecutionId,
+                JobQueueId = jobQueueId,
+                UserId = "fpsyear-update-log-test-worker",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Completed,
+                StartedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow
+            };
+
+            await repository.UpdateExecutionRecordAsync(record);
+
+            await using var assertContext = CreateDbContext();
+            var logFpsYear = await assertContext.Database
+                .SqlQuery<int>($@"
+                    SELECT fpsyear AS ""Value"" FROM fps.job_queue_log
+                    WHERE jobqueueid = {jobQueueId} ORDER BY logtime DESC LIMIT 1")
+                .SingleAsync();
+
+            Assert.Equal(currentFpsYear, logFpsYear);
+        }
+        finally
+        {
+            await using var context = CreateDbContext();
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                DELETE FROM fps.job_queue_log WHERE jobqueueid = {jobQueueId};");
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                DELETE FROM fps.job_queue WHERE jobqueueid = {jobQueueId};");
+        }
+    }
+
+    [SkippableFact]
+    public async Task CreateInitiatedRecordAsync_WhenFpsYearIsNull_DerivesFpsYearOnJobQueueLogFromRequestedAtUtc()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+
+        var jobExecutionId = Guid.NewGuid();
+        // 15-Sep in any year is unambiguously April-December -> FY == that calendar year.
+        var requestedAtUtc = new DateTime(2026, 9, 15, 10, 0, 0, DateTimeKind.Utc);
+        Guid jobQueueId = Guid.Empty;
+
+        try
+        {
+            var repository = CreateRepository();
+
+            jobQueueId = await repository.CreateInitiatedRecordAsync(
+                BatchJobNames.YearEndDataSetup,
+                jobExecutionId,
+                "fpsyear-derive-log-test",
+                requestedAtUtc,
+                RunMode.Manual,
+                fpsYear: null);
+
+            await using var assertContext = CreateDbContext();
+            var logFpsYear = await assertContext.Database
+                .SqlQuery<int>($@"
+                    SELECT fpsyear AS ""Value"" FROM fps.job_queue_log
+                    WHERE jobqueueid = {jobQueueId} ORDER BY logtime DESC LIMIT 1")
+                .SingleAsync();
+
+            Assert.Equal(2026, logFpsYear);
+        }
+        finally
+        {
+            await using var context = CreateDbContext();
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                DELETE FROM fps.job_queue_log WHERE jobqueueid = {jobQueueId};");
+            await context.Database.ExecuteSqlInterpolatedAsync($@"
+                DELETE FROM fps.job_queue WHERE jobqueueid = {jobQueueId};");
+        }
+    }
+
     private sealed record PersistedYears(int FpsYear, int? TargetFpsYear);
 
     private JobExecutionRepository CreateRepository() => new(CreateDbContext(), NullLogger<JobExecutionRepository>.Instance);

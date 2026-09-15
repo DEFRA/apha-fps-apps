@@ -64,5 +64,8 @@ internal sealed class TblJobQueueLog
     public required string PerformedBy { get; set; }
     public DateTime LogTime { get; set; }
     public string? Note { get; set; }
+
+    /// <summary>Partition key — resolve via <see cref="Apha.BatchJobs.Domain.FpsYearResolver"/>, never set directly.</summary>
+    public int FpsYear { get; set; }
 }
 

@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Domain;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Constants;
@@ -99,7 +100,8 @@ public class JobExecutionRepository : IJobExecutionRepository
                 StatusId = runningStatusId,
                 PerformedBy = record.UserId,
                 LogTime = now,
-                Note = BuildStartTransitionNote(expectedPickupStatus)
+                Note = BuildStartTransitionNote(expectedPickupStatus),
+                FpsYear = FpsYearResolver.ResolveFpsYear(claimedRow.FpsYear, now)
             });
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -170,7 +172,8 @@ public class JobExecutionRepository : IJobExecutionRepository
             StatusId = statusId,
             PerformedBy = record.UserId,
             LogTime = now,
-            Note = BuildStatusNote(record)
+            Note = BuildStatusNote(record),
+            FpsYear = FpsYearResolver.ResolveFpsYear(queueRow.FpsYear, now)
         });
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -425,7 +428,8 @@ public class JobExecutionRepository : IJobExecutionRepository
             StatusId = statusId,
             PerformedBy = requestedBy,
             LogTime = now,
-            Note = "Job accepted by API - Initiated"
+            Note = "Job accepted by API - Initiated",
+            FpsYear = FpsYearResolver.ResolveFpsYear(fpsYear, now)
         });
 
         await _context.SaveChangesAsync(cancellationToken);
