@@ -1292,3 +1292,55 @@
         }
     });
 })();
+
+// ── Reset focus to the top of the page after Back/Forward navigation ───────
+// Going Back (browser button, a govuk-back-link or history.back()) restores
+// the previous page along with its scroll position, and the browser leaves
+// focus on <body> wherever the user was. Screen readers therefore carry on
+// reading from the middle of the restored page instead of announcing it from
+// the start. Moving focus to the application logo/title in the header puts
+// the reading position back at the top of the page, exactly as it is on a
+// fresh page load.
+(function () {
+    'use strict';
+
+    var HEADER_TARGETS = ['.app-log', 'header .app-log-wrapper', 'header'];
+
+    function getHeaderTarget() {
+        for (var i = 0; i < HEADER_TARGETS.length; i++) {
+            var el = document.querySelector(HEADER_TARGETS[i]);
+            if (el) return el;
+        }
+        return null;
+    }
+
+    function isBackForwardNavigation(persisted) {
+        // Restored from the back/forward cache.
+        if (persisted) return true;
+
+        if (window.performance && typeof window.performance.getEntriesByType === 'function') {
+            var entries = window.performance.getEntriesByType('navigation');
+            if (entries && entries.length) return entries[0].type === 'back_forward';
+        }
+        // Legacy fallback: 2 === TYPE_BACK_FORWARD.
+        return !!(window.performance && window.performance.navigation &&
+                  window.performance.navigation.type === 2);
+    }
+
+    function focusPageTop() {
+        var target = getHeaderTarget();
+        if (!target) return;
+
+        if (!target.hasAttribute('tabindex')) {
+            target.setAttribute('tabindex', '-1');
+        }
+        window.scrollTo(0, 0);
+        target.focus();
+    }
+
+    window.addEventListener('pageshow', function (e) {
+        if (!isBackForwardNavigation(e.persisted)) return;
+        // Let the browser finish restoring scroll/focus first, then override.
+        window.setTimeout(focusPageTop, 0);
+    });
+})();
