@@ -162,7 +162,7 @@
                                         <span asp-validation-for="Project.Customer" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Manager">Manager</label>
+                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Manager">Manager <span class="sup_color_red">*</span></label>
                                         <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                                 asp-for="Project.Manager"
                                                 asp-items="Model.Managers"

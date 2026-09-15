@@ -342,6 +342,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
+            _projectService.GetAllCustomersAsync()
+                .Returns(ApiResponseDto<List<CustomerDto>>.SuccessResponse([]));
         }
     }
 }
