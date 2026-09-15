@@ -31,19 +31,19 @@
 
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="LastName">Last Name</label>
-                <input type="text" class="govuk-input" asp-for="LastName" />
+                <input type="text" class="govuk-input" maxlength="20" asp-for="LastName" />
                 <span asp-validation-for="LastName" class="govuk-error-message" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="FirstName">First Name</label>
-                <input type="text" class="govuk-input" asp-for="FirstName" />
+                <input type="text" class="govuk-input" maxlength="20" asp-for="FirstName" />
                 <span asp-validation-for="FirstName" class="govuk-error-message" style="display:none;"></span>
             </div>
 
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Title">Title</label>
-                <input type="text" class="govuk-input" asp-for="Title" />
+                <input type="text" class="govuk-input" maxlength="4" asp-for="Title" />
                 <span asp-validation-for="Title" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>

@@ -2,9 +2,7 @@ using Apha.BatchJobs.Domain.Interfaces;
 
 namespace Apha.BatchJobs.Infrastructure.Context;
 
-/// <summary>
-/// Scoped holder for resolved execution year metadata.
-/// </summary>
+/// <summary>Scoped holder for resolved execution year metadata.</summary>
 public sealed class ExecutionYearContext : IExecutionYearContext
 {
     /// <inheritdoc />

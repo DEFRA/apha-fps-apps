@@ -31,18 +31,18 @@
                 }
                 else
                 {
-                    <input type="text" asp-for="AnimalType" required class="govuk-input" />
+                    <input type="text" asp-for="AnimalType" required maxlength="50" class="govuk-input" />
                 }
                 <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="Species">Species</label>
-                <input type="text" asp-for="Species" class="govuk-input" />
+                <input type="text" asp-for="Species" maxlength="50" class="govuk-input" />
                 <span asp-validation-for="Species" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="SecurityLevel">Security Level</label>
-                <input type="text" asp-for="SecurityLevel" class="govuk-input" />
+                <input type="text" asp-for="SecurityLevel" maxlength="50" class="govuk-input" />
                 <span asp-validation-for="SecurityLevel" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
