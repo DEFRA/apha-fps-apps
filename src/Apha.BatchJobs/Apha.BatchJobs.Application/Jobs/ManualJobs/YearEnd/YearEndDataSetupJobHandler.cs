@@ -8,8 +8,8 @@ using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
 
 /// <summary>
-/// Year End Data Setup batch job handler scaffold.
-/// Execution logic will be added in the service layer in a later slice.
+/// Batch job entry point for Year End Data Setup — builds the execution context and delegates to
+/// <see cref="IYearEndDataSetupService"/>.
 /// </summary>
 public sealed class YearEndDataSetupJobHandler : IBatchJob
 {

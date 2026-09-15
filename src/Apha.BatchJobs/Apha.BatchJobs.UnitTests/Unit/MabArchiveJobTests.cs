@@ -15,12 +15,7 @@ using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// Tests for <see cref="MabArchiveJob"/> covering job metadata and status-driven Open/Planned
-/// year processing (docs/mabarchive-year-selection-processing-spec.md). Failure-notification
-/// behavior lives in <c>JobOrchestratorTests</c> now that <see cref="MabArchiveJob"/> no longer
-/// sends its own notifications.
-/// </summary>
+/// <summary>Tests for <see cref="MabArchiveJob"/> covering job metadata and status-driven Open/Planned year processing (docs/mabarchive-year-selection-processing-spec.md). Failure-notification behavior lives in <c>JobOrchestratorTests</c> now that <see cref="MabArchiveJob"/> no longer sends its own notifications.</summary>
 [Trait("Category", "Integration")]
 public sealed class MabArchiveJobTests
 {

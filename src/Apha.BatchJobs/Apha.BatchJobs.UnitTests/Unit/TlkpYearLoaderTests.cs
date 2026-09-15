@@ -4,11 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>
-/// Tests for TlkpYearLoader covering source-table contract, boundary validation,
-/// and confirmed isolation from the legacy fps.tbldb_variables table.
-/// Behavioral tests require a live PostgreSQL connection and use SkippableFact.
-/// </summary>
+/// <summary>Tests for TlkpYearLoader covering source-table contract, boundary validation, and confirmed isolation from the legacy fps.tbldb_variables table. Behavioral tests require a live PostgreSQL connection and use SkippableFact.</summary>
 [Trait("Category", "Integration")]
 public sealed class TlkpYearLoaderTests : IAsyncLifetime
 {

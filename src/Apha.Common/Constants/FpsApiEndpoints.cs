@@ -368,6 +368,10 @@ namespace Apha.Common.Constants
         public const string GetDepartmentIncomeTotals     = "api/v1/department-income/totals";
         public const string GetDepartmentIncomePeriods    = "api/v1/department-income/periods";
         public const string GetDepartmentIncomeSnapshotTests   = "api/v1/department-income/snapshot/tests";
+        public const string GetDepartmentIncomeSnapshotTime    = "api/v1/department-income/snapshot/time";
+        public const string GetDepartmentIncomeSnapshotAnimals    = "api/v1/department-income/snapshot/animals";
+        public const string GetDepartmentIncomeSnapshotAdditional = "api/v1/department-income/snapshot/additional";
+        public const string GetDepartmentIncomeSnapshotTotals     = "api/v1/department-income/snapshot/totals";
         public const string GetDepartmentIncomeSnapshotPeriods = "api/v1/department-income/snapshot-periods";
         public const string UpdateDepartmentIncomeSnapshotPeriodLock = "api/v1/department-income/snapshot-periods/lock";
 

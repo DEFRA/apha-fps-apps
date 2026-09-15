@@ -2,9 +2,7 @@ using Apha.BatchJobs.Domain.Interfaces;
 
 namespace Apha.BatchJobs.Infrastructure.Context;
 
-/// <summary>
-/// AsyncLocal-based correlation ID service.
-/// </summary>
+/// <summary>AsyncLocal-based correlation ID service.</summary>
 public sealed class CorrelationContextAccessor : ICorrelationContextAccessor
 {
     private static readonly AsyncLocal<string?> CorrelationIdHolder = new();
