@@ -5,13 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates.Services;
 
-/// <summary>
-/// Applies FEC Test/Product (FEC before AGRUP, spec §15.2) annual rate changes
-/// inside a single database transaction, then writes permanent history and
-/// clears request-scoped staging rows on success.
-/// Drift detection and revalidation are the responsibility of the FPS approval flow;
-/// the worker applies frozen effective values directly.
-/// </summary>
+/// <summary>Applies FEC Test/Product (FEC before AGRUP, spec §15.2) annual rate changes inside a single database transaction, then writes permanent history and clears request-scoped staging rows on success. Drift detection and revalidation are the responsibility of the FPS approval flow; the worker applies frozen effective values directly.</summary>
 public sealed class BulkTestRatesService : IBulkTestRatesService
 {
     private readonly IBulkRatesRepository _repository;

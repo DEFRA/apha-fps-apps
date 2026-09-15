@@ -7,11 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
 
-/// <summary>
-/// Registers application-layer orchestration services.
-/// Contains no references to Infrastructure namespaces — only Application, Domain,
-/// and framework abstractions.
-/// </summary>
+/// <summary>Registers application-layer orchestration services. Contains no references to Infrastructure namespaces — only Application, Domain, and framework abstractions.</summary>
 public static class BatchApplicationServiceExtensions
 {
     public static IServiceCollection AddBatchApplicationServices(

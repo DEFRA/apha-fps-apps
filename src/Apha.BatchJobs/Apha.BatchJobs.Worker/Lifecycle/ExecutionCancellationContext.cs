@@ -3,10 +3,10 @@ using Microsoft.Extensions.Hosting;
 namespace Apha.BatchJobs.Worker.Lifecycle;
 
 /// <summary>
-/// Owns the cancellation token for one job execution: a configured overall-timeout CTS linked
-/// with <see cref="IHostApplicationLifetime.ApplicationStopping"/>, plus first-shutdown-timestamp
-/// capture so the runner can classify why the token was cancelled. Created and disposed inside
-/// a single <c>BatchWorkerRunner.RunAsync</c> invocation — never registered in DI.
+/// Owns the cancellation token for one job execution: an overall-timeout CTS linked with
+/// <see cref="IHostApplicationLifetime.ApplicationStopping"/>, plus the timestamp of first
+/// shutdown so the runner can classify why the token was cancelled. Never registered in DI —
+/// created and disposed per invocation.
 /// </summary>
 public sealed class ExecutionCancellationContext : IDisposable
 {
@@ -30,10 +30,7 @@ public sealed class ExecutionCancellationContext : IDisposable
     /// <summary>True once <see cref="IHostApplicationLifetime.ApplicationStopping"/> has fired, at any point.</summary>
     public bool WasHostShutdownRequested => _shutdownRequestedAtUtc.HasValue;
 
-    /// <summary>
-    /// True only when the overall timeout fired and host shutdown was never requested — host
-    /// shutdown always takes precedence so an ECS SIGTERM is never misreported as a timeout.
-    /// </summary>
+    /// <summary>True only when the timeout fired without a shutdown request — shutdown always takes precedence, so an ECS SIGTERM is never misreported as a timeout.</summary>
     public bool WasJobTimeoutReached => _timeoutCts.IsCancellationRequested && !WasHostShutdownRequested;
 
     /// <summary>UTC timestamp of the first <see cref="IHostApplicationLifetime.ApplicationStopping"/> signal, if any.</summary>
