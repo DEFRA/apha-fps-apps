@@ -516,10 +516,6 @@ namespace Apha.FPS.Application.Services
                     findings.Add(Error("DUPLICATE_TEST_CODE", "FEC", row.TestCode, row.SourceRow,
                         $"TestCode '{row.TestCode}' appears more than once in the FEC worksheet."));
 
-                if (row.FecNewRate is < 0)
-                    findings.Add(Error("NEGATIVE_RATE", "FEC", row.TestCode, row.SourceRow,
-                        "Negative rates are not permitted.", "fecnewrate"));
-
                 if (!ctx.LiveFecLookup.TryGetValue(key, out var live))
                 {
                     // New Test Code.
@@ -536,7 +532,7 @@ namespace Apha.FPS.Application.Services
                         findings.Add(Error("MISSING_FOR_INSERT", "FEC", row.TestCode, row.SourceRow,
                             "Owner is required for new Test Code inserts.", "owner"));
 
-                    if (row.FecNewRate is >= 0)
+                    if (row.FecNewRate is not null)
                         findings.Add(Classification("FEC", row.TestCode, row.SourceRow,
                             ValidationCalculatedAction.Insert, row.FecNewRate));
                 }
@@ -544,13 +540,8 @@ namespace Apha.FPS.Application.Services
                 {
                     // Existing Test Code: description/owner changes are ignored (spec, unchanged).
 
-                    // Existing + blank/zero rate = Zero-Rate Withdrawal, not an error — still
-                    // counts toward withdrawnFecTestCodes even when already zero (a positive
-                    // AGRUP row under an already-zero FEC Test Code is still a conflict,
-                    // regardless of whether this upload is what caused the transition) — but the
-                    // classification itself is NoChange, not a fresh withdrawal, when the live
-                    // rate was already 0 (nothing is actually changing, so nothing should be
-                    // written/audited as an update).
+                    // Null/zero = withdrawal; still tracked even if already zero, but classified
+                    // NoChange (not a fresh withdrawal) when nothing is actually changing.
                     if (row.FecNewRate is null or 0)
                     {
                         withdrawn.Add(key);
@@ -559,14 +550,13 @@ namespace Apha.FPS.Application.Services
                             alreadyZero ? ValidationCalculatedAction.NoChange : ValidationCalculatedAction.ZeroRateWithdrawal,
                             0m));
                     }
-                    else if (row.FecNewRate is > 0)
+                    else
                     {
                         var unchanged = row.FecNewRate == live.UnitPriceVla && row.FecNewRate == live.DefraUnitPrice;
                         findings.Add(Classification("FEC", row.TestCode, row.SourceRow,
                             unchanged ? ValidationCalculatedAction.NoChange : ValidationCalculatedAction.Update,
                             row.FecNewRate));
                     }
-                    // Negative already reported above; no classification for an invalid value.
                 }
             }
 
@@ -601,10 +591,6 @@ namespace Apha.FPS.Application.Services
                     findings.Add(Error("TEST_CODE_NOT_FOUND", "AGRUP", businessKey, row.SourceRow,
                         $"TestCode '{row.TestCode}' does not exist in FPS year {ctx.FpsYear} and is not being inserted by this FEC upload.", "testcode"));
 
-                if (row.AgrupNew is < 0)
-                    findings.Add(Error("NEGATIVE_RATE", "AGRUP", businessKey, row.SourceRow,
-                        "Negative rates are not permitted.", "agrupnew"));
-
                 if (!ctx.LiveAgrupLookup.TryGetValue(agrupKey, out var live))
                     ValidateNewAgrupRow(ctx, row, businessKey, findings);
                 else
@@ -623,14 +609,11 @@ namespace Apha.FPS.Application.Services
                     }
                 }
 
-                // Interim BC-05 safety net, staged-vs-withdrawal (release-time,
-                // snapshot-independent — this is about what THIS upload contains, not what
-                // was previously downloaded). The snapshot-scoped/live-data counterpart is
-                // ValidateLiveWithdrawalConflicts below.
-                if (withdrawnFecTestCodes.Contains(testCodeKey) && row.AgrupNew is > 0)
+                // Staged AGRUP can't stay non-zero if its FEC is withdrawn in the same upload.
+                if (withdrawnFecTestCodes.Contains(testCodeKey) && row.AgrupNew is not null and not 0)
                 {
                     findings.Add(Error("AGRUP_POSITIVE_FOR_WITHDRAWN_FEC", "AGRUP", businessKey, row.SourceRow,
-                        $"FEC TestCode '{row.TestCode}' is being withdrawn (zeroed) in this upload, but AGRUP row '{businessKey}' still has a positive rate ({row.AgrupNew}).", "agrupnew"));
+                        $"FEC TestCode '{row.TestCode}' is being withdrawn (zeroed) in this upload, but AGRUP row '{businessKey}' still has a non-zero rate ({row.AgrupNew}).", "agrupnew"));
                 }
             }
         }
@@ -670,7 +653,7 @@ namespace Apha.FPS.Application.Services
                         $"TestCode '{row.TestCode}' / WorkGroup '{row.TestBuyerWorkGroup}' is not a recognised capability for FPS year {ctx.FpsYear}.", "testbuyerworkgroup"));
             }
 
-            if (row.AgrupNew is > 0)
+            if (row.AgrupNew is not null and not 0)
                 findings.Add(Classification("AGRUP", businessKey, row.SourceRow, ValidationCalculatedAction.Insert, row.AgrupNew));
         }
 
@@ -691,9 +674,7 @@ namespace Apha.FPS.Application.Services
                 findings.Add(Error("ROUTING_FIELD_CHANGED", "AGRUP", businessKey, row.SourceRow,
                     $"TestBuyerCode cannot be changed for an existing AGRUP row (was '{live.TestBuyerCode}').", "testbuyercode"));
 
-            // Existing + blank/zero rate = Zero-Rate Withdrawal, not a silent no-op. As with FEC
-            // above: if the live rate is already 0, nothing is actually changing — classify
-            // NoChange, not a fresh withdrawal.
+            // Null/zero = withdrawal, unless the live rate is already 0 (then NoChange).
             if (row.AgrupNew is null or 0)
             {
                 var alreadyZero = (live.UnitPrice ?? 0) == 0;
@@ -701,7 +682,7 @@ namespace Apha.FPS.Application.Services
                     alreadyZero ? ValidationCalculatedAction.NoChange : ValidationCalculatedAction.ZeroRateWithdrawal,
                     0m));
             }
-            else if (row.AgrupNew is > 0)
+            else
             {
                 var unchanged = row.AgrupNew == live.UnitPrice;
                 findings.Add(Classification("AGRUP", businessKey, row.SourceRow,
@@ -713,13 +694,7 @@ namespace Apha.FPS.Application.Services
         private static bool RoutingFieldChanged(string? staged, string? live)
             => !string.Equals(staged ?? string.Empty, live ?? string.Empty, StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// Only called when ValidationContext.IncludeWorkerOnlyChecks is true — see that
-        /// property for why this must not run at API release time. A live positive AGRUP row
-        /// related to a withdrawn FEC TestCode that was NOT present in the frozen download
-        /// snapshot cannot have been caught by the staged-row check above — it didn't exist, or
-        /// wasn't yet linked to that TestCode, at download time.
-        /// </summary>
+        /// <summary>Worker-only: catches a live non-zero AGRUP row for a withdrawn FEC TestCode that wasn't in the frozen download snapshot, so the staged-row check above couldn't see it.</summary>
         private static void ValidateLiveWithdrawalConflicts(
             ValidationContext ctx, ICollection<ValidationFinding> findings, IReadOnlySet<string> withdrawnFecTestCodes)
         {
@@ -736,7 +711,7 @@ namespace Apha.FPS.Application.Services
                 var testCodeKey = BulkRatesValidationKeys.TestCode(live.TestCode);
                 if (!withdrawnFecTestCodes.Contains(testCodeKey))
                     continue;
-                if (live.UnitPrice is not > 0)
+                if (live.UnitPrice is null or 0)
                     continue;
 
                 var agrupKey = BulkRatesValidationKeys.AgrupKey(live.TestCode, live.Buyer);
@@ -746,7 +721,7 @@ namespace Apha.FPS.Application.Services
                 var businessKey = $"{live.TestCode}/{live.Buyer}";
                 findings.Add(RequestLevel("LIVE_AGRUP_POSITIVE_FOR_WITHDRAWN_FEC", "AGRUP", businessKey,
                     $"FEC TestCode '{live.TestCode}' is being withdrawn, but live AGRUP row '{businessKey}' " +
-                    "(not present at download time) still has a positive rate — BC-05 interim rule."));
+                    "(not present at download time) still has a non-zero rate — BC-05 interim rule."));
             }
         }
 

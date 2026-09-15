@@ -25,6 +25,12 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest;
 /// false; there is no reachable seam on BulkTestRatesService's public API to exercise the
 /// true branch, same as before this move (only a hand-built ValidationContext in
 /// BulkRatesValidationServiceTests could reach it). That test class still covers it directly.
+///
+/// ValidateLiveWithdrawalConflicts was made sign-agnostic alongside the rest of the negative-rate
+/// change, so a withdrawn FEC now conflicts with a live AGRUP rate of either sign once worker-only
+/// checks are reachable — but IncludeWorkerOnlyChecks is still hardcoded false everywhere, so
+/// that branch has no live-path coverage today. Pre-existing gap, not introduced by this change;
+/// no new seam was added to manufacture coverage for it.
 /// </summary>
 public class BulkTestRatesServiceTests
 {
@@ -182,15 +188,37 @@ public class BulkTestRatesServiceTests
     }
 
     [Fact]
-    public async Task FecRow_NegativeRate_IsBlockingError_RegardlessOfNewOrExisting()
+    public async Task NewFecRow_NegativeRate_ClassifiesAsInsert()
+    {
+        var sut = CreateService(RepoWith());
+
+        var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("TC999", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.FecInsert.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingFecRow_PositiveToNegativeRate_ClassifiesAsUpdate()
     {
         var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)]);
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("TC001", -5)]), FpsYear, 1, null);
 
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "NEGATIVE_RATE" && e.SheetName == "FEC");
-        result.RowCounts.FecInsert.Should().Be(0);
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.FecUpdate.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingFecRow_SameNegativeRate_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith(liveFec: [LiveFec("TC001", -5, -5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("TC001", -5)]), FpsYear, 1, null);
+
+        result.RowCounts.FecUnchanged.Should().Be(1);
         result.RowCounts.FecUpdate.Should().Be(0);
     }
 
@@ -232,6 +260,49 @@ public class BulkTestRatesServiceTests
             ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 0, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
 
         result.Errors.Should().ContainSingle(e => e.ValidationCode == "NEW_AGRUP_ZERO_RATE_BLOCKED");
+    }
+
+    [Fact]
+    public async Task NewAgrupRow_NegativeRate_ClassifiesAsInsert()
+    {
+        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)], projectCodes: new HashSet<string> { "PRJ001" });
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", -5, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.AgrupInsert.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingAgrupRow_PositiveToNegativeRate_ClassifiesAsUpdate()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", 10)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.AgrupUpdate.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingAgrupRow_SameNegativeRate_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", -5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", -5)]), FpsYear, 1, null);
+
+        result.RowCounts.AgrupUnchanged.Should().Be(1);
+        result.RowCounts.AgrupUpdate.Should().Be(0);
     }
 
     [Fact]
@@ -396,6 +467,36 @@ public class BulkTestRatesServiceTests
             ParseResult(fec: [Fec("TC001", null)], agrup: [Agrup("TC001", "B001", 0)]), FpsYear, 1, null);
 
         result.Errors.Should().NotContain(e => e.ValidationCode == "AGRUP_POSITIVE_FOR_WITHDRAWN_FEC");
+    }
+
+    [Fact]
+    public async Task WithdrawnFecTestCode_StagedNegativeAgrupRow_RaisesConflictError()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", 5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", null)], agrup: [Agrup("TC001", "B001", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().ContainSingle(e => e.ValidationCode == "AGRUP_POSITIVE_FOR_WITHDRAWN_FEC");
+    }
+
+    [Fact]
+    public async Task NegativeFecAndNegativeAgrup_BothNonZero_NoWithdrawalConflict()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", 5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", -20)], agrup: [Agrup("TC001", "B001", -10)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "AGRUP_POSITIVE_FOR_WITHDRAWN_FEC");
+        result.RowCounts.FecUpdate.Should().Be(1);
+        result.RowCounts.AgrupUpdate.Should().Be(1);
     }
 
     // ── Downloaded-snapshot preservation ──────────────────────────────────────────

@@ -86,16 +86,42 @@ public class BulkAnimalRatesServiceTests
 
     // ── Negative rates ───────────────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData(-1, null, "dailyrate")]
-    [InlineData(null, -1, "defradailyrate")]
-    public async Task NegativeRate_IsBlockingError(int? dailyRate, int? defraDailyRate, string expectedField)
+    [Fact]
+    public async Task ExistingType_PositiveToNegativeRate_ClassifiesAsUpdate()
+    {
+        var repo = RepoWith([LiveAnimal("Cattle", 10, 5, true, "Bovine", "High")]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(animal: [Animal("Cattle", -10, 5, true, "Bovine", "High")]), FpsYear, 1);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.Update.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingType_SameNegativeRate_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith([LiveAnimal("Cattle", -10, 5, true, "Bovine", "High")]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(animal: [Animal("Cattle", -10, 5, true, "Bovine", "High")]), FpsYear, 1);
+
+        result.RowCounts.Unchanged.Should().Be(1);
+        result.RowCounts.Update.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task UnknownAnimalType_NegativeRate_IsNotFound_NotInsert()
     {
         var sut = CreateService(RepoWith());
 
-        var result = await sut.ProcessUploadAsync(ParseResult(animal: [Animal("Cattle", dailyRate, defraDailyRate)]), FpsYear, 1);
+        var result = await sut.ProcessUploadAsync(ParseResult(animal: [Animal("Unknown", -10)]), FpsYear, 1);
 
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "NEGATIVE_RATE" && e.FieldName == expectedField);
+        result.Errors.Should().ContainSingle(e => e.ValidationCode == "ANIMAL_TYPE_NOT_FOUND");
+        result.RowCounts.Insert.Should().Be(0);
+        result.RowCounts.Invalid.Should().Be(1);
     }
 
     // ── NotFound (update-only — no insert path) ───────────────────────────────────
