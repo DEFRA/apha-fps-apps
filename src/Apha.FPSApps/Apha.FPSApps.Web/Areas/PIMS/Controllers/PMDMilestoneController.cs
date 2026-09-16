@@ -132,6 +132,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<PMDMilestoneItem>
             {
                 GridId = "pmdMilestonesGrid",
+                Title = " PMD Milestones",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Number",
