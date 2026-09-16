@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
+using System.Globalization;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
@@ -247,12 +248,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var accountCodes = (await accountCodeTask).Data ?? new();
             model.IncomeAccountCodeList = accountCodes
                 .Where(ac => !string.IsNullOrEmpty(ac.Code))
+                .OrderBy(ac => GetNumericCodeOrder(ac.Code))
+                .ThenBy(ac => ac.Code, StringComparer.OrdinalIgnoreCase)
                 .Select(ac => new SelectListItem($"{ac.Code} - {ac.Description ?? string.Empty}", ac.Code, ac.Code == model.IncomeAccountCode))
                 .ToList();
 
             var subAccounts = (await subAccountTask).Data ?? new();
             model.SubAccountCodeList = subAccounts
                 .Where(sa => !string.IsNullOrEmpty(sa.SubAccountCode))
+                .OrderBy(sa => GetNumericCodeOrder(sa.SubAccountCode))
+                .ThenBy(sa => sa.SubAccountCode, StringComparer.OrdinalIgnoreCase)
                 .Select(sa => new SelectListItem($"{sa.SubAccountCode} - {sa.SubAccount ?? string.Empty}", sa.SubAccountCode, sa.SubAccountCode == model.SubAccountCode))
                 .ToList();
 
@@ -292,6 +297,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 new("Yes", "-1"),
                 new("No", "0")
             };
+        }
+
+        /// <summary>
+        /// Returns a numeric sort key for a code so that codes such as "1" sort before "1020400"
+        /// instead of sorting as text. Non-numeric codes sort last.
+        /// </summary>
+        private static (int IsNonNumeric, decimal Value) GetNumericCodeOrder(string? code)
+        {
+            return decimal.TryParse(code?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericCode)
+                ? (0, numericCode)
+                : (1, 0m);
         }
     }
 }

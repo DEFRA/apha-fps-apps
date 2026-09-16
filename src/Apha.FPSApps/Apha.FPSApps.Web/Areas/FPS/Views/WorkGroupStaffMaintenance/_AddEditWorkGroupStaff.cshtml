@@ -6,6 +6,17 @@
         : !string.IsNullOrWhiteSpace(Model?.PactId);
     var title = isEditMode ? "Edit WG Staff" : "Add WG Staff";
     var saveLabel = isEditMode ? "Update" : "Save";
+
+    // The staff lookup returns several thousand records. Rendering one <tr> per
+    // record into the scrollable modal body makes every main-thread scroll (i.e.
+    // dragging the scrollbar thumb) recalculate style/layout over that subtree.
+    // The data is emitted as JSON instead and rows are built on demand.
+    var staffLookup = (Model?.StaffLookupOptions ?? Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
+        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+        .GroupBy(x => x.Name)
+        .Select(g => g.First())
+        .Select(x => new { pactId = x.PactId, name = x.Name, spNumber = x.SpNumber })
+        .ToList();
 }
 
 <div class="modal-header">
@@ -13,7 +24,31 @@
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 
-<div class="modal-body" style="overflow-y:auto; max-height:calc(80vh - 120px);">
+<style>
+    /* The shared .modal-dialog carries transform/transition, which makes it the
+       containing block for the dialog and forces a composited repaint of the whole
+       dialog while the modal body scrollbar is dragged. Not needed for this modal. */
+    #modalPopup .modal-dialog {
+        transform: none;
+        transition: none;
+    }
+
+    /* The base .dropdown-panel class carries no positioning rules, so this panel
+       was laid out in normal flow and pushed the form down when opened. */
+    #staff-name-dropdown {
+        position: relative;
+    }
+
+    #staff-name-panel {
+        position: absolute;
+        z-index: 9999;
+        background: #fff;
+        border: 1px solid #b1b4b6;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+<div id="wgStaffModalBody" class="modal-body" style="overflow-y:auto; overflow-x:hidden; max-height:calc(80vh - 120px); overscroll-behavior:contain;">
     <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title"
          tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
@@ -76,7 +111,7 @@
                            aria-controls="staffNameTableBody"
                            onclick="toggleWgStaffNameDropdown()" />
 
-                    <div class="dropdown-panel" id="staff-name-panel" style="display:none; width:100%; min-width:580px; top:100%; left:0; max-height:220px; overflow-y:auto;">
+                    <div class="dropdown-panel" id="staff-name-panel" style="display:none; width:100%; top:100%; left:0; max-height:220px; overflow-y:auto; overscroll-behavior:contain;">
                         <label for="staff-name-search" class="govuk-label govuk-visually-hidden">Search staff</label>
                         <input type="text"
                                class="search-box govuk-input govuk-!-font-size-16"
@@ -96,27 +131,10 @@
                                 </tr>
                             </thead>
                             <tbody class="govuk-table__body" id="staffNameTableBody" role="listbox" aria-label="Staff results">
-                                @foreach (var staff in (Model?.StaffLookupOptions ?? System.Linq.Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
-                                                                   .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-                                                                   .GroupBy(x => x.Name)
-                                                                   .Select(g => g.First()))
-                                {
-                                    var rowId = "staffNameRow_" + @staff.PactId + "_" + @staff.SpNumber;
-                                    <tr id="@rowId" class="govuk-table__row staff-name-row"
-                                        data-pactid="@staff.PactId"
-                                        data-name="@staff.Name"
-                                        data-spnumber="@staff.SpNumber"
-                                        role="option"
-                                        tabindex="-1"
-                                        style="cursor:pointer;"
-                                        onclick="selectWgStaffName(this)">
-                                        <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@staff.Name</td>
-                                        <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@staff.SpNumber</td>
-                                    </tr>
-                                }
                             </tbody>
                         </table>
                     </div>
+                    <script type="application/json" id="staff-lookup-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(staffLookup))</script>
                 </div>
                 <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -335,6 +353,7 @@
 
         var isHidden = panel.style.display === 'none' || panel.style.display === '';
         if (isHidden) {
+            filterWgStaffNameTable(search.value);
             panel.style.display = 'block';
             panel.style.width = input.offsetWidth + 'px';
             input.setAttribute('aria-expanded', 'true');
@@ -388,20 +407,78 @@
         var displayEl = document.getElementById('staff-name-input');
         if (displayEl) displayEl.setAttribute('aria-expanded', 'false');
         document.getElementById('staff-name-search').value = '';
-        filterWgStaffNameTable('');
+        var tableBody = document.getElementById('staffNameTableBody');
+        if (tableBody) tableBody.replaceChildren();
     }
 
-    function filterWgStaffNameTable(query) {
-        var rows = document.querySelectorAll('#staffNameTableBody .staff-name-row');
-        var lower = (query || '').trim().toLowerCase();
+    var WG_STAFF_MAX_ROWS = 50;
+    var wgStaffLookup = null;
 
-        rows.forEach(function (row) {
-            var name = (row.getAttribute('data-name') || '').toLowerCase();
-            var spNumber = (row.getAttribute('data-spnumber') || '').toLowerCase();
-            var rowText = (row.textContent || '').toLowerCase();
-            var matches = !lower || name.includes(lower) || spNumber.includes(lower) || rowText.includes(lower);
-            row.style.display = matches ? '' : 'none';
-        });
+    function getWgStaffLookup() {
+        if (wgStaffLookup) return wgStaffLookup;
+        var dataEl = document.getElementById('staff-lookup-data');
+        try {
+            wgStaffLookup = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+        } catch (e) {
+            wgStaffLookup = [];
+        }
+        return wgStaffLookup;
+    }
+
+    // Builds only the rows that match the current search term, capped at
+    // WG_STAFF_MAX_ROWS. The full lookup holds several thousand entries, so they
+    // are never all placed in the DOM.
+    function filterWgStaffNameTable(query) {
+        var body = document.getElementById('staffNameTableBody');
+        if (!body) return;
+
+        var lower = (query || '').trim().toLowerCase();
+        var items = getWgStaffLookup();
+        var fragment = document.createDocumentFragment();
+        var shown = 0;
+
+        for (var i = 0; i < items.length && shown < WG_STAFF_MAX_ROWS; i++) {
+            var item = items[i];
+            var name = (item.name || '');
+            var spNumber = (item.spNumber || '') + '';
+
+            if (lower &&
+                name.toLowerCase().indexOf(lower) === -1 &&
+                spNumber.toLowerCase().indexOf(lower) === -1) {
+                continue;
+            }
+
+            var row = document.createElement('tr');
+            row.id = 'staffNameRow_' + item.pactId + '_' + spNumber;
+            row.className = 'govuk-table__row staff-name-row';
+            row.setAttribute('data-pactid', item.pactId == null ? '' : item.pactId);
+            row.setAttribute('data-name', name);
+            row.setAttribute('data-spnumber', spNumber);
+            row.setAttribute('role', 'option');
+            row.setAttribute('tabindex', '-1');
+            row.style.cursor = 'pointer';
+            row.onclick = function () { selectWgStaffName(this); };
+
+            var nameCell = document.createElement('td');
+            nameCell.className = 'govuk-table__cell';
+            nameCell.style.overflow = 'hidden';
+            nameCell.style.textOverflow = 'ellipsis';
+            nameCell.textContent = name;
+
+            var spCell = document.createElement('td');
+            spCell.className = 'govuk-table__cell';
+            spCell.style.whiteSpace = 'nowrap';
+            spCell.style.overflow = 'hidden';
+            spCell.style.textOverflow = 'ellipsis';
+            spCell.textContent = spNumber;
+
+            row.appendChild(nameCell);
+            row.appendChild(spCell);
+            fragment.appendChild(row);
+            shown++;
+        }
+
+        body.replaceChildren(fragment);
     }
 
     function recalculateHrsAvail() {
@@ -413,6 +490,29 @@
         var hrsAvailInput = document.getElementById('HrsAvail');
         if (hrsAvailInput) {
             hrsAvailInput.value = hrsAvail.toFixed(2);
+        }
+    }
+
+    function closeWgStaffNameDropdown() {
+        var panel = document.getElementById('staff-name-panel');
+        // Writing style.display unconditionally mutates the style attribute even
+        // when the value is unchanged. A global MutationObserver watches every
+        // .dropdown-panel for style/class changes and measures visibility, which
+        // forces a synchronous layout, so only touch the DOM when actually open.
+        if (!panel || panel.style.display === 'none' || panel.style.display === '') {
+            return;
+        }
+
+        panel.style.display = 'none';
+        var displayEl = document.getElementById('staff-name-input');
+        if (displayEl) displayEl.setAttribute('aria-expanded', 'false');
+    }
+
+    function onWgStaffDocumentClick(e) {
+        var dropdown = document.getElementById('staff-name-dropdown');
+        if (!dropdown) return;
+        if (!dropdown.contains(e.target)) {
+            closeWgStaffNameDropdown();
         }
     }
 
@@ -434,14 +534,23 @@
             }
         });
 
-        document.addEventListener('click', function (e) {
-            var dropdown = document.getElementById('staff-name-dropdown');
-            var panel = document.getElementById('staff-name-panel');
-            if (dropdown && panel && !dropdown.contains(e.target)) {
-                panel.style.display = 'none';
-                var displayEl = document.getElementById('staff-name-input');
-                if (displayEl) displayEl.setAttribute('aria-expanded', 'false');
-            }
-        });
+        // The partial is re-injected each time the modal opens and each injection
+        // creates a brand new function object, so the previously registered
+        // handler must be tracked on window to be removable.
+        if (window.__wgStaffDocClickHandler) {
+            document.removeEventListener('click', window.__wgStaffDocClickHandler);
+        }
+        window.__wgStaffDocClickHandler = onWgStaffDocumentClick;
+        document.addEventListener('click', onWgStaffDocumentClick);
+
+        var modalBody = document.getElementById('wgStaffModalBody');
+        if (modalBody) {
+            modalBody.addEventListener('scroll', function () {
+                var panel = document.getElementById('staff-name-panel');
+                if (panel && panel.style.display === 'block') {
+                    closeWgStaffNameDropdown();
+                }
+            }, { passive: true });
+        }
     })();
 </script>

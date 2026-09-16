@@ -615,6 +615,33 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task Edit_Post_ManagerValidationError_ReturnsProjectManagerFieldError()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError(nameof(PactProjectViewModel.Manager), "Manager is required");
+
+            // Act
+            var result = await _controller.Edit(new PactProjectViewModel());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+
+            string? managerErrorMessage = null;
+            foreach (var error in value.GetProperty("errors").EnumerateArray())
+            {
+                if (error.GetProperty("field").GetString() == "Project.Manager")
+                {
+                    managerErrorMessage = error.GetProperty("message").GetString();
+                    break;
+                }
+            }
+
+            Assert.Equal("Manager is required", managerErrorMessage);
+        }
+
         #endregion
 
         #region Delete (Project)

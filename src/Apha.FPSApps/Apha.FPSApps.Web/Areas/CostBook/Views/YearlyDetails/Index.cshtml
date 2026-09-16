@@ -5,6 +5,7 @@
     var selectedYear = Model.SelectedYear;
     var isDefra = Model.ProjectHeaderDto.IsDefraProject == -1;
     var programme = (Model.ProjectHeaderDto.Programme ?? "").ToLower() == "comm";
+    var disableCopyDataButton = Model.ProjectYears == null || Model.ProjectYears.Count <= 1;
 }
 <div class="govuk-template__body govuk-frontend-supported project-requirement-page">
     <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
@@ -94,10 +95,18 @@
                             <!-- Year costs shell -->
                             <div class="project-year-costs-shell">
                                 <div class="form-header project-year-costs-header">
-                                    <h3 class="govuk-heading-s">@selectedYear Year Costs</h3>
+                                    <div class="sup_flex_between_center">
+                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-0">@selectedYear Year Costs</h3>
+                                        <div class="govuk-!-margin-right-1 govuk-!-margin-bottom-1">
+                                            <button type="button" id="openCopyDataModal" class="govuk-button govuk-button--primary govuk-!-margin-bottom-0" disabled="@disableCopyDataButton">Copy Data</button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="content-area">
+                                      <div id="copyYearModalContentHidden" style="display:none;">
+                                        @await Html.PartialAsync("_CopyYearData")
+                                    </div>
                                     <div class="user-grid-section project-year-grid tab-grid-scroll">
 
                                         <!-- Year list (fsubProjectYear navigation) -->
@@ -117,9 +126,9 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody id="userTableBody">
-                                                        @foreach (var year in Model.ProjectYears)
+                                                        @foreach (var year in Model?.ProjectYears ?? Enumerable.Empty<int>())
                                                         {
-                                                            <tr class="project-year-row @(year == Model.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;">
+                                                            <tr class="project-year-row @(year == Model?.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;">
                                                                     <td>@year</td>
                                                                     <td>
                                                                         <button type="button" class="btn btn-sm delete-row-btn" data-year="@year" onclick="deletetblProjectYear(this)">
@@ -251,21 +260,21 @@
 
                                                                 <input type="text"
                                                                        class="govuk-input project-year-total-input"
-                                                                       id="year-total-staff" value="@Model.StaffCostTotal.ToString("£#,##0.00")"
+                                                                       id="year-total-staff" value="@Model?.StaffCostTotal.ToString("£#,##0.00")"
                                                                        readonly="" tabindex="-1">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-test">Test Costs:</label>
 
-                                                                <input type="text" value="@Model.TestCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.TestCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-test" tabindex="-1">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-animal">Animal Costs:</label>
-                                                                <input type="text" value="@Model.AnimalCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.AnimalCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-animal" tabindex="-1">
                                                             </div>
@@ -275,14 +284,14 @@
                                                                     Additional
                                                                     Costs:
                                                                 </label>
-                                                                <input type="text" value="@Model.AdditionalCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.AdditionalCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-additional" tabindex="-1">
                                                             </div>
                                                             <div class="total-item grand-total">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-grand">Grand Totals:</label>
-                                                                <input type="text" value="@Model.GrandTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.GrandTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-grand" tabindex="-1">
                                                             </div>
@@ -320,7 +329,8 @@
         // -- Page-level globals (Razor-resolved values for yearly-details.js) --
         const projectId   = '@projectId';
         let   selectedYear = @selectedYear;
-        const programme   = '@Model.ProjectHeaderDto.Programme';
+        const projectYears = [@string.Join(",", Model?.ProjectYears ?? Enumerable.Empty<int>())];
+        const programme   = '@Model?.ProjectHeaderDto?.Programme';
         const isDefra     = @(isDefra ? "true" : "false");
 
         // All controller URLs resolved here so yearly-details.js stays plain JS
@@ -328,6 +338,7 @@
             index:                   '@Url.Action("Index",                "YearlyDetails",  new { area = "CostBook" })',
             addProjectYear:          '@Url.Action("AddProjectYear",       "YearlyDetails",  new { area = "CostBook" })',
             deleteProjectYear:       '@Url.Action("DeleteProjectYear",    "YearlyDetails",  new { area = "CostBook" })',
+            copyYearData:            '@Url.Action("CopyYearData",         "YearlyDetails",  new { area = "CostBook" })',
             createStaff:             '@Url.Action("CreateStaff",          "YearlyDetails",  new { area = "CostBook" })',
             editStaff:               '@Url.Action("EditStaff",            "YearlyDetails",  new { area = "CostBook" })',
             deleteStaff:             '@Url.Action("DeleteStaff",          "YearlyDetails",  new { area = "CostBook" })',

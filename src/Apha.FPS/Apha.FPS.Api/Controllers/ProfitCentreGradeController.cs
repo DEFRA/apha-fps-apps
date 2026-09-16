@@ -99,7 +99,7 @@ namespace Apha.FPS.Api.Controllers
             {
                 throw new ArgumentException($"Profit centre grade {pcGrade} not found");
             }
-            return Ok(new { success = true });
+            return Ok(true);
         }
 
         /// <summary>
