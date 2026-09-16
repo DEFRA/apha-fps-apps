@@ -11,7 +11,11 @@ namespace Apha.BatchJobs.UnitTests;
 public sealed class NotificationSettingsPreflightTests
 {
     private static readonly IOptions<MilestoneNotificationsSettings> DefaultSettings =
-        Options.Create(new MilestoneNotificationsSettings { CapsMailbox = "caps@example.com" });
+        Options.Create(new MilestoneNotificationsSettings
+        {
+            CapsMailbox = "caps@example.com",
+            ApplicationBaseUrl = "https://fps-dev.example.com/PIMS/PMDMilestone?parentproject="
+        });
 
     [Fact]
     public void Constructor_WhenContextIsNull_ShouldThrowArgumentNullException()
@@ -130,6 +134,117 @@ public sealed class NotificationSettingsPreflightTests
 
         var ex = await Assert.ThrowsAsync<NotificationSettingsConfigurationException>(() => preflight.ValidateAsync(CancellationToken.None));
         Assert.Contains("CapsMailbox", ex.Message);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task ValidateAsync_WhenApplicationBaseUrlBlank_ShouldThrowNotificationSettingsConfigurationException(string? blankBaseUrl)
+    {
+        await using var context = CreateInMemoryDbContext();
+        SeedSetting(context, "PIMS_Project_Report_Name", "some-value");
+        SeedSetting(context, "PIMS_Project_Current_Root", "https://pims.example.com/projects");
+        SeedSetting(context, "PIMS_Project_Edit_Link", "https://pims.example.com/edit");
+        await context.SaveChangesAsync();
+
+        var settings = Options.Create(new MilestoneNotificationsSettings
+        {
+            CapsMailbox = "caps@example.com",
+            ApplicationBaseUrl = blankBaseUrl
+        });
+        var preflight = new NotificationSettingsPreflight(context, settings, NullLogger<NotificationSettingsPreflight>.Instance);
+
+        var ex = await Assert.ThrowsAsync<NotificationSettingsConfigurationException>(() => preflight.ValidateAsync(CancellationToken.None));
+        Assert.Contains("ApplicationBaseUrl", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("not a url")]
+    [InlineData("/relative/only")]
+    public async Task ValidateAsync_WhenApplicationBaseUrlNotAbsoluteUri_ShouldThrowNotificationSettingsConfigurationException(string invalidBaseUrl)
+    {
+        await using var context = CreateInMemoryDbContext();
+        SeedSetting(context, "PIMS_Project_Report_Name", "some-value");
+        SeedSetting(context, "PIMS_Project_Current_Root", "https://pims.example.com/projects");
+        SeedSetting(context, "PIMS_Project_Edit_Link", "https://pims.example.com/edit");
+        await context.SaveChangesAsync();
+
+        var settings = Options.Create(new MilestoneNotificationsSettings
+        {
+            CapsMailbox = "caps@example.com",
+            ApplicationBaseUrl = invalidBaseUrl
+        });
+        var preflight = new NotificationSettingsPreflight(context, settings, NullLogger<NotificationSettingsPreflight>.Instance);
+
+        var ex = await Assert.ThrowsAsync<NotificationSettingsConfigurationException>(() => preflight.ValidateAsync(CancellationToken.None));
+        Assert.Contains("ApplicationBaseUrl", ex.Message);
+        Assert.Contains("not a valid absolute URI", ex.Message);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WhenApplicationBaseUrlNotHttps_ShouldThrowNotificationSettingsConfigurationException()
+    {
+        await using var context = CreateInMemoryDbContext();
+        SeedSetting(context, "PIMS_Project_Report_Name", "some-value");
+        SeedSetting(context, "PIMS_Project_Current_Root", "https://pims.example.com/projects");
+        SeedSetting(context, "PIMS_Project_Edit_Link", "https://pims.example.com/edit");
+        await context.SaveChangesAsync();
+
+        var settings = Options.Create(new MilestoneNotificationsSettings
+        {
+            CapsMailbox = "caps@example.com",
+            ApplicationBaseUrl = "http://fps-dev.example.com/PIMS/PMDMilestone?parentproject="
+        });
+        var preflight = new NotificationSettingsPreflight(context, settings, NullLogger<NotificationSettingsPreflight>.Instance);
+
+        var ex = await Assert.ThrowsAsync<NotificationSettingsConfigurationException>(() => preflight.ValidateAsync(CancellationToken.None));
+        Assert.Contains("ApplicationBaseUrl", ex.Message);
+        Assert.Contains("only https is permitted", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("https://fps-apps-dev.aws-int.defra.cloud/PIMS/PMDMilestone")]
+    [InlineData("https://fps-apps-dev.aws-int.defra.cloud/PIMS/PMDMilestone?parentproject")]
+    [InlineData("https://fps-apps-dev.aws-int.defra.cloud/PIMS/PMDMilestone?parentProject=")]
+    [InlineData("https://fps-apps-dev.aws-int.defra.cloud/PIMS/PMDMilestone?parentproject=&extra=1")]
+    public async Task ValidateAsync_WhenApplicationBaseUrlMissingParentProjectSuffix_ShouldThrowNotificationSettingsConfigurationException(string baseUrlMissingSuffix)
+    {
+        await using var context = CreateInMemoryDbContext();
+        SeedSetting(context, "PIMS_Project_Report_Name", "some-value");
+        SeedSetting(context, "PIMS_Project_Current_Root", "https://pims.example.com/projects");
+        SeedSetting(context, "PIMS_Project_Edit_Link", "https://pims.example.com/edit");
+        await context.SaveChangesAsync();
+
+        var settings = Options.Create(new MilestoneNotificationsSettings
+        {
+            CapsMailbox = "caps@example.com",
+            ApplicationBaseUrl = baseUrlMissingSuffix
+        });
+        var preflight = new NotificationSettingsPreflight(context, settings, NullLogger<NotificationSettingsPreflight>.Instance);
+
+        var ex = await Assert.ThrowsAsync<NotificationSettingsConfigurationException>(() => preflight.ValidateAsync(CancellationToken.None));
+        Assert.Contains("ApplicationBaseUrl", ex.Message);
+        Assert.Contains("must end with 'parentproject='", ex.Message);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WhenApplicationBaseUrlIsValidHttps_ShouldNotThrow()
+    {
+        await using var context = CreateInMemoryDbContext();
+        SeedSetting(context, "PIMS_Project_Report_Name", "some-value");
+        SeedSetting(context, "PIMS_Project_Current_Root", "https://pims.example.com/projects");
+        SeedSetting(context, "PIMS_Project_Edit_Link", "https://pims.example.com/edit");
+        await context.SaveChangesAsync();
+
+        var settings = Options.Create(new MilestoneNotificationsSettings
+        {
+            CapsMailbox = "caps@example.com",
+            ApplicationBaseUrl = "https://fps-dev.example.com/PIMS/PMDMilestone?parentproject="
+        });
+        var preflight = new NotificationSettingsPreflight(context, settings, NullLogger<NotificationSettingsPreflight>.Instance);
+
+        await preflight.ValidateAsync(CancellationToken.None);
     }
 
     [Fact]

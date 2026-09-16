@@ -27,6 +27,9 @@ public sealed class NotificationSettingsPreflight : INotificationSettingsPreflig
         "PIMS_Project_Edit_Link"
     ];
 
+    /// <summary>Required suffix — MilestoneEditLinkBuilder appends the encoded ParentProject directly onto ApplicationBaseUrl with no separator.</summary>
+    private const string RequiredApplicationBaseUrlSuffix = "parentproject=";
+
     private readonly BatchJobsDbContext _context;
     private readonly MilestoneNotificationsSettings _settings;
     private readonly ILogger<NotificationSettingsPreflight> _logger;
@@ -79,9 +82,52 @@ public sealed class NotificationSettingsPreflight : INotificationSettingsPreflig
                 "completion email at the end — fail before any email goes out instead.");
         }
 
+        ValidateApplicationBaseUrl();
+
         _logger.LogInformation(
-            "Milestone notification settings preflight passed for {SettingCount} required tbl_settings rows " +
-            "and CapsMailbox configuration",
+            "Milestone notification settings preflight passed for {SettingCount} required tbl_settings rows, " +
+            "CapsMailbox, and ApplicationBaseUrl configuration",
             RequiredSettingIds.Length);
+    }
+
+    /// <summary>
+    /// Validates MilestoneNotifications:ApplicationBaseUrl — the source of truth for the PM
+    /// milestone link (edit-link-configuration spec §8). Must fail before any manager email is
+    /// sent rather than let a bad value surface only when a link fails to build per-candidate.
+    /// </summary>
+    private void ValidateApplicationBaseUrl()
+    {
+        var baseUrl = _settings.ApplicationBaseUrl;
+
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            throw new NotificationSettingsConfigurationException(
+                "Milestone notification settings preflight failed: MilestoneNotifications:ApplicationBaseUrl " +
+                "is not configured. This is now the source of truth for the PM milestone link and must be set " +
+                "before any manager email is sent.");
+        }
+
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+        {
+            throw new NotificationSettingsConfigurationException(
+                $"Milestone notification settings preflight failed: MilestoneNotifications:ApplicationBaseUrl " +
+                $"'{baseUrl}' is not a valid absolute URI.");
+        }
+
+        if (uri.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new NotificationSettingsConfigurationException(
+                $"Milestone notification settings preflight failed: MilestoneNotifications:ApplicationBaseUrl " +
+                $"'{baseUrl}' uses scheme '{uri.Scheme}' — only https is permitted.");
+        }
+
+        // A valid https URI alone isn't enough — the builder concatenates onto this directly.
+        if (!baseUrl.EndsWith(RequiredApplicationBaseUrlSuffix, StringComparison.Ordinal))
+        {
+            throw new NotificationSettingsConfigurationException(
+                $"Milestone notification settings preflight failed: MilestoneNotifications:ApplicationBaseUrl " +
+                $"'{baseUrl}' must end with '{RequiredApplicationBaseUrlSuffix}' — MilestoneEditLinkBuilder " +
+                "appends the encoded ParentProject directly onto this value with no separator.");
+        }
     }
 }
