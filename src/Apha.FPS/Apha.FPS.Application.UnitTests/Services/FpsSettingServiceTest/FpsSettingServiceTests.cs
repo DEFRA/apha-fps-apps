@@ -384,42 +384,16 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
 
         #endregion
 
-        // -----------------------------------------------------------------------
-        // SaveSettingAsync — validation
-        // -----------------------------------------------------------------------
+        #region SaveSettingAsync
 
-        #region SaveSettingAsync — validation
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        [InlineData("abc")]
-        [InlineData("-5")]
-        [InlineData("0")]
-        public async Task SaveSettingAsync_WhenHoursInDayIsInvalid_ThrowsBusinessValidationError(string? value)
+        [Fact]
+        public async Task SaveSettingAsync_WhenDtoIsValid_ReturnsMappedSavedDto()
         {
             // Arrange
-            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(dto));
-            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_HoursInDay");
-
-            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<FpsSetting>());
-        }
-
-        [Theory]
-        [InlineData("7.5")]
-        [InlineData("8")]
-        [InlineData("12")]
-        public async Task SaveSettingAsync_WhenHoursInDayIsValid_CallsRepositoryAndReturnsMappedDto(string value)
-        {
-            // Arrange
-            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
-            var entity = new FpsSetting { Id = "HoursInDay", Setting = value };
-            var savedEntity = new FpsSetting { Id = "HoursInDay", Setting = value };
-            var expectedDto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "9", Notes = "Saved", FpsYear = 2025 };
+            var entity = new FpsSetting { Id = "HoursInDay", Setting = "9", Notes = "Saved", FpsYear = 2025 };
+            var savedEntity = new FpsSetting { Id = "HoursInDay", Setting = "9", Notes = "Saved", FpsYear = 2025 };
+            var expectedDto = new FpsSettingDto { Id = "HoursInDay", Setting = "9", Notes = "Saved", FpsYear = 2025 };
 
             _mockMapper.Map<FpsSetting>(dto).Returns(entity);
             _mockRepository.SaveAsync(entity).Returns(savedEntity);
@@ -431,81 +405,17 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             // Assert
             result.Should().NotBeNull();
             result.Id.Should().Be("HoursInDay");
-            result.Setting.Should().Be(value);
+            result.Setting.Should().Be("9");
 
             await _mockRepository.Received(1).SaveAsync(entity);
-        }
-
-        [Theory]
-        [InlineData("maybe")]
-        [InlineData("true")]
-        [InlineData("1")]
-        public async Task SaveSettingAsync_WhenCapApprovalValueIsInvalid_ThrowsBusinessValidationError(string value)
-        {
-            // Arrange
-            var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveSettingAsync(dto));
-            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_CapApprovalReceivedForReset");
-
-            await _mockRepository.DidNotReceive().SaveAsync(Arg.Any<FpsSetting>());
-        }
-
-        [Theory]
-        [InlineData("yes")]
-        [InlineData("Yes")]
-        [InlineData("YES")]
-        [InlineData("no")]
-        [InlineData("No")]
-        [InlineData("NO")]
-        public async Task SaveSettingAsync_WhenCapApprovalValueIsValid_CallsRepositoryAndReturnsMappedDto(string value)
-        {
-            // Arrange
-            var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
-            var entity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = value };
-            var savedEntity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = value };
-            var expectedDto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
-
-            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
-            _mockRepository.SaveAsync(entity).Returns(savedEntity);
-            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
-
-            // Act
-            var result = await _sut.SaveSettingAsync(dto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Setting.Should().Be(value);
-
-            await _mockRepository.Received(1).SaveAsync(entity);
+            _mockMapper.Received(1).Map<FpsSetting>(dto);
+            _mockMapper.Received(1).Map<FpsSettingDto>(savedEntity);
         }
 
         [Fact]
-        public async Task SaveSettingAsync_WhenCapApprovalValueIsNullOrEmpty_SkipsValidationAndCallsRepository()
+        public async Task SaveSettingAsync_WhenIdIsUnrecognised_DoesNotValidateAndCallsRepositoryDirectly()
         {
-            // Arrange — empty/null value is allowed through (no validation fires for CapApproval)
-            var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = null };
-            var entity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = null };
-            var savedEntity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = null };
-            var expectedDto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = null };
-
-            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
-            _mockRepository.SaveAsync(entity).Returns(savedEntity);
-            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
-
-            // Act
-            var result = await _sut.SaveSettingAsync(dto);
-
-            // Assert
-            result.Should().NotBeNull();
-            await _mockRepository.Received(1).SaveAsync(entity);
-        }
-
-        [Fact]
-        public async Task SaveSettingAsync_WhenIdIsUnrecognised_CallsRepositoryDirectly()
-        {
-            // Arrange — no validation rules apply to unrecognised IDs
+            // Arrange — SaveSettingAsync performs no validation regardless of Id
             var dto = new FpsSettingDto { Id = "OtherKey", Setting = "anything" };
             var entity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
             var savedEntity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
@@ -526,11 +436,35 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         }
 
         [Fact]
+        public async Task SaveSettingAsync_WhenHoursInDayValueIsInvalid_DoesNotThrowAndCallsRepository()
+        {
+            // Arrange — SaveSettingAsync does not perform the HoursInDay validation
+            // (that validation only exists in SaveYearEndSettingAsync)
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "not-a-number" };
+            var entity = new FpsSetting { Id = "HoursInDay", Setting = "not-a-number" };
+            var savedEntity = new FpsSetting { Id = "HoursInDay", Setting = "not-a-number" };
+            var expectedDto = new FpsSettingDto { Id = "HoursInDay", Setting = "not-a-number" };
+
+            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
+            _mockRepository.SaveAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveSettingAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Setting.Should().Be("not-a-number");
+
+            await _mockRepository.Received(1).SaveAsync(entity);
+        }
+
+        [Fact]
         public async Task SaveSettingAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange
-            var dto = new FpsSettingDto { Id = "OtherKey", Setting = "value" };
-            var entity = new FpsSetting { Id = "OtherKey", Setting = "value" };
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "9" };
+            var entity = new FpsSetting { Id = "HoursInDay", Setting = "9" };
             _mockMapper.Map<FpsSetting>(dto).Returns(entity);
             _mockRepository.SaveAsync(entity).Throws(new Exception("Save failed"));
 
@@ -539,6 +473,165 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
             exception.Message.Should().Be("Save failed");
 
             await _mockRepository.Received(1).SaveAsync(entity);
+        }
+
+        #endregion
+
+        // -----------------------------------------------------------------------
+        // SaveYearEndSettingAsync — validation
+        // -----------------------------------------------------------------------
+
+        #region SaveYearEndSettingAsync — validation
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("abc")]
+        [InlineData("-5")]
+        [InlineData("0")]
+        public async Task SaveYearEndSettingAsync_WhenHoursInDayIsInvalid_ThrowsBusinessValidationError(string? value)
+        {
+            // Arrange
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndSettingAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_HoursInDay");
+
+            await _mockRepository.DidNotReceive().SaveYearEndSettingAsync(Arg.Any<FpsSetting>());
+        }
+
+        [Theory]
+        [InlineData("7.5")]
+        [InlineData("8")]
+        [InlineData("12")]
+        public async Task SaveYearEndSettingAsync_WhenHoursInDayIsValid_CallsRepositoryAndReturnsMappedDto(string value)
+        {
+            // Arrange
+            var dto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
+            var entity = new FpsSetting { Id = "HoursInDay", Setting = value };
+            var savedEntity = new FpsSetting { Id = "HoursInDay", Setting = value };
+            var expectedDto = new FpsSettingDto { Id = "HoursInDay", Setting = value };
+
+            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
+            _mockRepository.SaveYearEndSettingAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Id.Should().Be("HoursInDay");
+            result.Setting.Should().Be(value);
+
+            await _mockRepository.Received(1).SaveYearEndSettingAsync(entity);
+        }
+
+        [Theory]
+        [InlineData("maybe")]
+        [InlineData("true")]
+        [InlineData("1")]
+        public async Task SaveYearEndSettingAsync_WhenCapApprovalValueIsInvalid_ThrowsBusinessValidationError(string value)
+        {
+            // Arrange
+            var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndSettingAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_CapApprovalReceivedForReset");
+
+            await _mockRepository.DidNotReceive().SaveYearEndSettingAsync(Arg.Any<FpsSetting>());
+        }
+
+        [Theory]
+        [InlineData("yes")]
+        [InlineData("Yes")]
+        [InlineData("YES")]
+        [InlineData("no")]
+        [InlineData("No")]
+        [InlineData("NO")]
+        public async Task SaveYearEndSettingAsync_WhenCapApprovalValueIsValid_CallsRepositoryAndReturnsMappedDto(string value)
+        {
+            // Arrange
+            var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
+            var entity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = value };
+            var savedEntity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = value };
+            var expectedDto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = value };
+
+            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
+            _mockRepository.SaveYearEndSettingAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Setting.Should().Be(value);
+
+            await _mockRepository.Received(1).SaveYearEndSettingAsync(entity);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenCapApprovalValueIsNullOrEmpty_SkipsValidationAndCallsRepository()
+        {
+            // Arrange — empty/null value is allowed through (no validation fires for CapApproval)
+            var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = null };
+            var entity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = null };
+            var savedEntity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = null };
+            var expectedDto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = null };
+
+            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
+            _mockRepository.SaveYearEndSettingAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            await _mockRepository.Received(1).SaveYearEndSettingAsync(entity);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenIdIsUnrecognised_CallsRepositoryDirectly()
+        {
+            // Arrange — no validation rules apply to unrecognised IDs
+            var dto = new FpsSettingDto { Id = "OtherKey", Setting = "anything" };
+            var entity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
+            var savedEntity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
+            var expectedDto = new FpsSettingDto { Id = "OtherKey", Setting = "anything" };
+
+            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
+            _mockRepository.SaveYearEndSettingAsync(entity).Returns(savedEntity);
+            _mockMapper.Map<FpsSettingDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SaveYearEndSettingAsync(dto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Id.Should().Be("OtherKey");
+
+            await _mockRepository.Received(1).SaveYearEndSettingAsync(entity);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var dto = new FpsSettingDto { Id = "OtherKey", Setting = "value" };
+            var entity = new FpsSetting { Id = "OtherKey", Setting = "value" };
+            _mockMapper.Map<FpsSetting>(dto).Returns(entity);
+            _mockRepository.SaveYearEndSettingAsync(entity).Throws(new Exception("Save failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _sut.SaveYearEndSettingAsync(dto));
+            exception.Message.Should().Be("Save failed");
+
+            await _mockRepository.Received(1).SaveYearEndSettingAsync(entity);
         }
 
         #endregion
