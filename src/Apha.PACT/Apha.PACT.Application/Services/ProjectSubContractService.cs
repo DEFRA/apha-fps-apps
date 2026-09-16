@@ -285,6 +285,16 @@ namespace Apha.PACT.Application.Services
             };
         }
 
+        // Max lengths of the live fps.proj_subcontract columns (staging columns are text).
+        private const int ProjectMaxLength = 20;
+        private const int TestJobMaxLength = 50;
+        private const int WorkGroupMaxLength = 50;
+        private const int AcctCodeMaxLength = 30;
+        private const int SupplierMaxLength = 50;
+        private const int DescriptionMaxLength = 255;
+        private const int AmountPrecision = 19;
+        private const int AmountScale = 4;
+
         private static List<string> ValidateImportRow(SubContractRmsImportRowDto row, HashSet<string> validProjects)
         {
             var failures = new List<string>();
@@ -293,7 +303,9 @@ namespace Apha.PACT.Application.Services
 
             ExcelValidationHelper.ValidateStringInSet(row.Project, validProjects, "Project", failures);
 
-            if (failures.Count == 0 && !string.IsNullOrWhiteSpace(row.Project))
+            var isProjectValid = failures.Count == 0;
+
+            if (isProjectValid && !string.IsNullOrWhiteSpace(row.Project))
             {
                 var canonicalProject = validProjects
                     .FirstOrDefault(x => string.Equals(x, row.Project, StringComparison.OrdinalIgnoreCase));
@@ -309,6 +321,20 @@ namespace Apha.PACT.Application.Services
             ExcelValidationHelper.ValidateNonNegativeInteger(row.SupplierNumber, "Supplier Number", failures, required: false);
             ExcelValidationHelper.ValidateDecimal(row.DailyRate, "Daily Rate", failures, required: false);
             ExcelValidationHelper.ValidateNonNegativeInteger(row.AnimalDays, "Animal Days", failures, required: false);
+
+            if (isProjectValid)
+            {
+                ExcelValidationHelper.ValidateMaxLength(row.Project, ProjectMaxLength, "Project", failures);
+            }
+
+            ExcelValidationHelper.ValidateMaxLength(row.TestJob, TestJobMaxLength, "Test Job", failures);
+            ExcelValidationHelper.ValidateMaxLength(row.WorkGroup, WorkGroupMaxLength, "Work Group", failures);
+            ExcelValidationHelper.ValidateMaxLength(row.AcctCode, AcctCodeMaxLength, "Acct Code", failures);
+            ExcelValidationHelper.ValidateMaxLength(row.Supplier, SupplierMaxLength, "Supplier", failures);
+            ExcelValidationHelper.ValidateMaxLength(row.Description, DescriptionMaxLength, "Description", failures);
+
+            ExcelValidationHelper.ValidateDecimalPrecision(row.Amount, AmountPrecision, AmountScale, "Amount", failures);
+            ExcelValidationHelper.ValidateDecimalPrecision(row.DailyRate, AmountPrecision, AmountScale, "Daily Rate", failures);
 
             return failures;
         }
@@ -336,7 +362,12 @@ namespace Apha.PACT.Application.Services
                     { "Month", "Month" },
                     { "Supplier Number", "SupplierNumber" },
                     { "Daily Rate", "DailyRate" },
-                    { "Animal Days", "AnimalDays" }
+                    { "Animal Days", "AnimalDays" },
+                    { "Test Job", "TestJob" },
+                    { "Work Group", "WorkGroup" },
+                    { "Acct Code", "AcctCode" },
+                    { "Supplier", "Supplier" },
+                    { "Description", "Description" }
                 };
 
                 // Convert validation failures to BusinessValidationError format

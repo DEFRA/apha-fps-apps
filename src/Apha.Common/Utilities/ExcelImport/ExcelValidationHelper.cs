@@ -130,6 +130,20 @@ namespace Apha.Common.Utilities.ExcelImport
                 failures.Add($"{fieldName} must be between {min} and {max}.");
         }
 
+        public static void ValidateDecimalPrecision(string? value, int precision, int scale, string fieldName, List<string> failures)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            var parsed = ExcelParseHelper.TryParseDecimal(value);
+            if (!parsed.HasValue)
+                return;
+
+            var digits = Math.Abs(decimal.Truncate(parsed.Value)).ToString(System.Globalization.CultureInfo.InvariantCulture).TrimStart('0').Length;
+            if (digits > precision - scale)
+                failures.Add($"{fieldName} cannot exceed {precision - scale} digits before the decimal point.");
+        }
+
         public static void ValidateMaxLength(string? value, int maxLength, string fieldName, List<string> failures)
         {
             if (string.IsNullOrEmpty(value))
