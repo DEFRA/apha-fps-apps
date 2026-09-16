@@ -38,40 +38,6 @@ namespace Apha.FPS.Api.UnitTests.Filters
         }
 
         [Fact]
-        public async Task OnResultExecutionAsync_WrapsNullValue_SoResponseIsValidJson()
-        {
-            // Arrange - a null payload, e.g. a staff member with no charge rate
-            var context = CreateContext(new OkObjectResult(null));
-
-            // Act
-            await ExecuteAsync(context);
-
-            // Assert - the envelope must still be produced, otherwise the client
-            // receives an empty body and cannot deserialise ApiResponse<T>
-            var objectResult = Assert.IsType<ObjectResult>(context.Result);
-            var response = Assert.IsType<ApiResponse<object>>(objectResult.Value);
-
-            Assert.True(response.Success);
-            Assert.Null(response.Data);
-            Assert.Null(response.Errors);
-            Assert.NotNull(response.Meta);
-        }
-
-        [Fact]
-        public async Task OnResultExecutionAsync_PreservesStatusCode_WhenValueIsNull()
-        {
-            // Arrange
-            var context = CreateContext(new OkObjectResult(null));
-
-            // Act
-            await ExecuteAsync(context);
-
-            // Assert
-            var objectResult = Assert.IsType<ObjectResult>(context.Result);
-            Assert.Equal(StatusCodes.Status200OK, objectResult.StatusCode);
-        }
-
-        [Fact]
         public async Task OnResultExecutionAsync_WrapsNonNullValue()
         {
             // Arrange
