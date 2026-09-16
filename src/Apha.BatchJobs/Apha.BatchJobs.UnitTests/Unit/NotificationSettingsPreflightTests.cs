@@ -161,7 +161,7 @@ public sealed class NotificationSettingsPreflightTests
 
     [Theory]
     [InlineData("not a url")]
-    [InlineData("/relative/only")]
+    [InlineData("relative/only")]
     public async Task ValidateAsync_WhenApplicationBaseUrlNotAbsoluteUri_ShouldThrowNotificationSettingsConfigurationException(string invalidBaseUrl)
     {
         await using var context = CreateInMemoryDbContext();
