@@ -50,7 +50,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(viewModel.Parentproject, defaultRequest);
 
-            bool hasMilestoneRecords = viewModel.MilestonesGrid.Data?.Any() == true;
+            bool hasMilestoneRecords = viewModel.MilestonesGrid.Data?.Count > 0;
             (viewModel.ShowConfirmationSection, viewModel.ShowSubmitButton, viewModel.ConfirmationLabelText) =
                 await BuildConfirmationStateAsync(viewModel.Parentproject, hasMilestoneRecords);
 

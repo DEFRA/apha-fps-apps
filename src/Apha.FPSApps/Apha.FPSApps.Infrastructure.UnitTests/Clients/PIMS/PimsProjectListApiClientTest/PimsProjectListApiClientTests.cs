@@ -293,7 +293,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
                 Success = true,
                 Data = null
             };
-            var expectedDto = ApiResponseDto<ProjectDetailsMilestoneDto>.SuccessResponse(null);
+            var expectedDto = ApiResponseDto<ProjectDetailsMilestoneDto>.SuccessResponse(null!);
 
             _http.GetAsync<ProjectDetailsMilestoneRes>(url).Returns(httpResponse);
             _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(httpResponse).Returns(expectedDto);

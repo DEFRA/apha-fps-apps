@@ -1230,7 +1230,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             }
 
             var accessLevelsResult = await _service.GetAccessUserLevelsByUserAsync(systemId, accessUser.NtLogin);
-            return accessLevelsResult is { Success: true, Data: not null } && accessLevelsResult.Data.Any();
+            return accessLevelsResult is { Success: true, Data: not null } && accessLevelsResult.Data.Count > 0;
         }
 
         // ── Access Users Grid ────────────────────────────────────────────────────────
