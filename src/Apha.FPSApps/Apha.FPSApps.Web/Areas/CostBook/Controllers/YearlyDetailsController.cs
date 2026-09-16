@@ -182,14 +182,33 @@ public class YearlyDetailsController : Controller
 
     [HttpGet]
     [ActionName("AddProjectYear")]
-    public IActionResult AddProjectYearGet(string projectId, int year, string? programme = null)
+    public async Task<IActionResult> AddProjectYearGet(string projectId, int year, string? programme = null)
     {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var model = new ProjectYearRateItem
         {
-            Project = projectId,
+            Project = decodedProjectId,
             YearValue = year,
             Programme = programme
         };
+
+        var yearsResponse = await _service.GetProjectYearsAsync(decodedProjectId);
+        var latestYear = yearsResponse.Success && yearsResponse.Data != null
+            ? yearsResponse.Data.OrderByDescending(y => y.YearValue).FirstOrDefault()
+            : null;
+
+        if (latestYear is not null)
+        {
+            model.MarkupTime = latestYear.MarkupTime;
+            model.MarkupTests = latestYear.MarkupTests;
+            model.MarkupAnimals = latestYear.MarkupAnimals;
+            model.MarkupAdditional = latestYear.MarkupAdditional;
+            model.ProfitTime = latestYear.ProfitTime;
+            model.ProfitTests = latestYear.ProfitTests;
+            model.ProfitAnimals = latestYear.ProfitAnimals;
+            model.ProfitAdditional = latestYear.ProfitAdditional;
+        }
+
         return PartialView("_AddProjectYear", model);
     }
 
@@ -316,7 +335,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateTest(string projectId, int year, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(projectId, year, isDefra);
+        await GetTestCodeOptionsAsync(projectId, year, isDefra, string.Empty);
         return PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
     }
 
@@ -340,7 +359,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(projectId, year, isDefra);
+        await GetTestCodeOptionsAsync(projectId, year, isDefra, testCode);
         var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
         var row = listResponse.Data?.data?.FirstOrDefault(t => t.TestCode == testCode);
@@ -812,7 +831,7 @@ public class YearlyDetailsController : Controller
             : new List<AccountCategoryDto>();
     }
 
-    private async Task GetTestCodeOptionsAsync(string projectId, int year, bool isDefra)
+    private async Task GetTestCodeOptionsAsync(string projectId, int year, bool isDefra, string testCode = "")
     {
         var response = await _service.GetTestCodeLookupsAsync(projectId, year, isDefra);
         if (!response.Success || response.Data is null)
@@ -820,6 +839,9 @@ public class YearlyDetailsController : Controller
             ViewBag.TestCodeOptions = new List<TestCodeLookupDto>();
             return;
         }
-        ViewBag.TestCodeOptions = response.Data;
+
+        ViewBag.TestCodeOptions = string.IsNullOrWhiteSpace(testCode)
+            ? response.Data
+            : response.Data.Where(x => x.ItemCode == testCode).ToList();
     }
 }

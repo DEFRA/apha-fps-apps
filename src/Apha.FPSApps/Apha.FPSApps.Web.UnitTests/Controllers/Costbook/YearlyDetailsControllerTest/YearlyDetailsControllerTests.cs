@@ -157,14 +157,91 @@ public class YearlyDetailsControllerTests
     [Fact]
     public async Task AddProjectYearGet_ReturnsPartialView()
     {
+        // Arrange
+        _service.GetProjectYearsAsync("2024/001")
+            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
+
         // Act
-        var result = _controller.AddProjectYearGet("2024/001", 3);
+        var result = await _controller.AddProjectYearGet("2024/001", 3);
 
         // Assert
         var partialResult = Assert.IsType<PartialViewResult>(result);
         Assert.Equal("_AddProjectYear", partialResult.ViewName);
         var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
         Assert.Equal(3, model.YearValue);
+    }
+
+    [Fact]
+    public async Task AddProjectYearGet_PrefillsLatestMarkupAndProfitValues()
+    {
+        // Arrange
+        _service.GetProjectYearsAsync("2024/001")
+            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(
+            [
+                new ProjectYearDto
+                {
+                    YearValue = 2024,
+                    MarkupTime = 1.1,
+                    MarkupTests = 1.2,
+                    MarkupAnimals = 1.3,
+                    MarkupAdditional = 1.4,
+                    ProfitTime = 2.1,
+                    ProfitTests = 2.2,
+                    ProfitAnimals = 2.3,
+                    ProfitAdditional = 2.4
+                },
+                new ProjectYearDto
+                {
+                    YearValue = 2025,
+                    MarkupTime = 3.1,
+                    MarkupTests = 3.2,
+                    MarkupAnimals = 3.3,
+                    MarkupAdditional = 3.4,
+                    ProfitTime = 4.1,
+                    ProfitTests = 4.2,
+                    ProfitAnimals = 4.3,
+                    ProfitAdditional = 4.4
+                }
+            ]));
+
+        // Act
+        var result = await _controller.AddProjectYearGet("2024/001", 2026);
+
+        // Assert
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
+        Assert.Equal(2026, model.YearValue);
+        Assert.Equal(3.1, model.MarkupTime);
+        Assert.Equal(3.2, model.MarkupTests);
+        Assert.Equal(3.3, model.MarkupAnimals);
+        Assert.Equal(3.4, model.MarkupAdditional);
+        Assert.Equal(4.1, model.ProfitTime);
+        Assert.Equal(4.2, model.ProfitTests);
+        Assert.Equal(4.3, model.ProfitAnimals);
+        Assert.Equal(4.4, model.ProfitAdditional);
+    }
+
+    [Fact]
+    public async Task AddProjectYearGet_SkipsPrefill_WhenNoYearExists()
+    {
+        // Arrange
+        _service.GetProjectYearsAsync("2024/001")
+            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
+
+        // Act
+        var result = await _controller.AddProjectYearGet("2024/001", 2026);
+
+        // Assert
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
+        Assert.Null(model.MarkupTime);
+        Assert.Null(model.MarkupTests);
+        Assert.Null(model.MarkupAnimals);
+        Assert.Null(model.MarkupAdditional);
+        Assert.Null(model.ProfitTime);
+        Assert.Null(model.ProfitTests);
+        Assert.Null(model.ProfitAnimals);
+        Assert.Null(model.ProfitAdditional);
     }
 
     [Fact]
@@ -577,12 +654,19 @@ public class YearlyDetailsControllerTests
     public async Task CreateTest_Get_ReturnsPartialView()
     {
         _service.GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(new List<TestCodeLookupDto>()));
+            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(
+                new List<TestCodeLookupDto>
+                {
+                    new() { ItemCode = "TC001" },
+                    new() { ItemCode = "TC002" }
+                }));
 
         var result = await _controller.CreateTest("2024/001", 2024, false);
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         Assert.Equal("_AddEditTestRequirement", partialResult.ViewName);
+        var options = ((IEnumerable<TestCodeLookupDto>)_controller.ViewBag.TestCodeOptions).ToList();
+        Assert.Equal(2, options.Count);
     }
 
     #endregion
@@ -1038,9 +1122,12 @@ public class YearlyDetailsControllerTests
     #region AddProjectYearGet with Programme
 
     [Fact]
-    public void AddProjectYearGet_IncludesProgramme_WhenProvided()
+    public async Task AddProjectYearGet_IncludesProgramme_WhenProvided()
     {
-        var result = _controller.AddProjectYearGet("2024/001", 2, "DEFRA-PROG");
+        _service.GetProjectYearsAsync("2024/001")
+            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
+
+        var result = await _controller.AddProjectYearGet("2024/001", 2, "DEFRA-PROG");
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
@@ -1048,9 +1135,12 @@ public class YearlyDetailsControllerTests
     }
 
     [Fact]
-    public void AddProjectYearGet_ProgrammeIsNull_WhenNotProvided()
+    public async Task AddProjectYearGet_ProgrammeIsNull_WhenNotProvided()
     {
-        var result = _controller.AddProjectYearGet("2024/001", 2);
+        _service.GetProjectYearsAsync("2024/001")
+            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
+
+        var result = await _controller.AddProjectYearGet("2024/001", 2);
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
@@ -1069,13 +1159,21 @@ public class YearlyDetailsControllerTests
         _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
             .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(pagedResult));
         _service.GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(new List<TestCodeLookupDto>()));
+            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(
+                new List<TestCodeLookupDto>
+                {
+                    new() { ItemCode = "TC001" },
+                    new() { ItemCode = "TC002" }
+                }));
         _mapper.Map<TestRequirementItem>(testDto).Returns(new TestRequirementItem { TestCode = "TC001" });
 
         var result = await _controller.EditTest("2024/001", 2024, "TC001", false);
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         Assert.Equal("_AddEditTestRequirement", partialResult.ViewName);
+        var options = ((IEnumerable<TestCodeLookupDto>)_controller.ViewBag.TestCodeOptions).ToList();
+        Assert.Single(options);
+        Assert.Equal("TC001", options[0].ItemCode);
     }
 
     [Fact]

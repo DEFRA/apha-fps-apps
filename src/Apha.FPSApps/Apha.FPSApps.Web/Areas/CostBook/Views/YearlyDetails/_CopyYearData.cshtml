@@ -14,14 +14,14 @@
 
         <div class="govuk-form-group">
             <label class="govuk-label govuk-!-font-weight-bold" for="copyFromYearSelect">Copy data from year</label>
-            <select id="copyFromYearSelect" name="copyFromYear" class="govuk-select" aria-required="true">
+            <select id="copyFromYearSelect" name="copyFromYear" class="govuk-select" aria-required="true" disabled>
             </select>
             <span class="govuk-error-message" id="copyFromYearError" style="display:none;">Please select a year to copy from.</span>
         </div>
 
         <div class="sup_flex_between_center">
             <button type="button" class="govuk-button govuk-button--secondary" id="btnCopyCancel" onclick="closeModal()">Cancel</button>
-            <button type="button" class="govuk-button govuk-button--start" id="btnDoCopy">Copy</button>
+            <button type="button" class="govuk-button govuk-button--start" id="btnDoCopy" disabled>Copy</button>
         </div>
     </form>
 </div>

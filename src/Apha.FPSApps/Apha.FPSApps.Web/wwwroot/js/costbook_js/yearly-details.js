@@ -253,6 +253,9 @@ function bindCopyYearDataForm() {
         : (!isNaN(selectedYearFromHeading) ? selectedYearFromHeading : selectedYearFromGlobal);
 
     var yearSelect = modalContent.querySelector('#copyFromYearSelect');
+    var doCopyBtn = modalContent.querySelector('#btnDoCopy');
+    if (!doCopyBtn) return;
+
     if (yearSelect) {
         yearSelect.innerHTML = '';
 
@@ -267,10 +270,12 @@ function bindCopyYearDataForm() {
             option.textContent = y;
             yearSelect.appendChild(option);
         });
+
+        var hasOptions = yearSelect.options.length > 0;
+        yearSelect.disabled = !hasOptions;
+        doCopyBtn.disabled = !hasOptions;
     }
 
-    var doCopyBtn = modalContent.querySelector('#btnDoCopy');
-    if (!doCopyBtn) return;
 
     doCopyBtn.addEventListener('click', function () {
         var form = modalContent.querySelector('#copyDataForm');
