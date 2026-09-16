@@ -771,5 +771,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Copy failed" });
         }
+
+        /// <summary>Activates or deactivates ALL time codes for a job code (used by the Activate All / Deactivate All buttons).</summary>
+        [HttpPost]
+        public async Task<IActionResult> SetWorkgroupsActiveStatusByJobCode(string parentProject, string jobCodeId, bool isActive)
+        {
+            var result = await _timeCodeService.SetWorkgroupsActiveStatusByJobCodeAsync(jobCodeId, parentProject, isActive);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
+        }
     }
 }
