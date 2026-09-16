@@ -10,8 +10,7 @@ namespace Apha.FPS.Api.Filters
             ResultExecutingContext context,
             ResultExecutionDelegate next)
         {
-            if (context.Result is not ObjectResult objectResult ||
-                objectResult.Value is null)
+            if (context.Result is not ObjectResult objectResult)
             {
                 await next();
                 return;
@@ -19,7 +18,9 @@ namespace Apha.FPS.Api.Filters
 
             var correlationId = GetCorrelationId(context);
 
-            object wrappedResponse = IsPaginatedResult(objectResult.Value)
+            // A null value must still be wrapped, otherwise the response body is
+            // empty and clients cannot deserialise it into ApiResponse<T>.
+            object wrappedResponse = objectResult.Value is not null && IsPaginatedResult(objectResult.Value)
                 ? CreatePaginatedResponse(objectResult.Value, correlationId)
                 : CreateStandardResponse(objectResult.Value, correlationId);
 
@@ -39,7 +40,7 @@ namespace Apha.FPS.Api.Filters
                    type.GetGenericTypeDefinition() == typeof(PaginationRes<>);
         }
 
-        private static object CreateStandardResponse(object value, string correlationId)
+        private static object CreateStandardResponse(object? value, string correlationId)
         {
             return new ApiResponse<object>
             {
