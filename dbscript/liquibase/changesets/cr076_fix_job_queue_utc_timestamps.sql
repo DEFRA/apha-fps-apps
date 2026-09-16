@@ -15,9 +15,8 @@ BEGIN;
 --   batchjobs only
 --
 -- Expected schema before execution:
---   - approved_at_utc  = timestamp without time zone
---   - rejected_at_utc  = timestamp without time zone
---   - triggered_at_utc = timestamp without time zone
+--   - approved_at_utc, rejected_at_utc, and triggered_at_utc may each be
+--     timestamp without time zone or timestamp with time zone.
 --   - cancelled_at_utc = timestamp with time zone
 --
 -- Existing values in the three columns are UTC wall-clock timestamps and
@@ -33,46 +32,26 @@ BEGIN
         RAISE EXCEPTION 'CR076 precondition failed: fps.job_queue does not exist.';
     END IF;
 
-    -- approved_at_utc must still be timestamp without time zone.
+    -- All three columns may be either the legacy type or the corrected type.
+    -- This allows CR076 to recover from a partially applied/manual migration.
     SELECT COUNT(*)
       INTO v_count
       FROM information_schema.columns
      WHERE table_schema = 'fps'
        AND table_name = 'job_queue'
-       AND column_name = 'approved_at_utc'
-       AND data_type = 'timestamp without time zone';
+       AND column_name IN (
+           'approved_at_utc',
+           'rejected_at_utc',
+           'triggered_at_utc'
+       )
+       AND data_type IN (
+           'timestamp without time zone',
+           'timestamp with time zone'
+       );
 
-    IF v_count <> 1 THEN
+    IF v_count <> 3 THEN
         RAISE EXCEPTION
-            'CR076 precondition failed: fps.job_queue.approved_at_utc is not timestamp without time zone.';
-    END IF;
-
-    -- rejected_at_utc must still be timestamp without time zone.
-    SELECT COUNT(*)
-      INTO v_count
-      FROM information_schema.columns
-     WHERE table_schema = 'fps'
-       AND table_name = 'job_queue'
-       AND column_name = 'rejected_at_utc'
-       AND data_type = 'timestamp without time zone';
-
-    IF v_count <> 1 THEN
-        RAISE EXCEPTION
-            'CR076 precondition failed: fps.job_queue.rejected_at_utc is not timestamp without time zone.';
-    END IF;
-
-    -- triggered_at_utc must still be timestamp without time zone.
-    SELECT COUNT(*)
-      INTO v_count
-      FROM information_schema.columns
-     WHERE table_schema = 'fps'
-       AND table_name = 'job_queue'
-       AND column_name = 'triggered_at_utc'
-       AND data_type = 'timestamp without time zone';
-
-    IF v_count <> 1 THEN
-        RAISE EXCEPTION
-            'CR076 precondition failed: fps.job_queue.triggered_at_utc is not timestamp without time zone.';
+            'CR076 precondition failed: lifecycle timestamp columns must be timestamp with or without time zone.';
     END IF;
 
     -- cancelled_at_utc is deliberately NOT changed by this CR.
@@ -92,18 +71,30 @@ BEGIN
 END
 $$;
 
-ALTER TABLE fps.job_queue
-    ALTER COLUMN approved_at_utc
-        TYPE timestamp with time zone
-        USING approved_at_utc AT TIME ZONE 'UTC',
-
-    ALTER COLUMN rejected_at_utc
-        TYPE timestamp with time zone
-        USING rejected_at_utc AT TIME ZONE 'UTC',
-
-    ALTER COLUMN triggered_at_utc
-        TYPE timestamp with time zone
-        USING triggered_at_utc AT TIME ZONE 'UTC';
+DO $$
+DECLARE
+    v_column record;
+BEGIN
+    FOR v_column IN
+        SELECT column_name
+          FROM information_schema.columns
+         WHERE table_schema = 'fps'
+           AND table_name = 'job_queue'
+           AND column_name IN (
+               'approved_at_utc',
+               'rejected_at_utc',
+               'triggered_at_utc'
+           )
+           AND data_type = 'timestamp without time zone'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE fps.job_queue ALTER COLUMN %I TYPE timestamp with time zone USING %I AT TIME ZONE ''UTC''',
+            v_column.column_name,
+            v_column.column_name
+        );
+    END LOOP;
+END
+$$;
 
 DO $$
 DECLARE
