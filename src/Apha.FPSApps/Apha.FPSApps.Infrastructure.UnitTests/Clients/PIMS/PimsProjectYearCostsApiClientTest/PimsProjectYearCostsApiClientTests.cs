@@ -104,49 +104,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
         }
 
         [Fact]
-        public async Task GetAdditionalActualsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAdditionalActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve additional actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAdditionalActualsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<AdditionalCostRes>> { Success = true, Data = new List<AdditionalCostRes>() };
-
-            _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetAdditionalActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve additional actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
         public async Task GetAdditionalActualsAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
@@ -228,49 +185,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.Single(result.Errors);
             Assert.Equal("API Error", result.Errors[0].Message);
             Assert.Equal("ERROR_CODE", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAdditionalPlansAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAdditionalPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve additional plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAdditionalPlansAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<AdditionalCostRes>> { Success = true, Data = new List<AdditionalCostRes>() };
-
-            _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetAdditionalPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve additional plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         [Fact]
@@ -358,49 +272,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
         }
 
         [Fact]
-        public async Task GetAnimalActualsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<AnimalCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAnimalActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve animal actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAnimalActualsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<AnimalCostRes>> { Success = true, Data = new List<AnimalCostRes>() };
-
-            _http.GetAsync<List<AnimalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetAnimalActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve animal actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
         public async Task GetAnimalActualsAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
@@ -482,49 +353,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.Single(result.Errors);
             Assert.Equal("API Error", result.Errors[0].Message);
             Assert.Equal("ERROR_CODE", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAnimalPlansAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<AnimalCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAnimalPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve animal plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetAnimalPlansAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<AnimalCostRes>> { Success = true, Data = new List<AnimalCostRes>() };
-
-            _http.GetAsync<List<AnimalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetAnimalPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve animal plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         [Fact]
@@ -612,49 +440,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
         }
 
         [Fact]
-        public async Task GetTestPlansAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<TestCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTestPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve test plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetTestPlansAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<TestCostRes>> { Success = true, Data = new List<TestCostRes>() };
-
-            _http.GetAsync<List<TestCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetTestPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve test plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
         public async Task GetTestPlansAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
@@ -736,49 +521,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.Single(result.Errors);
             Assert.Equal("API Error", result.Errors[0].Message);
             Assert.Equal("ERROR_CODE", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetTestActualsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<TestCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetTestActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve test actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetTestActualsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<TestCostRes>> { Success = true, Data = new List<TestCostRes>() };
-
-            _http.GetAsync<List<TestCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TestCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetTestActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve test actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         [Fact]
@@ -866,49 +608,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
         }
 
         [Fact]
-        public async Task GetStaffPlansAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<StaffCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetStaffPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve staff plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetStaffPlansAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<StaffCostRes>> { Success = true, Data = new List<StaffCostRes>() };
-
-            _http.GetAsync<List<StaffCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetStaffPlansAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve staff plans", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
         public async Task GetStaffPlansAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
@@ -993,49 +692,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
         }
 
         [Fact]
-        public async Task GetStaffActualsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<StaffCostRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetStaffActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve staff actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetStaffActualsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<StaffCostRes>> { Success = true, Data = new List<StaffCostRes>() };
-
-            _http.GetAsync<List<StaffCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetStaffActualsAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve staff actuals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
         public async Task GetStaffActualsAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
@@ -1114,49 +770,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.Single(result.Errors);
             Assert.Equal("Not found", result.Errors[0].Message);
             Assert.Equal("NOT_FOUND", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetProjectYearDetailsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var url = string.Format(PimsApiEndpoints.GetProjectYearDetails, Project, Year);
-            _http.GetAsync<ProjectYearDetailsRes>(url).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetProjectYearDetailsAsync(Project, Year);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve project year details", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetProjectYearDetailsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var url = string.Format(PimsApiEndpoints.GetProjectYearDetails, Project, Year);
-            var apiResponse = new ApiResponse<ProjectYearDetailsRes> { Success = true, Data = new ProjectYearDetailsRes { Parentproject = Project } };
-
-            _http.GetAsync<ProjectYearDetailsRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProjectYearDetailsDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetProjectYearDetailsAsync(Project, Year);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve project year details", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         [Fact]
@@ -1243,49 +856,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
         }
 
         [Fact]
-        public async Task GetPactPayAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<PactPayRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetPactPayAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve pact pay data", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetPactPayAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<PactPayRes>> { Success = true, Data = new List<PactPayRes>() };
-
-            _http.GetAsync<List<PactPayRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<PactPayDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetPactPayAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve pact pay data", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
         public async Task GetPactPayAsync_EnsuresCorrectApiEndpoint_CallsWithCorrectUrl()
         {
             // Arrange
@@ -1368,49 +938,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.Single(result.Errors);
             Assert.Equal("API Error", result.Errors[0].Message);
             Assert.Equal("ERROR_CODE", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetMonthlyPactDataAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _http.GetAsync<List<MonthlyPactRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetMonthlyPactDataAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve monthly pact data", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetMonthlyPactDataAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<MonthlyPactRes>> { Success = true, Data = new List<MonthlyPactRes>() };
-
-            _http.GetAsync<List<MonthlyPactRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<MonthlyPactDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetMonthlyPactDataAsync(Project, Year, query);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve monthly pact data", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         [Fact]
@@ -1504,49 +1031,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.Single(result.Errors);
             Assert.Equal("Not found", result.Errors[0].Message);
             Assert.Equal("NOT_FOUND", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetFpsYearTotalsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var url = string.Format(PimsApiEndpoints.GetFpsYearTotals, Project, Year);
-            _http.GetAsync<FpsYearTotalsRes>(url).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetFpsYearTotalsAsync(Project, Year);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve FPS year totals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
-
-        [Fact]
-        public async Task GetFpsYearTotalsAsync_WhenMapperThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var url = string.Format(PimsApiEndpoints.GetFpsYearTotals, Project, Year);
-            var apiResponse = new ApiResponse<FpsYearTotalsRes> { Success = true, Data = new FpsYearTotalsRes { Parentproject = Project } };
-
-            _http.GetAsync<FpsYearTotalsRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<FpsYearTotalsDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
-
-            // Act
-            var result = await _client.GetFpsYearTotalsAsync(Project, Year);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve FPS year totals", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         [Fact]
