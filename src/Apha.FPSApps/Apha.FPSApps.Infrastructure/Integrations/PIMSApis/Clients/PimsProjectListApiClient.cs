@@ -14,7 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public PimsProjectListApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -52,59 +51,32 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<ProjectDto>> GetFpsProjectByIdAsync(string parentproject)
         {
-            try
-            {
-                var response = await _http.GetAsync<ProjectRes>(string.Format(PimsApiEndpoints.GetFpsProjectById, parentproject));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            var response = await _http.GetAsync<ProjectRes>(string.Format(PimsApiEndpoints.GetFpsProjectById, parentproject));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
-                return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve FPS project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<ProposedProjectDto>> GetProposedProjectByIdAsync(string parentproject)
         {
-            try
-            {
-                var response = await _http.GetAsync<ProposedProjectRes>(string.Format(PimsApiEndpoints.GetProposedProjectById, parentproject));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
+            var response = await _http.GetAsync<ProposedProjectRes>(string.Format(PimsApiEndpoints.GetProposedProjectById, parentproject));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
-                return ApiResponseDto<ProposedProjectDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProposedProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve proposed project", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
+            return ApiResponseDto<ProposedProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<ProjectsDto>>> GetYearlyDetailsByProjectAsync(string parentproject)
         {
-            try
-            {
-                var response = await _http.GetAsync<List<ProjectsRes>>(string.Format(PimsApiEndpoints.GetYearlyDetailsByProject, parentproject));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<ProjectsDto>>>(response);
+            var response = await _http.GetAsync<List<ProjectsRes>>(string.Format(PimsApiEndpoints.GetYearlyDetailsByProject, parentproject));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectsDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<ProjectsDto>>>(response);
-                return ApiResponseDto<List<ProjectsDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ProjectsDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve yearly details", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectsDto>>>(response);
+            return ApiResponseDto<List<ProjectsDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
         public async Task<ApiResponseDto<List<ProjectListMilestoneDto>>> GetAllProjectsForMilestoneAsync()
         {
@@ -120,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         {
             var response = await _http.GetAsync<ProjectDetailsMilestoneRes>(string.Format(PimsApiEndpoints.GetProjectsDetailsForMilestone, parentproject));
 
-            if (response.Success && response.Data != null)
+            if (response.Success)
                 return _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(response);
 
             var dto = _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(response);

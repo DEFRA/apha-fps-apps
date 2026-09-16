@@ -6,8 +6,10 @@ using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using System.Security.Claims;
 using System.Text.Json;
 using Xunit;
 
@@ -24,6 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             _mapper     = Substitute.For<IMapper>();
             _service    = Substitute.For<IMaintenanceService>();
             _controller = new MaintenanceController(_mapper, _service);
+            SetCurrentUserEmail("user@apha.gov.uk");
         }
 
         // ── helpers ───────────────────────────────────────────────────────────────
@@ -48,8 +51,37 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
         private static PaginatedResult<T> Paged<T>(List<T> items) =>
             new(items, items.Count, 1, 10);
 
-        private void SetupIndexMocks()
+        private void SetCurrentUserEmail(string email)
         {
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [
+                        new Claim("preferred_username", email),
+                        new Claim(ClaimTypes.Email, email)
+                    ], "TestAuth"))
+                }
+            };
+        }
+
+        private void SetupIndexMocks(string currentUserEmail = "user@apha.gov.uk")
+        {
+            SetCurrentUserEmail(currentUserEmail);
+
+            _service.GetAllAccessSystemsAsync()
+                .Returns(SuccessResponse(new List<AccessSystemDto> { new() { SystemId = 1, SystemName = "PIMS" } }));
+            _service.GetAccessUsersBySystemIdAsync(1)
+                .Returns(SuccessResponse(new List<AccessUserDto>
+                {
+                    new() { SystemId = 1, NtLogin = "jsmith", UserEmail = currentUserEmail }
+                }));
+            _service.GetAccessUserLevelsByUserAsync(1, "jsmith")
+                .Returns(SuccessResponse(new List<AccessUserLevelDto>
+                {
+                    new() { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 1 }
+                }));
             _service.GetPagedReportsAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(SuccessResponse(EmptyPaged<ReportDto>()));
             _service.GetAllSettingsAsync()
@@ -148,6 +180,23 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             var viewResult = Assert.IsType<ViewResult>(result);
             var vm = Assert.IsType<MaintenanceViewModel>(viewResult.Model);
             Assert.NotNull(vm.WorkingHoursSettingItem);
+        }
+
+        [Fact]
+        public async Task Index_CurrentUserHasNoUserAccess_RedirectsToAccessDenied()
+        {
+            // Arrange
+            SetupIndexMocks();
+            _service.GetAccessUsersBySystemIdAsync(1)
+                .Returns(SuccessResponse(new List<AccessUserDto>()));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("AccessDenied", redirect.ActionName);
+            Assert.Equal("Account", redirect.ControllerName);
         }
 
         #endregion
