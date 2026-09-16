@@ -88,6 +88,24 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
+    public async Task<ApiResponseDto<bool>> CopyYearDataAsync(string projectId, int sourceYear, int targetYear)
+    {
+        var req = new CopyYearDataReq
+        {
+            SourceYear = sourceYear,
+            TargetYear = targetYear
+        };
+
+        var response = await _http.PostAsync<CopyYearDataReq, bool>(
+            string.Format(CostBookApiEndpoints.CopyYearData, HttpUtility.UrlEncode(projectId)), req);
+
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
     // ── Staff ─────────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(

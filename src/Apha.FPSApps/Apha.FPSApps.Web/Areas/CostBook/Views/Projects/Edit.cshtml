@@ -562,8 +562,17 @@
              var form = document.getElementById('projectEditForm');
              if (form) {
                  form.addEventListener('submit', function (e) {
+                     var $form = $(form);
+
                      if (!validateProjectEditForm()) {
                          e.preventDefault();
+                         hideLoader();
+                         return;
+                     }
+
+                     if (!$form.valid()) {
+                         e.preventDefault();
+                         hideLoader();
                      }
                  });
              }
@@ -641,7 +650,7 @@
                         var newId = data.generatedId || data.projectId;
 
                         // Ask user if they want to recost the project
-                        showGovukConfirm('Do you want to recost this project at todays rates, (including inflation if specified)?').then(function (recostResult) {
+                        showGovukYesNo('Do you want to recost this project at todays rates, (including inflation if specified)?').then(function (recostResult) {
                             if (recostResult) {
                                 // Call Recost method
                                 if (copyBtn) { copyBtn.textContent = 'Recosting...'; }

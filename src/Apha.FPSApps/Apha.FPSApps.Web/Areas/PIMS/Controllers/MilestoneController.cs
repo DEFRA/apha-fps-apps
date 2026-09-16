@@ -123,6 +123,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return new DataGridConfig<MilestoneItem>
                 {
                     GridId = "milestonesGrid",
+                    Title = "Milestones",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "Number",
@@ -163,7 +164,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             return new DataGridConfig<MilestoneItem>
             {
-                GridId = "milestonesGrid",                
+                GridId = "milestonesGrid",
+                Title = "Milestones",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Number",
@@ -189,6 +191,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return new DataGridConfig<MilestoneFormDatesItem>
                 {
                     GridId = "milestoneFormDatesGrid",
+                    Title = "Milestone Form Dates",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "Year",
@@ -228,7 +231,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             return new DataGridConfig<MilestoneFormDatesItem>
             {
-                GridId = "milestoneFormDatesGrid",               
+                GridId = "milestoneFormDatesGrid",
+                Title = "Milestone Form Dates",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Year",

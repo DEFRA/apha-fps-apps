@@ -2926,7 +2926,7 @@ table.custom-table th {
 .project-code-section.ppf-header-project-controls {
     position: absolute;
     top: 0;
-    right: 0;
+    right: 40px;
     z-index: 2;
     height: 50px;
     padding: 0 10px;
@@ -5668,13 +5668,6 @@ input.govuk-input.ssr-total-input[readonly] {
 .isTestSupplierPage {
     .multicolumn-dropdown-panel {
         left: -154px !important;
-    }
-}
-#gridContainer_testListVlaGrid {
-    .editable-grid-container {
-        .sup_border_bottom_0 {
-            display: none;
-        }
     }
 }
 #ProjectDropdownPanel {

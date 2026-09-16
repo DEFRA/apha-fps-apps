@@ -95,7 +95,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)
         {
-            var result =
+            // The charge rate is derived purely from the staff member's workgroup grade
+            // and its profit centre grade. The job code only decides whether the DEFRA
+            // rate or the standard rate applies, so it must not restrict the lookup -
+            // otherwise staff who are not yet booked onto any job return no rate at all.
+            var rates =
                     from wg in _dbContext.WorkGroupEmployees
                     join e in _dbContext.Employees
                         on wg.SpNumber equals e.SPNumber
@@ -103,22 +107,25 @@ namespace Apha.FPS.DataAccess.Repositories
                         on wg.WorkGroupGrade equals w.WgGrade
                     join p in _dbContext.ProfitCentreGrades
                         on w.ProfitCentreGrade equals p.PcGrade
-                    join s in _dbContext.StaffJobs
-                        on wg.PactId equals s.StaffId
-                    join t in _dbContext.Projects
-                        on s.JobCode equals t.ParentProject
-                    where s.StaffId == staffId
+                    where wg.PactId == staffId
                     select new
                     {
-                        ParentProject = t.ParentProject,
-                        ChargeRate = t.IsDefraProject == -1
-                            ? p.DefraChargeRate
-                            : p.ChargeRate
+                        p.ChargeRate,
+                        p.DefraChargeRate
                     };
 
-            decimal? changeRate = await result.Where(e => e.ParentProject == jobcode).Select(e => e.ChargeRate).FirstOrDefaultAsync();
-            changeRate ??= await result.Select(e => e.ChargeRate).FirstOrDefaultAsync();
-            return changeRate;
+            var rate = await rates.FirstOrDefaultAsync();
+            if (rate == null)
+            {
+                return null;
+            }
+
+            var isDefraProject = await _dbContext.Projects
+                .Where(t => t.ParentProject == jobcode)
+                .Select(t => (short?)t.IsDefraProject)
+                .FirstOrDefaultAsync();
+
+            return isDefraProject == -1 ? rate.DefraChargeRate : rate.ChargeRate;
         }
 
         public async Task<StaffJob?> GetByIdAsync(string staffId, string jobCode)
