@@ -260,21 +260,21 @@
 
                                                                 <input type="text"
                                                                        class="govuk-input project-year-total-input"
-                                                                       id="year-total-staff" value="@Model.StaffCostTotal.ToString("£#,##0.00")"
+                                                                       id="year-total-staff" value="@Model?.StaffCostTotal.ToString("£#,##0.00")"
                                                                        readonly="" tabindex="-1">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-test">Test Costs:</label>
 
-                                                                <input type="text" value="@Model.TestCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.TestCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-test" tabindex="-1">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-animal">Animal Costs:</label>
-                                                                <input type="text" value="@Model.AnimalCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.AnimalCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-animal" tabindex="-1">
                                                             </div>
@@ -284,14 +284,14 @@
                                                                     Additional
                                                                     Costs:
                                                                 </label>
-                                                                <input type="text" value="@Model.AdditionalCostTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.AdditionalCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-additional" tabindex="-1">
                                                             </div>
                                                             <div class="total-item grand-total">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-grand">Grand Totals:</label>
-                                                                <input type="text" value="@Model.GrandTotal.ToString("£#,##0.00")" readonly=""
+                                                                <input type="text" value="@Model?.GrandTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-grand" tabindex="-1">
                                                             </div>
@@ -329,8 +329,8 @@
         // -- Page-level globals (Razor-resolved values for yearly-details.js) --
         const projectId   = '@projectId';
         let   selectedYear = @selectedYear;
-        const projectYears = [@string.Join(",", Model.ProjectYears)];
-        const programme   = '@Model.ProjectHeaderDto.Programme';
+        const projectYears = [@string.Join(",", Model?.ProjectYears ?? Enumerable.Empty<int>())];
+        const programme   = '@Model?.ProjectHeaderDto?.Programme';
         const isDefra     = @(isDefra ? "true" : "false");
 
         // All controller URLs resolved here so yearly-details.js stays plain JS
