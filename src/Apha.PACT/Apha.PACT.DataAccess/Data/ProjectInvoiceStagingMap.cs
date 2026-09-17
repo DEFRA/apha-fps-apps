@@ -14,28 +14,20 @@ namespace Apha.PACT.DataAccess.Data
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ProjectParent)
-                .HasMaxLength(20)
                 .HasColumnName("projectparent");
             entity.Property(e => e.Month)
-                .HasMaxLength(10)
                 .HasColumnName("month");
             entity.Property(e => e.Amount)
-                .HasMaxLength(10)
                 .HasColumnName("amount");
             entity.Property(e => e.CostOfWork)
-                .HasMaxLength(10)
                 .HasColumnName("costofwork");
             entity.Property(e => e.Wip)
-                .HasMaxLength(10)
                 .HasColumnName("wip");
             entity.Property(e => e.ProfitLoss)
-                .HasMaxLength(10)
                 .HasColumnName("profitloss");
             entity.Property(e => e.Detail)
-                .HasMaxLength(255)
                 .HasColumnName("detail");
             entity.Property(e => e.Type)
-                .HasMaxLength(10)
                 .HasColumnName("type");
             entity.Property(e => e.Filename)
                 .HasMaxLength(255)
