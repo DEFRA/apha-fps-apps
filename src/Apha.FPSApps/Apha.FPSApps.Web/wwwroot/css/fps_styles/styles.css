@@ -3,9 +3,7 @@
     padding: 0;
     box-sizing: border-box;
 }
-body{
-    padding-bottom: 10vh;
-}
+
 .main-content {
 
     margin: 0 auto;
@@ -3196,16 +3194,6 @@ table.custom-table th {
 }
 
 /* -- Budget Resource Level ---------------------------------------- */
-.brl-workgroup-grid #gridContainer_workGroupGrid .editable-grid-container {
-    min-height: unset !important;
-    height: auto !important;
-}
-
-.brl-workgroup-grid #gridContainer_workGroupGrid .grid-scroll-container {
-    height: 300px !important;
-    max-height: 300px !important;
-}
-
 .brl-action-buttons {
     display: flex;
     flex-direction: column;
@@ -5654,12 +5642,12 @@ input.govuk-input.ssr-total-input[readonly] {
 #cs-summary-grid .cs-summary-box-title-text {
     text-decoration: underline;
 }
-    .govuk-footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        z-index: 1000;
-    }
+.govuk-footer {
+    margin-top: 5vh;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
+}
 .isSideNav {
     .sidenav{
         padding-left: 0 !important;
