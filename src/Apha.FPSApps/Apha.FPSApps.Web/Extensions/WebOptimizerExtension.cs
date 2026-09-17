@@ -6,6 +6,21 @@ namespace Apha.FPSApps.Web.Extensions
         {
             services.AddWebOptimizer(pipeline =>
             {
+                // ── Shared common component assets ─────────────────────────
+                // Minify the multicolumn-dropdown component in place so the
+                // existing ~/js/common/multicolumn-dropdown.component.js and
+                // ~/css/common/multicolumn-dropdown.css references (used across
+                // ~22 views) are served minified without changing those views.
+                pipeline.MinifyJsFiles("js/common/multicolumn-dropdown.component.js");
+                pipeline.MinifyCssFiles("css/common/multicolumn-dropdown.css");
+
+                // Combined, minified bundle for views that prefer a single asset.
+                pipeline.AddCssBundle("/css/bundles/multicolumn-dropdown.css",
+                    "css/common/multicolumn-dropdown.css");
+
+                pipeline.AddJavaScriptBundle("/js/bundles/multicolumn-dropdown.js",
+                    "js/common/multicolumn-dropdown.component.js");
+
                 // ── Root layout (Views/Shared/_Layout.cshtml) ──────────────
                 pipeline.AddCssBundle("/css/bundles/root.css",
                     "lib/bootstrap/dist/css/bootstrap.min.css",
