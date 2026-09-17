@@ -101,6 +101,7 @@ function ajaxPost(url, params) {
 
     let currentGrade = '';
     let currentStaffId = '';
+    let currentStaffName = '';
 
     const el = id => document.getElementById(id);
     const setText = (id, v) => { const e = el(id); if (e) e.textContent = v; };
@@ -147,7 +148,6 @@ function ajaxPost(url, params) {
         const grade = el('workGroupGradeSelect').value;
         const group = el('workGroupSelect').value;
 
-        setText('stage2SelectedWorkGroupGrade', grade);
         setText('stage2SelectedWorkGroup', group);
         clearJobsGrid();
 
@@ -155,6 +155,7 @@ function ajaxPost(url, params) {
 
         currentGrade = grade;
         currentStaffId = '';
+        currentStaffName = '';
 
         showLoader();
         try {
@@ -208,16 +209,16 @@ function ajaxPost(url, params) {
         const staffName = cellText($row, 'Name');
         const planHrs = cellText($row, 'PlannedHours');
 
-        setText('stage2SelectedStaffName', staffName);
         setVal('stage2PersonSelectedInput', staffName);
         setVal('stage2SelectedStaffHoursInput', planHrs);
 
         if (!staffId) return;
         currentStaffId = staffId;
+        currentStaffName = staffName;
 
         showLoader();
         try {
-            const html = await ajaxPost(jobsGridUrl, { staffId, page: 1, pageSize: 10 });
+            const html = await ajaxPost(jobsGridUrl, { staffId, staffName, page: 1, pageSize: 10 });
             // Use jQuery .html() (not native innerHTML) so the DataGrid's embedded
             // <script> executes and re-binds its handlers (e.g. the page-size
             // dropdown) to the freshly injected markup.
@@ -258,8 +259,8 @@ function ajaxPost(url, params) {
         $.post(jobsGridUrl, { staffId: '' }, html => {
             $('#gridContainer_StaffJobsGrid').html(html);
         });
+        currentStaffName = '';
         setVal('stage2PersonSelectedInput', '');
-        setText('stage2SelectedStaffName', '');
         setVal('stage2SelectedStaffHoursInput', '');
     }
 
@@ -270,7 +271,7 @@ function ajaxPost(url, params) {
 
     /* ── ExtraFilter callbacks (used by DataGrid reloadGrid) ────────────── */
     const GetStaffAllocationExtraFilters = () => ({ workGroupGrade: currentGrade });
-    const GetStaffJobsExtraFilters = () => ({ staffId: currentStaffId });
+    const GetStaffJobsExtraFilters = () => ({ staffId: currentStaffId, staffName: currentStaffName });
 
     /* ── Navigate to PlanStaffZTCode ────────────────────────────────────── */
     function ssrPlanPersonOntoZT() {
@@ -340,7 +341,6 @@ function ajaxPost(url, params) {
 
             // ── 3. Restore heading labels ─────────────────────────────────
             setText('stage2SelectedWorkGroup', saved.workGroup);
-            setText('stage2SelectedWorkGroupGrade', saved.grade);
             clearJobsGrid();
 
             // ── 4. Reload staff grid and re-select saved staff row ────────

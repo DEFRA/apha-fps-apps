@@ -109,6 +109,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffPlanDetailsViewItem>
             {
                 GridId            = "staffPlanDetailsGrid",
+                Title             = "Staff Plan Details",
                 KeyProperty       = "Program",
                 AllowAdd          = false,
                 AllowEdit         = false,

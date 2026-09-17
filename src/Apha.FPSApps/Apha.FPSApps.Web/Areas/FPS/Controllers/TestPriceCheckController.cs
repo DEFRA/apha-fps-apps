@@ -149,6 +149,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<TestPriceCheckItem>
             {
                 GridId = "testPriceCheckGrid",
+                Title= "Test Price Details",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "TestCode",
