@@ -1362,7 +1362,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         }
 
         [Fact]
-        public async Task GetStaffChargeRate_ReturnsNull_WhenNoStaffJobsFound()
+        public async Task GetStaffChargeRate_ReturnsNull_WhenStaffHasNoWorkgroupGradeMapping()
         {
             // Arrange
             var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
@@ -1374,11 +1374,101 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
             var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
 
-            // Act
+            // Act - S999 has no WorkGroupEmployee row at all
             var result = await repo.GetStaffChargeRate("S999", "JOB001");
 
             // Assert
             Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetStaffChargeRate_ReturnsChargeRate_WhenStaffHasNoExistingStaffJobBooking()
+        {
+            // Arrange - staff member is being booked onto a job for the very first time,
+            // so there is no tblstaffjob row for them yet.
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob>();
+            var projects = new List<Project> { new() { ParentProject = "JOB001", IsDefraProject = 0 } };
+
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
+
+            // Act
+            var result = await repo.GetStaffChargeRate("S001", "JOB001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(100m, result.Value);
+        }
+
+        [Fact]
+        public async Task GetStaffChargeRate_ReturnsDefraChargeRate_WhenStaffHasNoExistingStaffJobBookingAndProjectIsDefra()
+        {
+            // Arrange
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob>();
+            var projects = new List<Project> { new() { ParentProject = "JOB001", IsDefraProject = -1 } };
+
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
+
+            // Act
+            var result = await repo.GetStaffChargeRate("S001", "JOB001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(120m, result.Value);
+        }
+
+        [Fact]
+        public async Task GetStaffChargeRate_IgnoresDefraFlagOfUnrelatedProjects()
+        {
+            // Arrange - the staff member is already booked on a DEFRA project, but the rate is
+            // requested for a non-DEFRA project, so the standard rate must be returned.
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob> { new() { StaffId = "S001", JobCode = "JOB_DEFRA", PlannedHours = 40 } };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "JOB_DEFRA", IsDefraProject = -1 },
+                new() { ParentProject = "JOB001", IsDefraProject = 0 }
+            };
+
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
+
+            // Act
+            var result = await repo.GetStaffChargeRate("S001", "JOB001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(100m, result.Value);
+        }
+
+        [Fact]
+        public async Task GetStaffChargeRate_ReturnsStandardChargeRate_WhenJobCodeDoesNotExist()
+        {
+            // Arrange
+            var wgEmployees = new List<WorkGroupEmployee> { new() { SpNumber = "SP001", PactId = "S001", WorkGroupGrade = "WG01" } };
+            var employees = new List<Employee> { new() { SPNumber = "SP001", FirstName = "John Doe" } };
+            var workgroupGrades = new List<WorkgroupGrade> { new() { WgGrade = "WG01", ProfitCentreGrade = "PC01" } };
+            var profitCentreGrades = new List<ProfitCentreGrade> { new() { PcGrade = "PC01", ChargeRate = 100m, DefraChargeRate = 120m } };
+            var staffJobs = new List<StaffJob> { new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40 } };
+            var projects = new List<Project> { new() { ParentProject = "JOB001", IsDefraProject = 0 } };
+
+            var repo = CreateRepository(staffJobs: staffJobs, workgroupGrades: workgroupGrades, profitCentreGrades: profitCentreGrades, wgEmployees: wgEmployees, employees: employees, projects: projects);
+
+            // Act
+            var result = await repo.GetStaffChargeRate("S001", "JOB999");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(100m, result.Value);
         }
 
         [Fact]

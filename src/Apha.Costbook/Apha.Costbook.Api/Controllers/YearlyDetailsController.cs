@@ -74,6 +74,15 @@ public class YearlyDetailsController : ControllerBase
         return Ok(BuildOk(deleted));
     }
 
+    [HttpPost("{projectId}/years/copy")]
+    public async Task<IActionResult> CopyYearData(string projectId, [FromBody] CopyYearDataReq req)
+    {
+        var (copied, errors) = await _service.CopyYearDataAsync(projectId, req.SourceYear, req.TargetYear);
+        if (errors.Count > 0)
+            return BadRequest(BuildError<bool>(string.Join("\n", errors)));
+        return Ok(BuildOk(copied));
+    }
+
     // ── Staff requirements ────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/staff")]

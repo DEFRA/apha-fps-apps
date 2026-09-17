@@ -708,7 +708,7 @@ body {
 }
 
 .govuk-footer {
-    position: sticky !important;
+    margin-top: 5vh;
     bottom: 0 !important;
     z-index: 999 !important;
 }

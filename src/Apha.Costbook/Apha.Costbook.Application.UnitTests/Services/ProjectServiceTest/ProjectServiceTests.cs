@@ -776,6 +776,47 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         }
 
         [Fact]
+        public async Task UpdateProjectAsync_FinancialYearsChanged_TriggersRecost()
+        {
+            // Arrange
+            var projectId = "P001";
+            var existingProject = new Project
+            {
+                ProjectId = projectId,
+                Inflation = 1,
+                IsDefraProject = 0,
+                FinancialYears = 1
+            };
+            var projectDto = new ProjectDto
+            {
+                ProjectId = projectId,
+                ProjectTitle = "Updated Project",
+                PreparedBy = "John Doe",
+                Startdate = new DateTime(2024, 4, 1),
+                IsDefraProject = 0,
+                Inflation = 1,
+                FinancialYears = 2 // Changed financial years
+            };
+
+            var resultProject = new Project { ProjectId = projectId };
+            var resultDto = new ProjectDto { ProjectId = projectId };
+
+            _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
+            _mockMapper.When(x => x.Map(projectDto, existingProject))
+                .Do(x => existingProject.FinancialYears = projectDto.FinancialYears);
+            _mockRepository.UpdateProjectAsync(existingProject).Returns(resultProject);
+            _mockRepository.RecostProjectAsync(projectId).Returns(true);
+            _mockMapper.Map<ProjectDto>(resultProject).Returns(resultDto);
+
+            // Act
+            await _projectService.UpdateProjectAsync(projectId, projectDto);
+
+            // Assert - RecostProjectAsync should be called
+            await _mockRepository.Received(1).UpdateProjectAsync(existingProject);
+            await _mockRepository.Received(1).RecostProjectAsync(projectId);
+        }
+
+        [Fact]
         public async Task UpdateProjectAsync_RecostThrowsException_SwallowsExceptionAndReturnsResult()
         {
             // Arrange

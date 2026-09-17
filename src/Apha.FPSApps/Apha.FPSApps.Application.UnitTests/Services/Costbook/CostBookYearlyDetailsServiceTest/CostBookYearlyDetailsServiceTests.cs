@@ -397,6 +397,23 @@ public class CostBookYearlyDetailsServiceTests
 
     #endregion
 
+    #region CopyYearDataAsync
+
+    [Fact]
+    public async Task CopyYearDataAsync_DelegatesToClient_WhenSuccess()
+    {
+        _yearlyDetailsClient.CopyYearDataAsync("2024/001", 2024, 2025)
+            .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+        var result = await _sut.CopyYearDataAsync("2024/001", 2024, 2025);
+
+        Assert.True(result.Success);
+        Assert.True(result.Data);
+        await _yearlyDetailsClient.Received(1).CopyYearDataAsync("2024/001", 2024, 2025);
+    }
+
+    #endregion
+
     #region AddProjectYearAsync Failure
 
     [Fact]

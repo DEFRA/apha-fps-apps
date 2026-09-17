@@ -519,6 +519,7 @@
             // ── Client-side validation for StartDate (custom date picker) ─────
             // jQuery Validate ignores hidden inputs by default, so intercept submit
             $('form').on('submit', function (e) {
+                var $form = $(this);
                 var $startBinding = $('#StartdateBinding');
                 var $startMsg = $('[data-valmsg-for="StartDate"]');
                 var $startDisplay = $('#StartdateDisplay');
@@ -526,12 +527,21 @@
 
                 if (!$startBinding.val()) {
                     e.preventDefault();
+                    hideLoader();
                     $startFg.addClass('govuk-form-group--error');
                     $startDisplay.addClass('govuk-input--error');
                     $startMsg.text('Start Date is required.')
                              .removeClass('field-validation-valid')
                              .addClass('field-validation-error')
                              .show();
+                    setTimeout(syncCreateFormErrorStyling, 0);
+                    return;
+                }
+
+                if (!$form.valid()) {
+                    hideLoader();
+                    setTimeout(syncCreateFormErrorStyling, 0);
+                    return;
                 }
 
                 // Clear StartDate error as soon as a date is picked
