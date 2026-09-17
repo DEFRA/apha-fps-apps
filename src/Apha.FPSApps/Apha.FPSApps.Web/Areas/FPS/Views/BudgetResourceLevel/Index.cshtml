@@ -46,7 +46,7 @@
 
         <!-- Left: WorkGroup selector -->
         <div class="govuk-grid-column-one-third sup_p_0">
-            <div class="sup_border sup_margin_bottom_10 sup_margin_right_10 brl-workgroup-grid">
+            <div class="sup_border sup_margin_right_10">
                 <div class="sup_justify_content sup_padding_right_left_10 sup_margin_tb_13">
                     <h2 class="govuk-!-font-size-16 sup_margin_5">(1) First Select a WorkGroup</h2>
                 </div>
@@ -54,17 +54,7 @@
                     @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
                 </div>
             </div>
-            <div class="sup_padding_16 sup_margin_right_10 brl-action-buttons">
-                <div class="brl-action-btn-row">
-                    <button type="button" class="govuk-button govuk-!-margin-bottom-0 brl-action-btn" onclick="selectByAccount()">
-                        Select by Account<br />[Rather than WorkGroup]
-                    </button>
-                </div>
-                <div class="brl-action-btn-row">
-                    <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 brl-action-btn" onclick="viewReport()">
-                        View Report
-                    </button>
-                </div>
+            <div class="sup_padding_16 sup_margin_right_10 sup_margin_top_10 brl-action-buttons">
                 <div class="brl-action-btn-row">
                     <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 brl-action-btn" onclick="sendToExcel()">
                         Send To Excel

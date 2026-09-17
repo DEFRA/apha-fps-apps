@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
@@ -427,6 +427,34 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
 
         #endregion
 
+        #region SetWorkgroupsActiveStatusByJobCode
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCode_HappyPath_ReturnsOk(bool isActive)
+        {
+            _serviceMock.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive).Returns(true);
+
+            var result = await _controller.SetWorkgroupsActiveStatusByJobCode("JC1", "PRJ1", isActive);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCode_ServiceReturnsFalse_ReturnsOkFalse()
+        {
+            _serviceMock.SetWorkgroupsActiveStatusByJobCodeAsync("JC_MISSING", "PRJ1", true).Returns(false);
+
+            var result = await _controller.SetWorkgroupsActiveStatusByJobCode("JC_MISSING", "PRJ1", true);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.False((bool)okResult.Value!);
+        }
+
+        #endregion
+
         #region CopyWorkGroup
 
         [Fact]
@@ -485,7 +513,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task DeleteBulk_WithEmptyItems_ReturnsOk()
         {
-            // Arrange â€” empty items list; service still returns true
+            // Arrange — empty items list; service still returns true
             var request = new BulkDeleteTimeCodeReq { ParentProject = "PRJ1", Items = [] };
             _serviceMock
                 .DeleteBulkAsync(
@@ -567,7 +595,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
         [Fact]
         public async Task CopyBulkWorkGroups_WithEmptyWorkGroups_ReturnsOkWithEmptyList()
         {
-            // Arrange â€” no work groups selected; service returns empty collection
+            // Arrange — no work groups selected; service returns empty collection
             var request = new BulkCopyWorkGroupReq
             {
                 ParentProject = "PRJ1",

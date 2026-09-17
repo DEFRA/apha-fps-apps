@@ -332,6 +332,16 @@
                         <h2 class="sup_border sup_border_b_0 sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
                             Time Code Validity for Project's Job Code &nbsp;
                             <span id="timeCodeGridSubtitle"></span>
+                            <span id="timeCodeBulkActiveButtons" style="margin-left:auto; display:none; gap:8px;">
+                                <button type="button" class="govuk-button sup_margin_0 sup_p_8"
+                                        id="timeCodeActivateAllBtn" onclick="activateAllTimeCodes()">
+                                    <i class="fa fa-check-square"></i> Active All
+                                </button>
+                                <button type="button" class="govuk-button govuk-button--warning sup_margin_0 sup_p_8"
+                                        id="timeCodeDeactivateAllBtn" onclick="deactivateAllTimeCodes()">
+                                    <i class="fa fa-square"></i> Deactive All
+                                </button>
+                            </span>
                         </h2>
                         
                         <div id="@($"gridContainer_{Model.TimeCodeGrid.GridId}")">
