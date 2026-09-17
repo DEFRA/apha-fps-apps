@@ -224,7 +224,7 @@ CREATE INDEX idx_period_monthlyoutput_fpsyear
 -- ============================================================================
 
 ALTER TABLE fps.period_monthlyoutput_old
-	ALTER COLUMN id DROP DEFAULT;
+	ALTER COLUMN id DROP IDENTITY;
 
 
 DO $$

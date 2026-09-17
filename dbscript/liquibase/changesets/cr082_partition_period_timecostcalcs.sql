@@ -231,11 +231,11 @@ CREATE INDEX idx_period_timecostcalcs_fpsyear
 -- 2b. Sequence ownership
 -- ============================================================================
 
--- The replacement table copied the serial DEFAULT from the source table.
--- Detach the backup from that sequence and make the production table its owner.
+-- The replacement table copied the identity sequence from the source table.
+-- Detach the backup from that identity property and make the production table its owner.
 
 ALTER TABLE fps.period_timecostcalcs_old
-	ALTER COLUMN id DROP DEFAULT;
+	ALTER COLUMN id DROP IDENTITY;
 
 
 DO $$
