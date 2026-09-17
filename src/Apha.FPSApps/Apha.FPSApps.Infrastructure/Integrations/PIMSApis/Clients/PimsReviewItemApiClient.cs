@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -14,18 +15,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        private const string BaseUrl = "api/v1/reviewitem";
-
         public PimsReviewItemApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        
+
         public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync()
         {
-            var response = await _http.GetAsync<List<ReviewItemRes>>(BaseUrl);
+            var response = await _http.GetAsync<List<ReviewItemRes>>(PimsApiEndpoints.GetAllReviewItems);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ReviewItemDto>>>(response);
 
@@ -33,10 +32,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<List<ReviewItemDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-       
+
         public async Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query)
         {
-            string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
+            string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetPagedReviewItems, query);
             var response = await _http.GetAsync<List<ReviewItemRes>>(url);
             if (response.Success)
             {
@@ -53,10 +52,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                 _mapper.Map<ApiMetaDto>(response.Meta));
         }
 
-        
+
         public async Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemId)
         {
-            var url = $"{BaseUrl}/{itemId}";
+            var url = string.Format(PimsApiEndpoints.GetReviewItemById, itemId);
             var response = await _http.GetAsync<ReviewItemRes>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
@@ -65,11 +64,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-       
+
         public async Task<ApiResponseDto<ReviewItemDto>> CreateReviewItemAsync(ReviewItemDto dto)
         {
             var request = _mapper.Map<ReviewItemReq>(dto);
-            var response = await _http.PostAsync<ReviewItemReq, ReviewItemRes>(BaseUrl, request);
+            var response = await _http.PostAsync<ReviewItemReq, ReviewItemRes>(PimsApiEndpoints.CreateReviewItem, request);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
 
@@ -80,7 +79,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         public async Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemId, ReviewItemDto dto)
         {
             var request = _mapper.Map<ReviewItemReq>(dto);
-            var url = $"{BaseUrl}/{itemId}";
+            var url = string.Format(PimsApiEndpoints.UpdateReviewItem, itemId);
             var response = await _http.PutAsync<ReviewItemReq, ReviewItemRes>(url, request);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
@@ -89,10 +88,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-       
+
         public async Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId)
         {
-            var url = $"{BaseUrl}/{itemId}";
+            var url = string.Format(PimsApiEndpoints.DeleteReviewItem, itemId);
             var response = await _http.DeleteAsync<bool>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);

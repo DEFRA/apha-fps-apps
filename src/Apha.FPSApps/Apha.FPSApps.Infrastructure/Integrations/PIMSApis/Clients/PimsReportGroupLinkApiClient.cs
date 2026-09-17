@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
@@ -12,18 +13,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        private const string BaseUrl = "api/v1/reportgrouplink";
-
         public PimsReportGroupLinkApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        
+
         public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetAllReportGroupLinksAsync()
         {
-            var response = await _http.GetAsync<List<ReportGroupLinkRes>>(BaseUrl);
+            var response = await _http.GetAsync<List<ReportGroupLinkRes>>(PimsApiEndpoints.GetAllReportGroupLinks);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ReportGroupLinkDto>>>(response);
 
@@ -31,10 +30,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<List<ReportGroupLinkDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        
+
         public async Task<ApiResponseDto<List<ReportGroupLinkDto>>> GetReportGroupLinksByReportIdAsync(int reportId)
         {
-            var url = $"{BaseUrl}/{reportId}";
+            var url = string.Format(PimsApiEndpoints.GetReportGroupLinkById, reportId);
             var response = await _http.GetAsync<List<ReportGroupLinkRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ReportGroupLinkDto>>>(response);
@@ -45,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<ReportGroupLinkDto>> GetReportGroupLinkByIdAsync(int reportId, int groupId)
         {
-            var url = $"{BaseUrl}/{reportId}/{groupId}";
+            var url = string.Format(PimsApiEndpoints.GetReportGroupLinkByReportAndGroup, reportId, groupId);
             var response = await _http.GetAsync<ReportGroupLinkRes>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<ReportGroupLinkDto>>(response);
@@ -54,11 +53,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<ReportGroupLinkDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        
+
         public async Task<ApiResponseDto<ReportGroupLinkDto>> CreateReportGroupLinkAsync(ReportGroupLinkDto dto)
         {
                 var request = _mapper.Map<ReportGroupLinkReq>(dto);
-                var response = await _http.PostAsync<ReportGroupLinkReq, ReportGroupLinkRes>(BaseUrl, request);
+                var response = await _http.PostAsync<ReportGroupLinkReq, ReportGroupLinkRes>(PimsApiEndpoints.CreateReportGroupLink, request);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<ReportGroupLinkDto>>(response);
 
@@ -66,10 +65,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                 return ApiResponseDto<ReportGroupLinkDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        
+
         public async Task<ApiResponseDto<bool>> DeleteReportGroupLinkAsync(int reportId, int groupId)
         {
-            var url = $"{BaseUrl}/{reportId}/{groupId}";
+            var url = string.Format(PimsApiEndpoints.DeleteReportGroupLink, reportId, groupId);
             var response = await _http.DeleteAsync<bool>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);
