@@ -79,6 +79,13 @@
 </main>
 
 @section Scripts {
+    <script src="~/js/common/lazy-panel-dropdown.js" asp-append-version="true"></script>
+    <style>
+        /* Row hover, previously applied via per-row mouseenter/mouseleave handlers. */
+        #ProjectDropdownBody tr[data-lazy-row]:hover {
+            background-color: #f3f2f1;
+        }
+    </style>
     <script>
         var allProjectLookup = [];
 
@@ -167,71 +174,54 @@
             applyButtonTitles();
 
             // ── Project multi-column dropdown ──────────────────────────────────
+            // Lazy/chunked rendering, debounced search and delegated row selection
+            // are provided by common/lazy-panel-dropdown.js.
             var projectDisplay = document.getElementById('projectNameInput');
             var projectPanel   = document.getElementById('ProjectDropdownPanel');
             var projectSearch  = document.getElementById('ProjectSearchBox');
             var projectBody    = document.getElementById('ProjectDropdownBody');
 
-            function getFilteredProjectRows() {
-                var q = (projectSearch ? projectSearch.value : '').toLowerCase();
+            var projectDropdown = createLazyPanelDropdown({
+                panelId: 'ProjectDropdownPanel',
+                bodyId: 'ProjectDropdownBody',
+                searchBoxId: 'ProjectSearchBox',
+                displayId: 'projectNameInput',
+                // All projects are searchable regardless of the selected programme.
+                getOptions: function () { return allProjectLookup; },
+                getSearchKey: function (p) { return p.parentProject + '\u0000' + (p.program || ''); },
+                getRowAttributes: function (p) {
+                    return { value: p.parentProject, program: p.program || '' };
+                },
+                getCells: function (p) { return [p.parentProject, p.program || '']; },
+                onSelect: function (row) { selectProject(row.value, row.program); }
+            });
 
-                var filtered = allProjectLookup;
+            function selectProject(parentProject, program) {
+                projectDisplay.value = parentProject;
 
-                // Filter by search text only — all projects are searchable regardless of selected programme
-                if (q) {
-                    filtered = filtered.filter(function (p) {
-                        return p.parentProject.toLowerCase().indexOf(q) !== -1
-                            || (p.program || '').toLowerCase().indexOf(q) !== -1;
-                    });
+                var programmeDropdown = document.getElementById('programmeDropdown');
+                var currentProgramNo = programmeDropdown ? programmeDropdown.value : '';
+
+                if (program && program !== currentProgramNo) {
+                    // Project belongs to a different programme — switch programme and navigate
+                    if (programmeDropdown) {
+                        Array.from(programmeDropdown.options).forEach(function (o) {
+                            o.selected = o.value === program;
+                        });
+                    }
+                    fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo='
+                        + encodeURIComponent(program)
+                        + '&projectName=' + encodeURIComponent(parentProject));
+                } else {
+                    reloadProjectsGrid();
                 }
-
-                return filtered;
-            }
-
-            function renderProjectRows(data) {
-                projectBody.innerHTML = '';
-                data.forEach(function (item) {
-                    var tr = document.createElement('tr');
-                    tr.style.cursor = 'pointer';
-                    tr.setAttribute('data-value', item.parentProject);
-                    tr.innerHTML = '<td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">' + item.parentProject + '</td>'
-                                 + '<td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">' + (item.program || '') + '</td>';
-                    tr.addEventListener('click', function () {
-                        projectDisplay.value = item.parentProject;
-                        projectPanel.style.display = 'none';
-
-                        var programmeDropdown = document.getElementById('programmeDropdown');
-                        var currentProgramNo = programmeDropdown ? programmeDropdown.value : '';
-
-                        if (item.program && item.program !== currentProgramNo) {
-                            // Project belongs to a different programme — switch programme and navigate
-                            if (programmeDropdown) {
-                                Array.from(programmeDropdown.options).forEach(function (o) {
-                                    o.selected = o.value === item.program;
-                                });
-                            }
-                            fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo='
-                                + encodeURIComponent(item.program)
-                                + '&projectName=' + encodeURIComponent(item.parentProject));
-                        } else {
-                            reloadProjectsGrid();
-                        }
-                    });
-                    tr.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-                    tr.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-                    projectBody.appendChild(tr);
-                });
-            }
-
-            function refreshProjectDropdown() {
-                renderProjectRows(getFilteredProjectRows());
             }
 
             if (projectDisplay && projectPanel && projectSearch && projectBody) {
                 projectDisplay.addEventListener('click', function (e) {
                     e.stopPropagation();
                     if (projectPanel.style.display !== 'none') {
-                        projectPanel.style.display = 'none';
+                        projectDropdown.close();
                         return;
                     }
                     if (allProjectLookup.length === 0) {
@@ -239,25 +229,15 @@
                             .then(function (r) { return r.json(); })
                             .then(function (data) {
                                 allProjectLookup = data;
-                                projectSearch.value = '';
-                                refreshProjectDropdown();
-                                projectPanel.style.display = 'block';
-                                projectSearch.focus();
+                                projectDropdown.toggle();
                             });
                     } else {
-                        projectSearch.value = '';
-                        refreshProjectDropdown();
-                        projectPanel.style.display = 'block';
-                        projectSearch.focus();
+                        projectDropdown.toggle();
                     }
                 });
 
-                projectSearch.addEventListener('input', refreshProjectDropdown);
-
-                document.addEventListener('click', function (e) {
-                    if (!projectDisplay.contains(e.target) && !projectPanel.contains(e.target)) {
-                        projectPanel.style.display = 'none';
-                    }
+                projectSearch.addEventListener('input', function () {
+                    projectDropdown.filter(this.value);
                 });
             }
 

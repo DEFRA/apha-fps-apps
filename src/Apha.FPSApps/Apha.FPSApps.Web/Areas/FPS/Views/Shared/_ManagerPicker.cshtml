@@ -1,7 +1,42 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ManagerPickerViewModel
 @{
     var fieldName = string.IsNullOrWhiteSpace(Model.FieldName) ? "Manager" : Model.FieldName;
+
+    // Rows are no longer emitted server-side. The picker receives a compact list
+    // and builds rows lazily (in chunks) the first time the panel is opened, so
+    // the containing modal is not held up rendering every manager up-front.
+    var managerRows = Model.ManagerList
+        .Where(i => !string.IsNullOrEmpty(i.Value))
+        .Select(i =>
+        {
+            var parts = (i.Text ?? string.Empty).Split('|');
+            return new
+            {
+                v = i.Value,
+                n = parts.Length > 0 ? parts[0].Trim() : string.Empty,
+                g = parts.Length > 1 ? parts[1].Trim() : string.Empty,
+                r = parts.Length > 2 ? parts[2].Trim() : string.Empty
+            };
+        })
+        .ToList();
 }
+<style>
+    #ManagerDropdownPanel td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #f3f2f1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #ManagerDropdownBody tr {
+        cursor: pointer;
+    }
+
+        #ManagerDropdownBody tr:hover {
+            background-color: #f3f2f1;
+        }
+</style>
 <div style="position: relative; display: block; width: 100%;">
     <input type="text" id="ManagerDisplay" placeholder="Select Manager" autocomplete="off" aria-label="Select Manager"
            class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; box-sizing:border-box; cursor:pointer;" readonly />
@@ -21,23 +56,7 @@
                     }
                 </tr>
             </thead>
-            <tbody id="ManagerDropdownBody">
-                @foreach (var item in Model.ManagerList.Where(i => !string.IsNullOrEmpty(i.Value)))
-                {
-                    var parts = item.Text.Split('|');
-                    var mgrName = parts[0].Trim();
-                    var mgrGroup = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                    var mgrGrade = parts.Length > 2 ? parts[2].Trim() : string.Empty;
-                    <tr data-value="@item.Value" data-display="@mgrName" style="cursor:pointer;">
-                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@mgrName">@mgrName</td>
-                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@mgrGroup">@mgrGroup</td>
-                        @if (Model.ShowGrade)
-                        {
-                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@mgrGrade">@mgrGrade</td>
-                        }
-                    </tr>
-                }
-            </tbody>
+            <tbody id="ManagerDropdownBody"></tbody>
         </table>
     </div>
 </div>
@@ -64,14 +83,88 @@
         var managerBody    = document.getElementById('ManagerDropdownBody');
 
         if (managerDisplay && managerSelect && managerPanel && managerSearch && managerBody) {
-            if (managerSelect.value) {
-                var matchManagerRow = managerBody.querySelector('tr[data-value="' + managerSelect.value + '"]');
-                managerDisplay.value = matchManagerRow ? matchManagerRow.getAttribute('data-display') : managerSelect.value;
+            var SHOW_GRADE = @(Model.ShowGrade ? "true" : "false");
+            var ROW_CHUNK_SIZE = 200;
+            var SEARCH_DEBOUNCE_MS = 150;
+
+            var allManagers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(managerRows));
+            allManagers.forEach(function (m) {
+                m.key = (m.n + '\u0000' + m.g + '\u0000' + m.r).toLowerCase();
+            });
+
+            var visibleManagers = allManagers;
+            var renderedCount = 0;
+            var bodyDirty = true;
+            var searchDebounceTimer = null;
+
+            function escapeHtml(text) {
+                return String(text === null || text === undefined ? '' : text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
             }
+
+            function buildRow(m) {
+                var html = '<tr data-manager-row="1" data-value="' + escapeHtml(m.v) + '" data-display="' + escapeHtml(m.n) + '">' +
+                               '<td title="' + escapeHtml(m.n) + '">' + escapeHtml(m.n) + '</td>' +
+                               '<td title="' + escapeHtml(m.g) + '">' + escapeHtml(m.g) + '</td>';
+                if (SHOW_GRADE) {
+                    html += '<td title="' + escapeHtml(m.r) + '">' + escapeHtml(m.r) + '</td>';
+                }
+                return html + '</tr>';
+            }
+
+            function renderMoreRows(count) {
+                var start = renderedCount;
+                var end = Math.min(start + (count || ROW_CHUNK_SIZE), visibleManagers.length);
+                if (end <= start) return;
+
+                var html = '';
+                for (var i = start; i < end; i++) {
+                    html += buildRow(visibleManagers[i]);
+                }
+                managerBody.insertAdjacentHTML('beforeend', html);
+                renderedCount = end;
+            }
+
+            function renderManagerRows() {
+                managerBody.innerHTML = '';
+                renderedCount = 0;
+                bodyDirty = false;
+                renderMoreRows(ROW_CHUNK_SIZE);
+            }
+
+            function ensureRendered() {
+                if (bodyDirty) renderManagerRows();
+            }
+
+            function filterManagerRows() {
+                var q = managerSearch.value.toLowerCase().trim();
+                visibleManagers = q
+                    ? allManagers.filter(function (m) { return m.key.indexOf(q) !== -1; })
+                    : allManagers;
+                renderManagerRows();
+            }
+
+            // Resolve the initial display text from the data rather than the DOM,
+            // so no rows need to exist yet.
+            if (managerSelect.value) {
+                var preselected = allManagers.find(function (m) { return String(m.v) === String(managerSelect.value); });
+                managerDisplay.value = preselected ? preselected.n : managerSelect.value;
+            }
+
             managerDisplay.addEventListener('click', function (e) {
                 e.stopPropagation();
                 managerPanel.style.display = managerPanel.style.display === 'none' ? 'block' : 'none';
-                if (managerPanel.style.display === 'block') { positionManagerPanel(); managerSearch.value = ''; filterManagerRows(); managerSearch.focus(); }
+                if (managerPanel.style.display === 'block') {
+                    positionManagerPanel();
+                    managerSearch.value = '';
+                    visibleManagers = allManagers;
+                    bodyDirty = true;
+                    ensureRendered();
+                    managerSearch.focus();
+                }
             });
             // The panel is fixed-positioned so it floats above the modal rather than
             // being clipped by (or stretching) the scrollable modal body. It is moved
@@ -94,24 +187,35 @@
                 managerPanel.style.setProperty('max-width', 'none', 'important');
                 managerPanel.style.setProperty('max-height', Math.min(260, spaceBelow - 8) + 'px', 'important');
             }
-            managerSearch.addEventListener('input', filterManagerRows);
-            function filterManagerRows() {
-                var q = managerSearch.value.toLowerCase();
-                managerBody.querySelectorAll('tr').forEach(function (row) {
-                    row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
-                });
-            }
-            managerBody.querySelectorAll('tr').forEach(function (row) {
-                row.addEventListener('click', function () {
-                    managerDisplay.value = this.getAttribute('data-display');
-                    var val = this.getAttribute('data-value');
-                    Array.from(managerSelect.options).forEach(function (o) { o.selected = o.value === val; });
-                    managerSelect.dispatchEvent(new Event('change'));
-                    managerPanel.style.display = 'none';
-                });
-                row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
-                row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
+
+            managerSearch.addEventListener('input', function () {
+                if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(function () {
+                    searchDebounceTimer = null;
+                    filterManagerRows();
+                }, SEARCH_DEBOUNCE_MS);
             });
+
+            // Append the next batch of rows as the user scrolls
+            managerPanel.addEventListener('scroll', function () {
+                if (renderedCount >= visibleManagers.length) return;
+                if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                    renderMoreRows(ROW_CHUNK_SIZE);
+                }
+            });
+
+            // Single delegated handler instead of listeners per row
+            managerBody.addEventListener('click', function (e) {
+                var row = e.target.closest('tr[data-manager-row]');
+                if (!row) return;
+
+                managerDisplay.value = row.getAttribute('data-display');
+                var val = row.getAttribute('data-value');
+                Array.from(managerSelect.options).forEach(function (o) { o.selected = o.value === val; });
+                managerSelect.dispatchEvent(new Event('change'));
+                managerPanel.style.display = 'none';
+            });
+
             document.addEventListener('click', function (e) {
                 if (!managerDisplay.contains(e.target) && !managerPanel.contains(e.target)) {
                     managerPanel.style.display = 'none';

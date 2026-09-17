@@ -68,28 +68,28 @@
                                         <th style="padding:6px 8px; text-align:left;">Constituent Codes</th>
                                     </tr>
                                 </thead>
-                                <tbody id="AccountDropdownBody">
-                                    @if (Model.AccountList != null)
-                                    {
-                                        foreach (var account in Model.AccountList.Where(a => !string.IsNullOrEmpty(a.Value)))
-                                        {
-                                            var parts = account.Text.Split('|');
-                                            var accShortName = parts.Length > 0 ? parts[0].Trim() : string.Empty;
-                                            var accDesc = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                                            var accConstituent = parts.Length > 2 ? parts[2].Trim() : string.Empty;
-                                            <tr data-value="@account.Value" data-display="@accShortName"
-                                                onclick="selectAccount('@account.Value', '@Html.Raw(accShortName.Replace("'", "\\'"))', this)"
-                                                style="cursor:pointer;">
-                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@accShortName</td>
-                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@accDesc</td>
-                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@accConstituent</td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
+                                <tbody id="AccountDropdownBody"></tbody>
                             </table>
                         </div>
                     </div>
+                    <script>
+                        // Rows are built lazily (in chunks) when the panel is first
+                        // opened so the modal itself is not held up by the full list.
+                        window.accountPanelOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                            (Model.AccountList ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>())
+                                .Where(a => !string.IsNullOrEmpty(a.Value))
+                                .Select(a =>
+                                {
+                                    var parts = (a.Text ?? string.Empty).Split('|');
+                                    return new
+                                    {
+                                        v = a.Value,
+                                        n = parts.Length > 0 ? parts[0].Trim() : string.Empty,
+                                        d = parts.Length > 1 ? parts[1].Trim() : string.Empty,
+                                        c = parts.Length > 2 ? parts[2].Trim() : string.Empty
+                                    };
+                                })));
+                    </script>
                     @* hidden select — keeps Account binding + server-side validation *@
                     <select id="Account" name="Account" required style="display:none;">
                         <option value="">-- Select Account --</option>

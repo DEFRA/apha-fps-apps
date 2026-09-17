@@ -55,25 +55,28 @@
                                         <th style="padding:6px 8px; text-align:left;">Unit Price VLA</th>
                                     </tr>
                                 </thead>
-                                <tbody id="TestCodeDropdownBody">
-                                    @foreach (var option in Model.TestCodeOptions.Where(o => !string.IsNullOrEmpty(o.Value)))
-                                    {
-                                        var parts = option.Text.Split('|');
-                                        var tCode = parts.Length > 0 ? parts[0].Trim() : string.Empty;
-                                        var tDesc = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                                        var tUnitPrice = parts.Length > 2 ? parts[2].Trim() : "0.00";
-                                        <tr data-value="@option.Value" data-description="@tDesc" data-unitprice="@tUnitPrice"
-                                            onclick="selectTestCode('@option.Value', '@Html.Raw(tCode.Replace("'", "\\'"))', '@Html.Raw(tDesc.Replace("'", "\\'"))', '@tUnitPrice', this)"
-                                            style="cursor:pointer;">
-                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@tCode</td>
-                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@tDesc</td>
-                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">£@tUnitPrice</td>
-                                        </tr>
-                                    }
-                                </tbody>
+                                <tbody id="TestCodeDropdownBody"></tbody>
                             </table>
                         </div>
                     </div>
+                    <script>
+                        // Rows are built lazily (in chunks) when the panel is first
+                        // opened so the modal itself is not held up by the full list.
+                        window.testCodePanelOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                            Model.TestCodeOptions
+                                .Where(o => !string.IsNullOrEmpty(o.Value))
+                                .Select(o =>
+                                {
+                                    var parts = (o.Text ?? string.Empty).Split('|');
+                                    return new
+                                    {
+                                        v = o.Value,
+                                        c = parts.Length > 0 ? parts[0].Trim() : string.Empty,
+                                        d = parts.Length > 1 ? parts[1].Trim() : string.Empty,
+                                        p = parts.Length > 2 ? parts[2].Trim() : "0.00"
+                                    };
+                                })));
+                    </script>
                     @* hidden select — keeps TestCode binding + server-side validation *@
                     <select id="TestCode" name="TestCode" required style="display:none;" onchange="onTestCodeSelected(this)">
                         <option value="">-- Select Test Code --</option>
