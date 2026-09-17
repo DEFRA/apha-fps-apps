@@ -147,7 +147,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<ContributionSummaryRowItem>
             {
                 GridId            = "contributionSummaryGrid",
-                Title             = string.Empty,
+                Title             = "Contribution Summary",
                 KeyProperty       = "WgGrade",
                 ShowCheckboxColumn = false,
                 ShowPagination    = true,

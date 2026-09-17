@@ -194,6 +194,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<Dictionary<string, string?>>
             {
                 GridId            = "bbQueryGrid",
+                Title             = "Account Budget Bid Details",
                 KeyProperty       = "AccShortName",
                 AllowAdd          = false,
                 AllowEdit         = false,

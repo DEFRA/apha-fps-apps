@@ -84,7 +84,8 @@
                                 <label class="govuk-label--s" for="External_Income">Staff Cost:</label>
                                 <div class="govuk-input__wrapper">
                                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                    <input type="text" aria-label="External_Income" id="External_Income" readonly class="govuk-input text-AlignRight" value="@Model.StaffCost.ToString("N2")">
+                                    <input type="text" aria-label="Staff Cost" id="External_Income" readonly class="govuk-input text-AlignRight" 
+                                    value="@Model.StaffCost.ToString("N2")">
                                 </div>
                             </div>
                             <div class="summary-item">
@@ -98,7 +99,7 @@
                                 <label class="govuk-label--s" for="Total_Costs">Remainder:</label>
                                 <div class="govuk-input__wrapper">
                                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                    <input type="text" value="0" aria-label="Total_Costs" id="Total_Costs" readonly class="govuk-input text-AlignRight">
+                                    <input type="text" value="0" aria-label="Remainder" id="Total_Costs" readonly class="govuk-input text-AlignRight">
                                 </div>
                             </div>
                         </div>
