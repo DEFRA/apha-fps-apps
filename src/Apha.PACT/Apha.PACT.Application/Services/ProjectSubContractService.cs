@@ -15,6 +15,16 @@ namespace Apha.PACT.Application.Services
         private readonly IProjectSubContractRepository _repository;
         private readonly IMapper _mapper;
 
+        // Max lengths of the live fps.proj_subcontract columns (staging columns are text).
+        private const int ProjectMaxLength = 20;
+        private const int TestJobMaxLength = 50;
+        private const int WorkGroupMaxLength = 50;
+        private const int AcctCodeMaxLength = 30;
+        private const int SupplierMaxLength = 50;
+        private const int DescriptionMaxLength = 255;
+        private const int AmountPrecision = 19;
+        private const int AmountScale = 4;
+
         public ProjectSubContractService(IProjectSubContractRepository repository, IMapper mapper)
         {
             _repository = repository;
@@ -277,23 +287,27 @@ namespace Apha.PACT.Application.Services
             var totalFailed = result.FailedCount + rowsToUpdate.Count;
             var totalCount = totalPassed + totalFailed;
 
+            var message = $"Import completed successfully. ";
+            if (totalFailed > 0 && totalPassed > 0)
+            {
+                message += $"{totalPassed} out of {totalCount} records successfully validated and is now live. {totalFailed} records failed validation.";
+            }
+            else if (totalFailed > 0 && totalPassed == 0)
+            {
+                message += $" All {totalFailed} records failed validation. ";
+            }
+            else if (totalFailed == 0 && totalPassed > 0)
+            {
+                message += $"All {totalPassed} records successfully validated and is now live. ";
+            }
+
             return new SubContractRmsImportResultDto
             {
                 PassedCount = totalPassed,
                 FailedCount = totalFailed,
-                Message = $"Import completed successfully. {totalPassed} out of {totalCount} records successfully validated and is now live."
+                Message = message
             };
         }
-
-        // Max lengths of the live fps.proj_subcontract columns (staging columns are text).
-        private const int ProjectMaxLength = 20;
-        private const int TestJobMaxLength = 50;
-        private const int WorkGroupMaxLength = 50;
-        private const int AcctCodeMaxLength = 30;
-        private const int SupplierMaxLength = 50;
-        private const int DescriptionMaxLength = 255;
-        private const int AmountPrecision = 19;
-        private const int AmountScale = 4;
 
         private static List<string> ValidateImportRow(SubContractRmsImportRowDto row, HashSet<string> validProjects)
         {
