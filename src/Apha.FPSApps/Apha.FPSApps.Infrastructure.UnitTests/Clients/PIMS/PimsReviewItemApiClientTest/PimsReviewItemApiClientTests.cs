@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsReviewItemApiCl
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(1, result.Data.data.Count());
+            Assert.Single(result.Data.data);
             Assert.Equal(1, result.Data.TotalCount);
             await _http.Received(1).GetAsync<List<ReviewItemRes>>(Arg.Any<string>());
         }

@@ -108,6 +108,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsReportGroupApiC
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
+            Assert.NotNull(result.Data);
             Assert.Single(result.Data);
             await _http.Received(1).GetAsync<List<ReportGroupRes>>(Arg.Any<string>());
         }
