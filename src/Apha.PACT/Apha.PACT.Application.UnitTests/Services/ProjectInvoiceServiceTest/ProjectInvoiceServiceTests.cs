@@ -672,7 +672,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
 
             result.PassedCount.Should().Be(1);
             result.FailedCount.Should().Be(0);
-            result.Message.Should().Contain("1 out of 1");
+            result.Message.Should().Contain("All 1 records successfully validated and is now live.");
         }
 
         [Fact]
@@ -819,7 +819,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
 
             var result = await _sut.ImportInvoiceAsync(request, "user1");
 
-            result.Message.Should().Be("Import completed successfully. 2 out of 2 records successfully validated and is now live.");
+            result.Message.Should().Be("Import completed successfully. All 2 records successfully validated and is now live. ");
         }
 
         [Fact]
@@ -1092,7 +1092,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
             // 1 from failedRows + 1 from rowsToUpdate
             result.FailedCount.Should().Be(2);
             result.PassedCount.Should().Be(0);
-            result.Message.Should().Contain("0 out of 2");
+            result.Message.Should().Contain("All 2 records failed validation.");
         }
 
         #endregion
