@@ -95,6 +95,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var grid = new DataGridConfig<Dictionary<string, string?>>
             {
                 GridId         = "testPlanCrossTabGrid",
+                Title          = "Test Planned Data - Programme & WG",
                 Columns        = columns,
                 Data           = rows,
                 ShowPagination = true,

@@ -130,6 +130,15 @@ namespace Apha.Common.Utilities.ExcelImport
                 failures.Add($"{fieldName} must be between {min} and {max}.");
         }
 
+        public static void ValidateFiniteDouble(double? value, string fieldName, List<string> failures)
+        {
+            if (!value.HasValue)
+                return;
+
+            if (double.IsNaN(value.Value) || double.IsInfinity(value.Value))
+                failures.Add($"{fieldName} must be a valid number.");
+        }
+
         public static void ValidateDecimalPrecision(string? value, int precision, int scale, string fieldName, List<string> failures)
         {
             if (string.IsNullOrWhiteSpace(value))
