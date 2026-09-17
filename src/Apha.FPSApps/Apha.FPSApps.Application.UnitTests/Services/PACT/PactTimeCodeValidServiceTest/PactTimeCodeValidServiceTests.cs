@@ -1,4 +1,4 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
@@ -484,6 +484,50 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactTimeCodeValidServ
 
             // Act
             var result = await _service.DeleteAllByJobCodeAsync(jobCode, parentProject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region SetWorkgroupsActiveStatusByJobCodeAsync Tests
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_WithValidJobCode_ReturnsSuccessResponse(bool isActive)
+        {
+            // Arrange
+            var jobCode = "JC001";
+            var parentProject = "PP001";
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _pactTimeCodeValidApiClient.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _pactTimeCodeValidApiClient.Received(1).SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var jobCode = "JC001";
+            var parentProject = "PP001";
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _pactTimeCodeValidApiClient.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, true).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, true);
 
             // Assert
             Assert.NotNull(result);

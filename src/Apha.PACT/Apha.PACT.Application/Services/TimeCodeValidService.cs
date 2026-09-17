@@ -111,6 +111,11 @@ namespace Apha.PACT.Application.Services
             return await _repository.DeleteAllByJobCodeAsync(jobCode, parentProject);
         }
 
+        public async Task<bool> SetWorkgroupsActiveStatusByJobCodeAsync(string jobCode, string parentProject, bool isActive)
+        {
+            return await _repository.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+        }
+
         public async Task<IEnumerable<TimeCodeValidDto>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject)
         {
             var items = await _repository.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
