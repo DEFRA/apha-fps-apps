@@ -19,6 +19,12 @@ namespace Apha.PACT.Application.Services
         private readonly ITimeCodeValidRepository _timeCodeValidRepository;
         private readonly IMapper _mapper;
 
+        // Max lengths of the live fps.monthlytime columns (staging columns are text).
+        private const int PactIdMaxLength = 50;
+        private const int TimeCodeMaxLength = 50;
+        private const int ParentProjectMaxLength = 20;
+        private const int WorkGroupMaxLength = 50;
+
         public MonthlyTimeService(
             IMonthlyTimeRepository repository,
             IMapper mapper,
@@ -304,12 +310,6 @@ namespace Apha.PACT.Application.Services
                 Message = $"Validation completed. {passedCount} records passed and {failedCount} records failed."
             };
         }
-
-        // Max lengths of the live fps.monthlytime columns (staging columns are text).
-        private const int PactIdMaxLength = 50;
-        private const int TimeCodeMaxLength = 50;
-        private const int ParentProjectMaxLength = 20;
-        private const int WorkGroupMaxLength = 50;
 
         private static List<string> ValidateRecord(
             StagingMonthlyTime record,
