@@ -11,6 +11,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 using System.Text.Json;
 
@@ -46,6 +47,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.TestCapabilityControllerTe
             {
                 HttpContext = new DefaultHttpContext()
             };
+
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(),
+                Substitute.For<ITempDataProvider>());
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
