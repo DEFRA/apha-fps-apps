@@ -46,6 +46,7 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Mapster
             var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Default.NameMatchingStrategy(NameMatchingStrategy.IgnoreCase);
             mapperConfig.Scan(typeof(FpsApiDtoMapper).Assembly);
             mapperConfig.Scan(typeof(FpsViewModelMapper).Assembly);
             services.AddSingleton(mapperConfig);

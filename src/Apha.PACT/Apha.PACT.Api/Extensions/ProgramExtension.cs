@@ -61,6 +61,7 @@ namespace Apha.PACT.Api.Extensions
 
             // Mapster
             var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Default.NameMatchingStrategy(NameMatchingStrategy.IgnoreCase);
             mapperConfig.Scan(typeof(EntityMapper).Assembly, typeof(RequestMapper).Assembly);
             services.AddSingleton(mapperConfig);
             services.AddScoped<IMapper, ServiceMapper>();
