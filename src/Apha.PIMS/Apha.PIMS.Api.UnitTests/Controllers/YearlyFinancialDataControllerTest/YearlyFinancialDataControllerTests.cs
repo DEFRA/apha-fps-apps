@@ -197,8 +197,10 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnedValue = Assert.IsType<System.Collections.Generic.Dictionary<string, bool>>(okResult.Value);
-            Assert.True(returnedValue["success"]);
+            var returnedValue = okResult.Value;
+            var successProperty = returnedValue?.GetType().GetProperty("success");
+            Assert.NotNull(successProperty);
+            Assert.True((bool?)successProperty?.GetValue(returnedValue) ?? false);
 
             await _service.Received(1).DeleteAsync((short)year, project);
         }
@@ -216,8 +218,10 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnedValue = Assert.IsType<System.Collections.Generic.Dictionary<string, bool>>(okResult.Value);
-            Assert.False(returnedValue["success"]);
+            var returnedValue = okResult.Value;
+            var successProperty = returnedValue?.GetType().GetProperty("success");
+            Assert.NotNull(successProperty);
+            Assert.False((bool?)successProperty?.GetValue(returnedValue) ?? true);
         }
 
         #endregion
@@ -247,7 +251,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.YearlyFinancialDataControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnedData = Assert.IsType<List<PactProjectYearCostsRes>>(okResult.Value);
+            var returnedData = Assert.IsAssignableFrom<IReadOnlyList<PactProjectYearCostsRes>>(okResult.Value);
             Assert.Single(returnedData);
 
             await _service.Received(1).GetPactCostsAsync(project, (short)year);

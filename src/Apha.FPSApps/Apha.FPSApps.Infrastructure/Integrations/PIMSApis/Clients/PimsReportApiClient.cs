@@ -24,12 +24,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<List<ReportDto>>> GetAllReportsAsync()
         {
-            var response = await _http.GetAsync<List<ReportRes>>(PimsApiEndpoints.GetAllReports);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ReportDto>>>(response);
+            try
+            {
+                var response = await _http.GetAsync<List<ReportRes>>(PimsApiEndpoints.GetAllReports);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ReportDto>>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<List<ReportDto>>>(response);
-            return ApiResponseDto<List<ReportDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<List<ReportDto>>>(response);
+                return ApiResponseDto<List<ReportDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseDto<List<ReportDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Code = "INTERNAL_ERROR", Message = ex.Message } },
+                    new ApiMetaDto());
+            }
         }
 
         // GET /api/v1/report/paged
@@ -55,50 +64,86 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<ReportDto>> GetReportByIdAsync(int id)
         {
-            var url = string.Format(PimsApiEndpoints.GetReportById, id);
-            var response = await _http.GetAsync<ReportRes>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<ReportDto>>(response);
+            try
+            {
+                var url = string.Format(PimsApiEndpoints.GetReportById, id);
+                var response = await _http.GetAsync<ReportRes>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ReportDto>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<ReportDto>>(response);
-            return ApiResponseDto<ReportDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<ReportDto>>(response);
+                return ApiResponseDto<ReportDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseDto<ReportDto>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Code = "INTERNAL_ERROR", Message = ex.Message } },
+                    new ApiMetaDto());
+            }
         }
 
 
         public async Task<ApiResponseDto<ReportDto>> CreateReportAsync(ReportDto dto)
         {
-            var request = _mapper.Map<ReportReq>(dto);
-            var response = await _http.PostAsync<ReportReq, ReportRes>(PimsApiEndpoints.CreateReport, request);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<ReportDto>>(response);
+            try
+            {
+                var request = _mapper.Map<ReportReq>(dto);
+                var response = await _http.PostAsync<ReportReq, ReportRes>(PimsApiEndpoints.CreateReport, request);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ReportDto>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<ReportDto>>(response);
-            return ApiResponseDto<ReportDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<ReportDto>>(response);
+                return ApiResponseDto<ReportDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseDto<ReportDto>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Code = "INTERNAL_ERROR", Message = ex.Message } },
+                    new ApiMetaDto());
+            }
         }
 
 
         public async Task<ApiResponseDto<ReportDto>> UpdateReportAsync(int id, ReportDto dto)
         {
-            var request = _mapper.Map<ReportReq>(dto);
-            var url = string.Format(PimsApiEndpoints.UpdateReport, id);
-            var response = await _http.PutAsync<ReportReq, ReportRes>(url, request);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<ReportDto>>(response);
+            try
+            {
+                var request = _mapper.Map<ReportReq>(dto);
+                var url = string.Format(PimsApiEndpoints.UpdateReport, id);
+                var response = await _http.PutAsync<ReportReq, ReportRes>(url, request);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ReportDto>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<ReportDto>>(response);
-            return ApiResponseDto<ReportDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<ReportDto>>(response);
+                return ApiResponseDto<ReportDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseDto<ReportDto>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Code = "INTERNAL_ERROR", Message = ex.Message } },
+                    new ApiMetaDto());
+            }
         }
 
 
         public async Task<ApiResponseDto<bool>> DeleteReportAsync(int id)
         {
-            var url = string.Format(PimsApiEndpoints.DeleteReport, id);
-            var response = await _http.DeleteAsync<bool>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<bool>>(response);
+            try
+            {
+                var url = string.Format(PimsApiEndpoints.DeleteReport, id);
+                var response = await _http.DeleteAsync<bool>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<bool>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseDto<bool>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Code = "INTERNAL_ERROR", Message = ex.Message } },
+                    new ApiMetaDto());
+            }
         }
     }
 }
