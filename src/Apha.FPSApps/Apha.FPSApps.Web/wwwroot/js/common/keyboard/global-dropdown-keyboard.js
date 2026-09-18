@@ -858,6 +858,82 @@
     }, true);
 })();
 
+// ── Global GOV.UK tabs: hand off focus to next tab after panel content ──────
+// When a user Tabs through the focusable elements inside the currently
+// active tab panel, focus would naturally leave the whole tabs component
+// once it reaches the last focusable element in that panel. Instead, we
+// want focus to move to the *next* tab header so keyboard users continue
+// to move through the tabs component (unless the active tab is the last
+// one, in which case default browser behaviour — moving focus out of the
+// component — is preserved).
+(function () {
+    'use strict';
+
+    function isFocusable(el) {
+        if (!el || el.disabled || el.hidden) {
+            return false;
+        }
+        if (el.tabIndex < 0) {
+            return false;
+        }
+        var style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+            return false;
+        }
+        return true;
+    }
+
+    function getFocusableElements(container) {
+        var selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        return Array.prototype.slice
+            .call(container.querySelectorAll(selector))
+            .filter(isFocusable);
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Tab' || e.shiftKey) {
+            return;
+        }
+
+        var target = e.target;
+        var panel = target && target.closest ? target.closest('.govuk-tabs__panel') : null;
+        if (!panel) {
+            return;
+        }
+
+        // Ignore panels that are hidden/inactive.
+        if (panel.classList.contains('govuk-tabs__panel--hidden') || panel.style.display === 'none') {
+            return;
+        }
+
+        var tabsWrapper = panel.closest('.govuk-tabs');
+        if (!tabsWrapper) {
+            return;
+        }
+
+        var focusable = getFocusableElements(panel);
+        if (!focusable.length || target !== focusable[focusable.length - 1]) {
+            return;
+        }
+
+        var tabs = Array.prototype.slice.call(tabsWrapper.querySelectorAll('.govuk-tabs__tab'));
+        var selectedTab = tabsWrapper.querySelector('.govuk-tabs__list-item--selected .govuk-tabs__tab');
+        var currentIndex = tabs.indexOf(selectedTab);
+        if (currentIndex === -1) {
+            return;
+        }
+
+        var nextIndex = currentIndex + 1;
+        if (nextIndex >= tabs.length) {
+            // Last tab's content finished — allow focus to leave the component naturally.
+            return;
+        }
+
+        e.preventDefault();
+        tabs[nextIndex].focus();
+    }, true);
+})();
+
 // ── Global data-grid arrow-key navigation (NVDA / screen-reader friendly) ───
 // Makes every ".editable-grid-table" behave like a proper ARIA grid:
 //   * The whole grid is a SINGLE tab stop (roving tabindex). Tab moves into
