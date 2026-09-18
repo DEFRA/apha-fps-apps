@@ -208,6 +208,13 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<List<ProjectRes>>(projects));
         }
 
+        [HttpGet("distinct")]
+        public async Task<ActionResult<List<ProjectRes>>> GetDistinctParentProjectsAsync()
+        {
+            var projects = await _projectService.GetDistinctParentProjectsAsync();
+            return Ok(_mapper.Map<List<ProjectRes>>(projects));
+        }
+
         [HttpGet("pactview")]
         public async Task<ActionResult<PaginationRes<ProjectRes>>> GetPagedPactProjectsAsync(
     [FromQuery] QueryParameters<string> query)
