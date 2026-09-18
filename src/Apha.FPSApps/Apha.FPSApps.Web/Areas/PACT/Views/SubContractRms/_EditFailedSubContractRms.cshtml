@@ -1,6 +1,11 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model Apha.FPSApps.Web.Areas.PACT.Models.SubContractRmsFailedItem
 
+@{
+    var projectOptionsListData = Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Projects ?? new List<object>());
+    var preselectedProject = Model.Project ?? string.Empty;
+}
+
 <div class="modal-header flex-space-center">
     <h3 class="modal-title m-0" id="editFailedSubContractModalLabel">Edit Failed Sub-Contract</h3>
     <button type="button" class="btn-close btn-red" onclick="$('#modalPopup').removeClass('show')">X</button>
@@ -34,9 +39,11 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label for="txtmodal-project-failed" class="govuk-label govuk-!-font-weight-bold">Project:<span class="sup_color_red">*</span></label>
-                    <input type="text" class="govuk-input govuk-!-font-size-16"
-                           id="txtmodal-project-failed" asp-for="Project" placeholder="Enter project" required>
+                    <label for="rmsFailedProjectMultiDropdown_input" class="govuk-label govuk-!-font-weight-bold">Project:<span class="sup_color_red">*</span></label>
+                    <div id="rmsFailedProjectMultiDropdown"
+                         data-projects="@projectOptionsListData"
+                         data-selected="@preselectedProject"></div>
+                    <input type="hidden" asp-for="Project" id="Project" required />
                     <span asp-validation-for="Project" class="govuk-error-message"></span>
                 </div>
             </div>
