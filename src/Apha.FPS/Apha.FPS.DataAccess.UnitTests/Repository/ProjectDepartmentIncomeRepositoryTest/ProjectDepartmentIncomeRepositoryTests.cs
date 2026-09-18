@@ -30,6 +30,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             IEnumerable<PeriodLookup>?       periodLookups      = null,
             IEnumerable<Period>?             periods            = null,
             IEnumerable<ProjectSubContract>? projectSubContracts = null,
+            IEnumerable<Animal>?             animals            = null,
             int fpsYear = TestFpsYear)
         {
             var mockRequestContext = new Mock<IFpsRequestContext>();
@@ -59,6 +60,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             Setup(periodLookups,      (ctx, s) => ctx.Setup(x => x.PeriodLookups).Returns(s.Object));
             Setup(periods,            (ctx, s) => ctx.Setup(x => x.Periods).Returns(s.Object));
             Setup(projectSubContracts,(ctx, s) => ctx.Setup(x => x.ProjectSubContracts).Returns(s.Object));
+            Setup(animals ?? [],      (ctx, s) => ctx.Setup(x => x.Animals).Returns(s.Object));
 
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
@@ -214,6 +216,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
                 DailyRate   = 10m,
                 AnimalDays  = 1,
                 FpsYear     = fpsYear
+            };
+
+        private static Animal MakeAnimal(
+            string   animalType = "Test item",
+            decimal? dailyRate  = 10m,
+            int      fpsYear    = TestFpsYear) =>
+            new()
+            {
+                AnimalType = animalType,
+                DailyRate  = dailyRate,
+                FpsYear    = fpsYear
             };
 
         private static PeriodLookup MakePeriodLookup(
@@ -432,9 +445,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         }
 
         [Fact]
-        public async Task GetTimeIncomeAsync_WithNoMatchingEmployee_SpNumberIsNull()
+        public async Task GetTimeIncomeAsync_WithNoMatchingEmployee_RowExcluded()
         {
-            // Arrange â€” no employee seeded so the left join produces null
+            // Arrange â€” no employee seeded; Access qryDeptIncomeTime uses an
+            // INNER JOIN to tblWGEmployee, so time rows without a matching
+            // employee (PACTid = StaffID) are excluded.
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc()],
                 workgroups:         [MakeWorkgroup()],
@@ -446,8 +461,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             var result = await repo.GetTimeIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
 
             // Assert
-            Assert.Single(result);
-            Assert.Null(result[0].SpNumber);
+            Assert.Empty(result);
         }
 
         [Fact]
@@ -1938,8 +1952,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         }
 
         [Fact]
-        public async Task GetAdditionalIncomeAsync_NegativeAmount_ExcludedByHavingFilter()
+        public async Task GetAdditionalIncomeAsync_NegativeAmount_Included()
         {
+            // Access qryDeptIncomeExceptional does not filter out non-positive
+            // totals, so negative amounts are included.
             var sc = MakeProjectSubContract(acctCode: "Consumables", amount: -50m);
             var repo = CreateRepository(
                 workgroups:          [MakeWorkgroup()],
@@ -1949,7 +1965,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
             var result = await repo.GetAdditionalIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
 
-            Assert.Empty(result);
+            Assert.Single(result);
         }
 
         #endregion
@@ -2403,8 +2419,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
         #region Null employee (SpNumber null)
 
         [Fact]
-        public async Task GetTimeIncomeAsync_NoMatchingEmployee_SpNumberIsNull()
+        public async Task GetTimeIncomeAsync_NoMatchingEmployee_RowExcluded()
         {
+            // INNER JOIN to tblWGEmployee excludes time rows without a matching
+            // employee, matching Access qryDeptIncomeTime.
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc()],
                 workgroups:         [MakeWorkgroup()],
@@ -2414,13 +2432,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
             var result = await repo.GetTimeIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
 
-            Assert.Single(result);
-            Assert.Null(result[0].SpNumber);
+            Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetTimeIncomeCurrentAsync_NoMatchingEmployee_SpNumberIsNull()
+        public async Task GetTimeIncomeCurrentAsync_NoMatchingEmployee_RowExcluded()
         {
+            // INNER JOIN to tblWGEmployee excludes time rows without a matching
+            // employee, matching Access qryDeptIncomeTime.
             var repo = CreateRepository(
                 timeCostCalcs:      [MakeTimeCostCalc()],
                 workgroups:         [MakeWorkgroup()],
@@ -2430,8 +2449,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
             var result = await repo.GetTimeIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
 
-            Assert.Single(result);
-            Assert.Null(result[0].SpNumber);
+            Assert.Empty(result);
         }
 
         #endregion
