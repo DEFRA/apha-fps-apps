@@ -625,6 +625,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList();
         }
 
+
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeAsync(
             string? project, int monthFrom, int monthTo)
             => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: false);
