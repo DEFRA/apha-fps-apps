@@ -5556,8 +5556,29 @@ input.govuk-input.ssr-total-input[readonly] {
 .isStaffPlanDetails {
     width: 20%;
 }
+
+/* Misc Reports needs more room than the shared 20% for "Resource Centre:" plus
+   the resource centre names in the select. */
+.isMiscReport {
+    width: 34%;
+}
 .isTestPriceCheck {
     width: 16%;
+}
+
+/* The 20% column is too narrow for the label and select to share a row, so the
+   table squeezes the header cell to ~1 character and "Resource Centre:" wraps
+   vertically. Keep the label on one line and let the select take the rest. */
+.isMiscReport {
+    .govuk-table__header {
+        white-space: nowrap;
+        width: 1%;
+    }
+
+    .govuk-select {
+        width: 100%;
+        vertical-align: middle;
+    }
 }
 .isPlanAllAdditionalCosts.isHalfGrid {
     width: 54%;

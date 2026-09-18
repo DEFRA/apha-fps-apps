@@ -19,7 +19,9 @@
     <link rel="stylesheet" href="~/css/main_style.css" />
     <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
     <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
-    <script src="~/lib/jquery/dist/jquery.js"></script>
+    @* Minified build: inline scripts in @section Scripts run before deferred
+       scripts, so jQuery must stay here and load synchronously. *@
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -49,9 +51,9 @@
 
     <!-- ── Scripts ───────────────────────────────────────────────────── -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/js/common/keyboard/global-dropdown-keyboard.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/govuk-modal-dialog.js"></script>
     <fps-year-script></fps-year-script>
 
