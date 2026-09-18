@@ -139,6 +139,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             viewModel.WgStaffGrid = new DataGridConfig<WorkGroupEmployeeItem>
             {
                 GridId = "wgStaffGrid",
+                Title = "Staff Details",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "PactId",
@@ -332,6 +333,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = new DataGridConfig<WorkGroupEmployeeItem>
             {
                 GridId = "wgStaffGrid",
+                Title = "Staff Details",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "PactId",

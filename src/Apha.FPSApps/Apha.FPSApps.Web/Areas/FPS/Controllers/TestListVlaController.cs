@@ -58,7 +58,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 TestListGrid = new DataGridConfig<TestListVlaItem>
                 {
                     GridId              = "testListVlaGrid",
-                    Title               = "",
+                    Title               = "Test Details",
                     ShowCheckboxColumn  = false,
                     ShowPagination      = true,
                     KeyProperty         = "ItemCode",
@@ -196,7 +196,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<TestListVlaItem>
             {
                 GridId              = "testListVlaGrid",
-                Title               = "",
+                Title               = "Test Details",
                 ShowCheckboxColumn  = false,
                 ShowPagination      = true,
                 KeyProperty         = "ItemCode",

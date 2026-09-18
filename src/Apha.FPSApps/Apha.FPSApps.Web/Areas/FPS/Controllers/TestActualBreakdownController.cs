@@ -69,6 +69,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<TestActualBreakdownItem>
             {
                 GridId = "testActualBreakdownGrid",
+                Title = "Actual Test WG Details",
                 KeyProperty = "TestCode",
                 AllowAdd = false,
                 AllowEdit = false,

@@ -3,7 +3,7 @@
 (function () {
     'use strict';
 
-    function isVisible(el) {
+    function isVisible(el) {            
         if (!el) return false;
         var style = window.getComputedStyle(el);
         return style.display !== 'none' && style.visibility !== 'hidden';
@@ -131,12 +131,35 @@
         }
     }, true);
 
+    // Make the app footer reachable and announced by keyboard/screen readers.
+    // The shared AppFooter renders as a plain <div class="govuk-footer">, which
+    // has no landmark semantics, so NVDA skips it entirely and the copyright
+    // text is never read. Promoting it to a "contentinfo" landmark and adding
+    // tabindex="0" places it at the natural end of the Tab order, where its
+    // visible text is read once. Applied globally via this shared script.
+    // No aria-label is set: the footer already contains visible text, and an
+    // accessible name would make NVDA announce the copyright twice (once as
+    // the name, once as the contained text).
+    // Additive: markup in Views/Shared/Components/AppFooter stays unchanged.
+    function makeFooterReadable() {
+        var footer = document.querySelector('.govuk-footer');
+        if (!footer || !isVisible(footer)) return;
+        if (!footer.hasAttribute('role') && footer.tagName !== 'FOOTER') {
+            footer.setAttribute('role', 'contentinfo');
+        }
+        if (!footer.hasAttribute('tabindex')) {
+            footer.setAttribute('tabindex', '0');
+        }
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restoreFocusAfterRefresh);
         document.addEventListener('DOMContentLoaded', makePageHeadingFocusable);
+        document.addEventListener('DOMContentLoaded', makeFooterReadable);
     } else {
         restoreFocusAfterRefresh();
         makePageHeadingFocusable();
+        makeFooterReadable();
     }
 
     // Resolve the flyout panel + row-container ("body") associated with a trigger input.
@@ -229,12 +252,51 @@
         return !!resolvePanelParts(el);
     }
 
+    // Build the column header texts for the table a dropdown row belongs to, so
+    // each cell value can be announced together with the column it belongs to
+    // (e.g. "Project: FP1234, Description: Some title").
+    function getColumnHeaders(row) {
+        var table = row.closest('table');
+        if (!table) return [];
+        var headerRow = table.querySelector('thead tr');
+        if (!headerRow) return [];
+        return Array.prototype.map.call(headerRow.querySelectorAll('th, td'), function (th) {
+            return (th.textContent || '').replace(/\s+/g, ' ').trim();
+        });
+    }
+
+    // Give a multi-column dropdown row an accessible name describing every
+    // column it contains. Applying role="option" to a <tr> removes its native
+    // table semantics, so the individual <td> cells are no longer exposed to
+    // screen readers and NVDA announces only "row" with no data. Composing an
+    // aria-label from the cell values (prefixed with their column headers when
+    // available) restores the full record announcement.
+    function ensureRowIsLabelled(row) {
+        if (row.hasAttribute('aria-label')) return;
+
+        var cells = row.querySelectorAll('td, th');
+        if (!cells.length) return;
+
+        var headers = getColumnHeaders(row);
+        var parts = [];
+        Array.prototype.forEach.call(cells, function (cell, i) {
+            if (cell.getAttribute('aria-hidden') === 'true') return;
+            var text = (cell.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!text) return;
+            var header = headers[i];
+            parts.push(header ? header + ': ' + text : text);
+        });
+
+        if (parts.length) row.setAttribute('aria-label', parts.join(', '));
+    }
+
     // Make each row keyboard-focusable/actionable the first time it is encountered.
     function ensureRowIsAccessible(row) {
         if (row.hasAttribute('data-kbd-enabled')) return;
         row.setAttribute('data-kbd-enabled', 'true');
         if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '-1');
         if (!row.hasAttribute('role')) row.setAttribute('role', 'option');
+        ensureRowIsLabelled(row);
 
         row.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
@@ -1343,4 +1405,604 @@
         // Let the browser finish restoring scroll/focus first, then override.
         window.setTimeout(focusPageTop, 0);
     });
+})();
+
+// ── Global "read full textarea value" support (NVDA / screen-reader friendly) ──
+// A <textarea rows="1"> (or any textarea shorter than its content) clips the
+// value visually to one line, and only reveals the rest via internal
+// scrolling. Sighted users can't see the hidden text either, and screen
+// reader users have to know to arrow-down inside the field to discover more
+// content exists. This is common across the app for compact, read-only
+// summary fields (e.g. Project Description cards).
+//
+// Fix: keep the existing visual size/rows exactly as authored (no UI change),
+// and for READ-ONLY textareas expose the label plus the complete value as a
+// single accessible name. The element is also given role="img", which makes
+// screen readers announce only that name and ignore the textbox's own value.
+// Without this, NVDA announces twice: once for the aria-label (full text) and
+// again for the control's value (clipped to the current visible line).
+// Editable textareas are left completely untouched so typing/caret reporting
+// still behaves natively. No hidden/duplicate DOM elements are added.
+// Purely additive, safe to re-run.
+(function () {
+    'use strict';
+
+    function isVisible(el) {
+        if (!el) return false;
+        var style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    function findLabelText(textarea) {
+        var label = null;
+        if (textarea.id) label = document.querySelector('label[for="' + CSS.escape(textarea.id) + '"]');
+        if (!label) label = textarea.closest('label');
+        if (!label) return '';
+        return (label.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function syncAriaLabel(textarea) {
+        // Only read-only/disabled summary fields are re-presented; editable
+        // fields must keep their native textbox semantics.
+        if (!textarea.readOnly && !textarea.disabled) return;
+
+        var labelText = findLabelText(textarea);
+
+        // Cleared value: drop the stale accessible name rather than leaving
+        // the previously announced text in place.
+        if (!textarea.value) {
+            textarea.removeAttribute('aria-label');
+            return;
+        }
+
+        var value = textarea.value.replace(/\s+/g, ' ').trim();
+        textarea.setAttribute('aria-label', labelText ? labelText + ': ' + value : value);
+        // Announce the name once, as a single static item, instead of
+        // name + (partial) textbox value.
+        textarea.setAttribute('role', 'img');
+        textarea.setAttribute('aria-readonly', 'true');
+    }
+
+    function processAllTextareas(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(scope.querySelectorAll('textarea'), function (textarea) {
+            if (!isVisible(textarea)) return;
+            syncAriaLabel(textarea);
+        });
+    }
+
+    function init() {
+        processAllTextareas(document);
+
+        // Summary/comment textareas are frequently populated or replaced
+        // after the initial page load (AJAX partials, grid reloads, dynamic
+        // selection changes), so keep re-checking for new/changed textareas.
+        var observer = new MutationObserver(function (mutations) {
+            var needsCheck = false;
+            mutations.forEach(function (m) {
+                if (m.type === 'childList' && m.addedNodes.length) {
+                    Array.prototype.forEach.call(m.addedNodes, function (node) {
+                        if (node.nodeType !== 1) return;
+                        if (node.tagName === 'TEXTAREA' || (node.querySelector && node.querySelector('textarea'))) {
+                            needsCheck = true;
+                        }
+                    });
+                } else if (m.type === 'characterData' || (m.type === 'attributes' && m.attributeName === 'value')) {
+                    needsCheck = true;
+                }
+            });
+            if (needsCheck) processAllTextareas(document);
+        });
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+        // Textarea values changed via script (e.g. el.value = '...') don't
+        // fire childList/attribute mutations, so also catch the standard
+        // input/change events.
+        document.addEventListener('input', function (e) {
+            if (e.target && e.target.tagName === 'TEXTAREA') syncAriaLabel(e.target);
+        }, true);
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.tagName === 'TEXTAREA') syncAriaLabel(e.target);
+        }, true);
+
+        // Dropdown/multi-select pages update these summary fields with a plain
+        // assignment ("textarea.value = selectedTitle"). That fires no input or
+        // change event and mutates no DOM node, so neither the listeners above
+        // nor the MutationObserver would ever see it - leaving the aria-label
+        // stuck on whichever option was selected first. Wrapping the native
+        // "value" setter keeps the accessible name in sync with every
+        // programmatic assignment, whatever page script performs it.
+        var valueDescriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+        if (valueDescriptor && valueDescriptor.configurable && valueDescriptor.set) {
+            Object.defineProperty(HTMLTextAreaElement.prototype, 'value', {
+                configurable: true,
+                enumerable: valueDescriptor.enumerable,
+                get: valueDescriptor.get,
+                set: function (newValue) {
+                    valueDescriptor.set.call(this, newValue);
+                    try { syncAriaLabel(this); } catch (ignored) { /* never break assignment */ }
+                }
+            });
+        }
+    }
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+})();
+
+// ── Global summary-list / summary-card readability (NVDA friendly) ───────────
+// Summary cards across the apps render as a <dl class="govuk-summary-list">
+// with each row split into a <dt> key and a <dd> value (e.g. the "Time Summary"
+// card: HrsPaid / Leave / SickSpecial / HrsAvail / ...). Two problems follow:
+//   1. None of it is in the Tab order, so keyboard users never reach the card
+//      and NVDA only exposes it if the user happens to browse into that region.
+//   2. The key and the value are separate nodes, so they are announced
+//      disconnected - the number is read without the label it belongs to.
+// Fix: make each row a single focusable item whose accessible name combines the
+// key and its value ("HrsPaid: 37.5"), and expose the card itself as a labelled
+// group so its title is announced once on entry. Works for any <dl>-based
+// summary structure anywhere in the apps - no per-page markup changes needed.
+(function () {
+    'use strict';
+
+    function isVisible(el) {
+        if (!el) return false;
+        var style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    function textOf(el) {
+        return el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    // Label a single key/value row so both halves are announced together.
+    function enhanceRow(row) {
+        var key = row.querySelector('dt');
+        var value = row.querySelector('dd');
+        if (!key || !value) return;
+
+        var keyText = textOf(key);
+        var valueText = textOf(value);
+        if (!keyText && !valueText) return;
+
+        var name = keyText && valueText ? keyText + ': ' + valueText
+                                        : (keyText || valueText);
+
+        row.setAttribute('aria-label', name);
+        // The <dt>/<dd> children are already covered by the row's accessible
+        // name, so hide them to avoid the value being announced a second time.
+        key.setAttribute('aria-hidden', 'true');
+        value.setAttribute('aria-hidden', 'true');
+        if (!row.hasAttribute('role')) row.setAttribute('role', 'group');
+        if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '0');
+    }
+
+    // A <dl> whose rows are plain <dt>/<dd> pairs without a wrapping row
+    // element still needs the pairs joining, so fall back to pairing siblings.
+    function enhanceBareList(list) {
+        var children = Array.prototype.slice.call(list.children);
+        for (var i = 0; i < children.length - 1; i++) {
+            var key = children[i];
+            var value = children[i + 1];
+            if (key.tagName !== 'DT' || value.tagName !== 'DD') continue;
+            if (value.hasAttribute('data-kbd-summary-labelled')) continue;
+
+            var keyText = textOf(key);
+            var valueText = textOf(value);
+            if (!keyText && !valueText) continue;
+
+            value.setAttribute('data-kbd-summary-labelled', 'true');
+            value.setAttribute('aria-label', keyText && valueText ? keyText + ': ' + valueText : (keyText || valueText));
+            if (!value.hasAttribute('role')) value.setAttribute('role', 'group');
+            if (!value.hasAttribute('tabindex')) value.setAttribute('tabindex', '0');
+        }
+    }
+
+    // Expose the surrounding card as a named region so its heading (e.g.
+    // "Time Summary") is announced once when focus enters the card.
+    function enhanceCard(list) {
+        var card = list.closest('.govuk-summary-card');
+        if (!card || card.hasAttribute('role')) return;
+
+        var title = card.querySelector('.govuk-summary-card__title, h1, h2, h3, h4');
+        if (!title) return;
+
+        if (!title.id) {
+            title.id = 'kbd-summary-card-title-' + Math.random().toString(36).slice(2, 10);
+        }
+        card.setAttribute('role', 'region');
+        card.setAttribute('aria-labelledby', title.id);
+    }
+
+    // Inline "label: value" header pairs shown above grids (e.g. the
+    // "Staff Name: <name>  Grade: <grade>" list above the ZT code grid) are
+    // rendered as two sibling elements - a bold label and a plain value. They
+    // are not focusable and the two halves are announced as disconnected
+    // fragments, so the value is read without the label it belongs to.
+    // Joining them into one focusable item fixes both issues. Recognised by
+    // the label ending in ":" followed by a sibling holding the value.
+    function enhanceInlinePair(container) {
+        if (container.hasAttribute('data-kbd-summary-labelled')) return;
+
+        var parts = container.querySelectorAll(':scope > span, :scope > strong, :scope > b');
+        if (parts.length !== 2) return;
+
+        var keyText = textOf(parts[0]);
+        var valueText = textOf(parts[1]);
+        if (!/:\s*$/.test(keyText) || !valueText) return;
+
+        container.setAttribute('data-kbd-summary-labelled', 'true');
+        container.setAttribute('aria-label', keyText.replace(/\s*:\s*$/, '') + ': ' + valueText);
+        // Children are covered by the container's accessible name; hide them so
+        // the value isn't announced twice.
+        parts[0].setAttribute('aria-hidden', 'true');
+        parts[1].setAttribute('aria-hidden', 'true');
+        if (!container.hasAttribute('role')) container.setAttribute('role', 'group');
+        if (!container.hasAttribute('tabindex')) container.setAttribute('tabindex', '0');
+    }
+
+    function processInlinePairs(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(scope.querySelectorAll('li, p, div'), function (container) {
+            if (!isVisible(container)) return;
+            enhanceInlinePair(container);
+        });
+    }
+
+    function processSummaryLists(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(scope.querySelectorAll('dl'), function (list) {
+            if (!isVisible(list)) return;
+
+            var rows = list.querySelectorAll('.govuk-summary-list__row');
+            if (rows.length) {
+                Array.prototype.forEach.call(rows, function (row) {
+                    if (row.hasAttribute('data-kbd-summary-labelled')) return;
+                    row.setAttribute('data-kbd-summary-labelled', 'true');
+                    enhanceRow(row);
+                });
+            } else {
+                enhanceBareList(list);
+            }
+
+            enhanceCard(list);
+        });
+
+        processInlinePairs(scope);
+    }
+
+    function init() {
+        processSummaryLists(document);
+
+        // Summary values are frequently recalculated or re-rendered after the
+        // initial load (AJAX saves, grid edits, dropdown selections), so keep
+        // the accessible names in sync with the visible figures.
+        var observer = new MutationObserver(function (mutations) {
+            var needsCheck = false;
+            mutations.forEach(function (m) {
+                if (m.type === 'characterData') {
+                    needsCheck = true;
+                    return;
+                }
+                Array.prototype.forEach.call(m.addedNodes || [], function (node) {
+                    if (node.nodeType !== 1) return;
+                    // Any added element may bring a summary list or an inline
+                    // "label: value" header pair with it.
+                    needsCheck = true;
+                });
+            });
+            if (!needsCheck) return;
+
+            // Values changed in place: clear the cached marker so rows are
+            // re-labelled with the new figures rather than the stale ones.
+            Array.prototype.forEach.call(
+                document.querySelectorAll('[data-kbd-summary-labelled]'),
+                function (el) { el.removeAttribute('data-kbd-summary-labelled'); });
+            processSummaryLists(document);        });
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+})();
+
+// ──────────────────────────────────────────────────────────────────────────
+// Initial page focus
+// After a full page navigation (e.g. clicking a side-nav link) browsers leave
+// focus on the document body. NVDA then resumes reading from wherever its
+// virtual cursor happened to be instead of the top of the page. Explicitly
+// moving focus to the application title in the header puts both the tab order
+// and the screen-reader review cursor back at the top of every page.
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+    'use strict';
+
+    // The app logo/title lives in the AppHeader view component. Anchor the
+    // lookup on .app-log-wrapper so we never accidentally match a page-level
+    // <header> (e.g. a card or grid toolbar header) further down the document.
+    function findLogo() {
+        return document.querySelector('.app-log-wrapper .app-log') ||
+               document.querySelector('.app-log-wrapper') ||
+               document.querySelector('header .app-log') ||
+               null;
+    }
+
+    // Focus is only considered "intentionally claimed" by the page when it sits
+    // on real page content. Focus parked on the chrome (main menu buttons, the
+    // side nav, the user dropdown) is exactly the bug we are fixing, so it
+    // must not block us from moving back to the logo.
+    function isChromeOrUnfocused(el) {
+        if (!el || el === document.body || el === document.documentElement) return true;
+        return !!(el.closest &&
+            el.closest('#header, .main-nav, .header-nav, .navmenu, .userdropdown, .userdropdownbtn, ' +
+                       '.sidenav, #shortnav, .side-nav, .project-side-nav'));
+    }
+
+    // A bare "#" (or any invalid fragment) is not a real in-page target.
+    // querySelector('#') throws a SyntaxError, which previously aborted the
+    // whole routine on pages whose nav links use href="#".
+    function hasRealHashTarget() {
+        var hash = window.location.hash;
+        if (!hash || hash === '#') return false;
+        try {
+            return !!document.querySelector(hash);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function applyFocus() {
+        var target = findLogo();
+        if (!target) return;
+
+        if (!target.hasAttribute('tabindex')) {
+            target.setAttribute('tabindex', '-1');
+        }
+
+        // Don't fight genuine page-content focus (autofocus field, validation
+        // summary, or a dialog opened on load).
+        if (!isChromeOrUnfocused(document.activeElement)) return;
+
+        try {
+            target.focus({ preventScroll: true });
+        } catch (e) {
+            target.focus();
+        }
+        window.scrollTo(0, 0);
+    }
+
+    function focusPageStart() {
+        // Respect in-page anchors (#section links) - the browser target wins.
+        if (hasRealHashTarget()) return;
+
+        // Run once as soon as the DOM is usable, then again after 'load' and on
+        // the next frame. This file is included before navmenu.js and before any
+        // page-level scripts, so a single early pass can be overridden by nav
+        // code that restores/highlights the active menu item and focuses it.
+        applyFocus();
+        window.requestAnimationFrame(function () { applyFocus(); });
+        window.setTimeout(applyFocus, 0);
+        window.setTimeout(applyFocus, 150);
+    }
+
+    // Some screens (e.g. FPS Master Lookup) use side-nav links with href="#"
+    // that swap the content pane over AJAX instead of navigating. No page load
+    // fires, so focus would otherwise stay on the clicked link. Treat those the
+    // same as a navigation and send focus back to the logo once the new content
+    // has been injected.
+    document.addEventListener('click', function (e) {
+        var link = e.target && e.target.closest
+            ? e.target.closest('a[href="#"], a[href=""], a:not([href])')
+            : null;
+        if (!link) return;
+        if (!link.closest('.sidenav, #shortnav, .side-nav, .project-side-nav, .main-nav')) return;
+
+        // Let the page's own handler run and render first.
+        window.setTimeout(applyFocus, 0);
+        window.setTimeout(applyFocus, 250);
+    }, true);
+
+    // Expose so page scripts can re-assert top-of-page focus after their own
+    // AJAX content swaps if the timings above aren't sufficient.
+    window.focusAppLogo = applyFocus;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', focusPageStart);
+    } else {
+        focusPageStart();
+    }
+
+    // Late-running scripts and slow partials can still shift focus after
+    // DOMContentLoaded, so take a final pass once everything has loaded.
+    window.addEventListener('load', function () {
+        if (hasRealHashTarget()) return;
+        window.setTimeout(applyFocus, 0);
+    });
+
+    // Back/forward navigation restored from the bfcache re-runs no scripts,
+    // so hook pageshow as well.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) focusPageStart();
+    });
+})();
+
+// ──────────────────────────────────────────────────────────────────────────
+// Modal header announcement
+// The shared #modalPopup container in every area layout is a plain <div> with
+// a static aria-label ("Dialog" / "Modal dialog"). Partials injected into
+// #modaPopupBody supply their own ".modal-header > h3" title, but nothing
+// gives that heading focus or ties it to the dialog, so NVDA announces only
+// the generic container label and the modal's real title is never read.
+//
+// This module watches for a modal becoming visible and then:
+//   1) promotes the container to a proper role="dialog" + aria-modal
+//   2) points aria-labelledby at the injected heading, so the real title
+//      becomes the dialog's accessible name
+//   3) moves focus to the heading, so NVDA starts reading from the title
+//      rather than from the first input or the close button
+// Applied globally; no markup changes needed in the many modal partials.
+// ──────────────────────────────────────────────────────────────────────────
+(function () {
+    'use strict';
+
+    var HEADER_SELECTOR = '.modal-header, .govuk-edit-modal__header';
+    var TITLE_SELECTOR = 'h1, h2, h3, h4, .modal-title, .govuk-heading-s, .govuk-heading-m';
+    var titleSeq = 0;
+
+    function isShown(el) {
+        if (!el) return false;
+        if (el.classList.contains('show')) return true;
+        var style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    function findHeading(modal) {
+        var header = modal.querySelector(HEADER_SELECTOR);
+        if (header) {
+            var inHeader = header.querySelector(TITLE_SELECTOR);
+            if (inHeader && inHeader.textContent.trim()) return inHeader;
+            // Header with no heading element but visible text of its own.
+            if (header.textContent.trim()) return header;
+        }
+        var anyTitle = modal.querySelector(TITLE_SELECTOR);
+        return (anyTitle && anyTitle.textContent.trim()) ? anyTitle : null;
+    }
+
+    function announceModal(modal) {
+        if (!modal || !isShown(modal)) return;
+
+        var heading = findHeading(modal);
+        if (!heading) return;
+
+        // Skip if we've already wired up this exact heading for this modal.
+        if (modal.getAttribute('data-modal-titled') === heading.id && heading.id) return;
+
+        if (!heading.id) {
+            heading.id = 'modalTitle_' + (++titleSeq);
+        }
+
+        // Give the container real dialog semantics so the name is announced
+        // as a dialog title rather than stray text.
+        if (modal.getAttribute('role') !== 'dialog') {
+            modal.setAttribute('role', 'dialog');
+        }
+        modal.setAttribute('aria-modal', 'true');
+
+        // aria-labelledby must win over the layout's generic aria-label.
+        modal.removeAttribute('aria-label');
+        modal.setAttribute('aria-labelledby', heading.id);
+
+        modal.setAttribute('data-modal-titled', heading.id);
+
+        // Never let the whole dialog body become the accessible description -
+        // that is what makes NVDA read the entire form the moment it opens.
+        modal.removeAttribute('aria-describedby');
+
+        // Make the heading programmatically focusable (but keep it out of the
+        // Tab sequence) so NVDA reads ONLY the title, and the very next Tab
+        // lands on the close (cross) button that follows it in the header.
+        if (!heading.hasAttribute('tabindex')) {
+            heading.setAttribute('tabindex', '-1');
+        }
+
+
+        focusHeading(modal, heading);
+    }
+
+    // Other scripts (modal focus traps, autofocus attributes, page-level
+    // "focus the first input" code) run at unpredictable times just after a
+    // modal opens and will happily steal focus to an input or the close
+    // button - which makes NVDA read that control instead of the title.
+    // Re-assert focus on the heading over a short window, but only while
+    // focus is still somewhere the user did not deliberately put it.
+    function focusHeading(modal, heading) {
+        var attempts = 0;
+
+        function settle() {
+            if (!isShown(modal)) return;
+
+            var active = document.activeElement;
+            // The user has started interacting (typed/tabbed somewhere) -
+            // stop fighting them.
+            if (active && active !== document.body &&
+                active !== document.documentElement &&
+                active !== heading &&
+                active !== modal &&
+                modal.contains(active) &&
+                modal.getAttribute('data-modal-settled') === '1') {
+                return;
+            }
+
+            if (active !== heading) {
+                try {
+                    heading.focus({ preventScroll: true });
+                } catch (e) {
+                    heading.focus();
+                }
+            }
+
+            if (++attempts < 4) {
+                window.setTimeout(settle, 60);
+            } else {
+                // Hand control back to the user / focus trap.
+                modal.setAttribute('data-modal-settled', '1');
+            }
+        }
+
+        modal.removeAttribute('data-modal-settled');
+        window.setTimeout(settle, 0);
+    }
+
+    function scanForOpenModals() {
+        var modals = document.querySelectorAll(
+            '#modalPopup, .modal.show, [role="dialog"], [data-govuk-modal="backdrop"]');
+        Array.prototype.forEach.call(modals, function (m) {
+            if (isShown(m)) {
+                announceModal(m);
+            } else if (m.hasAttribute('data-modal-titled')) {
+                // Closed again - clear the markers so the next open re-runs
+                // the announcement (the injected content/title changes).
+                m.removeAttribute('data-modal-titled');
+                m.removeAttribute('data-modal-settled');
+            }
+        });
+    }
+
+    function init() {
+        // Modals are shown by toggling a class and are filled over AJAX, so
+        // watch both attribute flips and injected content.
+        var observer = new MutationObserver(function (mutations) {
+            var recheck = false;
+            mutations.forEach(function (m) {
+                if (m.type === 'attributes' || (m.addedNodes && m.addedNodes.length)) {
+                    recheck = true;
+                }
+            });
+            if (recheck) scanForOpenModals();
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+
+        scanForOpenModals();
+    }
+
+    // Allow page scripts to re-assert the title after replacing modal content.
+    window.announceModalHeader = scanForOpenModals;
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
 })();

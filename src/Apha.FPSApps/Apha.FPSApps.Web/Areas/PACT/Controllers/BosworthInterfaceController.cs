@@ -47,6 +47,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public async Task<IActionResult> Index()
         {
+            TempData["NavigationSource"] = "BosworthInterface";
             var viewModel = new BosworthInterfaceViewModel();
             await PopulateDropdownsAsync(viewModel);
             return View(viewModel);

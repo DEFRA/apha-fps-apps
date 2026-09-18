@@ -319,11 +319,11 @@
                                                         <label class="govuk-label govuk-label govuk-!-margin-bottom-4" asp-for="IsDefraProject">Is Defra Project?:<span class="sup_color_red">*</span></label>
                                                     </td>
                                                     <td class="govuk-table__cell">
-                                                        <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select sup_select_option_width_100" style="width: 100%"></select>
+                                                        <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" aria-describedby="IsDefraProjectHint" class="govuk-select sup_select_option_width_100" style="width: 100%"></select>
                                                         <span asp-validation-for="IsDefraProject" class="govuk-error-message"></span>
                                                     </td>
                                                     <td class="govuk-table__cell">
-                                                        <span class="warning-text" style="margin-left: -10px;font-weight:bold; margin-bottom: 20px;display:block; font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                                        <span id="IsDefraProjectHint" class="warning-text" style="margin-left: -10px;font-weight:bold; margin-bottom: 20px;display:block; font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                                             Changing this option will recost existing projects with current rates.
                                                         </span>
                                                     </td>
@@ -334,7 +334,7 @@
                                                         <label asp-for="StartFYear" class="govuk-label govuk-label govuk-!-margin-bottom-4">Start (Financial) Year:</label>
                                                     </td>
                                                     <td class="govuk-table__cell">
-                                                        <input asp-for="StartFYear" asp-format="{0:0}" class="govuk-input sup_select_option_width_100 margin_left_5 read-only" readonly>
+                                                        <input asp-for="StartFYear" aria-label="Start Finacial Year" asp-format="{0:0}" class="govuk-input sup_select_option_width_100 margin_left_5 read-only" readonly>
                                                         <span asp-validation-for="StartFYear" class="govuk-error-message"></span>
                                                     </td>
 
@@ -389,12 +389,13 @@
                                                                        name="Inflation"
                                                                        value="-1"
                                                                        class="govuk-checkboxes__input"
+                                                                       aria-describedby="chkInflationHint"
                                                                 @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
                                                                 <label class="govuk-checkboxes__label" for="chkInflation">
                                                                     <span class="govuk-visually-hidden">Include Inflation</span>
                                                                 </label>
                                                             </div>
-                                                            <span class="warning-text isCustomInfo">
+                                                            <span id="chkInflationHint" class="warning-text isCustomInfo">
                                                                 Changing this option will recost existing projects with current rates as well as affecting inflation.
                                                             </span>
                                                         </div>

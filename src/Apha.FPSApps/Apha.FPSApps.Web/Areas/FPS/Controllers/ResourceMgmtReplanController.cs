@@ -204,7 +204,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             new()
             {
                 GridId = "RePlanGrid",
-                Title = "",
+                Title = "2.All Jobs for Staff in Workgroup",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffRowKey",
@@ -228,7 +228,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             new()
             {
                 GridId = "AllTimeGrid",
-                Title = "",
+                Title = "3. All Time for Project",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffId",
