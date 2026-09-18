@@ -1,4 +1,5 @@
-﻿using Apha.BatchJobs.Domain.Enums;
+using Apha.BatchJobs.Domain.Constants;
+using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Worker.Execution;
 
@@ -6,7 +7,7 @@ namespace Apha.BatchJobs.UnitTests;
 
 /// <summary>
 /// Tests for <see cref="BatchExecutionRequestResolver"/>. HealthCheck is intentionally not
-/// covered here â€” it never reaches this resolver (Program.cs short-circuits earlier).
+/// covered here — it never reaches this resolver (Program.cs short-circuits earlier).
 /// </summary>
 public sealed class BatchExecutionRequestResolverTests
 {
@@ -21,7 +22,7 @@ public sealed class BatchExecutionRequestResolverTests
             requestedBy: "arihant",
             requestedAtUtc: null);
 
-        var request = new BatchExecutionRequestResolver().Resolve();
+        var request = new BatchExecutionRequestResolver().Resolve().Single();
 
         Assert.Equal("RecreateSummary", request.JobName);
         Assert.Equal(RunMode.Manual, request.RunMode);
@@ -41,7 +42,7 @@ public sealed class BatchExecutionRequestResolverTests
             requestedBy: "scheduler",
             requestedAtUtc: "2026-07-22T03:00:00Z");
 
-        var request = new BatchExecutionRequestResolver().Resolve();
+        var request = new BatchExecutionRequestResolver().Resolve().Single();
 
         Assert.Equal("MABArchive", request.JobName);
         Assert.Equal(RunMode.Scheduled, request.RunMode);
@@ -61,7 +62,7 @@ public sealed class BatchExecutionRequestResolverTests
             requestedAtUtc: null,
             parametersJson: "{\"month\":\"2026-07\"}");
 
-        var request = new BatchExecutionRequestResolver().Resolve();
+        var request = new BatchExecutionRequestResolver().Resolve().Single();
 
         Assert.Equal("{\"month\":\"2026-07\"}", request.ParametersJson);
     }
@@ -76,7 +77,7 @@ public sealed class BatchExecutionRequestResolverTests
             requestedBy: "arihant",
             requestedAtUtc: null);
 
-        var request = new BatchExecutionRequestResolver().Resolve();
+        var request = new BatchExecutionRequestResolver().Resolve().Single();
 
         Assert.Null(request.ParametersJson);
     }
@@ -91,9 +92,91 @@ public sealed class BatchExecutionRequestResolverTests
             requestedBy: null,
             requestedAtUtc: null);
 
-        var request = new BatchExecutionRequestResolver().Resolve();
+        var request = new BatchExecutionRequestResolver().Resolve().Single();
 
         Assert.Equal("system", request.RequestedBy);
+    }
+
+    [Fact]
+    public void Resolve_WhenJobNameIsMonthlyBusinessNotificationsCategory_ExpandsToOneRequestPerTaggedJob()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: "MonthlyBusinessNotifications",
+            runMode: "Scheduled",
+            jobExecutionId: null,
+            requestedBy: "EventBridgeScheduler",
+            requestedAtUtc: null);
+
+        var requests = new BatchExecutionRequestResolver().Resolve();
+
+        Assert.Equal(MonthlyScheduledNotificationJobs.JobNames.Count, requests.Count);
+        Assert.Equal(MonthlyScheduledNotificationJobs.JobNames, requests.Select(r => r.JobName));
+        Assert.All(requests, r => Assert.Equal(RunMode.Scheduled, r.RunMode));
+        Assert.All(requests, r => Assert.NotEqual(Guid.Empty, r.JobExecutionId));
+        Assert.Equal(requests.Select(r => r.JobExecutionId).Distinct().Count(), requests.Count);
+    }
+
+    [Fact]
+    public void Resolve_WhenCategoryHasTwoConfiguredJobs_ExpandsToTwoRequestsWithDistinctExecutionIds()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: "MonthlyBusinessNotifications",
+            runMode: "Scheduled",
+            jobExecutionId: null,
+            requestedBy: "EventBridgeScheduler",
+            requestedAtUtc: null);
+
+        var requests = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]).Resolve();
+
+        Assert.Equal(2, requests.Count);
+        Assert.Equal("TestJobA", requests[0].JobName);
+        Assert.Equal("TestJobB", requests[1].JobName);
+        Assert.NotEqual(Guid.Empty, requests[0].JobExecutionId);
+        Assert.NotEqual(Guid.Empty, requests[1].JobExecutionId);
+        Assert.NotEqual(requests[0].JobExecutionId, requests[1].JobExecutionId);
+    }
+
+    [Fact]
+    public void Resolve_WhenCategoryNameLowercase_StillRecognizedAsCategoryTrigger()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: "monthlybusinessnotifications",
+            runMode: "Scheduled",
+            jobExecutionId: null,
+            requestedBy: "EventBridgeScheduler",
+            requestedAtUtc: null);
+
+        var requests = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]).Resolve();
+
+        Assert.Equal(2, requests.Count);
+    }
+
+    [Fact]
+    public void Resolve_WhenCategoryHasNoConfiguredJobs_ThrowsJobValidationException()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: "MonthlyBusinessNotifications",
+            runMode: "Scheduled",
+            jobExecutionId: null,
+            requestedBy: "EventBridgeScheduler",
+            requestedAtUtc: null);
+
+        var ex = Assert.Throws<JobValidationException>(() => new BatchExecutionRequestResolver([]).Resolve());
+        Assert.Contains("MonthlyBusinessNotifications", ex.Message);
+    }
+
+    [Fact]
+    public void Resolve_WhenCategoryTriggerWithManualRunMode_ThrowsJobValidationException()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: "MonthlyBusinessNotifications",
+            runMode: "Manual",
+            jobExecutionId: null,
+            requestedBy: "arihant",
+            requestedAtUtc: null);
+
+        var ex = Assert.Throws<JobValidationException>(() => new BatchExecutionRequestResolver().Resolve());
+        Assert.Contains("BATCH_RUN_MODE", ex.Message);
     }
 
     [Fact]

@@ -6,26 +6,68 @@ namespace Apha.BatchJobs.Worker.Execution;
 
 /// <summary>
 /// Reads BATCH_JOB_* environment variables, validates them, and returns the immutable
-/// <see cref="BatchExecutionRequest"/> the runner consumes.
+/// <see cref="BatchExecutionRequest"/>(s) the runner consumes.
 /// </summary>
 public sealed class BatchExecutionRequestResolver
 {
-    public BatchExecutionRequest Resolve()
+    private readonly IReadOnlyList<string> _monthlyScheduledNotificationJobs;
+
+    public BatchExecutionRequestResolver()
+        : this(MonthlyScheduledNotificationJobs.JobNames)
     {
-        var jobName     = ResolveJobName();
+    }
+
+    /// <summary>Test seam — lets tests exercise fan-out with more than the one job currently configured in production.</summary>
+    internal BatchExecutionRequestResolver(IReadOnlyList<string> monthlyScheduledNotificationJobs)
+    {
+        _monthlyScheduledNotificationJobs = monthlyScheduledNotificationJobs;
+    }
+
+    /// <summary>
+    /// Resolves one worker invocation's environment into the job(s) to run. Normally this is a
+    /// single request. When BATCH_JOB_NAME is the shared category trigger
+    /// <see cref="MonthlyScheduledNotificationJobs.EventBridgeCategoryName"/>, it expands into one
+    /// request per configured job, each with its own self-generated execution ID.
+    /// </summary>
+    public IReadOnlyList<BatchExecutionRequest> Resolve()
+    {
+        var rawJobName  = ResolveJobName();
         var requestedBy = ResolveRequestedBy();
         var runMode     = ResolveRunMode();
-        var executionId = ResolveJobExecutionId(jobName, runMode);
         var requestedAt = ResolveRequestedAt(runMode);
         var parameters  = ResolveParametersJson();
 
-        return new BatchExecutionRequest(
-            jobName,
-            runMode,
-            executionId,
-            requestedBy,
-            requestedAt?.UtcDateTime,
-            parameters);
+        if (!string.Equals(rawJobName, MonthlyScheduledNotificationJobs.EventBridgeCategoryName, StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                new BatchExecutionRequest(
+                    rawJobName,
+                    runMode,
+                    ResolveJobExecutionId(rawJobName, runMode),
+                    requestedBy,
+                    requestedAt?.UtcDateTime,
+                    parameters)
+            ];
+        }
+
+        if (runMode != RunMode.Scheduled)
+            throw new JobValidationException(
+                $"BATCH_JOB_NAME '{rawJobName}' is a shared category trigger and requires BATCH_RUN_MODE=Scheduled.");
+
+        if (_monthlyScheduledNotificationJobs.Count == 0)
+            throw new JobValidationException(
+                $"BATCH_JOB_NAME '{rawJobName}' is a shared category trigger but has no jobs configured.");
+
+        return _monthlyScheduledNotificationJobs
+            .Select(jobName => new BatchExecutionRequest(
+                jobName,
+                runMode,
+                ResolveJobExecutionId(jobName, runMode, publishExecutionId: false),
+                requestedBy,
+                requestedAt?.UtcDateTime,
+                parameters))
+            .ToArray();
     }
 
     private static string ResolveJobName()
@@ -58,7 +100,7 @@ public sealed class BatchExecutionRequestResolver
         return runMode;
     }
 
-    private static Guid ResolveJobExecutionId(string jobName, RunMode runMode)
+    private Guid ResolveJobExecutionId(string jobName, RunMode runMode, bool publishExecutionId = true)
     {
         var raw =
             Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
@@ -74,8 +116,13 @@ public sealed class BatchExecutionRequestResolver
         if (runMode == RunMode.Scheduled && IsWorkerManagedJob(jobName))
         {
             var id = Guid.NewGuid();
-            // Publish back so any subsequent read within this process observes the same value.
-            Environment.SetEnvironmentVariable("BATCH_JOB_EXECUTION_ID", id.ToString("D"));
+            if (publishExecutionId)
+            {
+                // Publish back so any subsequent read within this process observes the same value.
+                // Skipped for category fan-out (see MonthlyScheduledNotificationJobs) — each job
+                // there needs its own independently generated ID, not a shared published one.
+                Environment.SetEnvironmentVariable("BATCH_JOB_EXECUTION_ID", id.ToString("D"));
+            }
             return id;
         }
 
@@ -119,9 +166,9 @@ public sealed class BatchExecutionRequestResolver
         return json;
     }
 
-    private static bool IsWorkerManagedJob(string jobName) =>
+    private bool IsWorkerManagedJob(string jobName) =>
         string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(jobName, BatchJobNames.MilestoneUpdateNotifications, StringComparison.OrdinalIgnoreCase);
+        _monthlyScheduledNotificationJobs.Any(name => string.Equals(name, jobName, StringComparison.OrdinalIgnoreCase));
 
     private static bool LooksLikeTemplatePlaceholder(string? value)
     {

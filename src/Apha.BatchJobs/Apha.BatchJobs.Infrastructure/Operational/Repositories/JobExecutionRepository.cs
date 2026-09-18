@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Domain;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Constants;
@@ -19,11 +20,6 @@ public class JobExecutionRepository : IJobExecutionRepository
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<JobExecutionRepository> _logger;
 
-    /// <summary>
-    /// Initializes a new instance of the JobExecutionRepository.
-    /// </summary>
-    /// <param name="context">The database context.</param>
-    /// <param name="logger">Optional logger for structured execution record events.</param>
     public JobExecutionRepository(BatchJobsDbContext context, ILogger<JobExecutionRepository>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -59,6 +55,15 @@ public class JobExecutionRepository : IJobExecutionRepository
             var expectedStatusId = await EnsureStatusAsync(existingRow.JobId, expectedPickupStatus.ToString(), cancellationToken);
             var runningStatusId = await EnsureStatusAsync(existingRow.JobId, JobStatus.Running.ToString(), cancellationToken);
 
+            // record.FpsYear is the target/planned year from job parameters, already cross-checked
+            // against target_fpsyear above — it is not this row's current fpsyear and must not
+            // overwrite it on pickup.
+            //
+            // record.TargetFpsYear is the same resolved value, persisted into the row's own
+            // target_fpsyear column here — the one durable place a later, separate execution
+            // (e.g. Year End Cutover) can find it via GetLastExecutionByTargetFpsYearAsync.
+            // Coalesced against the row's current value rather than set unconditionally, so a run
+            // with no targetFpsYear in its parameters can never blank out an already-persisted one.
             var updateRows = await _context.TblJobQueue
                 .Where(q => q.JobExecutionId == record.JobExecutionId && q.StatusId == expectedStatusId)
                 .ExecuteUpdateAsync(updates => updates
@@ -66,9 +71,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                     .SetProperty(q => q.StartDateTime, _ => record.StartedAt)
                     .SetProperty(q => q.RequestedBy, _ => record.UserId)
                     .SetProperty(q => q.UpdatedAt, _ => now)
-                    .SetProperty(
-                        q => q.FpsYear,
-                        q => record.FpsYear.HasValue ? record.FpsYear.Value : q.FpsYear),
+                    .SetProperty(q => q.TargetFpsYear, q => record.TargetFpsYear ?? q.TargetFpsYear),
                     cancellationToken);
 
             if (updateRows == 0)
@@ -97,7 +100,8 @@ public class JobExecutionRepository : IJobExecutionRepository
                 StatusId = runningStatusId,
                 PerformedBy = record.UserId,
                 LogTime = now,
-                Note = BuildStartTransitionNote(expectedPickupStatus)
+                Note = BuildStartTransitionNote(expectedPickupStatus),
+                FpsYear = FpsYearResolver.ResolveFpsYear(claimedRow.FpsYear, now)
             });
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -168,7 +172,8 @@ public class JobExecutionRepository : IJobExecutionRepository
             StatusId = statusId,
             PerformedBy = record.UserId,
             LogTime = now,
-            Note = BuildStatusNote(record.Status)
+            Note = BuildStatusNote(record),
+            FpsYear = FpsYearResolver.ResolveFpsYear(queueRow.FpsYear, now)
         });
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -202,6 +207,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -228,6 +234,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
             FpsYear = last.FpsYear,
+            TargetFpsYear = last.TargetFpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -239,7 +246,7 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
-    public async Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default)
+    public async Task<JobExecutionRecord?> GetLastExecutionByTargetFpsYearAsync(string jobName, int targetFpsYear, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
@@ -248,7 +255,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             from q in _context.TblJobQueue
             join m in _context.TblJobMaster on q.JobId equals m.JobId
             join s in _context.TblJobStatus on q.StatusId equals s.StatusId
-            where m.JobName == jobName && q.FpsYear == fpsYear
+            where m.JobName == jobName && q.TargetFpsYear == targetFpsYear
             orderby q.StartDateTime descending
             select new
             {
@@ -258,6 +265,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -284,6 +292,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
             FpsYear = last.FpsYear,
+            TargetFpsYear = last.TargetFpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -311,6 +320,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.RequestedBy,
                 q.RequestedAtUtc,
                 q.FpsYear,
+                q.TargetFpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -343,6 +353,68 @@ public class JobExecutionRepository : IJobExecutionRepository
             Status = status,
             RequestedAtUtc = execution.RequestedAtUtc,
             FpsYear = execution.FpsYear,
+            TargetFpsYear = execution.TargetFpsYear,
+            StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
+            CompletedAt = execution.EndDateTime,
+            DurationSeconds = execution.EndDateTime.HasValue && execution.StartDateTime.HasValue
+                ? (int)(execution.EndDateTime.Value - execution.StartDateTime.Value).TotalSeconds
+                : null,
+            ErrorMessage = execution.ErrorMessage,
+            RetryAttempts = 0
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<JobExecutionRecord?> GetExecutionByJobQueueIdAsync(Guid jobQueueId, CancellationToken cancellationToken = default)
+    {
+        var execution = await (
+            from q in _context.TblJobQueue
+            join m in _context.TblJobMaster on q.JobId equals m.JobId
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where q.JobQueueId == jobQueueId
+            orderby q.StartDateTime descending
+            select new
+            {
+                m.JobName,
+                q.JobExecutionId,
+                q.JobQueueId,
+                q.RequestedBy,
+                q.RequestedAtUtc,
+                q.FpsYear,
+                q.TargetFpsYear,
+                q.StartDateTime,
+                q.EndDateTime,
+                s.Status,
+                q.ErrorMessage
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (execution == null)
+            return null;
+
+        if (!Enum.TryParse<JobStatus>(execution.Status, true, out var status))
+        {
+            _logger.LogError(
+                "Status parsing failed for JobQueueId | JobQueueId={JobQueueId} | StatusFromDb={StatusValue}",
+                execution.JobQueueId,
+                execution.Status);
+            throw new InvalidOperationException(
+                $"Invalid status '{execution.Status}' in database for JobQueueId '{execution.JobQueueId}'.");
+        }
+
+        return new JobExecutionRecord
+        {
+            ExecutionId = 0,
+            JobName = execution.JobName,
+            JobExecutionId = execution.JobExecutionId,
+            JobQueueId = execution.JobQueueId,
+            UserId = execution.RequestedBy,
+            JobType = JobType.Unknown,
+            RunMode = RunMode.Manual,
+            Status = status,
+            RequestedAtUtc = execution.RequestedAtUtc,
+            FpsYear = execution.FpsYear,
+            TargetFpsYear = execution.TargetFpsYear,
             StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = execution.EndDateTime,
             DurationSeconds = execution.EndDateTime.HasValue && execution.StartDateTime.HasValue
@@ -403,8 +475,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             RequestedBy = requestedBy,
             RequestedAtUtc = requestedAtUtc,
             FpsYear = fpsYear,
-            // Keep compatibility with environments where startdatetime is still NOT NULL.
-            // Status remains Initiated; worker updates the value when transitioning to Running.
+            // startdatetime kept non-null for compatibility; worker updates it on transition to Running.
             StartDateTime = requestedAtUtc,
             EndDateTime = null,
             ErrorMessage = null,
@@ -418,7 +489,8 @@ public class JobExecutionRepository : IJobExecutionRepository
             StatusId = statusId,
             PerformedBy = requestedBy,
             LogTime = now,
-            Note = "Job accepted by API - Initiated"
+            Note = "Job accepted by API - Initiated",
+            FpsYear = FpsYearResolver.ResolveFpsYear(fpsYear, now)
         });
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -543,11 +615,18 @@ public class JobExecutionRepository : IJobExecutionRepository
             "Status catalog must be provisioned via approved DBA migration/CR scripts before worker execution.");
     }
 
-    private static string BuildStatusNote(JobStatus status) => status switch
+    /// <summary>
+    /// On Failed, prefers the bounded diagnostic summary the orchestrator already built from the
+    /// classified exception (<see cref="JobExecutionRecord.DiagnosticSummary"/>) over the generic
+    /// literal — falls back to it only if the caller never set one.
+    /// </summary>
+    private static string BuildStatusNote(JobExecutionRecord record) => record.Status switch
     {
         JobStatus.Completed => "Execution completed",
-        JobStatus.Failed => "Execution failed",
-        _ => $"Status changed to {status}"
+        JobStatus.Failed => string.IsNullOrWhiteSpace(record.DiagnosticSummary)
+            ? "Execution failed"
+            : record.DiagnosticSummary,
+        _ => $"Status changed to {record.Status}"
     };
 
     private static string BuildStartTransitionNote(JobStatus previousStatus)
