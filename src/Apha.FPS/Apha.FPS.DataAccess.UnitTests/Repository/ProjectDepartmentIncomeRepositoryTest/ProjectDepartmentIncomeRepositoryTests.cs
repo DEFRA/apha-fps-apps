@@ -27,6 +27,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             IEnumerable<TestRequirement>?    testRequirements   = null,
             IEnumerable<AdditionalCost>?     additionalCosts    = null,
             IEnumerable<PeriodMonthlyOutput>? periodMonthlyOutputs = null,
+            IEnumerable<PeriodTimeCostCalcs>? periodTimeCostCalcs = null,
+            IEnumerable<PeriodProjSubContract>? periodProjSubContracts = null,
             IEnumerable<PeriodLookup>?       periodLookups      = null,
             IEnumerable<Period>?             periods            = null,
             IEnumerable<ProjectSubContract>? projectSubContracts = null,
@@ -57,6 +59,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             Setup(testRequirements,   (ctx, s) => ctx.Setup(x => x.TestRequirements).Returns(s.Object));
             Setup(additionalCosts,    (ctx, s) => ctx.Setup(x => x.AdditionalCosts).Returns(s.Object));
             Setup(periodMonthlyOutputs, (ctx, s) => ctx.Setup(x => x.PeriodMonthlyOutputs).Returns(s.Object));
+            Setup(periodTimeCostCalcs, (ctx, s) => ctx.Setup(x => x.PeriodTimeCostCalcs).Returns(s.Object));
+            Setup(periodProjSubContracts, (ctx, s) => ctx.Setup(x => x.PeriodProjSubContracts).Returns(s.Object));
             Setup(periodLookups,      (ctx, s) => ctx.Setup(x => x.PeriodLookups).Returns(s.Object));
             Setup(periods,            (ctx, s) => ctx.Setup(x => x.Periods).Returns(s.Object));
             Setup(projectSubContracts,(ctx, s) => ctx.Setup(x => x.ProjectSubContracts).Returns(s.Object));
@@ -201,18 +205,19 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
             };
 
         private static ProjectSubContract MakeProjectSubContract(
-            string  project  = TestProject,
-            string  acctCode = "Consumables",
-            double  month    = 1,
-            decimal amount   = 100m,
-            int     fpsYear  = TestFpsYear) =>
+            string  project     = TestProject,
+            string  acctCode    = "Consumables",
+            double  month       = 1,
+            decimal amount      = 100m,
+            string  description = "Test item",
+            int     fpsYear     = TestFpsYear) =>
             new()
             {
                 Project     = project,
                 AcctCode    = acctCode,
                 Month       = month,
                 Amount      = amount,
-                Description = "Test item",
+                Description = description,
                 DailyRate   = 10m,
                 AnimalDays  = 1,
                 FpsYear     = fpsYear
@@ -277,6 +282,63 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
                 Volume            = volume,
                 TestPrice         = testPrice,
                 TotalCost         = totalCost,
+            };
+
+        private static PeriodTimeCostCalcs MakePeriodTimeCostCalc(
+            string  project    = TestProject,
+            int     periodNum  = 1,
+            double  month      = 1,
+            string  name       = "Jane Doe",
+            string  gradeCode  = "G1",
+            string  spNumber   = "SP1",
+            decimal chargeRate = 10m,
+            decimal pay        = 100m,
+            double  time       = 5.0,
+            decimal totalCost  = 150m,
+            int     fpsYear    = TestFpsYear) =>
+            new()
+            {
+                Period            = periodNum,
+                Project           = project,
+                OracleProjectCode = "OPC001",
+                SubAccountCode    = "SAC001",
+                Month             = month,
+                DefraProject      = "Yes",
+                Occ               = 1234,
+                Opc               = "PC1",
+                Spc               = "PC1",
+                Name              = name,
+                GradeCode         = gradeCode,
+                SpNumber          = spNumber,
+                ChargeRate        = chargeRate,
+                Pay               = pay,
+                NonPay            = 0m,
+                Overhead          = 0m,
+                Time              = time,
+                TotalCost         = totalCost,
+                FpsYear           = fpsYear
+            };
+
+        private static PeriodProjSubContract MakePeriodProjSubContract(
+            string  project   = TestProject,
+            short   periodNum = 1,
+            double  month     = 1,
+            decimal amount    = 100m,
+            string  acctCode  = "LargeAnimals",
+            int     fpsYear   = TestFpsYear) =>
+            new()
+            {
+                Period            = periodNum,
+                Project           = project,
+                OracleProjectCode = "OPC001",
+                SubAccountCode    = "SAC001",
+                IsDefraProject    = "Yes",
+                Opc               = "PC1",
+                Occ               = 1234,
+                Month             = month,
+                Amount            = amount,
+                AcctCode          = acctCode,
+                FpsYear           = fpsYear
             };
 
         private static PaginationParameters<string> DefaultQuery(
@@ -1141,6 +1203,74 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
             // Assert
             Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_AndGetAnimalIncomeAsync_ReturnIdenticalResults()
+        {
+            // Arrange â€” both public methods delegate to the shared QueryAnimalIncomeAsync helper.
+            ProjectDepartmentIncomeRepository BuildRepo() => CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                animals:             [MakeAnimal()],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "LargeAnimals")]);
+
+            // Act
+            var currentRows = await BuildRepo().GetAnimalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+            var snapshotRows = await BuildRepo().GetAnimalIncomeAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            Assert.Equal(currentRows.Count, snapshotRows.Count);
+            for (var i = 0; i < currentRows.Count; i++)
+            {
+                Assert.Equal(currentRows[i].Project, snapshotRows[i].Project);
+                Assert.Equal(currentRows[i].AnimalType, snapshotRows[i].AnimalType);
+                Assert.Equal(currentRows[i].AnimalDays, snapshotRows[i].AnimalDays);
+                Assert.Equal(currentRows[i].Rate, snapshotRows[i].Rate);
+                Assert.Equal(currentRows[i].TotalCost, snapshotRows[i].TotalCost);
+            }
+        }
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_ResolvesRateFromAnimalsLookup()
+        {
+            // Arrange â€” description "Sheep x 10 @5" â†’ animal type "Sheep", days 10.
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                animals:             [MakeAnimal(animalType: "Sheep", dailyRate: 7.5m)],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "LargeAnimals", description: "Sheep x 10 @5")]);
+
+            // Act
+            var result = await repo.GetAnimalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var row = Assert.Single(result);
+            Assert.Equal("Sheep", row.AnimalType);
+            Assert.Equal(10m, row.AnimalDays);
+            Assert.Equal(7.5m, row.Rate);
+        }
+
+        [Fact]
+        public async Task GetAnimalIncomeCurrentAsync_RateIsZero_WhenAnimalTypeNotInLookup()
+        {
+            // Arrange â€” no matching Animals row for the parsed animal type.
+            var repo = CreateRepository(
+                workgroups:          [MakeWorkgroup()],
+                projects:            [MakeProject()],
+                costCentres:         [MakeCostCentre()],
+                animals:             [MakeAnimal(animalType: "Cattle", dailyRate: 12m)],
+                projectSubContracts: [MakeProjectSubContract(acctCode: "SmallAnimals", description: "Sheep x 5")]);
+
+            // Act
+            var result = await repo.GetAnimalIncomeCurrentAsync(TestProject, TestMonthFrom, TestMonthTo);
+
+            // Assert
+            var row = Assert.Single(result);
+            Assert.Equal("Sheep", row.AnimalType);
+            Assert.Equal(0m, row.Rate);
         }
 
         #endregion
@@ -2666,6 +2796,243 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectDepartmentIncomeReposi
 
             Assert.Single(result);
             Assert.Null(result[0].OCC);
+        }
+
+        #endregion
+
+        // ── Snapshot coverage: Time / Animal / Exceptional / Totals ──────────────
+
+        #region GetTimeSnapshotIncomeAsync
+
+        [Fact]
+        public async Task GetTimeSnapshotIncomeAsync_WithData_ReturnsNetRows()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs: [
+                    MakePeriodTimeCostCalc(periodNum: 2, time: 8.0, pay: 200m),
+                    MakePeriodTimeCostCalc(periodNum: 1, time: 3.0, pay: 50m),
+                ]);
+
+            var result = await repo.GetTimeSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Single(result);
+            Assert.Equal(TestProject, result[0].Project);
+            Assert.Equal(5m, result[0].Time);
+            Assert.Equal(150m, result[0].Pay);
+        }
+
+        [Fact]
+        public async Task GetTimeSnapshotIncomeAsync_NullProject_ReturnsAllProjects()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs: [
+                    MakePeriodTimeCostCalc(project: "PROJ1", periodNum: 2, time: 8.0),
+                    MakePeriodTimeCostCalc(project: "PROJ2", periodNum: 2, time: 4.0),
+                ]);
+
+            var result = await repo.GetTimeSnapshotIncomeAsync(null, 1, 2);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetTimeSnapshotIncomeAsync_ZtProject_Excluded()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs: [
+                    MakePeriodTimeCostCalc(project: "ZT100", periodNum: 2, time: 8.0),
+                ]);
+
+            var result = await repo.GetTimeSnapshotIncomeAsync(null, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetTimeSnapshotIncomeAsync_ZeroNetTime_Excluded()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs: [
+                    MakePeriodTimeCostCalc(periodNum: 2, time: 5.0),
+                    MakePeriodTimeCostCalc(periodNum: 1, time: 5.0),
+                ]);
+
+            var result = await repo.GetTimeSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetTimeSnapshotIncomeAsync_NoData_ReturnsEmpty()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs: []);
+
+            var result = await repo.GetTimeSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAnimalSnapshotIncomeAsync
+
+        [Fact]
+        public async Task GetAnimalSnapshotIncomeAsync_WithAnimalAcctCode_ReturnsRows()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 300m, acctCode: "LargeAnimals"),
+                    MakePeriodProjSubContract(periodNum: 1, amount: 100m, acctCode: "LargeAnimals"),
+                ]);
+
+            var result = await repo.GetAnimalSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Single(result);
+            Assert.Equal(200m, result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetAnimalSnapshotIncomeAsync_NonAnimalAcctCode_Excluded()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 300m, acctCode: "Consumables"),
+                ]);
+
+            var result = await repo.GetAnimalSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAnimalSnapshotIncomeAsync_ZeroNet_Excluded()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 100m, acctCode: "Mice"),
+                    MakePeriodProjSubContract(periodNum: 1, amount: 100m, acctCode: "Mice"),
+                ]);
+
+            var result = await repo.GetAnimalSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetExceptionalSnapshotIncomeAsync
+
+        [Fact]
+        public async Task GetExceptionalSnapshotIncomeAsync_NonAnimalAcctCode_ReturnsRows()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 500m, acctCode: "Consumables"),
+                ]);
+
+            var result = await repo.GetExceptionalSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Single(result);
+            Assert.Equal(500m, result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetExceptionalSnapshotIncomeAsync_NegativeNet_Retained()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 100m, acctCode: "Consumables"),
+                    MakePeriodProjSubContract(periodNum: 1, amount: 400m, acctCode: "Consumables"),
+                ]);
+
+            var result = await repo.GetExceptionalSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Single(result);
+            Assert.Equal(-300m, result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetExceptionalSnapshotIncomeAsync_AnimalAcctCode_Excluded()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 300m, acctCode: "SmallAnimals"),
+                ]);
+
+            var result = await repo.GetExceptionalSnapshotIncomeAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetExceptionalSnapshotIncomeAsync_NullProject_ReturnsAllProjects()
+        {
+            var repo = CreateRepository(
+                periods: [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(project: "PROJ1", periodNum: 2, amount: 200m, acctCode: "Consumables"),
+                    MakePeriodProjSubContract(project: "PROJ2", periodNum: 2, amount: 300m, acctCode: "Consumables"),
+                ]);
+
+            var result = await repo.GetExceptionalSnapshotIncomeAsync(null, 1, 2);
+
+            Assert.Equal(2, result.Count);
+        }
+
+        #endregion
+
+        #region GetTotalsSnapshotAsync
+
+        [Fact]
+        public async Task GetTotalsSnapshotAsync_WithAllAreas_ReturnsAggregatedTotals()
+        {
+            var repo = CreateRepository(
+                workgroups:           [MakeWorkgroup()],
+                projects:             [MakeProject()],
+                costCentres:          [MakeCostCentre()],
+                periods:              [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs:  [MakePeriodTimeCostCalc(periodNum: 2, time: 8.0)],
+                periodMonthlyOutputs: [MakePeriodMonthlyOutput(TestProject, periodNum: 2)],
+                periodProjSubContracts: [
+                    MakePeriodProjSubContract(periodNum: 2, amount: 300m, acctCode: "LargeAnimals"),
+                    MakePeriodProjSubContract(periodNum: 2, amount: 500m, acctCode: "Consumables"),
+                ]);
+
+            var result = await repo.GetTotalsSnapshotAsync(TestProject, 1, 2);
+
+            Assert.Single(result);
+            Assert.NotNull(result[0].TimeCost);
+            Assert.NotNull(result[0].AnimalsCost);
+            Assert.NotNull(result[0].ProjectSpecificsCost);
+        }
+
+        [Fact]
+        public async Task GetTotalsSnapshotAsync_NoData_ReturnsEmpty()
+        {
+            var repo = CreateRepository(
+                workgroups:           [MakeWorkgroup()],
+                projects:             [MakeProject()],
+                costCentres:          [MakeCostCentre()],
+                periods:              [MakePeriod("P1", endPeriod: 1), MakePeriod("P2", endPeriod: 2)],
+                periodTimeCostCalcs:  [],
+                periodMonthlyOutputs: [],
+                periodProjSubContracts: []);
+
+            var result = await repo.GetTotalsSnapshotAsync(TestProject, 1, 2);
+
+            Assert.Empty(result);
         }
 
         #endregion

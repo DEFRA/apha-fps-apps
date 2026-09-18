@@ -165,14 +165,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(
             string? project, int startPeriod, int endPeriod)
         {
-            var fpsYear = _requestContext.FpsYear;
-
-            var validPeriodNumbers = (await _context.Periods
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .ToListAsync())
-                .Select(p => (int)p.EndPeriod)
-                .ToList();
+            var validPeriodNumbers = await GetValidPeriodNumbersAsync();
 
             var endRows = await _context.PeriodMonthlyOutputs
                 .AsNoTracking()
@@ -282,14 +275,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<DepartmentIncomeTime>> GetTimeSnapshotIncomeAsync(
             string? project, int startPeriod, int endPeriod)
         {
-            var fpsYear = _requestContext.FpsYear;
-
-            var validPeriodNumbers = (await _context.Periods
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .ToListAsync())
-                .Select(p => (int)p.EndPeriod)
-                .ToList();
+            var validPeriodNumbers = await GetValidPeriodNumbersAsync();
 
             var endRows = await _context.PeriodTimeCostCalcs
                 .AsNoTracking()
@@ -455,14 +441,7 @@ namespace Apha.FPS.DataAccess.Repositories
             string? project, int startPeriod, int endPeriod, bool animals,
             Func<PeriodSubContractGroup, T> map)
         {
-            var fpsYear = _requestContext.FpsYear;
-
-            var validPeriodNumbers = (await _context.Periods
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .ToListAsync())
-                .Select(p => (int)p.EndPeriod)
-                .ToList();
+            var validPeriodNumbers = await GetValidPeriodNumbersAsync();
 
             bool AcctMatches(string? acct) =>
                 acct != null && (animals ? AnimalAcctCodes.Contains(acct) : !AnimalAcctCodes.Contains(acct));
@@ -537,6 +516,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList();
         }
 
+        private async Task<List<int>> GetValidPeriodNumbersAsync()
+        {
+            var fpsYear = _requestContext.FpsYear;
+            return (await _context.Periods
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .ToListAsync())
+                .Select(p => (int)p.EndPeriod)
+                .ToList();
+        }
+
         private sealed class PeriodSubContractGroup
         {
             public string? Project { get; init; }
@@ -552,79 +542,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeAsync(
             string? project, int monthFrom, int monthTo)
-        {
-            var fpsYear = _requestContext.FpsYear;
-
-            var subContracts = await
-                (from sc in _context.ProjectSubContracts.AsNoTracking()
-                     .Where(s => s.FpsYear == fpsYear
-                              && s.AcctCode != null
-                              && AnimalAcctCodes.Contains(s.AcctCode)
-                              && s.Month.HasValue
-                              && (int)s.Month.Value >= monthFrom
-                              && (int)s.Month.Value <= monthTo)
-                 join proj in _context.Projects.AsNoTracking()
-                     .Where(p => p.FpsYear == fpsYear)
-                     on sc.Project equals proj.ParentProject
-                 join cc in _context.CostCentres.AsNoTracking()
-                     .Where(c => c.FpsYear == fpsYear)
-                     on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
-                 from cc in ccJoin.DefaultIfEmpty()
-                 select new
-                 {
-                     proj.ParentProject,
-                     proj.OracleProjectCode,
-                     proj.SubAccountCode,
-                     proj.IsDefraProject,
-                     OCC   = cc != null ? (double?)cc.CostCentreNo : null,
-                     OPC   = cc != null ? cc.ProfitCentre          : (string?)null,
-                     Month = (int)(sc.Month ?? 0),
-                     sc.Description,
-                     Amount = sc.Amount ?? 0m,
-                 })
-                .ToListAsync();
-
-            var filtered = string.IsNullOrEmpty(project)
-                ? subContracts
-                : subContracts.Where(r => r.ParentProject == project).ToList();
-
-            // fnAnimalDesc(): text before " x " is the animal type; used to
-            // look up the daily rate from tblAnimals (Access DLookUp parity).
-            var animalRates = await _context.Animals.AsNoTracking()
-                .Where(a => a.FpsYear == fpsYear)
-                .ToListAsync();
-
-            var rateLookup = animalRates
-                .GroupBy(a => a.AnimalType)
-                .ToDictionary(g => g.Key, g => g.First().DailyRate, StringComparer.OrdinalIgnoreCase);
-
-            return filtered
-                .Select(r =>
-                {
-                    var animalType = ParseAnimalDesc(r.Description);
-                    return new DepartmentIncomeAnimal
-                    {
-                        Project           = r.ParentProject,
-                        OracleProjectCode = r.OracleProjectCode,
-                        SubAccountCode    = r.SubAccountCode,
-                        DefraProject      = DefraFlag(r.IsDefraProject),
-                        OPC               = r.OPC,
-                        OCC               = FmtDouble(r.OCC),
-                        Month             = r.Month,
-                        SPC               = "SSSD",
-                        SCC               = "35227",
-                        AnimalType        = animalType,
-                        AnimalDays        = ParseAnimalDays(r.Description) ?? 0m,
-                        Rate              = (animalType != null && rateLookup.TryGetValue(animalType, out var rate))
-                                                ? (rate ?? 0m)
-                                                : 0m,
-                        TotalCost         = r.Amount,
-                    };
-                })
-                .OrderBy(r => r.Project)
-                .ToList();
-        }
-
+            => await QueryAnimalIncomeAsync(project, monthFrom, monthTo);
 
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeAsync(
             string? project, int monthFrom, int monthTo)
@@ -750,6 +668,10 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeCurrentAsync(
+            string? project, int monthFrom, int monthTo)
+            => await QueryAnimalIncomeAsync(project, monthFrom, monthTo);
+
+        private async Task<List<DepartmentIncomeAnimal>> QueryAnimalIncomeAsync(
             string? project, int monthFrom, int monthTo)
         {
             var fpsYear = _requestContext.FpsYear;
