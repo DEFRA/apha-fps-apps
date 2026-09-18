@@ -195,6 +195,14 @@ public sealed class YearEndOrchestratorClaimIntegrationTests : IAsyncLifetime
         var lockRepository = new BatchLockRepository(context);
         var executionRepository = new JobExecutionRepository(context, NullLogger<JobExecutionRepository>.Instance);
         var reconciliationService = new BatchLockReconciliationService(lockRepository, executionRepository, NullLogger<BatchLockReconciliationService>.Instance);
+        // Bare, unconfigured — these fake-job tests complete before the default 30s
+        // HeartbeatIntervalSeconds' first tick, so the heartbeat loop never actually calls these.
+        var heartbeatScope = Substitute.For<IHeartbeatRepositoryScope>();
+        heartbeatScope.LockRepository.Returns(Substitute.For<IBatchLockRepository>());
+        heartbeatScope.ExecutionRepository.Returns(Substitute.For<IJobExecutionRepository>());
+        heartbeatScope.DisposeAsync().Returns(ValueTask.CompletedTask);
+        var heartbeatRepositoryScopeFactory = Substitute.For<IHeartbeatRepositoryScopeFactory>();
+        heartbeatRepositoryScopeFactory.Create().Returns(heartbeatScope);
         var correlationService = Substitute.For<ICorrelationContextAccessor>();
         var currentExecutionContext = Substitute.For<ICurrentJobExecutionContext>();
         var notificationService = Substitute.For<IEmailNotificationService>();
@@ -208,6 +216,7 @@ public sealed class YearEndOrchestratorClaimIntegrationTests : IAsyncLifetime
             lockRepository,
             executionRepository,
             reconciliationService,
+            heartbeatRepositoryScopeFactory,
             correlationService,
             currentExecutionContext,
             notificationService,

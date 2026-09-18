@@ -6,6 +6,7 @@ using Apha.BatchJobs.Application.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
+using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -28,6 +29,12 @@ public sealed class JobOrchestratorTests
     // call these tests don't care about is a no-op for all of them (see JobOrchestratorPhase3Tests
     // for tests that specifically exercise this dependency).
     private readonly IBatchLockReconciliationService _reconciliationService = Substitute.For<IBatchLockReconciliationService>();
+    // Bare, unconfigured repos inside the scope: HeartbeatIntervalSeconds defaults to 30 real
+    // seconds, and every job below completes almost instantly (mocked), so the heartbeat loop
+    // never survives past its first Task.Delay tick — it never actually calls these repos, only
+    // needs a non-null scope to dispose cleanly. Tests that specifically exercise heartbeat
+    // renewal behaviour build their own factory with a short interval and configured repos.
+    private readonly IHeartbeatRepositoryScopeFactory _heartbeatRepositoryScopeFactory = CreateNoOpHeartbeatRepositoryScopeFactory();
     private readonly ICorrelationContextAccessor _correlationService = Substitute.For<ICorrelationContextAccessor>();
     private readonly ICurrentJobExecutionContext _currentExecutionContext = Substitute.For<ICurrentJobExecutionContext>();
     private readonly IEmailNotificationService _notificationService = Substitute.For<IEmailNotificationService>();
@@ -49,6 +56,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -674,6 +682,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1266,6 +1275,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1314,6 +1324,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1368,6 +1379,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1411,6 +1423,16 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
+    public void IsRetryable_BatchLockLeaseLostException_ReturnsFalse()
+    {
+        // A lost lease means the attempt loop no longer holds the lock at all — retrying would
+        // re-execute business logic without exclusive access, since the loop never re-acquires
+        // between attempts. Explicit case in IsRetryable documents this rather than only relying
+        // on the `_ => false` default.
+        Assert.False(JobOrchestrator.IsRetryable(new BatchLockLeaseLostException("lease lost")));
+    }
+
+    [Fact]
     public void IsRetryable_UndefinedTablePostgresException_ReturnsFalse()
     {
         // 42P01: a missing relation is a schema/SQL mismatch, not a transient failure — retrying
@@ -1447,6 +1469,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1509,6 +1532,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1550,6 +1574,7 @@ public sealed class JobOrchestratorTests
             _lockRepo,
             _execRepo,
             _reconciliationService,
+            _heartbeatRepositoryScopeFactory,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1589,7 +1614,7 @@ public sealed class JobOrchestratorTests
 
     private JobOrchestrator CreateOrchestratorWithNotifier(IPostCompletionNotifier notifier)
         => new(
-            _factory, _lockRepo, _execRepo, _reconciliationService, _correlationService, _currentExecutionContext,
+            _factory, _lockRepo, _execRepo, _reconciliationService, _heartbeatRepositoryScopeFactory, _correlationService, _currentExecutionContext,
             _notificationService, [notifier], _alertingSettings, _settings,
             _failureClassifier, NullLogger<JobOrchestrator>.Instance);
 
@@ -1838,6 +1863,28 @@ public sealed class JobOrchestratorTests
     }
 
     // --- Helpers ----------------------------------------------------------------
+
+    /// <summary>
+    /// A factory whose IHeartbeatRepositoryScope exposes bare, unconfigured repository
+    /// substitutes — sufficient for any test whose job completes before the heartbeat's first
+    /// tick (the default 30s HeartbeatIntervalSeconds), since the loop then never actually calls
+    /// them. <paramref name="lockRepository"/>/<paramref name="executionRepository"/> let a test
+    /// override this when it specifically needs the heartbeat to observe particular renewal/touch
+    /// behaviour.
+    /// </summary>
+    private static IHeartbeatRepositoryScopeFactory CreateNoOpHeartbeatRepositoryScopeFactory(
+        IBatchLockRepository? lockRepository = null,
+        IJobExecutionRepository? executionRepository = null)
+    {
+        var scope = Substitute.For<IHeartbeatRepositoryScope>();
+        scope.LockRepository.Returns(lockRepository ?? Substitute.For<IBatchLockRepository>());
+        scope.ExecutionRepository.Returns(executionRepository ?? Substitute.For<IJobExecutionRepository>());
+        scope.DisposeAsync().Returns(ValueTask.CompletedTask);
+
+        var factory = Substitute.For<IHeartbeatRepositoryScopeFactory>();
+        factory.Create().Returns(scope);
+        return factory;
+    }
 
     /// <summary>
     /// Configures GetExecutionByJobExecutionIdAsync to return an Initiated record
