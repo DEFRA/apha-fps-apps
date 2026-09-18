@@ -78,7 +78,7 @@ namespace Apha.PACT.DataAccess.Repository
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId, jobQueueEntry.FpsYear);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -138,7 +138,7 @@ namespace Apha.PACT.DataAccess.Repository
             };
         }
 
-        private static BatchJobQueueLog BuildJobQueueLogEntry(string requestedBy, Guid jobqueueId, string note, DateTime logtime, int statusId)
+        private static BatchJobQueueLog BuildJobQueueLogEntry(string requestedBy, Guid jobqueueId, string note, DateTime logtime, int statusId, int fpsYear)
         {
             return new BatchJobQueueLog
             {
@@ -146,7 +146,8 @@ namespace Apha.PACT.DataAccess.Repository
                 StatusId = statusId,
                 PerformedBy = requestedBy,
                 LogTime = logtime,
-                Note = note
+                Note = note,
+                FpsYear = fpsYear
             };
         }
     }

@@ -219,6 +219,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BatchJobRepositoryTest
         }
 
         [Fact(Skip = "EF.Functions.ILike in FirstOrDefaultAsync predicate requires PostgreSQL provider; covered by integration tests.")]
+        public async Task EnqueueBatchJobAsync_LogEntry_UsesRequestContextFpsYear()
+        {
+            // Arrange
+            const int expectedYear = 2025;
+            const string jobName = "RecreateSummary";
+            var job = new BatchJobMaster { JobId = 1, JobName = jobName };
+            var status = new BatchJobStatus { JobId = 1, StatusId = 10, Status = "initiated" };
+
+            var (repo, mockContext, _) = CreateRepository(jobs: [job], queues: [], statuses: [status], fpsYear: expectedYear);
+
+            // Act
+            var result = await repo.EnqueueBatchJobAsync(jobName, "user@test.com", Guid.NewGuid().ToString(), "note");
+
+            // Assert: request context -> queue entry -> log entry all agree
+            Assert.Equal(expectedYear, result.FpsYear);
+
+            var logsMock = Mock.Get(mockContext.Object.BatchJobQueueLogs);
+            logsMock.Verify(s => s.Add(It.Is<BatchJobQueueLog>(l => l.FpsYear == result.FpsYear)), Times.Once);
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in FirstOrDefaultAsync predicate requires PostgreSQL provider; covered by integration tests.")]
         public async Task EnqueueBatchJobAsync_SaveFails_TransactionRolledBack()
         {
             // Arrange
