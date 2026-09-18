@@ -57,6 +57,50 @@ function saveWorkGroupEmail() {
 }
 
 // ── Document ready ────────────────────────────────────────────────────────────
+function initializeProfitCentreDropdown(config) {
+    if (typeof MultiColumnDropdownComponent === 'undefined') { return; }
+    if (!document.getElementById('profitCentreMultiDropdown')) { return; }
+
+    var profitCentreData = config.data || [];
+    var selectedProfitCentre = config.selectedValue || '';
+    var isInitializing = true;
+    var profitCentreDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'profitCentreDropdown',
+        containerSelector: '#profitCentreMultiDropdown',
+        placeholder: 'Select a Profit Centre',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by profit centre',
+        labelText: '',
+        columns: [
+            { field: 'Text', header: 'Profit Centre', width: '250px' }
+        ],
+        data: profitCentreData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#SelectedProfitCentre').val(selectedItem.Value);
+                if (!isInitializing) {
+                    $('#SelectedProfitCentre').trigger('change');
+                }
+            },
+            onClear: function () {
+                $('#SelectedProfitCentre').val('');
+                if (!isInitializing) {
+                    $('#SelectedProfitCentre').trigger('change');
+                }
+            }
+        }
+    });
+
+    // Set initial value if exists (without triggering change / grid reload)
+    if (selectedProfitCentre && selectedProfitCentre !== '') {
+        profitCentreDropdown.setValue(selectedProfitCentre);
+    }
+    isInitializing = false;
+}
+
 $(function () {
 
     // Disable checkboxes when year is closed

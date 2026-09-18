@@ -11,14 +11,18 @@ var selectedJobCodeId = null;
 var programDropdown = null;
 var contractDropdown = null;
 var customerDropdown = null;
+var managerDropdown = null;
+var timeCodeWorkGroupDropdown = null;
 
 // Data for dropdowns
 var programListData = [];
 var contractListData = [];
 var customerListData = [];
+var managerListData = [];
 var selectedProgramValue = '';
 var selectedContractValue = '';
 var selectedCustomerValue = '';
+var selectedManagerValue = '';
 
 // Initialize the page
 function initializeProjectMaintenanceDetails(config) {
@@ -28,15 +32,18 @@ function initializeProjectMaintenanceDetails(config) {
     programListData = config.programListData;
     contractListData = config.contractListData;
     customerListData = config.customerListData;
+    managerListData = config.managerListData;
     selectedProgramValue = config.selectedProgramValue;
     selectedContractValue = config.selectedContractValue;
     selectedCustomerValue = config.selectedCustomerValue;
+    selectedManagerValue = config.selectedManagerValue;
 
     // Initialize dropdowns when page loads
     $(document).ready(function () {
         initializeProgramDropdown();
         initializeContractDropdown();
         initializeCustomerDropdown();
+        initializeManagerDropdown();
         // Initialize form validation (unobtrusive + numeric)
         initializeFormValidation('#projectDetailForm');
     });
@@ -407,6 +414,7 @@ function addTimeCode() {
         success: function(html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            initializeTimeCodeWorkGroupDropdown();
         },
         error: function() { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -422,6 +430,7 @@ function editTimeCode(btn) {
         success: function(html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+            initializeTimeCodeWorkGroupDropdown();
         },
         error: function () { showAlertMessage('An error occurred while loading the form.', AlertType.ERROR); }
     });
@@ -876,6 +885,40 @@ function initializeCustomerDropdown() {
     }
 }
 
+function initializeManagerDropdown() {
+    managerDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'managerDropdown',
+        containerSelector: '#managerMultiDropdown',
+        placeholder: 'Select a Manager',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by manager',
+        labelText: 'Manager',
+        required: true,
+        columns: [
+            { field: 'Text', header: 'Manager', width: '250px' }
+        ],
+        data: managerListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                $('#Project_Manager').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function (dropdown) {
+                $('#Project_Manager').val('');
+            }
+        }
+    });
+
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
+    if (selectedManagerValue && selectedManagerValue !== '') {
+        setTimeout(function() {
+            managerDropdown.setValue(selectedManagerValue);
+        }, 0);
+    }
+}
+
 // Initialize WorkGroup Multicolumn Dropdown for Job Code Modal
 function initializeJobCodeWorkGroupDropdown(config) {
     var workGroupData = config.workGroupData || [];
@@ -911,4 +954,45 @@ function initializeJobCodeWorkGroupDropdown(config) {
         if (selectedWorkGroup && selectedWorkGroup !== '') {
             jobCodeWorkGroupDropdown.setValue(selectedWorkGroup);
         }
+}
+
+// Initialize WorkGroup Multicolumn Dropdown for Time Code Modal
+// Reads work group data from the container's data-workgroups attribute and the
+// selected value from the hidden #WorkGroup input (both rendered by the partial).
+function initializeTimeCodeWorkGroupDropdown() {
+    var $container = $('#timeCodeWorkGroupMultiDropdown');
+    if (!$container.length) { return; }
+
+    var workGroupData = $container.data('workgroups') || [];
+    var selectedWorkGroup = $('#WorkGroup').val() || '';
+
+    timeCodeWorkGroupDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'timeCodeWorkGroupDropdown',
+        containerSelector: '#timeCodeWorkGroupMultiDropdown',
+        placeholder: 'Select a Work Group',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by work group',
+        labelText: '',
+        required: true,
+        columns: [
+            { field: 'Text', header: 'Work Group', width: '250px' }
+        ],
+        data: workGroupData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                $('#WorkGroup').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function (dropdown) {
+                $('#WorkGroup').val('');
+            }
+        }
+    });
+
+    // Set initial value if exists
+    if (selectedWorkGroup && selectedWorkGroup !== '') {
+        timeCodeWorkGroupDropdown.setValue(selectedWorkGroup);
+    }
 }
