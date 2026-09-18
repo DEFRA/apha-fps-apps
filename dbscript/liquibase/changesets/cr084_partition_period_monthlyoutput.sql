@@ -24,7 +24,8 @@ BEGIN;
 --   - Partition key becomes part of the primary key.
 --   - Existing data is preserved.
 --   - Explicit partitions: 2016..2027 + DEFAULT.
---   - Original table is retained as *_old after successful migration.
+--   - Original table is used temporarily as *_old during migration and
+--     dropped after all validation succeeds.
 --
 -- NOTE:
 --   fps.period_monthlyoutput did NOT previously have an fpsyear column.
@@ -308,30 +309,10 @@ END
 $$;
 
 
+DROP TABLE fps.period_monthlyoutput_old;
+
+
 COMMIT;
-
-
---rollback LOCK TABLE fps.period_monthlyoutput, fps.period_monthlyoutput_old IN ACCESS EXCLUSIVE MODE;
---rollback ALTER TABLE fps.period_monthlyoutput RENAME TO period_monthlyoutput_partitioned;
---rollback ALTER TABLE fps.period_monthlyoutput_old RENAME TO period_monthlyoutput;
---rollback ALTER SEQUENCE fps.period_monthlyoutput_id_seq OWNED BY fps.period_monthlyoutput.id;
---rollback ALTER TABLE fps.period_monthlyoutput ALTER COLUMN id SET DEFAULT nextval('fps.period_monthlyoutput_id_seq'::regclass);
---rollback DROP TABLE fps.period_monthlyoutput_partitioned CASCADE;
-
-
--- ============================================================================
--- IMPORTANT
--- ============================================================================
---
--- Do NOT drop:
---
---     fps.period_monthlyoutput_old
---
--- as part of CR084.
---
--- Retain the backup table until deployment verification (Snapshot Tests /
--- Totals grid parity against Access frmDeptIncome.frm) has completed
--- successfully.
 --
 -- Future FPS-year partitions are an infrastructure / DBA responsibility.
 -- ============================================================================
