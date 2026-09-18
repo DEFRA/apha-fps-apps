@@ -993,6 +993,17 @@ function exportMonthlyOutput() {
     const passed = window.monthlyOutputPassedFilter;
     const url = (passed === null || passed === undefined)
         ? '/PACT/MonthlyOutput/ExportStaging'
-        : '/PACT/MonthlyOutput/ExportStaging?passed=' + passed;
-    window.location = url;
+        : '/PACT/MonthlyOutput/ExportStaging?passed=' + passed
+
+    const filename = getExportedMonthlyOutputFileName();
+
+    window.downloadFile(url, filename, { method: 'get' });
+    //window.location = url;
+}
+function getExportedMonthlyOutputFileName() {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    return `ExportedOP_${dd}${mm}${yyyy}.xlsx`;
 }
