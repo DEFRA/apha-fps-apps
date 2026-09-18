@@ -27,8 +27,7 @@ BEGIN;
 --     and NO owning sequence.
 --   - Existing data is preserved.
 --   - Explicit partitions: 2016..2027 + DEFAULT.
---   - Original table is used temporarily as *_old during migration and
---     dropped after all validation succeeds.
+--   - Original table is retained as *_old after successful migration.
 --
 -- NOTE:
 --   fps.period_proj_subcontract did NOT previously have an fpsyear column.
@@ -276,10 +275,28 @@ END
 $$;
 
 
-DROP TABLE fps.period_proj_subcontract_old;
-
-
 COMMIT;
+
+
+--rollback LOCK TABLE fps.period_proj_subcontract, fps.period_proj_subcontract_old IN ACCESS EXCLUSIVE MODE;
+--rollback ALTER TABLE fps.period_proj_subcontract RENAME TO period_proj_subcontract_partitioned;
+--rollback ALTER TABLE fps.period_proj_subcontract_old RENAME TO period_proj_subcontract;
+--rollback DROP TABLE fps.period_proj_subcontract_partitioned CASCADE;
+
+
+-- ============================================================================
+-- IMPORTANT
+-- ============================================================================
+--
+-- Do NOT drop:
+--
+--     fps.period_proj_subcontract_old
+--
+-- as part of CR083.
+--
+-- Retain the backup table until deployment verification (Snapshot Animals /
+-- Exceptional / Totals grid parity against Access frmDeptIncome.frm) has
+-- completed successfully.
 --
 -- Future FPS-year partitions are an infrastructure / DBA responsibility.
 -- ============================================================================

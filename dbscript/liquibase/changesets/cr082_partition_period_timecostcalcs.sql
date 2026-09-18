@@ -23,8 +23,7 @@ BEGIN;
 --   - Partition key becomes part of the primary key.
 --   - Existing data is preserved.
 --   - Explicit partitions: 2016..2027 + DEFAULT.
---   - Original table is used temporarily as *_old during migration and
---     dropped after all validation succeeds.
+--   - Original table is retained as *_old after successful migration.
 --
 -- NOTE:
 --   fps.period_timecostcalcs did NOT previously have an fpsyear column.
@@ -320,10 +319,29 @@ END
 $$;
 
 
-DROP TABLE fps.period_timecostcalcs_old;
-
-
 COMMIT;
+
+
+--rollback LOCK TABLE fps.period_timecostcalcs, fps.period_timecostcalcs_old IN ACCESS EXCLUSIVE MODE;
+--rollback ALTER TABLE fps.period_timecostcalcs RENAME TO period_timecostcalcs_partitioned;
+--rollback ALTER TABLE fps.period_timecostcalcs_old RENAME TO period_timecostcalcs;
+--rollback ALTER SEQUENCE fps.period_timecostcalcs_id_seq OWNED BY fps.period_timecostcalcs.id;
+--rollback ALTER TABLE fps.period_timecostcalcs ALTER COLUMN id SET DEFAULT nextval('fps.period_timecostcalcs_id_seq'::regclass);
+--rollback DROP TABLE fps.period_timecostcalcs_partitioned CASCADE;
+
+
+-- ============================================================================
+-- IMPORTANT
+-- ============================================================================
+--
+-- Do NOT drop:
+--
+--     fps.period_timecostcalcs_old
+--
+-- as part of CR082.
+--
+-- Retain the backup table until deployment verification (Snapshot Time grid
+-- parity against Access frmDeptIncome.frm) has completed successfully.
 --
 -- Future FPS-year partitions are an infrastructure / DBA responsibility.
 -- ============================================================================

@@ -95,9 +95,16 @@ SELECT setval(
     COALESCE((SELECT MAX(jobqueuelogid) FROM fps.job_queue_log), 0) > 0
 );
 
-DROP TABLE fps.job_queue_log_old;
-
 COMMIT;
+
+-- Rollback restores the pre-CR077 table retained as job_queue_log_old.
+-- Rows written to the partitioned table after CR077 are discarded.
+--rollback LOCK TABLE fps.job_queue_log, fps.job_queue_log_old IN ACCESS EXCLUSIVE MODE;
+--rollback ALTER TABLE fps.job_queue_log RENAME TO job_queue_log_partitioned;
+--rollback ALTER TABLE fps.job_queue_log_old RENAME TO job_queue_log;
+--rollback ALTER TABLE fps.job_queue_log DROP COLUMN fpsyear;
+--rollback DROP TABLE fps.job_queue_log_partitioned CASCADE;
+--rollback CREATE INDEX idx_job_queue_log_jobqueueid_logtime ON fps.job_queue_log (jobqueueid, logtime DESC);
 
 -- Application deployment required with this CR:
 -- * add FpsYear to TblJobQueueLog;

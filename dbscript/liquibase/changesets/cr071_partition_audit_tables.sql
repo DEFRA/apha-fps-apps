@@ -19,8 +19,7 @@ BEGIN;
 --   - FKs to fps.job_queue therefore remain on jobqueueid only.
 --   - Existing data is preserved.
 --   - Explicit partitions: 2016..2027 + DEFAULT.
---   - Original tables are used temporarily as *_old during migration and
---     dropped after all validation succeeds.
+--   - Original tables are retained as *_old after successful migration.
 --
 -- CR074 depends on this CR having completed successfully.
 -- ============================================================================
@@ -610,11 +609,40 @@ END
 $$;
 
 
-DROP TABLE fps.rate_change_history_old;
-DROP TABLE fps.notification_run_summary_old;
-
-
 COMMIT;
+
+
+--rollback LOCK TABLE fps.rate_change_history, fps.rate_change_history_old, fps.notification_run_summary, fps.notification_run_summary_old IN ACCESS EXCLUSIVE MODE;
+--rollback ALTER TABLE fps.rate_change_history RENAME TO rate_change_history_partitioned;
+--rollback ALTER TABLE fps.notification_run_summary RENAME TO notification_run_summary_partitioned;
+--rollback ALTER TABLE fps.rate_change_history_old RENAME TO rate_change_history;
+--rollback ALTER TABLE fps.notification_run_summary_old RENAME TO notification_run_summary;
+--rollback ALTER SEQUENCE fps.rate_change_history_ratechangehistoryid_seq OWNED BY fps.rate_change_history.ratechangehistoryid;
+--rollback ALTER TABLE fps.rate_change_history ALTER COLUMN ratechangehistoryid SET DEFAULT nextval('fps.rate_change_history_ratechangehistoryid_seq'::regclass);
+--rollback ALTER SEQUENCE fps.notification_run_summary_notificationrunsummaryid_seq OWNED BY fps.notification_run_summary.notificationrunsummaryid;
+--rollback ALTER TABLE fps.notification_run_summary ALTER COLUMN notificationrunsummaryid SET DEFAULT nextval('fps.notification_run_summary_notificationrunsummaryid_seq'::regclass);
+--rollback DROP TABLE fps.rate_change_history_partitioned CASCADE;
+--rollback DROP TABLE fps.notification_run_summary_partitioned CASCADE;
+--rollback ALTER INDEX fps.idx_rate_change_history_old_jobqueueid RENAME TO idx_rate_change_history_jobqueueid;
+--rollback ALTER INDEX fps.idx_rate_change_history_old_businesskey RENAME TO idx_rate_change_history_businesskey;
+--rollback ALTER INDEX fps.idx_rate_change_history_old_jobid RENAME TO idx_rate_change_history_jobid;
+--rollback ALTER INDEX fps.idx_rate_change_history_old_fpsyear RENAME TO idx_rate_change_history_fpsyear;
+--rollback ALTER INDEX fps.ux_notification_run_summary_old_jobqueue RENAME TO ux_notification_run_summary_jobqueue;
+
+
+-- ============================================================================
+-- IMPORTANT
+-- ============================================================================
+--
+-- Do NOT drop:
+--
+--     fps.rate_change_history_old
+--     fps.notification_run_summary_old
+--
+-- as part of CR071.
+--
+-- Retain both backup tables until CR071 / CR074 deployment verification
+-- has completed successfully.
 --
 -- CR074 must execute after CR071.
 --
