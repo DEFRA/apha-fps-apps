@@ -12,6 +12,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using NSubstitute;
 using System.Text.Json;
 
@@ -352,6 +353,74 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_EditFailedSubContractRms", partial.ViewName);
             Assert.IsType<SubContractRmsFailedItem>(partial.Model);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRms_WhenServiceSucceeds_PopulatesProjectsViewBag()
+        {
+            // Arrange
+            var dto = new SubContractRmsImportRowDto { Id = 9, Project = "P9" };
+            var model = new SubContractRmsFailedItem { Id = 9, Project = "P9" };
+            _subContractService.GetFailedSubContractRmsByIdAsync(9)
+                .Returns(ApiResponseDto<SubContractRmsImportRowDto>.SuccessResponse(dto));
+            _mapper.Map<SubContractRmsFailedItem>(dto).Returns(model);
+            _projectService.GetAllPactProjectsAsync().Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+            [
+                new ProjectDto { ParentProject = "P9", ProjectTitle = "Project 9" }
+            ]));
+
+            // Act
+            var result = await _controller.GetFailedSubContractRms(9);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var projects = Assert.IsType<List<SelectListItem>>(_controller.ViewBag.Projects);
+            var project = Assert.Single(projects);
+            Assert.Equal("P9", project.Value);
+            Assert.Equal("Project 9", project.Text);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRms_WhenServiceFails_ReturnsNotFound()
+        {
+            // Arrange
+            _subContractService.GetFailedSubContractRmsByIdAsync(9)
+                .Returns(ApiResponseDto<SubContractRmsImportRowDto>.FailureResponse(null, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.GetFailedSubContractRms(9);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+            await _projectService.DidNotReceive().GetAllPactProjectsAsync();
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRms_WhenDataIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            _subContractService.GetFailedSubContractRmsByIdAsync(9)
+                .Returns(ApiResponseDto<SubContractRmsImportRowDto>.SuccessResponse(null!));
+
+            // Act
+            var result = await _controller.GetFailedSubContractRms(9);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task GetFailedSubContractRms_WhenModelStateInvalid_ReturnsBadRequest()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("id", "Invalid");
+
+            // Act
+            var result = await _controller.GetFailedSubContractRms(9);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            await _subContractService.DidNotReceive().GetFailedSubContractRmsByIdAsync(Arg.Any<int>());
         }
 
         [Fact]

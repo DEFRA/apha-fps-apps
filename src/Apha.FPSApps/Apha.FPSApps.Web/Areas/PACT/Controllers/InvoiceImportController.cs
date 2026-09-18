@@ -326,6 +326,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return NotFound();
 
             var item = _mapper.Map<InvoiceImportFailedItem>(result.Data);
+            ViewBag.Projects = await GetProjectsListAsync();
             return PartialView("_EditFailedInvoiceImport", item);
         }
 
