@@ -77,7 +77,8 @@ function initializeProfitCentreDropdown(config) {
         data: profitCentreData,
         displayField: 'Text',
         valueField: 'Value',
-        clearButtonClearsSelection: true,
+        clearButtonClearsSelection: false,
+        showClearButton: false,
         callbacks: {
             onSelect: function (selectedItem) {
                 $('#SelectedProfitCentre').val(selectedItem.Value);
@@ -94,9 +95,19 @@ function initializeProfitCentreDropdown(config) {
         }
     });
 
+    // Determine the value to select initially. If the provided value is null/empty
+    // or not a valid option in the data, fall back to the first profit centre.
+    var isValidSelection = selectedProfitCentre !== '' &&
+        profitCentreData.some(function (item) { return item.Value === selectedProfitCentre; });
+
+    var initialValue = isValidSelection
+        ? selectedProfitCentre
+        : (profitCentreData.length > 0 ? profitCentreData[0].Value : '');
+
     // Set initial value if exists (without triggering change / grid reload)
-    if (selectedProfitCentre && selectedProfitCentre !== '') {
-        profitCentreDropdown.setValue(selectedProfitCentre);
+    if (initialValue && initialValue !== '') {
+        profitCentreDropdown.setValue(initialValue);
+        $('#SelectedProfitCentre').val(initialValue);
     }
     isInitializing = false;
 }
