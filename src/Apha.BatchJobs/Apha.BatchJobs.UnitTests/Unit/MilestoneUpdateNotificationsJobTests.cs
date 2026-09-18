@@ -298,6 +298,7 @@ public sealed class MilestoneUpdateNotificationsJobTests
         var handler = CreateHandler();
         Assert.Equal(BatchJobNames.MilestoneUpdateNotifications, handler.Name);
         Assert.Equal("RecipientMonthDeduplicationKey", handler.IdempotencyStrategy);
+        Assert.Equal(1800, handler.MaxExecutionSeconds);
     }
 
     // -------------------------------------------------------------------------

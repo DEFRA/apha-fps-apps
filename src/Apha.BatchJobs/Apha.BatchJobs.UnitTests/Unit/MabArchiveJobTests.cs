@@ -173,7 +173,7 @@ public sealed class MabArchiveJobTests
         Assert.Equal("YearScopedRebuildWithDeterministicOrdering", subject.IdempotencyStrategy);
         Assert.Equal("cron(0 20 ? * MON-FRI *)", subject.ScheduleExpression);
         Assert.Equal("Weekdays (Monday to Friday) at 8:00 PM UTC", subject.ScheduleDescription);
-        Assert.Null(subject.MaxExecutionSeconds);
+        Assert.Equal(1800, subject.MaxExecutionSeconds);
     }
 
     [SkippableFact]

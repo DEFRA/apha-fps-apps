@@ -64,7 +64,8 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
     public string IdempotencyStrategy => "RecipientMonthDeduplicationKey";
     public string? ScheduleExpression => null; // TBD — cron expression pending stakeholder confirmation
     public string? ScheduleDescription => null; // TBD
-    public int? MaxExecutionSeconds => null;
+    /// <summary>Maximum execution timeout: 30 minutes. Provisional — runtime scales with recipient count and there is no volume cap yet; revisit once real runtime telemetry is available.</summary>
+    public int? MaxExecutionSeconds => 1800;
 
     public MilestoneUpdateNotificationsJob(
         IMilestoneNotificationReadRepository readRepository,
