@@ -54,28 +54,28 @@
                                         <th style="padding:6px 8px; text-align:left;">Hrs Avail</th>
                                     </tr>
                                 </thead>
-                                <tbody id="StaffDropdownBody">
-                                    @if (Model.StaffList != null)
-                                    {
-                                        foreach (var staff in Model.StaffList.Where(s => !string.IsNullOrEmpty(s.Value)))
-                                        {
-                                            var parts = staff.Text.Split('|');
-                                            var sName = parts.Length > 0 ? parts[0].Trim() : string.Empty;
-                                            var sGrade = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                                            var sHrsAvail = parts.Length > 2 ? parts[2].Trim() : string.Empty;
-                                            <tr data-staffid="@staff.Value" data-name="@sName"
-                                                onclick="selectStaff('@staff.Value', '@Html.Raw(sName.Replace("'", "\\'"))', this)"
-                                                style="cursor:pointer;">
-                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@sName</td>
-                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@sGrade</td>
-                                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@sHrsAvail</td>
-                                            </tr>
-                                        }
-                                    }
-                                </tbody>
+                                <tbody id="StaffDropdownBody"></tbody>
                             </table>
                         </div>
                     </div>
+                    <script>
+                        // Rows are built lazily (in chunks) when the panel is first
+                        // opened so the modal itself is not held up by the full list.
+                        window.staffPanelOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                            (Model.StaffList ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>())
+                                .Where(s => !string.IsNullOrEmpty(s.Value))
+                                .Select(s =>
+                                {
+                                    var parts = (s.Text ?? string.Empty).Split('|');
+                                    return new
+                                    {
+                                        v = s.Value,
+                                        n = parts.Length > 0 ? parts[0].Trim() : string.Empty,
+                                        g = parts.Length > 1 ? parts[1].Trim() : string.Empty,
+                                        h = parts.Length > 2 ? parts[2].Trim() : string.Empty
+                                    };
+                                })));
+                    </script>
                     @* hidden select — keeps Name field binding + server-side validation *@
                     <select id="Name" name="Name" required style="display:none;" onchange="onStaffSelected(this)">
                         <option value="">-- Select Staff --</option>

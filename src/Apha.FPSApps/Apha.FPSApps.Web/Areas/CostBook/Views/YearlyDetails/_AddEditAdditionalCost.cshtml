@@ -42,19 +42,22 @@
                                 <th style="padding:6px 8px; text-align:left;">Use Inflation</th>
                             </tr>
                         </thead>
-                        <tbody id="accountCatDropdownBody">
-                            @foreach (var c in accountCats)
-                            {
-                                <tr data-value="@c.AccShortName"
-                                    data-useinflation="@c.UseInflation.ToString().ToLower()"
-                                    style="cursor:pointer;">
-                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@c.AccShortName</td>
-                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(c.UseInflation ? "Yes" : "No")</td>
-                                </tr>
-                            }
-                        </tbody>
+                        <tbody id="accountCatDropdownBody"></tbody>
                     </table>
                 </div>
+                @* Rows are rendered lazily (in chunks) so the modal is not held up by
+                   the full list. This is an inert JSON block rather than an executable
+                   <script>, because the modal markup is injected via innerHTML, which
+                   does not run scripts. *@
+                <script type="application/json" id="accountCatPanelData">
+                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                        accountCats.Select(c => new
+                        {
+                            v = c.AccShortName,
+                            ui = c.UseInflation.ToString().ToLower(),
+                            uid = c.UseInflation ? "Yes" : "No"
+                        })))
+                </script>
             </div>
             <span asp-validation-for="AccountCat" class="govuk-error-message" style="display:none;"></span>
         </div>

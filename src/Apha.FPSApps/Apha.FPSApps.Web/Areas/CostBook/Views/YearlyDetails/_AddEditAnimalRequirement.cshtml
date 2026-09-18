@@ -42,20 +42,23 @@
                                 <th style="padding:6px 8px; text-align:left;">Daily Rate</th>
                             </tr>
                         </thead>
-                        <tbody id="animalTypeDropdownBody">
-                            @foreach (var a in animalTypes)
-                            {
-                                <tr data-value="@a.AnimalType"
-                                    data-dailyrate="@(a.DailyRate?.ToString() ?? "")"
-                                    data-dailyratewithinflamation="@(a.DailyRateWithInflamation?.ToString() ?? "")"
-                                    style="cursor:pointer;">
-                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@a.AnimalType</td>
-                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(a.DailyRate?.ToString("F2") ?? "N/A")</td>
-                                </tr>
-                            }
-                        </tbody>
+                        <tbody id="animalTypeDropdownBody"></tbody>
                     </table>
                 </div>
+                @* Rows are rendered lazily (in chunks) so the modal is not held up by
+                   the full list. This is an inert JSON block rather than an executable
+                   <script>, because the modal markup is injected via innerHTML, which
+                   does not run scripts. *@
+                <script type="application/json" id="animalTypePanelData">
+                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                        animalTypes.Select(a => new
+                        {
+                            v = a.AnimalType,
+                            dr = a.DailyRate?.ToString() ?? "",
+                            dri = a.DailyRateWithInflamation?.ToString() ?? "",
+                            drd = a.DailyRate?.ToString("F2") ?? "N/A"
+                        })))
+                </script>
             </div>
             <span asp-validation-for="AnimalType" class="govuk-error-message" style="display:none;"></span>
         </div>

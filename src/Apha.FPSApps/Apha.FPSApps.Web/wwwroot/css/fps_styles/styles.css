@@ -5544,20 +5544,60 @@ input.govuk-input.ssr-total-input[readonly] {
     width: 63%;
 }
 .isBudgetBidsQuery{
-    width: 20%;
+    width: 34%;
 }
 .isProjectGroupManagement {
     width: 35%;
 }
 .isResourceReAllocationScreen {
-    width: 24%;
+    width: 38%;
 }
 .isMiscReport,
 .isStaffPlanDetails {
-    width: 20%;
+    width: 34%;
 }
 .isTestPriceCheck {
     width: 16%;
+}
+
+/* Resource Centre selector header rows (label + select in a 2-cell table).
+   Without these rules the select keeps its intrinsic width -- which is driven by
+   the longest option text -- so the auto-layout table grows wider than its
+   column and spills past the page border. The oversized select also pushes the
+   header cell to take the leftover space, which is the gap that appears between
+   the label and the control. Pinning the label cell to its content and letting
+   the select flex into whatever remains fixes both symptoms. */
+.isMiscReport,
+.isStaffPlanDetails,
+.isBudgetBidsQuery,
+.isResourceReAllocationScreen {
+    .govuk-table {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    form {
+        width: 100%;
+    }
+
+    .govuk-table__header {
+        white-space: nowrap;
+        width: 1%;
+    }
+
+    /* Gap between the label and the control. Applied to the select's cell
+       because the views set govuk-!-padding-right-0 on the label cell, which
+       would override a padding-right rule here. */
+    .govuk-table__cell {
+        padding-left: 10px;
+    }
+
+    .govuk-select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        vertical-align: middle;
+    }
 }
 .isPlanAllAdditionalCosts.isHalfGrid {
     width: 54%;

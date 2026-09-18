@@ -1171,9 +1171,12 @@ public class YearlyDetailsControllerTests
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         Assert.Equal("_AddEditTestRequirement", partialResult.ViewName);
+        // Edit mode must expose the full lookup list, not just the selected code,
+        // otherwise the multi-column dropdown shows only the current row.
         var options = ((IEnumerable<TestCodeLookupDto>)_controller.ViewBag.TestCodeOptions).ToList();
-        Assert.Single(options);
-        Assert.Equal("TC001", options[0].ItemCode);
+        Assert.Equal(2, options.Count);
+        Assert.Contains(options, o => o.ItemCode == "TC001");
+        Assert.Contains(options, o => o.ItemCode == "TC002");
     }
 
     [Fact]
@@ -1656,6 +1659,24 @@ public class YearlyDetailsControllerTests
             .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(null!));
 
         var result = await _controller.CreateTest("2024/001", 2024, false);
+
+        Assert.IsType<PartialViewResult>(result);
+        var options = Assert.IsAssignableFrom<IEnumerable<TestCodeLookupDto>>(_controller.ViewBag.TestCodeOptions);
+        Assert.Empty(options);
+    }
+
+    [Fact]
+    public async Task EditTest_Get_SetsEmptyTestCodeOptions_WhenServiceFails()
+    {
+        var testDto = new TestRequirementDto { TestCode = "TC001" };
+        var pagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto> { testDto }, 1);
+        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
+            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(pagedResult));
+        _service.GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
+            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.FailureResponse(null, new ApiMetaDto()));
+        _mapper.Map<TestRequirementItem>(testDto).Returns(new TestRequirementItem { TestCode = "TC001" });
+
+        var result = await _controller.EditTest("2024/001", 2024, "TC001", false);
 
         Assert.IsType<PartialViewResult>(result);
         var options = Assert.IsAssignableFrom<IEnumerable<TestCodeLookupDto>>(_controller.ViewBag.TestCodeOptions);

@@ -100,25 +100,7 @@
                                             <th class="govuk-table__header">Constituent Account Codes</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="govuk-table__body" id="accountTableBody">
-                                        @if (bid.AccountFullList != null)
-                                        {
-                                            foreach (var a in bid.AccountFullList)
-                                            {
-                                                <tr class="govuk-table__row account-row"
-                                                    data-value="@a.AccShortName"
-                                                    data-description="@(a.AccountDescription ?? "")"
-                                                    style="cursor:pointer;"
-                                                    onmouseover="this.style.background='#bee0f7'"
-                                                    onmouseout="this.style.background=''"
-                                                    onclick="selectAccount(this)">
-                                                    <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@a.AccShortName</td>
-                                                    <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@a.AccountDescription</td>
-                                                    <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@a.ConstituentAccountCodes</td>
-                                                </tr>
-                                            }
-                                        }
-                                    </tbody>
+                                    <tbody class="govuk-table__body" id="accountTableBody"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -143,10 +125,75 @@
         </form>
 
         <script>
+            // Accounts are kept as data and rendered lazily (in chunks) when the
+            // panel is first opened, so the modal itself loads immediately.
+            var accountOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                (bid!.AccountFullList ?? new List<AccountCategoryDto>())
+                    .Select(a => new
+                    {
+                        v = a.AccShortName ?? string.Empty,
+                        d = a.AccountDescription ?? string.Empty,
+                        c = a.ConstituentAccountCodes ?? string.Empty
+                    })));
+
+            var ACCOUNT_ROW_CHUNK_SIZE = 200;
+            var ACCOUNT_SEARCH_DEBOUNCE_MS = 150;
+            var visibleAccounts = accountOptions;
+            var renderedAccountCount = 0;
+            var accountBodyDirty = true;
+            var accountSearchTimer = null;
+
+            accountOptions.forEach(function (a) {
+                a.key = (a.v + '\u0000' + a.d + '\u0000' + a.c).toLowerCase();
+            });
+
+            function escapeAccountHtml(text) {
+                return String(text === null || text === undefined ? '' : text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function renderMoreAccountRows(count) {
+                var body = document.getElementById('accountTableBody');
+                if (!body) return;
+
+                var start = renderedAccountCount;
+                var end = Math.min(start + (count || ACCOUNT_ROW_CHUNK_SIZE), visibleAccounts.length);
+                if (end <= start) return;
+
+                var cell = 'class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;';
+                var html = '';
+                for (var i = start; i < end; i++) {
+                    var a = visibleAccounts[i];
+                    html += '<tr class="govuk-table__row account-row" data-value="' + escapeAccountHtml(a.v) + '"' +
+                                ' data-description="' + escapeAccountHtml(a.d) + '" style="cursor:pointer;">' +
+                                '<td ' + cell + ' white-space:nowrap;">' + escapeAccountHtml(a.v) + '</td>' +
+                                '<td ' + cell + '">' + escapeAccountHtml(a.d) + '</td>' +
+                                '<td ' + cell + ' white-space:nowrap;">' + escapeAccountHtml(a.c) + '</td>' +
+                            '</tr>';
+                }
+
+                body.insertAdjacentHTML('beforeend', html);
+                renderedAccountCount = end;
+            }
+
+            function renderAccountRows() {
+                var body = document.getElementById('accountTableBody');
+                if (!body) return;
+
+                body.innerHTML = '';
+                renderedAccountCount = 0;
+                accountBodyDirty = false;
+                renderMoreAccountRows(ACCOUNT_ROW_CHUNK_SIZE);
+            }
+
             function toggleAccountDropdown() {
                 var panel = document.getElementById('accountDropdownPanel');
                 if (panel.style.display === 'none') {
                     panel.style.display = 'block';
+                    if (accountBodyDirty) renderAccountRows();
                     document.getElementById('accountSearch').focus();
                 } else {
                     panel.style.display = 'none';
@@ -172,12 +219,59 @@
             }
 
             function filterAccountTable(query) {
-                var rows  = document.querySelectorAll('#accountTableBody .account-row');
-                var lower = query.toLowerCase();
-                rows.forEach(function (row) {
-                    row.style.display = row.innerText.toLowerCase().includes(lower) ? '' : 'none';
-                });
+                if (accountSearchTimer) {
+                    clearTimeout(accountSearchTimer);
+                    accountSearchTimer = null;
+                }
+
+                var apply = function () {
+                    var lower = String(query || '').toLowerCase().trim();
+                    visibleAccounts = lower
+                        ? accountOptions.filter(function (a) { return a.key.indexOf(lower) !== -1; })
+                        : accountOptions;
+                    renderAccountRows();
+                };
+
+                // Immediate when clearing, debounced while typing
+                if (!query) {
+                    apply();
+                } else {
+                    accountSearchTimer = setTimeout(function () {
+                        accountSearchTimer = null;
+                        apply();
+                    }, ACCOUNT_SEARCH_DEBOUNCE_MS);
+                }
             }
+
+            (function () {
+                var body = document.getElementById('accountTableBody');
+                var scroller = body ? body.closest('.table_scroll_wrapper') : null;
+
+                // Single delegated handler instead of inline onclick per row
+                if (body) {
+                    body.addEventListener('click', function (e) {
+                        var row = e.target.closest('.account-row');
+                        if (row) selectAccount(row);
+                    });
+                    body.addEventListener('mouseover', function (e) {
+                        var row = e.target.closest('.account-row');
+                        if (row) row.style.background = '#bee0f7';
+                    });
+                    body.addEventListener('mouseout', function (e) {
+                        var row = e.target.closest('.account-row');
+                        if (row) row.style.background = '';
+                    });
+                }
+
+                if (scroller) {
+                    scroller.addEventListener('scroll', function () {
+                        if (renderedAccountCount >= visibleAccounts.length) return;
+                        if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                            renderMoreAccountRows(ACCOUNT_ROW_CHUNK_SIZE);
+                        }
+                    });
+                }
+            })();
 
             document.addEventListener('click', function (e) {
                 var panel = document.getElementById('accountDropdownPanel');

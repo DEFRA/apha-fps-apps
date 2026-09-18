@@ -31,6 +31,15 @@
     var globalZIndex = 10000;
     var dropdownInstances = [];
 
+    // Number of rows materialised in the DOM per chunk. Remaining rows are
+    // appended lazily while the user scrolls, so opening a dropdown backed by a
+    // large lookup no longer blocks on building thousands of table rows.
+    var ROW_CHUNK_SIZE = 200;
+
+    // Delay applied to the search box so a burst of keystrokes results in a
+    // single filter + render pass instead of one per character.
+    var SEARCH_DEBOUNCE_MS = 150;
+
     function closeOtherDropdowns(currentDropdown) {
         dropdownInstances.forEach(function (dropdownInstance) {
             if (dropdownInstance && dropdownInstance !== currentDropdown && dropdownInstance.isOpen) {
@@ -78,6 +87,17 @@
         this.isOpen = false;
         this.focusedRowIndex = -1; // Track keyboard navigation
 
+        // Rendering state: the table body is built lazily (on open) and in chunks.
+        this.bodyDirty = true;
+        this.renderedRowCount = 0;
+
+        // Cache of lowercased, concatenated column values keyed by row object so
+        // filtering does not re-stringify every cell on every keystroke.
+        this.searchKeyCache = new WeakMap();
+
+        // Retained so the document-level handler can be detached on destroy.
+        this.documentClickHandler = null;
+
         dropdownInstances.push(this);
 
         this.init();
@@ -102,7 +122,11 @@
         }
 
         container.innerHTML = this.getDropdownHTML();
-        this.renderTableBody();
+
+        // The panel is hidden until the user opens it, so defer building the
+        // rows. This keeps modal/page load cost independent of the data volume.
+        this.bodyDirty = true;
+        this.renderedRowCount = 0;
     };
 
     /**
@@ -224,21 +248,76 @@
      * Render table body with data
      */
     MultiColumnDropdownComponent.prototype.renderTableBody = function () {
+        // While the panel is closed there is nothing to see; flag the body as
+        // stale and rebuild it the next time the dropdown is opened.
+        if (!this.isOpen) {
+            this.bodyDirty = true;
+            this.renderedRowCount = 0;
+            return;
+        }
+
+        this.renderTableBodyNow();
+    };
+
+    /**
+     * Build the first chunk of rows immediately, regardless of open state.
+     */
+    MultiColumnDropdownComponent.prototype.renderTableBodyNow = function () {
         var tbody = document.getElementById(this.config.dropdownId + '_tbody');
         if (!tbody) return;
 
-        var html = '';
+        this.renderedRowCount = 0;
 
         if (this.filteredData.length === 0) {
             var colspan = this.config.columns.length + (this.config.showSerialNumber ? 1 : 0);
-            html = `<tr><td colspan="${colspan}" style="text-align: center; padding: 10px;">No data available</td></tr>`;
-        } else {
-            this.filteredData.forEach(function (row, index) {
-                html += this.getTableRowHTML(row, index);
-            }, this);
+            tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; padding: 10px;">No data available</td></tr>`;
+            this.bodyDirty = false;
+            return;
         }
 
-        tbody.innerHTML = html;
+        tbody.innerHTML = '';
+        this.bodyDirty = false;
+        this.renderMoreRows(ROW_CHUNK_SIZE);
+    };
+
+    /**
+     * Ensure the table body reflects the current filtered data.
+     */
+    MultiColumnDropdownComponent.prototype.ensureBodyRendered = function () {
+        if (this.bodyDirty) {
+            this.renderTableBodyNow();
+        }
+    };
+
+    /**
+     * Append the next batch of rows to the table body.
+     */
+    MultiColumnDropdownComponent.prototype.renderMoreRows = function (count) {
+        var tbody = document.getElementById(this.config.dropdownId + '_tbody');
+        if (!tbody) return;
+
+        var start = this.renderedRowCount;
+        var end = Math.min(start + (count || ROW_CHUNK_SIZE), this.filteredData.length);
+        if (end <= start) return;
+
+        var html = '';
+        for (var i = start; i < end; i++) {
+            html += this.getTableRowHTML(this.filteredData[i], i);
+        }
+
+        tbody.insertAdjacentHTML('beforeend', html);
+        this.renderedRowCount = end;
+    };
+
+    /**
+     * Materialise rows up to (and including) the supplied index.
+     */
+    MultiColumnDropdownComponent.prototype.ensureRowRendered = function (rowIndex) {
+        this.ensureBodyRendered();
+
+        if (rowIndex >= this.renderedRowCount) {
+            this.renderMoreRows(rowIndex - this.renderedRowCount + 1);
+        }
     };
 
     /**
@@ -373,8 +452,15 @@
         // Search functionality
         if (searchBox && this.config.enableSearch) {
             searchBox.addEventListener('input', function () {
-                self.filterData(this.value);
-                self.focusedRowIndex = -1; // Reset focus when filtering
+                var value = this.value;
+                if (self.searchDebounceTimer) {
+                    clearTimeout(self.searchDebounceTimer);
+                }
+                self.searchDebounceTimer = setTimeout(function () {
+                    self.searchDebounceTimer = null;
+                    self.filterData(value);
+                    self.focusedRowIndex = -1; // Reset focus when filtering
+                }, SEARCH_DEBOUNCE_MS);
             });
 
             searchBox.addEventListener('click', function (e) {
@@ -400,6 +486,8 @@
                     self.closeDropdown();
                 } else if (e.key === 'Enter') {
                     e.preventDefault();
+                    // Apply any pending debounced search before acting on the results
+                    self.flushPendingSearch();
                     // If there's exactly one filtered result, select it
                     if (self.filteredData.length === 1) {
                         self.selectItem(self.filteredData[0]);
@@ -424,6 +512,7 @@
                 // Clear the search box
                 if (searchBox) {
                     searchBox.value = '';
+                    self.cancelPendingSearch();
                     self.filterData('');
                     searchBox.focus();
                 }
@@ -493,17 +582,54 @@
         }
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', function (e) {
+        this.documentClickHandler = function (e) {
             var container = document.querySelector('[data-dropdown-id="' + dropdownId + '"]');
             if (container && !container.contains(e.target)) {
                 self.closeDropdown();
             }
-        });
+        };
+        document.addEventListener('click', this.documentClickHandler);
+
+        // Append the next batch of rows as the user scrolls the panel
+        var tableWrapper = panel.querySelector('.dropdown-table-wrapper');
+        if (tableWrapper) {
+            tableWrapper.addEventListener('scroll', function () {
+                if (self.renderedRowCount >= self.filteredData.length) return;
+
+                if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                    self.renderMoreRows(ROW_CHUNK_SIZE);
+                }
+            });
+        }
 
         // Prevent panel clicks from closing dropdown
         panel.addEventListener('click', function (e) {
             e.stopPropagation();
         });
+    };
+
+    /**
+     * Run any pending debounced search immediately.
+     */
+    MultiColumnDropdownComponent.prototype.flushPendingSearch = function () {
+        if (!this.searchDebounceTimer) return;
+
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = null;
+
+        var searchBox = document.getElementById(this.config.dropdownId + '_search');
+        this.filterData(searchBox ? searchBox.value : '');
+        this.focusedRowIndex = -1;
+    };
+
+    /**
+     * Discard any pending debounced search.
+     */
+    MultiColumnDropdownComponent.prototype.cancelPendingSearch = function () {
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = null;
+        }
     };
 
     /**
@@ -540,6 +666,9 @@
             this.isOpen = true;
             input.classList.add('dropdown-open');
 
+            // Build the rows only now that the panel is actually visible
+            this.ensureBodyRendered();
+
             // Focus search box if enabled
             if (this.config.enableSearch) {
                 var searchBox = document.getElementById(this.config.dropdownId + '_search');
@@ -574,6 +703,7 @@
 
             // Clear search
             if (searchBox && this.config.enableSearch) {
+                this.cancelPendingSearch();
                 searchBox.value = '';
                 this.filterData('');
             }
@@ -591,6 +721,10 @@
         this.focusedRowIndex = rowIndex;
         var tbody = document.getElementById(this.config.dropdownId + '_tbody');
         if (!tbody) return;
+
+        // The target row may not have been materialised yet when the list is
+        // being rendered in chunks.
+        this.ensureRowRendered(rowIndex);
 
         var row = tbody.querySelector('.dropdown-row[data-row-index="' + rowIndex + '"]');
         if (row) {
@@ -611,19 +745,34 @@
             this.filteredData = [...this.originalData];
         } else {
             this.filteredData = this.originalData.filter(function (row) {
-                // Search across all columns
-                for (var i = 0; i < self.config.columns.length; i++) {
-                    var column = self.config.columns[i];
-                    var value = String(self.getFieldValue(row, column.field)).toLowerCase();
-                    if (value.indexOf(searchTerm) > -1) {
-                        return true;
-                    }
-                }
-                return false;
+                // Search across all columns using a cached, lowercased key
+                return self.getSearchKey(row).indexOf(searchTerm) > -1;
             });
         }
 
         this.renderTableBody();
+    };
+
+    /**
+     * Build (once per row) the lowercased concatenation of all searchable
+     * column values. Cached so repeated filtering does not re-stringify cells.
+     */
+    MultiColumnDropdownComponent.prototype.getSearchKey = function (row) {
+        if (row === null || typeof row !== 'object') {
+            return String(this.getFieldValue(row, this.config.displayField)).toLowerCase();
+        }
+
+        var key = this.searchKeyCache.get(row);
+        if (key !== undefined) return key;
+
+        var parts = [];
+        for (var i = 0; i < this.config.columns.length; i++) {
+            parts.push(String(this.getFieldValue(row, this.config.columns[i].field)).toLowerCase());
+        }
+
+        key = parts.join('\u0000');
+        this.searchKeyCache.set(row, key);
+        return key;
     };
 
     /**
@@ -728,6 +877,7 @@
     MultiColumnDropdownComponent.prototype.updateData = function (newData) {
         this.originalData = [...newData];
         this.filteredData = [...newData];
+        this.searchKeyCache = new WeakMap();
         this.renderTableBody();
     };
 
@@ -758,6 +908,7 @@
      * Refresh/reload the dropdown
      */
     MultiColumnDropdownComponent.prototype.refresh = function () {
+        this.bodyDirty = true;
         this.renderTableBody();
     };
 
@@ -765,18 +916,30 @@
      * Destroy the dropdown and clean up
      */
     MultiColumnDropdownComponent.prototype.destroy = function () {
+        var self = this;
+
+        this.cancelPendingSearch();
+
+        if (this.documentClickHandler) {
+            document.removeEventListener('click', this.documentClickHandler);
+            this.documentClickHandler = null;
+        }
+
         var container = document.querySelector(this.config.containerSelector);
         if (container) {
             container.innerHTML = '';
         }
 
         dropdownInstances = dropdownInstances.filter(function (dropdownInstance) {
-            return dropdownInstance !== this;
-        }, this);
+            return dropdownInstance !== self;
+        });
 
         // Clear references
         this.originalData = [];
         this.filteredData = [];
+        this.searchKeyCache = new WeakMap();
+        this.renderedRowCount = 0;
+        this.bodyDirty = true;
         this.selectedValue = null;
         this.selectedItem = null;
     };
