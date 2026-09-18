@@ -376,11 +376,14 @@ function openEditStaffModal(pid, year, srIdentity) {
             var hiddenGrade = document.getElementById('WgGrade');
             var displayInput = document.getElementById('wgGradeSelect');
             if (hiddenGrade && displayInput && hiddenGrade.value) {
-                // Rows are rendered lazily, so make sure they all exist before
-                // looking the selected grade up by value.
-                ensureAllWgGradeRowsRendered();
-                var matchRow = document.querySelector('#wgGradeDropdownBody tr[data-value="' + hiddenGrade.value + '"]');
-                displayInput.value = matchRow ? matchRow.querySelector('td').textContent.trim() : hiddenGrade.value;
+                // Resolve the display text from the cached option list rather than
+                // forcing every row into the DOM. Rendering the full list here
+                // defeated the lazy loading and made opening the panel in edit
+                // mode hang while the browser laid out thousands of rows.
+                var selected = getWgGradeOptions().filter(function (o) {
+                    return o.v === hiddenGrade.value;
+                })[0];
+                displayInput.value = selected ? selected.v : hiddenGrade.value;
             }
         });
 }
@@ -1062,8 +1065,9 @@ function renderWgGradeRows() {
     renderMoreWgGradeRows(WG_GRADE_CHUNK_SIZE);
 }
 
-// Ensures every matching row exists in the DOM. Used when code needs to look a
-// row up by value (e.g. prepopulating the display input in edit mode).
+// Ensures every matching row exists in the DOM. Only use when code genuinely
+// needs the whole list materialised -- it renders every row synchronously and
+// so undoes the benefit of chunked rendering.
 function ensureAllWgGradeRowsRendered() {
     if (_wgGradeRendered === 0) {
         _wgGradeVisible = getWgGradeOptions();
