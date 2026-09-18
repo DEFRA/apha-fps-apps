@@ -365,6 +365,67 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
+    public async Task<JobExecutionRecord?> GetExecutionByJobQueueIdAsync(Guid jobQueueId, CancellationToken cancellationToken = default)
+    {
+        var execution = await (
+            from q in _context.TblJobQueue
+            join m in _context.TblJobMaster on q.JobId equals m.JobId
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where q.JobQueueId == jobQueueId
+            orderby q.StartDateTime descending
+            select new
+            {
+                m.JobName,
+                q.JobExecutionId,
+                q.JobQueueId,
+                q.RequestedBy,
+                q.RequestedAtUtc,
+                q.FpsYear,
+                q.TargetFpsYear,
+                q.StartDateTime,
+                q.EndDateTime,
+                s.Status,
+                q.ErrorMessage
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (execution == null)
+            return null;
+
+        if (!Enum.TryParse<JobStatus>(execution.Status, true, out var status))
+        {
+            _logger.LogError(
+                "Status parsing failed for JobQueueId | JobQueueId={JobQueueId} | StatusFromDb={StatusValue}",
+                execution.JobQueueId,
+                execution.Status);
+            throw new InvalidOperationException(
+                $"Invalid status '{execution.Status}' in database for JobQueueId '{execution.JobQueueId}'.");
+        }
+
+        return new JobExecutionRecord
+        {
+            ExecutionId = 0,
+            JobName = execution.JobName,
+            JobExecutionId = execution.JobExecutionId,
+            JobQueueId = execution.JobQueueId,
+            UserId = execution.RequestedBy,
+            JobType = JobType.Unknown,
+            RunMode = RunMode.Manual,
+            Status = status,
+            RequestedAtUtc = execution.RequestedAtUtc,
+            FpsYear = execution.FpsYear,
+            TargetFpsYear = execution.TargetFpsYear,
+            StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
+            CompletedAt = execution.EndDateTime,
+            DurationSeconds = execution.EndDateTime.HasValue && execution.StartDateTime.HasValue
+                ? (int)(execution.EndDateTime.Value - execution.StartDateTime.Value).TotalSeconds
+                : null,
+            ErrorMessage = execution.ErrorMessage,
+            RetryAttempts = 0
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<Guid> CreateInitiatedRecordAsync(
         string jobName,
         Guid jobExecutionId,

@@ -35,6 +35,14 @@ public interface IJobExecutionRepository
     Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets an execution record by its job queue identifier. Used by orphan lock reconciliation,
+    /// which only knows the JobQueueId referenced by an expired job_lock row, not the
+    /// JobExecutionId.
+    /// </summary>
+    /// <param name="jobQueueId">The job queue UUID.</param>
+    Task<JobExecutionRecord?> GetExecutionByJobQueueIdAsync(Guid jobQueueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates a new job queue record in Initiated state.
     /// Called by the API immediately after accepting a trigger request,
     /// before publishing the EventBridge event.
