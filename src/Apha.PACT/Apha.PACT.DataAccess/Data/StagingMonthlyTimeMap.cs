@@ -19,29 +19,21 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.Hours).HasColumnName("hours");
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.Name)
-                .HasMaxLength(50)
                 .HasColumnName("name");
             entity.Property(e => e.NewWorkGroup)
-                .HasMaxLength(50)
                 .HasColumnName("newworkgroup");
             entity.Property(e => e.OldTestCode)
-                .HasMaxLength(20)
                 .HasColumnName("oldtestcode");
             entity.Property(e => e.PactId)
-                .HasMaxLength(50)
                 .HasColumnName("pactid");
             entity.Property(e => e.PactStaffId)
-                .HasMaxLength(50)
                 .HasColumnName("pactstaffid");
             entity.Property(e => e.ParentProject)
-                .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.Passed).HasColumnName("passed");
             entity.Property(e => e.TimeCode)
-                .HasMaxLength(50)
                 .HasColumnName("timecode");
             entity.Property(e => e.WorkGroup)
-                .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.Filename)
                 .HasMaxLength(255)

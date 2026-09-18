@@ -39,6 +39,6 @@
     $('#yearSelector').on('change', function () {
         var area = $(this).data('area') || '';
         var homeUrl = area ? '/' + area + '/Home/Index' : '/Home/Index';
-        window.location.href = homeUrl + '?year=' + $(this).val();
+        window.location.href = homeUrl + '?fpsContextYear=' + $(this).val();
     });
 </script>

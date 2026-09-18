@@ -13,8 +13,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         public string? SelectedReport { get; set; }
 
-        public string? SelectedReportTitle { get; set; }
-
         public int FpsYear { get; set; }
     }
 }

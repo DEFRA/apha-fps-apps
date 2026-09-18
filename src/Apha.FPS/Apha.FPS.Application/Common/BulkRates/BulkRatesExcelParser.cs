@@ -27,11 +27,7 @@ namespace Apha.FPS.Application.Common.BulkRates
         private static readonly string[] AgrupRequiredColumns =
         [
             "Test Code", "Buyer", "Agrup", "Agrup New",
-            "Change", "No Required", "Date Created", "Active", "Comments",
-            // Routing columns. Cell values are optional per row (existing rows are
-            // protected/reference-only; a new row supplies at least one) — only the column
-            // headers themselves are required to exist.
-            "Project Buyer Code", "Test Buyer Code", "Test Buyer Work Group"
+            "Change", "No Required", "Date Created", "Active", "Comments"
         ];
 
         // Staff worksheet
@@ -140,12 +136,13 @@ namespace Apha.FPS.Application.Common.BulkRates
 
                 var agrup = CellDecimalOrNull(row, agrupHeaders, "Agrup");
                 var agrupNew = CellDecimalOrNull(row, agrupHeaders, "Agrup New");
+                var buyer = CellString(row, agrupHeaders, "Buyer")?.Trim() ?? string.Empty;
 
                 agrupRows.Add(new TestRequirementStagingRow
                 {
                     JobQueueId = jobQueueId,
                     TestCode = testCode.Trim(),
-                    Buyer = CellString(row, agrupHeaders, "Buyer")?.Trim() ?? string.Empty,
+                    Buyer = buyer,
                     Agrup = agrup,
                     AgrupNew = agrupNew,
                     Change = agrupNew.HasValue && agrup.HasValue
@@ -154,9 +151,9 @@ namespace Apha.FPS.Application.Common.BulkRates
                     DateCreated = CellDateOrNull(row, agrupHeaders, "Date Created"),
                     Active = CellShortOrNull(row, agrupHeaders, "Active"),
                     Comments = CellString(row, agrupHeaders, "Comments"),
-                    ProjectBuyerCode = CellString(row, agrupHeaders, "Project Buyer Code"),
-                    TestBuyerCode = CellString(row, agrupHeaders, "Test Buyer Code"),
-                    TestBuyerWorkGroup = CellString(row, agrupHeaders, "Test Buyer Work Group")
+                    // ProjectBuyerCode is no longer a separate Excel column — Buyer is the
+                    // single project value the user supplies, so it doubles as the routing code.
+                    ProjectBuyerCode = buyer
                 });
             }
 

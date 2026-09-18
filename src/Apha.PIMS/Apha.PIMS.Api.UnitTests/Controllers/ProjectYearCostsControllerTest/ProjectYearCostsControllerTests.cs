@@ -618,6 +618,26 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectYearCostsControllerTest
         }
 
         [Fact]
+        public async Task GetProjectYearDetails_WhenServiceReturnsNull_ReturnsSuccessResponseWithNullData()
+        {
+            // Arrange
+            _service.GetProjectYearDetailsAsync(Project, Year).Returns((ProjectYearDetailsDto)null!);
+
+            // Act
+            var result = await _controller.GetProjectYearDetails(Project, Year);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<Apha.Common.Contracts.ApiResponse<ProjectYearDetailsRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+
+            await _service.Received(1).GetProjectYearDetailsAsync(Project, Year);
+            _mapper.DidNotReceive().Map<ProjectYearDetailsRes>(Arg.Any<ProjectYearDetailsDto>());
+        }
+
+        [Fact]
         public async Task GetProjectYearDetails_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
@@ -813,7 +833,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectYearCostsControllerTest
         }
 
         [Fact]
-        public async Task GetFpsYearTotals_WhenServiceReturnsNull_ReturnsNotFound()
+        public async Task GetFpsYearTotals_WhenServiceReturnsNull_ReturnsSuccessResponseWithNullData()
         {
             // Arrange
             _service.GetFpsYearTotalsAsync(Project, Year).Returns((FpsYearTotalsDto?)null);
@@ -822,7 +842,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectYearCostsControllerTest
             var result = await _controller.GetFpsYearTotals(Project, Year);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<Apha.Common.Contracts.ApiResponse<FpsYearTotalsRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
 
             await _service.Received(1).GetFpsYearTotalsAsync(Project, Year);
             _mapper.DidNotReceive().Map<FpsYearTotalsRes>(Arg.Any<FpsYearTotalsDto>());
