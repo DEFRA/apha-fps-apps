@@ -128,7 +128,7 @@
             // Accounts are kept as data and rendered lazily (in chunks) when the
             // panel is first opened, so the modal itself loads immediately.
             var accountOptions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                (bid.AccountFullList ?? new List<AccountCategoryDto>())
+                (bid!.AccountFullList ?? new List<AccountCategoryDto>())
                     .Select(a => new
                     {
                         v = a.AccShortName ?? string.Empty,
