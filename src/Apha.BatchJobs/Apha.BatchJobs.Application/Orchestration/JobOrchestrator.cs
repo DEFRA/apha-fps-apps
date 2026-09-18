@@ -25,6 +25,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly IBatchJobFactory _factory;
     private readonly IBatchLockRepository _lockRepository;
     private readonly IJobExecutionRepository _executionRepository;
+    private readonly IBatchLockReconciliationService _reconciliationService;
     private readonly ICorrelationContextAccessor _correlationService;
     private readonly ICurrentJobExecutionContext _currentExecutionContext;
     private readonly IEmailNotificationService _notificationService;
@@ -50,6 +51,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
         IJobExecutionRepository executionRepository,
+        IBatchLockReconciliationService reconciliationService,
         ICorrelationContextAccessor correlationService,
         ICurrentJobExecutionContext currentExecutionContext,
         IEmailNotificationService notificationService,
@@ -62,6 +64,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
+        _reconciliationService = reconciliationService ?? throw new ArgumentNullException(nameof(reconciliationService));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _currentExecutionContext = currentExecutionContext ?? throw new ArgumentNullException(nameof(currentExecutionContext));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -149,6 +152,19 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _logger.LogInformation(
             "[Worker → DB] ✓ Fetched pre-created execution record | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | CurrentStatus={CurrentStatus}",
             jobName, jobExecutionId, jobQueueId, existingExecution.Status);
+
+        // Layer 2 — scoped, defensive reconciliation immediately before acquisition. Only the
+        // resolved lock name this execution actually needs is inspected — never a system-wide
+        // scan (design doc §4/§9). The reconciliation service itself decides whether this row is
+        // actually expired (it refuses as a no-op otherwise), so nothing here needs to duplicate
+        // that check. Deliberately not wrapped in try/catch: an unexpected failure here must
+        // propagate and prevent acquisition rather than be logged-and-ignored — lock state that
+        // can't be trusted must not be treated as safe to acquire against.
+        var existingLock = await _lockRepository.GetLockAsync(lockName, cancellationToken);
+        if (existingLock is not null)
+        {
+            await _reconciliationService.ReconcileAsync(existingLock, cancellationToken);
+        }
 
         _logger.LogInformation(
             "Acquiring execution lock for '{LockName}' (requested job '{JobName}') | JobExecutionId={JobExecutionId}...",

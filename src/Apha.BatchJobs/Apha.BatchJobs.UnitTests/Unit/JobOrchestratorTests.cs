@@ -24,6 +24,10 @@ public sealed class JobOrchestratorTests
     private readonly IBatchJobFactory _factory = Substitute.For<IBatchJobFactory>();
     private readonly IBatchLockRepository _lockRepo = Substitute.For<IBatchLockRepository>();
     private readonly IJobExecutionRepository _execRepo = Substitute.For<IJobExecutionRepository>();
+    // Unconfigured substitute: GetLockAsync returns null by default, so the Layer 2 reconciliation
+    // call these tests don't care about is a no-op for all of them (see JobOrchestratorPhase3Tests
+    // for tests that specifically exercise this dependency).
+    private readonly IBatchLockReconciliationService _reconciliationService = Substitute.For<IBatchLockReconciliationService>();
     private readonly ICorrelationContextAccessor _correlationService = Substitute.For<ICorrelationContextAccessor>();
     private readonly ICurrentJobExecutionContext _currentExecutionContext = Substitute.For<ICurrentJobExecutionContext>();
     private readonly IEmailNotificationService _notificationService = Substitute.For<IEmailNotificationService>();
@@ -44,6 +48,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -199,6 +204,8 @@ public sealed class JobOrchestratorTests
         await _orchestrator.RunAsync(BatchJobNames.YearEndDataSetup, RunMode.Manual, Guid.NewGuid(), "test-user");
 
         // Assert
+        // Layer 2 (Phase 3) must resolve the same shared "YearEnd" lock name, not "YearEnd-DataSetup".
+        await _lockRepo.Received(1).GetLockAsync(BatchJobNames.YearEndLock, Arg.Any<CancellationToken>());
         await _lockRepo.Received(1).TryAcquireLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await _lockRepo.Received(1).ReleaseLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
@@ -223,8 +230,106 @@ public sealed class JobOrchestratorTests
         await _orchestrator.RunAsync(BatchJobNames.YearEndCutover, RunMode.Manual, Guid.NewGuid(), "test-user");
 
         // Assert
+        // Layer 2 (Phase 3) must resolve the same shared "YearEnd" lock name, not "YearEnd-CutOver".
+        await _lockRepo.Received(1).GetLockAsync(BatchJobNames.YearEndLock, Arg.Any<CancellationToken>());
         await _lockRepo.Received(1).TryAcquireLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await _lockRepo.Received(1).ReleaseLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Phase 3 — Layer 2: scoped, defensive reconciliation immediately before acquisition
+    // ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task RunAsync_ChecksOnlyTheResolvedLockName_NotTheRawJobName()
+    {
+        SetupInitiatedExecution("RecreateSummary");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("RecreateSummary");
+        _factory.Create("RecreateSummary").Returns(job);
+        _lockRepo.TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        await _orchestrator.RunAsync("RecreateSummary", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // For a job whose lock name equals its own job name, this alone doesn't distinguish
+        // "checks the resolved lock name" from "checks the raw job name" — the YearEnd tests
+        // above (lock name "YearEnd" != job name "YearEnd-DataSetup"/"YearEnd-CutOver") are what
+        // actually prove resolution, not identity. This test proves the single-lookup-per-run
+        // shape: exactly one GetLockAsync call, for exactly this job's own lock name.
+        await _lockRepo.Received(1).GetLockAsync("RecreateSummary", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WithExistingUnexpiredLock_ReconciliationIsANoOpAndAcquisitionStillRefusesNormally()
+    {
+        SetupInitiatedExecution("RecreateSummary");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("RecreateSummary");
+        _factory.Create("RecreateSummary").Returns(job);
+
+        var unexpiredLock = new BatchLock
+        {
+            LockId = 1,
+            JobName = "RecreateSummary",
+            AcquiredAt = DateTime.UtcNow.AddMinutes(-2),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            JobQueueId = Guid.NewGuid(),
+            IsActive = true
+        };
+        _lockRepo.GetLockAsync("RecreateSummary", Arg.Any<CancellationToken>()).Returns(unexpiredLock);
+        // Reconciliation is called regardless — JobOrchestrator doesn't decide expiry itself, the
+        // service does (Phase 2's own defensive guard makes this a no-op for an unexpired lock;
+        // here it's mocked, so this test only proves JobOrchestrator's own behaviour: it always
+        // hands off to reconciliation, and never treats that call as a substitute for the actual
+        // atomic acquire).
+        _lockRepo.TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(false);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("RecreateSummary", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        await _reconciliationService.Received(1).ReconcileAsync(unexpiredLock, Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WithExpiredRequestedLock_ReconcilesBeforeAttemptingAcquisition()
+    {
+        SetupInitiatedExecution("RecreateSummary");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("RecreateSummary");
+        _factory.Create("RecreateSummary").Returns(job);
+
+        var expiredLock = new BatchLock
+        {
+            LockId = 1,
+            JobName = "RecreateSummary",
+            AcquiredAt = DateTime.UtcNow.AddMinutes(-15),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(-10),
+            JobQueueId = Guid.NewGuid(),
+            IsActive = true
+        };
+        _lockRepo.GetLockAsync("RecreateSummary", Arg.Any<CancellationToken>()).Returns(expiredLock);
+        _lockRepo.TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        await _orchestrator.RunAsync("RecreateSummary", RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        await _reconciliationService.Received(1).ReconcileAsync(expiredLock, Arg.Any<CancellationToken>());
+        Received.InOrder(() =>
+        {
+            _reconciliationService.ReconcileAsync(expiredLock, Arg.Any<CancellationToken>());
+            _lockRepo.TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        });
     }
 
     [Theory]
@@ -568,6 +673,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1159,6 +1265,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1206,6 +1313,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1259,6 +1367,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1337,6 +1446,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1398,6 +1508,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1438,6 +1549,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _reconciliationService,
             _correlationService,
             _currentExecutionContext,
             _notificationService,
@@ -1477,7 +1589,7 @@ public sealed class JobOrchestratorTests
 
     private JobOrchestrator CreateOrchestratorWithNotifier(IPostCompletionNotifier notifier)
         => new(
-            _factory, _lockRepo, _execRepo, _correlationService, _currentExecutionContext,
+            _factory, _lockRepo, _execRepo, _reconciliationService, _correlationService, _currentExecutionContext,
             _notificationService, [notifier], _alertingSettings, _settings,
             _failureClassifier, NullLogger<JobOrchestrator>.Instance);
 

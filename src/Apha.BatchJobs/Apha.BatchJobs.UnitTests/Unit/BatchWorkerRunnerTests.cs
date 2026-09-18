@@ -1,8 +1,10 @@
 ﻿using Apha.BatchJobs.Application.FailureHandling;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Constants;
+using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Exceptions;
+using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Worker.Configuration;
 using Apha.BatchJobs.Worker.Execution;
 using Apha.BatchJobs.Worker.Reporting;
@@ -22,11 +24,27 @@ namespace Apha.BatchJobs.UnitTests;
 /// </summary>
 public sealed class BatchWorkerRunnerTests
 {
-    private static IServiceProvider BuildServiceProvider(IJobOrchestrator orchestrator)
+    private static IServiceProvider BuildServiceProvider(
+        IJobOrchestrator orchestrator,
+        IBatchLockRepository? lockRepository = null,
+        IBatchLockReconciliationService? reconciliationService = null)
     {
         var services = new ServiceCollection();
         services.AddScoped(_ => orchestrator);
+        // Layer 1's startup reconciliation sweep (BatchWorkerRunner.RunAsync) resolves both of
+        // these before dispatch. Defaulting GetExpiredLocksAsync to an empty list keeps every
+        // test below that doesn't care about reconciliation behaving exactly as it did before
+        // Phase 3 — see BatchWorkerRunnerPhase3Tests for tests exercising this directly.
+        services.AddScoped(_ => lockRepository ?? CreateNoOpLockRepository());
+        services.AddScoped(_ => reconciliationService ?? Substitute.For<IBatchLockReconciliationService>());
         return services.BuildServiceProvider();
+    }
+
+    private static IBatchLockRepository CreateNoOpLockRepository()
+    {
+        var repository = Substitute.For<IBatchLockRepository>();
+        repository.GetExpiredLocksAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<BatchLock>());
+        return repository;
     }
 
     private static IHostApplicationLifetime CreateLifetime(out CancellationTokenSource lifetimeCts)
@@ -41,20 +59,24 @@ public sealed class BatchWorkerRunnerTests
         IJobOrchestrator orchestrator,
         RecordingSummaryWriter summaryWriter,
         IHostApplicationLifetime? hostLifetime,
-        int overallTimeoutSeconds) =>
-        CreateRunner(new BatchExecutionRequestResolver(), orchestrator, summaryWriter, hostLifetime, overallTimeoutSeconds);
+        int overallTimeoutSeconds,
+        IBatchLockRepository? lockRepository = null,
+        IBatchLockReconciliationService? reconciliationService = null) =>
+        CreateRunner(new BatchExecutionRequestResolver(), orchestrator, summaryWriter, hostLifetime, overallTimeoutSeconds, lockRepository, reconciliationService);
 
     private static BatchWorkerRunner CreateRunner(
         BatchExecutionRequestResolver resolver,
         IJobOrchestrator orchestrator,
         RecordingSummaryWriter summaryWriter,
         IHostApplicationLifetime? hostLifetime,
-        int overallTimeoutSeconds) =>
+        int overallTimeoutSeconds,
+        IBatchLockRepository? lockRepository = null,
+        IBatchLockReconciliationService? reconciliationService = null) =>
         new(
             resolver,
             hostLifetime ?? CreateLifetime(out _),
             Options.Create(new BatchRuntimeOptions { WorkerOverallTimeoutSeconds = overallTimeoutSeconds }),
-            BuildServiceProvider(orchestrator),
+            BuildServiceProvider(orchestrator, lockRepository, reconciliationService),
             new BatchFailureClassifier(new ConfigurationBuilder().Build()),
             summaryWriter,
             NullLogger<BatchWorkerRunner>.Instance);
@@ -295,6 +317,8 @@ public sealed class BatchWorkerRunnerTests
             resolvedOrchestrators.Add(fake);
             return fake;
         });
+        services.AddScoped(_ => CreateNoOpLockRepository());
+        services.AddScoped(_ => Substitute.For<IBatchLockReconciliationService>());
 
         var runner = new BatchWorkerRunner(
             resolver,
@@ -310,6 +334,113 @@ public sealed class BatchWorkerRunnerTests
         Assert.Equal(BatchExitCodes.Success, exitCode);
         Assert.Equal(2, resolvedOrchestrators.Count);
         Assert.NotSame(resolvedOrchestrators[0], resolvedOrchestrators[1]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Phase 3 — Layer 1: generic startup orphan-lock reconciliation
+    // ─────────────────────────────────────────────────────────────
+
+    private static BatchLock BuildExpiredLock(string lockName) => new()
+    {
+        LockId = 1,
+        JobName = lockName,
+        AcquiredAt = DateTime.UtcNow.AddMinutes(-15),
+        ExpiresAt = DateTime.UtcNow.AddMinutes(-10),
+        JobQueueId = Guid.NewGuid(),
+        IsActive = true
+    };
+
+    [Fact]
+    public async Task RunAsync_WithMultipleExpiredLocks_ReconcilesAllOfThemBeforeDispatchingTheRequestedJob()
+    {
+        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
+        var expiredLockA = BuildExpiredLock("SomeJobA");
+        var expiredLockB = BuildExpiredLock("SomeJobB");
+        var lockRepository = Substitute.For<IBatchLockRepository>();
+        lockRepository.GetExpiredLocksAsync(Arg.Any<CancellationToken>()).Returns(new[] { expiredLockA, expiredLockB });
+        var reconciliationService = Substitute.For<IBatchLockReconciliationService>();
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(SucceededResult("RecreateSummary"));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600, lockRepository, reconciliationService);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        await reconciliationService.Received(1).ReconcileAsync(expiredLockA, Arg.Any<CancellationToken>());
+        await reconciliationService.Received(1).ReconcileAsync(expiredLockB, Arg.Any<CancellationToken>());
+        // Ordering: both reconciliations must happen before the requested job is dispatched.
+        Received.InOrder(() =>
+        {
+            reconciliationService.ReconcileAsync(expiredLockA, Arg.Any<CancellationToken>());
+            reconciliationService.ReconcileAsync(expiredLockB, Arg.Any<CancellationToken>());
+            orchestrator.RunAsync("RecreateSummary", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        });
+    }
+
+    [Fact]
+    public async Task RunAsync_WithNoExpiredLocks_NeverCallsReconcileAndDispatchesRequestedJobNormally()
+    {
+        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
+        var lockRepository = CreateNoOpLockRepository();
+        var reconciliationService = Substitute.For<IBatchLockReconciliationService>();
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(SucceededResult("RecreateSummary"));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600, lockRepository, reconciliationService);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        await reconciliationService.DidNotReceive().ReconcileAsync(Arg.Any<BatchLock>(), Arg.Any<CancellationToken>());
+        await orchestrator.Received(1).RunAsync("RecreateSummary", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WithStaleLockBelongingToUnrelatedJob_ReconcilesItAndStillDispatchesRequestedJob()
+    {
+        // Proves Layer 1 is job-agnostic: a container invoked for "RecreateSummary" still
+        // reconciles an expired lock belonging to an entirely different job.
+        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
+        var unrelatedExpiredLock = BuildExpiredLock("SomeUnrelatedJob");
+        var lockRepository = Substitute.For<IBatchLockRepository>();
+        lockRepository.GetExpiredLocksAsync(Arg.Any<CancellationToken>()).Returns(new[] { unrelatedExpiredLock });
+        var reconciliationService = Substitute.For<IBatchLockReconciliationService>();
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(SucceededResult("RecreateSummary"));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600, lockRepository, reconciliationService);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        await reconciliationService.Received(1).ReconcileAsync(
+            Arg.Is<BatchLock>(l => l.JobName == "SomeUnrelatedJob"), Arg.Any<CancellationToken>());
+        await orchestrator.Received(1).RunAsync("RecreateSummary", Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenStartupReconciliationThrowsUnexpectedly_NeverDispatchesRequestedJob()
+    {
+        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
+        var lockRepository = Substitute.For<IBatchLockRepository>();
+        lockRepository.GetExpiredLocksAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<BatchLock>>(new InvalidOperationException("simulated DB failure")));
+        var reconciliationService = Substitute.For<IBatchLockReconciliationService>();
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(orchestrator, summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600, lockRepository, reconciliationService);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.NotEqual(BatchExitCodes.Success, exitCode);
+        Assert.Equal(1, summaryWriter.CallCount);
+        Assert.Equal(BatchRunOutcome.Failure, summaryWriter.LastResult!.Outcome);
+        await orchestrator.DidNotReceive().RunAsync(
+            Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     private sealed class RecordingSummaryWriter : IBatchRunSummaryWriter

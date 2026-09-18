@@ -1,6 +1,7 @@
 using Apha.BatchJobs.Application.FailureHandling;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Constants;
+using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Worker.Lifecycle;
 using Apha.BatchJobs.Worker.Reporting;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,42 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
             var resolutionFailure = BatchExecutionResult.Failure(request: null, classification, ex);
             _summaryWriter.WriteSummary(resolutionFailure, TimeSpan.Zero);
             return resolutionFailure.ExitCode;
+        }
+
+        // Layer 1 — generic, job-agnostic orphan-lock reconciliation. Runs once per container,
+        // before dispatching to whichever job(s) this invocation resolved to (including a
+        // fanned-out category trigger, which still only sweeps once, not once per fanned-out
+        // job). Job-agnostic on purpose: it doesn't matter whether an expired lock it finds
+        // belongs to the job this container was invoked for — any container cleans up any stale
+        // lock it happens to find (design doc §4).
+        //
+        // Fails closed: an unexpected error here means lock state can't be trusted, so job
+        // dispatch must not proceed. Normal outcomes (no expired locks, a lock already reconciled
+        // by someone else) are not errors and fall through to dispatch as usual.
+        try
+        {
+            await using var reconciliationScope = _serviceProvider.CreateAsyncScope();
+            var reconciliationService = reconciliationScope.ServiceProvider.GetRequiredService<IBatchLockReconciliationService>();
+            var lockRepository = reconciliationScope.ServiceProvider.GetRequiredService<IBatchLockRepository>();
+
+            var expiredLocks = await lockRepository.GetExpiredLocksAsync();
+            foreach (var expiredLock in expiredLocks)
+            {
+                await reconciliationService.ReconcileAsync(expiredLock);
+            }
+        }
+        catch (Exception ex)
+        {
+            var classification = _failureClassifier.Classify(ex);
+            _logger.LogError(
+                ex,
+                "[{ErrorType}] Startup orphan-lock reconciliation failed — refusing to dispatch, lock state cannot be trusted: {ErrorMessage}",
+                classification.ErrorType,
+                ex.Message);
+
+            var reconciliationFailure = BatchExecutionResult.Failure(request: null, classification, ex);
+            _summaryWriter.WriteSummary(reconciliationFailure, TimeSpan.Zero);
+            return reconciliationFailure.ExitCode;
         }
 
         // Created before any execution scope so every job below — including each job of a

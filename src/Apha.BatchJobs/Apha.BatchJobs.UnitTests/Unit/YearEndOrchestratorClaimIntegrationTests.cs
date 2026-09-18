@@ -194,6 +194,7 @@ public sealed class YearEndOrchestratorClaimIntegrationTests : IAsyncLifetime
         var factory = new FakeBatchJobFactory(fakeJob);
         var lockRepository = new BatchLockRepository(context);
         var executionRepository = new JobExecutionRepository(context, NullLogger<JobExecutionRepository>.Instance);
+        var reconciliationService = new BatchLockReconciliationService(lockRepository, executionRepository, NullLogger<BatchLockReconciliationService>.Instance);
         var correlationService = Substitute.For<ICorrelationContextAccessor>();
         var currentExecutionContext = Substitute.For<ICurrentJobExecutionContext>();
         var notificationService = Substitute.For<IEmailNotificationService>();
@@ -206,6 +207,7 @@ public sealed class YearEndOrchestratorClaimIntegrationTests : IAsyncLifetime
             factory,
             lockRepository,
             executionRepository,
+            reconciliationService,
             correlationService,
             currentExecutionContext,
             notificationService,

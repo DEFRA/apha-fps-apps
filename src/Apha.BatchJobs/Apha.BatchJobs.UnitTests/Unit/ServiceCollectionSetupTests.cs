@@ -1,5 +1,7 @@
-﻿using Apha.BatchJobs.Application.DependencyInjection;
+﻿using Apha.BatchJobs.Application.Configuration;
+using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Orchestration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Infrastructure.DependencyInjection;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
@@ -12,6 +14,7 @@ using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -336,5 +339,36 @@ public sealed class ServiceCollectionSetupTests
         using var serviceProvider = BuildServiceProvider();
         var ex = Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<IEmailService>());
         Assert.Contains("GraphEmailSettings", ex.Message);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Phase 3 — orphan lock reconciliation wiring
+    // ---------------------------------------------------------------------------
+
+    [Fact]
+    public void AddBatchJobs_ResolvesIBatchLockReconciliationServiceThroughTheRealCompositionRoot()
+    {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
+        var services = CreateServices(GetBatchJobsRoot());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var reconciliationService = serviceProvider.GetRequiredService<IBatchLockReconciliationService>();
+
+        Assert.IsType<BatchLockReconciliationService>(reconciliationService);
+    }
+
+    [Fact]
+    public void BatchJobsSection_BindsLockTimeoutSecondsAndHeartbeatIntervalSecondsToConfirmedPhase3Values()
+    {
+        // Reads the real appsettings.json (via CreateServices' configuration stack) rather than
+        // an in-memory copy, so this actually proves the shipped file has the confirmed values —
+        // 300s lease / 30s heartbeat, ~10 renewal opportunities of margin before expiry.
+        var services = CreateServices(GetBatchJobsRoot());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var settings = serviceProvider.GetRequiredService<IOptions<BatchJobSettings>>().Value;
+
+        Assert.Equal(300, settings.LockTimeoutSeconds);
+        Assert.Equal(30, settings.HeartbeatIntervalSeconds);
     }
 }
