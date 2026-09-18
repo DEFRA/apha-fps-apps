@@ -7,14 +7,17 @@ CREATE TABLE IF NOT EXISTS fps.tblmasterlookup (
     CONSTRAINT pk_tblmasterlookup PRIMARY KEY (mastertablename)
 );
 
-INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
-    ('tbldisease');
+INSERT INTO fps.tblmasterlookup (mastertablename)
+VALUES ('tbldisease')
+ON CONFLICT (mastertablename) DO NOTHING;
 
-INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
-    ('tlkpcustomer');
+INSERT INTO fps.tblmasterlookup (mastertablename)
+VALUES ('tlkpcustomer')
+ON CONFLICT (mastertablename) DO NOTHING;
 
-INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
-    ('tbldirectorate');
+INSERT INTO fps.tblmasterlookup (mastertablename)
+VALUES ('tbldirectorate')
+ON CONFLICT (mastertablename) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS fps.tbldirectorate
 (
