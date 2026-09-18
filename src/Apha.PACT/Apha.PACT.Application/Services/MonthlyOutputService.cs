@@ -18,6 +18,10 @@ namespace Apha.PACT.Application.Services
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly ITestRequirementRepository _testRequirementRepository;
         private readonly IMapper _mapper;
+ 
+        private const int TestCodeMaxLength = 20;
+        private const int ProjectMaxLength = 20;
+        private const int WorkGroupMaxLength = 50;
 
         public MonthlyOutputService(
             IMonthlyOutputRepository repository,
@@ -343,28 +347,63 @@ namespace Apha.PACT.Application.Services
             var month = record.Month;
             var volume = record.Volume;
 
+            var failureCount = failures.Count;
             if (volume == null || volume == 0)
             {
                 failures.Add($"The volume is not a number. \"{volume}\"");
                 return failures;
             }
+            var isVolumeValid = failures.Count == failureCount;
 
+            failureCount = failures.Count;
             if (!TryValidateAndNormalizeWorkGroup(ref workGroup, context, failures))
                 return failures;
+            var isWorkGroupValid = failures.Count == failureCount;
 
+            failureCount = failures.Count;
             if (!TryValidateAndNormalizeTestCodeAndBuyer(ref testCode, ref workGroup, ref buyer, context, failures))
                 return failures;
+            var isTestCodeAndBuyerValid = failures.Count == failureCount;
 
+            failureCount = failures.Count;
             if (!TryValidateMonth(month, context, failures))
                 return failures;
+            var isMonthValid = failures.Count == failureCount;
 
             record.WorkGroup = workGroup;
             record.TestCode = testCode;
             record.Buyer = buyer;
 
+            ValidateLiveColumnConstraints(record, isWorkGroupValid, isTestCodeAndBuyerValid, isVolumeValid, isMonthValid, failures);
+
             ValidateDuplicates(record, failures, context, stagingKeys);
 
             return failures;
+        }
+
+        private static void ValidateLiveColumnConstraints(
+            StagingMonthlyOutput record,
+            bool isWorkGroupValid,
+            bool isTestCodeAndBuyerValid,
+            bool isVolumeValid,
+            bool isMonthValid,
+            List<string> failures)
+        {
+
+            if (isWorkGroupValid)
+                ExcelValidationHelper.ValidateMaxLength(record.WorkGroup, WorkGroupMaxLength, "Work Group", failures);
+
+            if (isTestCodeAndBuyerValid)
+            {  
+                ExcelValidationHelper.ValidateMaxLength(record.TestCode, TestCodeMaxLength, "Test Code", failures);
+                ExcelValidationHelper.ValidateMaxLength(record.Buyer,    ProjectMaxLength, "Project", failures);
+            }
+
+            if (isVolumeValid)
+                ExcelValidationHelper.ValidateFiniteDouble(record.Volume, "The volume", failures);
+
+            if (isMonthValid)
+                ExcelValidationHelper.ValidateFiniteDouble(record.Month, "The month No.", failures);
         }
 
         private static bool TryValidateAndNormalizeWorkGroup(

@@ -529,9 +529,19 @@
         // outside the modal while it's open, pull it back in immediately -
         // unless the modal is in the middle of closing (isOpen is set false
         // just before we restore focus to the trigger that opened it).
+        // Some multi-column dropdown panels are re-parented to <body> while open
+        // (a transformed .modal-dialog ancestor would otherwise break their fixed
+        // positioning). They are still logically part of the modal, so focus must
+        // be allowed to stay inside them - otherwise the trap below immediately
+        // yanks focus back and the panel's search box cannot be typed into.
+        function isFloatingModalPanel(target) {
+            return !!(target && target.closest && target.closest('[data-floating-dropdown-panel]'));
+        }
+
         document.addEventListener('focusin', function (e) {
             if (!isOpen) return;
             if (modal.contains(e.target)) return;
+            if (isFloatingModalPanel(e.target)) return;
 
             var focusable = getFocusableElements();
             if (focusable.length) {

@@ -99,6 +99,11 @@
                 <a asp-area="PACT" asp-controller="WorkGroupTestCapability" asp-action="Index" asp-route-workGroup="@ViewBag.SourceWorkGroup"
                    class="govuk-back-link sup_align_right">Back</a>
                 }
+             @if ((ViewBag.NavigationSource as string) == "TestCapability")
+                {
+                 <a asp-area="PACT" asp-controller="TestCapability" asp-action="Index"
+                     class="govuk-back-link sup_align_right">Back</a>
+                }
         </div>
     </div>
 </div>

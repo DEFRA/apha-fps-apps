@@ -48,6 +48,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // Capture where the user navigated from (incoming) before overwriting it
+            ViewBag.NavigationSource = TempData.Peek("NavigationSource")?.ToString();
+            // Set the outgoing source so the next page (e.g. PortfolioMaintenance) can show a back link here
+            TempData["NavigationSource"] = "TestCapability";
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var testCapabilityGrid = await BuildTestCapabilityGridAsync(defaultRequest, viewBy: 1, filterValue: null);
             var testReqmtGrid = BuildEmptyTestReqmtGrid();
