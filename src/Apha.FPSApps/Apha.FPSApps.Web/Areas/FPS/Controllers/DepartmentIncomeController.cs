@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task PopulateDropdownsAsync(DepartmentIncomeViewModel model)
         {
             // Project dropdown — IProjectService (separate lookup service, not CRUD resource)
-            var projectsResult = await _projectService.GetAllProjectsAsync();
+            var projectsResult = await _projectService.GetDistinctParentProjectsAsync();
             if (projectsResult.Success && projectsResult.Data != null)
             {
                 model.ProjectList = projectsResult.Data
