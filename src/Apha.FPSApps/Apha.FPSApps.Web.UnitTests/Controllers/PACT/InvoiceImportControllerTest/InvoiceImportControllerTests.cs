@@ -1064,6 +1064,31 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceImportControllerTes
             Assert.Equal(5, model.Id);
         }
 
+        [Fact]
+        public async Task GetFailedInvoiceImport_Success_PopulatesProjectsViewBag()
+        {
+            // Arrange
+            var dto = new InvoiceImportRowDto { Id = 5, ProjectParent = "PRJ001" };
+            _invoiceService.GetFailedInvoiceImportByIdAsync(5)
+                .Returns(ApiResponseDto<InvoiceImportRowDto>.SuccessResponse(dto));
+            _mapper.Map<InvoiceImportFailedItem>(dto)
+                .Returns(new InvoiceImportFailedItem { Id = 5, ProjectParent = "PRJ001" });
+            SetupProjectsList(
+            [
+                new ProjectDto { ParentProject = "PRJ001" }
+            ]);
+
+            // Act
+            var result = await _controller.GetFailedInvoiceImport(5);
+
+            // Assert
+            Assert.IsType<PartialViewResult>(result);
+            var projects = Assert.IsType<List<SelectListItem>>(_controller.ViewBag.Projects);
+            var project = Assert.Single(projects);
+            Assert.Equal("PRJ001", project.Value);
+            Assert.Equal("PRJ001", project.Text);
+        }
+
         #endregion
 
         #region SaveFailedInvoiceImport

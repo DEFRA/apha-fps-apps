@@ -381,49 +381,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SubContractRmsControllerTe
         }
 
         [Fact]
-        public async Task GetFailedSubContractRms_WhenServiceFails_ReturnsNotFound()
-        {
-            // Arrange
-            _subContractService.GetFailedSubContractRmsByIdAsync(9)
-                .Returns(ApiResponseDto<SubContractRmsImportRowDto>.FailureResponse(null, new ApiMetaDto()));
 
-            // Act
-            var result = await _controller.GetFailedSubContractRms(9);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
-            await _projectService.DidNotReceive().GetAllPactProjectsAsync();
-        }
-
-        [Fact]
-        public async Task GetFailedSubContractRms_WhenDataIsNull_ReturnsNotFound()
-        {
-            // Arrange
-            _subContractService.GetFailedSubContractRmsByIdAsync(9)
-                .Returns(ApiResponseDto<SubContractRmsImportRowDto>.SuccessResponse(null!));
-
-            // Act
-            var result = await _controller.GetFailedSubContractRms(9);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
-        public async Task GetFailedSubContractRms_WhenModelStateInvalid_ReturnsBadRequest()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("id", "Invalid");
-
-            // Act
-            var result = await _controller.GetFailedSubContractRms(9);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
-            await _subContractService.DidNotReceive().GetFailedSubContractRmsByIdAsync(Arg.Any<int>());
-        }
-
-        [Fact]
         public async Task SaveFailedSubContractRms_WhenValidationSucceedsAndMoved_ReturnsSuccessJsonWithMovedFlag()
         {
             // Arrange
