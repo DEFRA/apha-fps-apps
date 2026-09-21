@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.FPS.Application.Validation;
 using Microsoft.AspNetCore.Authentication;
 using Npgsql;

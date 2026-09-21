@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.DataAccess.Context;
 
 namespace Apha.PIMS.Api.Middleware

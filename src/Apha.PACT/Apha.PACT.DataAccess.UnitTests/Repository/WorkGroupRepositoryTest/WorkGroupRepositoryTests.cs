@@ -1,4 +1,4 @@
-﻿    using Apha.Common.Helpers.Repository;
+    using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -17,7 +17,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         private static readonly string[] ExpectedOrderAscendingAB = { "WG_A", "WG_B" };
         private static readonly string[] ExpectedOrderNullFirst = { "WG_NULL", "WG_VALUE" };
 
-        // ── Factories ────────────────────────────────────────────────────────
+        // -- Factories --------------------------------------------------------
 
         /// <summary>
         /// WorkGroupRepository has no IFpsYearContext dependency and only reads data.
@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         private static WorkGroupRepository CreateRepository(IEnumerable<WorkGroup> workGroups)
             => CreateRepositoryWithMocks(workGroups).Repo;
 
-        // ── Staff-by-workgroup repository factory (three-set join) ───────────
+        // -- Staff-by-workgroup repository factory (three-set join) -----------
 
         private static WorkGroupRepository CreateRepositoryForStaffByWorkGroup(
             IEnumerable<PactWorkGroupGradeView> gradeViews,
@@ -64,7 +64,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
-        // ── Time-code repository factory (three-set join) ────────────────────
+        // -- Time-code repository factory (three-set join) --------------------
 
         private static PactWorkGroupGradeView GradeView(string wgGrade, string workGroup) =>
             new() { WgGrade = wgGrade, WorkGroup = workGroup };
@@ -123,7 +123,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 [StaffView(pactId, name, wgGrade)],
                 [TimeRecord(pactId, parentProject, timeCode, month, hours)]);
 
-        // ── Owners repository factory (staff/grade view join) ─────────────────────
+        // -- Owners repository factory (staff/grade view join) ---------------------
 
         private static PactWorkGroupGradeView OwnerGradeView(
             string wgGrade, string workGroup, string gradeCode) =>
@@ -148,7 +148,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
-        // ── WorkGroupView (budget) repository factory ─────────────────────────────
+        // -- WorkGroupView (budget) repository factory -----------------------------
 
         private static WorkGroupRepository CreateWorkGroupViewRepository(
             IEnumerable<WorkGroupView> workGroupViews,
@@ -282,7 +282,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             // Act
             var result = await repo.GetAllWorkGroupNamesAsync();
 
-            // Assert — result is List<string>, not WorkGroup objects
+            // Assert � result is List<string>, not WorkGroup objects
             Assert.Equal(2, result.Count);
             Assert.All(result, name => Assert.IsType<string>(name));
             Assert.Contains("WG_A", result);
@@ -411,9 +411,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
         #endregion
 
-        // ────────────────────────────────────────────────────────────────────
-        #region GetWorkGroupTimeCodeAsync — join / projection
-        // ────────────────────────────────────────────────────────────────────
+        // --------------------------------------------------------------------
+        #region GetWorkGroupTimeCodeAsync � join / projection
+        // --------------------------------------------------------------------
 
         [Fact]
         public async Task GetWorkGroupTimeCodeAsync_MatchingJoin_ReturnsProjectedRow()
@@ -501,9 +501,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
         #endregion
 
-        // ────────────────────────────────────────────────────────────────────
-        #region GetWorkGroupTimeCodeAsync — workGroup filter
-        // ────────────────────────────────────────────────────────────────────
+        // --------------------------------------------------------------------
+        #region GetWorkGroupTimeCodeAsync � workGroup filter
+        // --------------------------------------------------------------------
 
         [Fact]
         public async Task GetWorkGroupTimeCodeAsync_WorkGroupFilter_ReturnsMatchingRows()
@@ -561,9 +561,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
         #endregion
 
-        // ────────────────────────────────────────────────────────────────────
-        #region GetWorkGroupTimeCodeAsync — monthNumber filter
-        // ────────────────────────────────────────────────────────────────────
+        // --------------------------------------------------------------------
+        #region GetWorkGroupTimeCodeAsync � monthNumber filter
+        // --------------------------------------------------------------------
 
         [Fact]
         public async Task GetWorkGroupTimeCodeAsync_MonthNumberFilter_ReturnsMatchingRows()
@@ -607,9 +607,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
         #endregion
 
-        // ────────────────────────────────────────────────────────────────────
-        #region GetWorkGroupTimeCodeAsync — column filter (ApplyWorkGroupTimeCodeFilter)
-        // ────────────────────────────────────────────────────────────────────
+        // --------------------------------------------------------------------
+        #region GetWorkGroupTimeCodeAsync � column filter (ApplyWorkGroupTimeCodeFilter)
+        // --------------------------------------------------------------------
 
         [Fact]
         public async Task GetWorkGroupTimeCodeAsync_NullFilter_ReturnsAllRows()
@@ -822,7 +822,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
         #endregion
 
-        #region GetPagedAsync — FPS CostCentre sorting (ApplyFpsWorkGroupSorting)
+        #region GetPagedAsync � FPS CostCentre sorting (ApplyFpsWorkGroupSorting)
 
         [Fact]
         public async Task GetPagedAsync_SortByCostCentreAscending_OrdersByCostCentre()
@@ -889,7 +889,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             {
                 Page = 1,
                 PageSize = 10,
-                SortBy = "costcentre", // lower-case — switch lowers the key
+                SortBy = "costcentre", // lower-case � switch lowers the key
                 Descending = false
             };
 
@@ -937,8 +937,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         [InlineData("Owner", true, "C")]
         [InlineData("CentralOverhead", false, "A")]
         [InlineData("CentralOverhead", true, "C")]
-        [InlineData("UnknownColumn", false, "A")] // default arm → OrderBy(WorkGroupName)
-        [InlineData(null, false, "A")]            // null SortBy → default arm
+        [InlineData("UnknownColumn", false, "A")] // default arm ? OrderBy(WorkGroupName)
+        [InlineData(null, false, "A")]            // null SortBy ? default arm
         public async Task GetPagedAsync_AppliesFpsWorkGroupSorting_ForEachColumn(
             string? sortBy, bool descending, string expectedFirstWorkGroupName)
         {
@@ -1173,8 +1173,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var repo = CreateWorkGroupViewRepository(views, userEmail);
             var query = new PaginationParameters<string>
             {
-                Page = 0,      // non-positive → defaults to 1
-                PageSize = 0,  // non-positive → defaults to 5
+                Page = 0,      // non-positive ? defaults to 1
+                PageSize = 0,  // non-positive ? defaults to 5
                 SortBy = "WorkGroupName",
                 Descending = false
             };

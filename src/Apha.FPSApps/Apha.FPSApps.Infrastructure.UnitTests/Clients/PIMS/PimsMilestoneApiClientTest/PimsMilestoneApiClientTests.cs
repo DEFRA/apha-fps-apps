@@ -6,10 +6,10 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Web;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiClientTest
 {
@@ -363,10 +363,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             var dto = new MilestoneDto { Project = "PP001", Number = "M1" };
-            _mapper.Map<MilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<MilestoneReq>(dto).Throws(new Exception("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.SaveMilestoneAsync("PP001", dto));
+            await Assert.ThrowsAsync<Exception>(() => _client.SaveMilestoneAsync("PP001", dto));
         }
 
         #endregion
@@ -1500,10 +1500,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
-            _mapper.Map<StagingMilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<StagingMilestoneReq>(dto).Throws(new Exception("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.AddStagingRowAsync(dto, 2025));
+            await Assert.ThrowsAsync<Exception>(() => _client.AddStagingRowAsync(dto, 2025));
         }
 
         #endregion

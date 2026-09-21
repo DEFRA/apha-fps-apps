@@ -1,10 +1,10 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -50,7 +50,7 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Gets a paged list of animal costs filtered by animal type (ASU Data View — frmAnimalCosts).
+        /// Gets a paged list of animal costs filtered by animal type (ASU Data View � frmAnimalCosts).
         /// No user-email guard: returns records across all projects for the current FPS year.
         /// Converted from qryJobAnimalCost filtered via fsubAnimalCosts LinkMasterFields (AnimalType).
         /// </summary>
