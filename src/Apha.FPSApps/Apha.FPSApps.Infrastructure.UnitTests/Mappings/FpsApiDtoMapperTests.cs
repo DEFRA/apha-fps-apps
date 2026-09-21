@@ -54,7 +54,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Mappings
             config.NewConfig<BulkRatesUploadResultRes, BulkRatesUploadResultDto>();
             config.NewConfig<BulkRatesStagingDataRes, BulkRatesStagingDataDto>();
 
-            config.Compile();
+            var exception = Record.Exception(() => config.Compile());
+
+            Assert.Null(exception);
         }
 
         [Fact]
