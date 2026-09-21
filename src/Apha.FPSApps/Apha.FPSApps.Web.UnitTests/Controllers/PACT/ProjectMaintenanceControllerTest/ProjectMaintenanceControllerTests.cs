@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using System.Text.Json;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControllerTest
 {

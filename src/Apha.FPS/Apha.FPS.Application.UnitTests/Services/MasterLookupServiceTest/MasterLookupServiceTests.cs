@@ -4,11 +4,11 @@ using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Npgsql;
 using Xunit;
+using MapsterMapper;
 
 namespace Apha.FPS.Application.UnitTests.Services.MasterLookupServiceTest
 {

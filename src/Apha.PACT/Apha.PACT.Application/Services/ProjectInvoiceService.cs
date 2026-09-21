@@ -6,8 +6,9 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.Common.Utilities.ExcelImport;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.Extensions.Logging;
+using MapsterMapper;
 
 namespace Apha.PACT.Application.Services
 {
