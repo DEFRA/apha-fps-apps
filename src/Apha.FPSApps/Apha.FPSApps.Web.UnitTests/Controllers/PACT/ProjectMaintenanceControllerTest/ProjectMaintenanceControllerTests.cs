@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using System.Text.Json;
+using Mapster;
 using MapsterMapper;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControllerTest
@@ -1705,8 +1706,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
 
         private static IMapper CreateRealPactMapper()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<PactViewModelMapper>(), NullLoggerFactory.Instance);
-            return config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Apply(new PactViewModelMapper());
+            return new Mapper(config);
         }
 
         [Fact]
