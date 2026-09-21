@@ -21,6 +21,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsAsync()
             => await _fpsClient.FpsProject.GetAllProjectsAsync();
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetDistinctParentProjectsAsync()
+            => await _fpsClient.FpsProject.GetDistinctParentProjectsAsync();
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync()
             => await _fpsClient.FpsProject.GetAllProjectsForAllUsersAsync();
 

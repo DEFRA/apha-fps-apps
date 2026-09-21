@@ -208,6 +208,31 @@ namespace Apha.Common.Constants
         public const string UpdateReport = "api/v1/report/{0}";
         public const string DeleteReport = "api/v1/report/{0}";
 
+        // Review Item
+        public const string GetAllReviewItems = "api/v1/reviewitem";
+        public const string GetPagedReviewItems = "api/v1/reviewitem/paged";
+        public const string GetReviewItemById = "api/v1/reviewitem/{0}";
+        public const string CreateReviewItem = "api/v1/reviewitem";
+        public const string UpdateReviewItem = "api/v1/reviewitem/{0}";
+        public const string DeleteReviewItem = "api/v1/reviewitem/{0}";
+
+        // Report Group
+        public const string GetAllReportGroups = "api/v1/reportgroup";
+        public const string GetPagedReportGroups = "api/v1/reportgroup/paged";
+        public const string GetReportGroupsByReportId = "api/v1/reportgroup/byreport/{0}";
+        public const string GetReportGroupById = "api/v1/reportgroup/{0}";
+        public const string CreateReportGroup = "api/v1/reportgroup";
+        public const string UpdateReportGroup = "api/v1/reportgroup/{0}";
+        public const string DeleteReportGroup = "api/v1/reportgroup/{0}";
+
+        // Report Group Link
+        public const string GetAllReportGroupLinks = "api/v1/reportgrouplink";
+        public const string GetReportGroupLinkById = "api/v1/reportgrouplink/{0}";
+        public const string GetReportGroupLinkByReportAndGroup = "api/v1/reportgrouplink/{0}/{1}";
+        public const string CreateReportGroupLink = "api/v1/reportgrouplink";
+        public const string UpdateReportGroupLink = "api/v1/reportgrouplink/{0}/{1}";
+        public const string DeleteReportGroupLink = "api/v1/reportgrouplink/{0}/{1}";
+
         // Risk
         public const string GetAllRiskRatings = "api/v1/risk-ratings";
         public const string GetPagedRiskRatings = "api/v1/risk-ratings/paged";

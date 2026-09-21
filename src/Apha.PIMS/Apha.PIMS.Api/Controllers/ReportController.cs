@@ -48,7 +48,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetReportById(int id)
         {
             ReportDto? result = await _service.GetReportByIdAsync(id);
-            return result is null ? NotFound() : Ok(_mapper.Map<ReportRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ReportRes>();
+            }
+
+            return Ok(_mapper.Map<ReportRes>(result));
         }
 
         /// <summary>Create a new report.</summary>
@@ -77,6 +82,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeleteReportAsync(id);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -13,10 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
     {
         private readonly IPimsHttpExecutor _http;
         private readonly IMapper _mapper;
-        
-        private const string InternalCodeError = "INTERNAL_ERROR";
-        
-        private const string BaseUrl = "api/v1/reviewitem";
 
         public PimsReviewItemApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -24,137 +21,83 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             _mapper = mapper;
         }
 
-        
+
         public async Task<ApiResponseDto<List<ReviewItemDto>>> GetAllReviewItemsAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<ReviewItemRes>>(BaseUrl);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<ReviewItemDto>>>(response);
+            var response = await _http.GetAsync<List<ReviewItemRes>>(PimsApiEndpoints.GetAllReviewItems);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ReviewItemDto>>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<List<ReviewItemDto>>>(response);
-                return ApiResponseDto<List<ReviewItemDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ReviewItemDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve ReviewItem data", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<List<ReviewItemDto>>>(response);
+            return ApiResponseDto<List<ReviewItemDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-       
+
         public async Task<ApiResponseDto<PaginatedResult<ReviewItemDto>>> GetPagedReviewItemsAsync(QueryParameters<string> query)
         {
-            try
+            string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetPagedReviewItems, query);
+            var response = await _http.GetAsync<List<ReviewItemRes>>(url);
+            if (response.Success)
             {
-                string url = QueryStringHelper.AddQueryString($"{BaseUrl}/paged", query);
-                var response = await _http.GetAsync<List<ReviewItemRes>>(url);
-                if (response.Success)
-                {
-                    var items = _mapper.Map<List<ReviewItemDto>>(response.Data ?? []);
-                    var pageNumber = response.Pagination?.PageNumber ?? query.Page;
-                    var pageSize = response.Pagination?.PageSize ?? query.PageSize;
-                    var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
-                    var paged = new PaginatedResult<ReviewItemDto>(items, totalRecords, pageNumber, pageSize);
-                    return ApiResponseDto<PaginatedResult<ReviewItemDto>>.SuccessResponse(paged);
-                }
+                var items = _mapper.Map<List<ReviewItemDto>>(response.Data ?? []);
+                var pageNumber = response.Pagination?.PageNumber ?? query.Page;
+                var pageSize = response.Pagination?.PageSize ?? query.PageSize;
+                var totalRecords = response.Pagination?.TotalRecords ?? items.Count;
+                var paged = new PaginatedResult<ReviewItemDto>(items, totalRecords, pageNumber, pageSize);
+                return ApiResponseDto<PaginatedResult<ReviewItemDto>>.SuccessResponse(paged);
+            }
 
-                return ApiResponseDto<PaginatedResult<ReviewItemDto>>.FailureResponse(
-                    _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
-                    _mapper.Map<ApiMetaDto>(response.Meta));
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<PaginatedResult<ReviewItemDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve paged ReviewItem data", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            return ApiResponseDto<PaginatedResult<ReviewItemDto>>.FailureResponse(
+                _mapper.Map<List<ApiErrorDto>>(response.Errors ?? []),
+                _mapper.Map<ApiMetaDto>(response.Meta));
         }
 
-        
+
         public async Task<ApiResponseDto<ReviewItemDto>> GetReviewItemByIdAsync(int itemId)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{itemId}";
-                var response = await _http.GetAsync<ReviewItemRes>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
+            var url = string.Format(PimsApiEndpoints.GetReviewItemById, itemId);
+            var response = await _http.GetAsync<ReviewItemRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
-                return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ReviewItemDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve ReviewItem by ID", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
+            return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-       
+
         public async Task<ApiResponseDto<ReviewItemDto>> CreateReviewItemAsync(ReviewItemDto dto)
         {
-            try
-            {
-                var request = _mapper.Map<ReviewItemReq>(dto);
-                var response = await _http.PostAsync<ReviewItemReq, ReviewItemRes>(BaseUrl, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
+            var request = _mapper.Map<ReviewItemReq>(dto);
+            var response = await _http.PostAsync<ReviewItemReq, ReviewItemRes>(PimsApiEndpoints.CreateReviewItem, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
-                return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ReviewItemDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to create ReviewItem", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
+            return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<ReviewItemDto>> UpdateReviewItemAsync(int itemId, ReviewItemDto dto)
         {
-            try
-            {
-                var request = _mapper.Map<ReviewItemReq>(dto);
-                var url = $"{BaseUrl}/{itemId}";
-                var response = await _http.PutAsync<ReviewItemReq, ReviewItemRes>(url, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
+            var request = _mapper.Map<ReviewItemReq>(dto);
+            var url = string.Format(PimsApiEndpoints.UpdateReviewItem, itemId);
+            var response = await _http.PutAsync<ReviewItemReq, ReviewItemRes>(url, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
-                return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ReviewItemDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to update ReviewItem", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<ReviewItemDto>>(response);
+            return ApiResponseDto<ReviewItemDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-       
+
         public async Task<ApiResponseDto<bool>> DeleteReviewItemAsync(int itemId)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{itemId}";
-                var response = await _http.DeleteAsync<bool>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            var url = string.Format(PimsApiEndpoints.DeleteReviewItem, itemId);
+            var response = await _http.DeleteAsync<bool>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to delete ReviewItem", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }
