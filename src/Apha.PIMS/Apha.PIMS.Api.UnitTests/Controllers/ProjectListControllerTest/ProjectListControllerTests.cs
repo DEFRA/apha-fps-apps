@@ -302,5 +302,80 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
         }
 
         #endregion
+
+        #region GetProjectsDetailsForMilestoneAsync
+
+        [Fact]
+        public async Task GetProjectsDetailsForMilestoneAsync_WhenServiceReturnsResult_ReturnsOkResult_WithMappedDetail()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            var dto = new ProjectDetailsMilestoneDto
+            {
+                Parentproject = parentproject,
+                Program = "animalsurv",
+                Customer = "CUST1",
+                ProjectGroup = "GRP1",
+                Formrequired = true,
+                TypeLookUp = 'D'
+            };
+            var res = new ProjectDetailsMilestoneRes
+            {
+                Parentproject = parentproject,
+                Program = "animalsurv",
+                Customer = "CUST1",
+                ProjectGroup = "GRP1",
+                Formrequired = true,
+                TypeLookUp = 'D'
+            };
+
+            _service.GetProjectsDetailsForMilestoneAsync(parentproject).Returns(dto);
+            _mapper.Map<ProjectDetailsMilestoneRes>(dto).Returns(res);
+
+            // Act
+            var result = await _controller.GetProjectsDetailsForMilestoneAsync(parentproject);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(res, okResult.Value);
+            await _service.Received(1).GetProjectsDetailsForMilestoneAsync(parentproject);
+            _mapper.Received(1).Map<ProjectDetailsMilestoneRes>(dto);
+        }
+
+        [Fact]
+        public async Task GetProjectsDetailsForMilestoneAsync_WhenServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetProjectsDetailsForMilestoneAsync(parentproject).Returns((ProjectDetailsMilestoneDto?)null);
+
+            // Act
+            var result = await _controller.GetProjectsDetailsForMilestoneAsync(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<ProjectDetailsMilestoneRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            await _service.Received(1).GetProjectsDetailsForMilestoneAsync(parentproject);
+            _mapper.DidNotReceive().Map<ProjectDetailsMilestoneRes>(Arg.Any<ProjectDetailsMilestoneDto>());
+        }
+
+        [Fact]
+        public async Task GetProjectsDetailsForMilestoneAsync_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetProjectsDetailsForMilestoneAsync(parentproject).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetProjectsDetailsForMilestoneAsync(parentproject));
+
+            await _service.Received(1).GetProjectsDetailsForMilestoneAsync(parentproject);
+            _mapper.DidNotReceive().Map<ProjectDetailsMilestoneRes>(Arg.Any<ProjectDetailsMilestoneDto>());
+        }
+
+        #endregion
     }
 }

@@ -160,6 +160,33 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
         }
 
         [Fact]
+        public async Task Index_ManagerListDeduplicatesRepeatedManagerNames()
+        {
+            // Arrange — the managers lookup returns one row per workgroup/grade assignment, so
+            // the same person appears several times, including casing/whitespace variants.
+            _programService.GetAllProgramsAsync()
+                .Returns(MakeProgramResponse(("P001", "Programme One")));
+            _projectService.GetManagersAsync()
+                .Returns(MakeManagerResponse(
+                    "Aaron, Basia",
+                    "Aaron, Basia",
+                    " aaron, basia ",
+                    "Abad, Jasen"));
+            _projectService.GetAllCustomersAsync()
+                .Returns(MakeCustomerResponse("ACME Ltd"));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert — each manager offered exactly once
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectProfitabilityVlaViewModel>(viewResult.Model);
+            Assert.Equal(2, model.ManagerList.Count);
+            Assert.Single(model.ManagerList, m => m.Value == "Aaron, Basia");
+            Assert.Single(model.ManagerList, m => m.Value == "Abad, Jasen");
+        }
+
+        [Fact]
         public async Task Index_CustomerListIsPopulatedFromProjectService()
         {
             // Arrange

@@ -77,6 +77,10 @@ namespace Apha.PIMS.Api.Controllers
                 convertedFiscalMonth,
                 string.IsNullOrWhiteSpace(contractFilter) ? "*" : contractFilter,
                 programFilter);
+            if (pagedData is null)
+            {
+                return CreateNullSuccessResponse<PaginationRes<MonitoringReportDataRes>>();
+            }
 
             var response = new PaginationRes<MonitoringReportDataRes>
             {
@@ -118,6 +122,10 @@ namespace Apha.PIMS.Api.Controllers
                 convertedReportYear,
                 convertedFiscalMonth,
                 programFilter);
+            if (pagedData is null)
+            {
+                return CreateNullSuccessResponse<PaginationRes<ProgramCustomerMonitoringReportDataRes>>();
+            }
 
             var response = new PaginationRes<ProgramCustomerMonitoringReportDataRes>
             {
@@ -127,6 +135,20 @@ namespace Apha.PIMS.Api.Controllers
             };
 
             return Ok(response);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
 
         private static short ConvertCalendarInputToAccessReportYear(short reportYear, short reportMonth)

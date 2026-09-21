@@ -25,6 +25,9 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
             _sut = new ProjectInvoiceService(_mockRepository, _mockMapper);
         }
 
+        private static MonthlyInvoicesSummary MakeSummaryRow(string program, string project, int month, decimal amount)
+            => new() { FpsYear = 2025, Program = program, ParentProject = project, Month = month, MonthlyAmount = amount };
+
         #region GetPagedProjectInvoicesAsync
 
         [Fact]
@@ -669,7 +672,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
 
             result.PassedCount.Should().Be(1);
             result.FailedCount.Should().Be(0);
-            result.Message.Should().Contain("1 out of 1");
+            result.Message.Should().Contain("All 1 records successfully validated and is now live.");
         }
 
         [Fact]
@@ -816,7 +819,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
 
             var result = await _sut.ImportInvoiceAsync(request, "user1");
 
-            result.Message.Should().Be("Import completed successfully. 2 out of 2 records successfully validated and is now live.");
+            result.Message.Should().Be("Import completed successfully. All 2 records successfully validated and is now live. ");
         }
 
         [Fact]
@@ -1089,7 +1092,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
             // 1 from failedRows + 1 from rowsToUpdate
             result.FailedCount.Should().Be(2);
             result.PassedCount.Should().Be(0);
-            result.Message.Should().Contain("0 out of 2");
+            result.Message.Should().Contain("All 2 records failed validation.");
         }
 
         #endregion
@@ -1237,6 +1240,189 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
             var result = await _sut.DeleteFailedInvoiceImportByIdAsync(99, "user1");
 
             result.Should().BeFalse();
+        }
+
+        #endregion
+
+        #region GetMonthlyInvoicesSummaryAsync
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithRows_GroupsByProgramAndProject()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var params_ = new PaginationParameters<string>();
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(params_);
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(params_).Returns(
+            [
+                MakeSummaryRow("PROG1", "PRJ001", 1, 100m),
+                MakeSummaryRow("PROG1", "PRJ001", 2, 200m),
+                MakeSummaryRow("PROG2", "PRJ002", 1, 300m)
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.Rows.Count);
+            var row1 = result.Rows.First(r => r.Program == "PROG1");
+            Assert.Equal(100m, row1.MonthlyAmounts[1]);
+            Assert.Equal(200m, row1.MonthlyAmounts[2]);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_WithNoRows_ReturnsEmptyPivot()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns([]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Empty(result.Rows);
+            Assert.Empty(result.Months);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_PaginationMetadata_CalculatedCorrectly()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 2 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            // 3 distinct (Program, Project) groups → TotalRecords = 3, TotalPages = 2
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
+            [
+                MakeSummaryRow("A", "PRJ1", 1, 10m),
+                MakeSummaryRow("B", "PRJ2", 1, 20m),
+                MakeSummaryRow("C", "PRJ3", 1, 30m)
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Equal(3, result.Pagination.TotalRecords);
+            Assert.Equal(2, result.Pagination.TotalPages);
+            Assert.Equal(1, result.Pagination.PageNumber);
+            Assert.Equal(2, result.Pagination.PageSize);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_SortByProgram_SortsAscendingByDefault()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { SortBy = "Program", Descending = false, Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
+            [
+                MakeSummaryRow("Z", "PRJ2", 1, 10m),
+                MakeSummaryRow("A", "PRJ1", 1, 20m)
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Equal("A", result.Rows[0].Program);
+            Assert.Equal("Z", result.Rows[1].Program);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_SortByMonthColumn_SortsByMonthlyAmount()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { SortBy = "M1", Descending = false, Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
+            [
+                MakeSummaryRow("B", "PRJ2", 1, 500m),
+                MakeSummaryRow("A", "PRJ1", 1, 100m)
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Equal(100m, result.Rows[0].MonthlyAmounts[1]);
+            Assert.Equal(500m, result.Rows[1].MonthlyAmounts[1]);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_SortByProgramDescending_SortsDescending()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { SortBy = "Program", Descending = true, Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
+            [
+                MakeSummaryRow("A", "PRJ1", 1, 10m),
+                MakeSummaryRow("Z", "PRJ2", 1, 20m)
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Equal("Z", result.Rows[0].Program);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_PageTwo_ReturnsSecondPageRows()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
+            [
+                MakeSummaryRow("A", "PRJ1", 1, 10m),
+                MakeSummaryRow("B", "PRJ2", 1, 20m)
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Single(result.Rows);
+            Assert.Equal("B", result.Rows[0].Program);
+            Assert.Equal(2, result.Pagination.PageNumber);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummaryAsync_RowWithNullAmount_DefaultsToZero()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetMonthlyInvoicesSummaryAsync(Arg.Any<PaginationParameters<string>>()).Returns(
+            [
+                new MonthlyInvoicesSummary { FpsYear = 2025, Program = "A", ParentProject = "PRJ1", Month = 1, MonthlyAmount = null }
+            ]);
+
+            // Act
+            var result = await _sut.GetMonthlyInvoicesSummaryAsync(query);
+
+            // Assert
+            Assert.Equal(0m, result.Rows[0].MonthlyAmounts[1]);
+        }
+
+        #endregion
+
+        #region GetTotalAmountAsync
+
+        [Fact]
+        public async Task GetTotalAmountAsync_ValidParentProject_DelegatesToRepository()
+        {
+            // Arrange
+            _mockRepository.GetTotalAmountAsync("PRJ001").Returns(2000m);
+
+            // Act
+            var result = await _sut.GetTotalAmountAsync("PRJ001");
+
+            // Assert
+            Assert.Equal(2000m, result);
         }
 
         #endregion

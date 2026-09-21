@@ -429,6 +429,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TimeCodeValidRepositoryTest
 
         #endregion
 
+        #region SetWorkgroupsActiveStatusByJobCodeAsync
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_ThrowsException_BecauseBulkUpdateRequiresDatabase(bool isActive)
+        {
+            // ExecuteUpdateAsync is a bulk EF Core operation that cannot
+            // be exercised against an in-memory mock query provider.
+            var timeCodes = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = !isActive, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(timeCodes);
+
+            await Assert.ThrowsAnyAsync<Exception>(() =>
+                repo.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive));
+        }
+
+        #endregion
+
         #region CopyWorkGroupAsync
 
         [Fact]

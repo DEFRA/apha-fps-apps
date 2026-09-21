@@ -146,6 +146,24 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.QueryReportControllerTest
             await _service.Received(1).GetMonitoringReportDataAsync(parameters, 2025, 1, "LabTGen", programFilter);
         }
 
+        [Fact]
+        public async Task GetMonitoringReportData_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);
+            _service.GetMonitoringReportDataAsync(parameters, 2024, 10, "*", null)
+                .Returns((PagedData<MonitoringReportData>)null!);
+
+            var result = await _controller.GetMonitoringReportData(query, 2025, 1, "*", null);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var payload = Assert.IsType<ApiResponse<PaginationRes<MonitoringReportDataRes>>>(jsonResult.Value);
+            Assert.True(payload.Success);
+            Assert.Null(payload.Data);
+        }
+
         [Theory]
         [InlineData((short)0)]
         [InlineData((short)13)]
@@ -255,6 +273,24 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.QueryReportControllerTest
 
             Assert.IsType<OkObjectResult>(result);
             await _service.Received(1).GetProgramCustomerMonitoringReportDataAsync(parameters, 2025, 1, programFilter);
+        }
+
+        [Fact]
+        public async Task GetProgramCustomerMonitoringReportData_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(parameters);
+            _service.GetProgramCustomerMonitoringReportDataAsync(parameters, 2024, 10, null)
+                .Returns((PagedData<ProgramCustomerMonitoringReportData>)null!);
+
+            var result = await _controller.GetProgramCustomerMonitoringReportData(query, 2025, 1, null);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var payload = Assert.IsType<ApiResponse<PaginationRes<ProgramCustomerMonitoringReportDataRes>>>(jsonResult.Value);
+            Assert.True(payload.Success);
+            Assert.Null(payload.Data);
         }
 
         [Theory]

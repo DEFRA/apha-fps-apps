@@ -1,3 +1,4 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
@@ -60,6 +61,28 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProposedProjectControllerTest
 
             await _service.Received(1).GetProposedProjectByIdAsync(parentproject);
             _mapper.Received(1).Map<ProposedProjectRes>(proposedDto);
+        }
+
+        [Fact]
+        public async Task GetProposedProjectById_WhenServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetProposedProjectByIdAsync(parentproject).Returns((ProposedProjectDto?)null);
+
+            // Act
+            var result = await _controller.GetProposedProjectById(parentproject);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = Assert.IsType<ApiResponse<ProposedProjectRes>>(jsonResult.Value);
+            Assert.True(value.Success);
+            Assert.Null(value.Data);
+            Assert.NotNull(value.Meta);
+            Assert.False(string.IsNullOrWhiteSpace(value.Meta.CorrelationId));
+
+            await _service.Received(1).GetProposedProjectByIdAsync(parentproject);
+            _mapper.DidNotReceive().Map<ProposedProjectRes>(Arg.Any<ProposedProjectDto>());
         }
 
         [Fact]

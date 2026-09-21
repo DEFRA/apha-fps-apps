@@ -382,11 +382,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task DeleteProfitCentreAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var apiResponse = SuccessApiResponse<bool?>(true);
-            var expected    = ApiResponseDto<bool>.SuccessResponse(true);
+            var apiResponse = SuccessApiResponse<object>(new { success = true });
 
-            _http.DeleteAsync<bool?>(Arg.Is<string>(u => u.Contains("PC01"))).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expected);
+            _http.DeleteAsync<object>(Arg.Is<string>(u => u.Contains("PC01"))).Returns(apiResponse);
 
             // Act
             var result = await _client.DeleteProfitCentreAsync("PC01");
@@ -394,13 +392,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
+            Assert.True(result.Data);
         }
 
         [Fact]
         public async Task DeleteProfitCentreAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var apiResponse = FailureApiResponse<bool?>();
+            var apiResponse = FailureApiResponse<object>();
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
@@ -408,7 +407,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
                 Meta    = new ApiMetaDto()
             };
 
-            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _http.DeleteAsync<object>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act

@@ -96,26 +96,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
         }
 
         [Fact]
-        public async Task GetMonitoringReportDataAsync_WhenHttpThrows_ReturnsInternalError()
+        public async Task GetMonitoringReportDataAsync_WhenHttpThrows_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _http.GetAsync<List<MonitoringReportDataRes>>(Arg.Any<string>())
                 .ThrowsAsync(new Exception("network"));
 
-            // Act
-            var result = await _client.GetMonitoringReportDataAsync(query, 2025, 8);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve monitoring query report data", result.Errors[0].Message);
+            // Act + Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetMonitoringReportDataAsync(query, 2025, 8));
         }
 
         [Fact]
-        public async Task GetMonitoringReportDataAsync_WhenMapperThrows_ReturnsInternalError()
+        public async Task GetMonitoringReportDataAsync_WhenMapperThrows_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -125,13 +118,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
             _mapper.Map<ApiResponseDto<List<MonitoringReportDataDto>>>(apiResponse)
                 .Throws(new InvalidOperationException("map failed"));
 
-            // Act
-            var result = await _client.GetMonitoringReportDataAsync(query, 2025, 8);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("INTERNAL_ERROR", result.Errors![0].Code);
-            Assert.Equal("Failed to retrieve monitoring query report data", result.Errors[0].Message);
+            // Act + Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetMonitoringReportDataAsync(query, 2025, 8));
         }
 
         [Fact]
@@ -197,26 +185,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
         }
 
         [Fact]
-        public async Task GetProgramCustomerMonitoringReportDataAsync_WhenHttpThrows_ReturnsInternalError()
+        public async Task GetProgramCustomerMonitoringReportDataAsync_WhenHttpThrows_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             _http.GetAsync<List<ProgramCustomerMonitoringReportDataRes>>(Arg.Any<string>())
                 .ThrowsAsync(new Exception("network"));
 
-            // Act
-            var result = await _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal("Failed to retrieve program and customer monitoring report data", result.Errors[0].Message);
+            // Act + Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2));
         }
 
         [Fact]
-        public async Task GetProgramCustomerMonitoringReportDataAsync_WhenMapperThrows_ReturnsInternalError()
+        public async Task GetProgramCustomerMonitoringReportDataAsync_WhenMapperThrows_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
@@ -226,13 +207,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
             _mapper.Map<ApiResponseDto<List<ProgramCustomerMonitoringReportDataDto>>>(apiResponse)
                 .Throws(new InvalidOperationException("map failed"));
 
-            // Act
-            var result = await _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("INTERNAL_ERROR", result.Errors![0].Code);
-            Assert.Equal("Failed to retrieve program and customer monitoring report data", result.Errors[0].Message);
+            // Act + Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2));
         }
     }
 }

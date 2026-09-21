@@ -18,6 +18,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Diseases
                 .AsNoTracking()
+                .OrderBy(d => d.DiseaseName)
                 .ToListAsync();
         }
     }

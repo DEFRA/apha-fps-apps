@@ -633,6 +633,27 @@ public class YearlyDetailsControllerTests
 
     #endregion
 
+    #region CopyYearData
+
+    [Fact]
+    public async Task CopyYearData_ReturnsOk_WhenCopiedSuccessfully()
+    {
+        var req = new CopyYearDataReq { SourceYear = 2024, TargetYear = 2025 };
+
+        _service.CopyYearDataAsync("2024/001", 2024, 2025)
+            .Returns((true, (IReadOnlyList<string>)Array.Empty<string>()));
+
+        var result = await _controller.CopyYearData("2024/001", req);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.True(apiResponse.Data);
+        await _service.Received(1).CopyYearDataAsync("2024/001", 2024, 2025);
+    }
+
+    #endregion
+
     #region DeleteStaffRequirement - false result
 
     [Fact]

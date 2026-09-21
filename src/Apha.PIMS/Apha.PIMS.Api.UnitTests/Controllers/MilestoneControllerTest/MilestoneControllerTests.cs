@@ -147,8 +147,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var result = await _controller.GetMilestone(project, number);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Null(okResult.Value);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = jsonResult.Value as ApiResponse<MilestoneRes>;
+
+            Assert.NotNull(response);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.NotEmpty(response.Meta.CorrelationId);
 
             _mapper.DidNotReceive().Map<MilestoneRes>(Arg.Any<MilestoneDto>());
         }
@@ -628,8 +634,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var result = await _controller.GetMilestoneFormDates(parent, year);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Null(okResult.Value);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = jsonResult.Value as ApiResponse<MilestoneFormDatesRes>;
+
+            Assert.NotNull(response);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+            Assert.NotEmpty(response.Meta.CorrelationId);
 
             _mapper.DidNotReceive().Map<MilestoneFormDatesRes>(Arg.Any<MilestoneFormDatesDto>());
         }

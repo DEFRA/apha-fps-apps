@@ -119,7 +119,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectManagerControllerTest
         }
 
         [Fact]
-        public async Task GetById_ServiceReturnsNull_ReturnsNotFound()
+        public async Task GetById_ServiceReturnsNull_ReturnsJsonSuccessResponseWithNullData()
         {
             // Arrange
             _service.GetProjectManagerByNameAsync(Arg.Any<string>()).Returns((ProjectManagerDto?)null);
@@ -128,7 +128,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectManagerControllerTest
             var result = await _controller.GetProjectManagerByName("Unknown");
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var apiResponse = Assert.IsType<Apha.Common.Contracts.ApiResponse<ProjectManagerRes>>(jsonResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.Null(apiResponse.Data);
+            Assert.NotNull(apiResponse.Meta);
+            await _service.Received(1).GetProjectManagerByNameAsync("Unknown");
+            _mapper.DidNotReceive().Map<ProjectManagerRes>(Arg.Any<ProjectManagerDto>());
         }
 
         [Fact]

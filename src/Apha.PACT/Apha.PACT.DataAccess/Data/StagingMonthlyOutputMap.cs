@@ -14,7 +14,6 @@ namespace Apha.PACT.DataAccess.Data
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Buyer)
-                .HasMaxLength(20)
                 .HasColumnName("buyer");
             entity.Property(e => e.FailureComments)
                 .HasColumnType("character varying")
@@ -22,11 +21,9 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.Passed).HasColumnName("passed");
             entity.Property(e => e.TestCode)
-                .HasMaxLength(20)
                 .HasColumnName("testcode");
             entity.Property(e => e.Volume).HasColumnName("volume");
             entity.Property(e => e.WorkGroup)
-                .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.Filename)
                 .HasMaxLength(255)

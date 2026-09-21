@@ -427,6 +427,34 @@ namespace Apha.PACT.Api.UnitTests.Controller.TimeCodeValidControllerTest
 
         #endregion
 
+        #region SetWorkgroupsActiveStatusByJobCode
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCode_HappyPath_ReturnsOk(bool isActive)
+        {
+            _serviceMock.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive).Returns(true);
+
+            var result = await _controller.SetWorkgroupsActiveStatusByJobCode("JC1", "PRJ1", isActive);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCode_ServiceReturnsFalse_ReturnsOkFalse()
+        {
+            _serviceMock.SetWorkgroupsActiveStatusByJobCodeAsync("JC_MISSING", "PRJ1", true).Returns(false);
+
+            var result = await _controller.SetWorkgroupsActiveStatusByJobCode("JC_MISSING", "PRJ1", true);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.False((bool)okResult.Value!);
+        }
+
+        #endregion
+
         #region CopyWorkGroup
 
         [Fact]

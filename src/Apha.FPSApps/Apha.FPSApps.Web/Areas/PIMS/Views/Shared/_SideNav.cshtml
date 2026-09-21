@@ -2,6 +2,8 @@
 
 @{
     string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    string? selectedProject = string.IsNullOrWhiteSpace(Model?.Parentproject) ? null : Model.Parentproject;
+    bool showSideNav = !string.IsNullOrWhiteSpace(selectedProject);
 
     string GetActiveClass(string controllerName) =>
         string.Equals(currentController, controllerName, StringComparison.OrdinalIgnoreCase)
@@ -9,29 +11,83 @@
             : string.Empty;
 }
 
-<!-- ── Side Navigation ─────────────────────────────────────────── -->
-<nav class="sidenav flex-column flex-shrink-0" id="shortnav">
-    <button class="toggle-btn" onclick="toggleSidebar()" style="right: -8px; top: 30px"
-            aria-label="Toggle side navigation">
-        <img src="~/images/chevron-left-solid-full.svg" width="20"
-             alt="side menu left arrow" style="margin: -2px 5px 0 0px" />
-    </button>
-    <ul>
-        <li class="sidebar-link-two@(GetActiveClass("ProjectDetails"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
-            <a href="@Url.Action("Index", "ProjectDetails", new { area = "PIMS", parentproject = Model.Parentproject })"
-               style="color: #fff">Project Details</a>
-        </li>
+@if (showSideNav)
+{
+    <!-- ── Side Navigation ─────────────────────────────────────────── -->
+    <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
+        <button class="toggle-btn" onclick="toggleSidebar()" style="right: -8px; top: 30px"
+                aria-label="Toggle side navigation">
+            <img src="~/images/chevron-left-solid-full.svg" width="20"
+                 alt="side menu left arrow" style="margin: -2px 5px 0 0px" />
+        </button>
+        <ul>
+            <li class="sidebar-link-two@(GetActiveClass("ProjectDetails"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
+                <a href="@Url.Action("Index", "ProjectDetails", new { area = "PIMS", parentproject = selectedProject })"
+                   data-project-route="parentproject"
+                   style="color: #fff">Project Details</a>
+            </li>
 
-        <li class="sidebar-link-two@(GetActiveClass("ProjectYearCosts"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
-            <a href="@Url.Action("Index", "ProjectYearCosts", new { area = "PIMS", parentproject = Model.Parentproject })"
-               style="color: #fff">Yearly Finances</a>
-        </li>
-       
-        <li class="sidebar-link-two@(GetActiveClass("Comment"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
-            <a href="@Url.Action("Index", "Comment", new { area = "PIMS", parentproject = Model.Parentproject })"
-               style="color: #fff">Comments</a>
-        </li>
+            <li class="sidebar-link-two@(GetActiveClass("ProjectYearCosts"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
+                <a href="@Url.Action("Index", "ProjectYearCosts", new { area = "PIMS", parentproject = selectedProject })"
+                   data-project-route="parentproject"
+                   style="color: #fff">Yearly Finances</a>
+            </li>
 
+            <li class="sidebar-link-two@(GetActiveClass("YearlyFinancialData"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
+                <a href="@Url.Action("Index", "YearlyFinancialData", new { area = "PIMS", parentproject = selectedProject })"
+                   data-project-route="parentproject"
+                   style="color: #fff">Yearly Financial Details</a>
+            </li>
 
-    </ul>
-</nav>
+            <li class="sidebar-link-two@(GetActiveClass("Milestone"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
+                <a href="@Url.Action("Index", "Milestone", new { area = "PIMS", parentproject = selectedProject })"
+                   data-project-route="parentproject"
+                   style="color: #fff">Milestone</a>
+            </li>
+
+            <li class="sidebar-link-two@(GetActiveClass("Invoice"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
+                <a href="@Url.Action("Index", "Invoice", new { area = "PIMS", parentproject = selectedProject })"
+                   data-project-route="parentproject"
+                   style="color: #fff">Invoices</a>
+            </li>
+
+            <li class="sidebar-link-two@(GetActiveClass("Comment"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
+                <a href="@Url.Action("Index", "Comment", new { area = "PIMS", parentproject = selectedProject })"
+                   data-project-route="parentproject"
+                   style="color: #fff">Comments</a>
+            </li>
+
+        </ul>
+    </nav>
+}
+
+<script>
+    function updatePimsSideNavProject(project) {
+        var normalizedProject = (project || '').trim();
+        document.querySelectorAll('#shortnav a[data-project-route]').forEach(function (link) {
+            var routeParams = (link.getAttribute('data-project-route') || '')
+                .split(',')
+                .map(function (x) { return x.trim(); })
+                .filter(function (x) { return x.length > 0; });
+
+            if (!routeParams.length) {
+                return;
+            }
+
+            var url = new URL(link.href, window.location.origin);
+            routeParams.forEach(function (paramName) {
+                if (normalizedProject) {
+                    url.searchParams.set(paramName, normalizedProject);
+                } else {
+                    url.searchParams.delete(paramName);
+                }
+            });
+
+            link.href = url.pathname + (url.search || '');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updatePimsSideNavProject('@(selectedProject ?? string.Empty)');
+    });
+</script>

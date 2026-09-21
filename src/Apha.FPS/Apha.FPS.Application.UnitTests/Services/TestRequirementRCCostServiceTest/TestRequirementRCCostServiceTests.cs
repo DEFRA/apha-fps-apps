@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -235,7 +236,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         }
 
         [Fact]
-        public async Task CreateAsync_DuplicatePrimaryKey_ThrowsInvalidOperationException()
+        public async Task CreateAsync_DuplicatePrimaryKey_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = CreateTestDto();
@@ -243,7 +244,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
                 .Returns(true);
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CreateAsync(dto));
             Assert.Contains("already exists", ex.Message);
         }
 

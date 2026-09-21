@@ -113,15 +113,17 @@ namespace Apha.Costbook.Application.Services
             // Capture old values BEFORE overwriting — needed for recost comparison below
             decimal? oldInflation = existingProject.Inflation;
             var oldIsdefraproject = existingProject.IsDefraProject;
+            var oldFinancialYears = existingProject.FinancialYears;
 
-            
+
             _mapper.Map(dto, existingProject);
 
             var result = await _repo.UpdateProjectAsync(existingProject);
 
             bool shouldRecost =
                 oldInflation != existingProject.Inflation ||
-                oldIsdefraproject != existingProject.IsDefraProject;
+                oldIsdefraproject != existingProject.IsDefraProject ||
+                oldFinancialYears != existingProject.FinancialYears;
 
             try
             {

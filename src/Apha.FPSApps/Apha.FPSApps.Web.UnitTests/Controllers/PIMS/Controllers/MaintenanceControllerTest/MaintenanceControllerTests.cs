@@ -5,9 +5,11 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using MapsterMapper;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using System.Security.Claims;
 using System.Text.Json;
 using Xunit;
 
@@ -24,6 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             _mapper     = Substitute.For<IMapper>();
             _service    = Substitute.For<IMaintenanceService>();
             _controller = new MaintenanceController(_mapper, _service);
+            SetCurrentUserEmail("user@apha.gov.uk");
         }
 
         // ── helpers ───────────────────────────────────────────────────────────────
@@ -48,8 +51,37 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
         private static PaginatedResult<T> Paged<T>(List<T> items) =>
             new(items, items.Count, 1, 10);
 
-        private void SetupIndexMocks()
+        private void SetCurrentUserEmail(string email)
         {
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [
+                        new Claim("preferred_username", email),
+                        new Claim(ClaimTypes.Email, email)
+                    ], "TestAuth"))
+                }
+            };
+        }
+
+        private void SetupIndexMocks(string currentUserEmail = "user@apha.gov.uk")
+        {
+            SetCurrentUserEmail(currentUserEmail);
+
+            _service.GetAllAccessSystemsAsync()
+                .Returns(SuccessResponse(new List<AccessSystemDto> { new() { SystemId = 1, SystemName = "PIMS" } }));
+            _service.GetAccessUsersBySystemIdAsync(1)
+                .Returns(SuccessResponse(new List<AccessUserDto>
+                {
+                    new() { SystemId = 1, NtLogin = "jsmith", UserEmail = currentUserEmail }
+                }));
+            _service.GetAccessUserLevelsByUserAsync(1, "jsmith")
+                .Returns(SuccessResponse(new List<AccessUserLevelDto>
+                {
+                    new() { SystemId = 1, NtLogin = "jsmith", AccessLevelId = 1 }
+                }));
             _service.GetPagedReportsAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(SuccessResponse(EmptyPaged<ReportDto>()));
             _service.GetAllSettingsAsync()
@@ -148,6 +180,23 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             var viewResult = Assert.IsType<ViewResult>(result);
             var vm = Assert.IsType<MaintenanceViewModel>(viewResult.Model);
             Assert.NotNull(vm.WorkingHoursSettingItem);
+        }
+
+        [Fact]
+        public async Task Index_CurrentUserHasNoUserAccess_RedirectsToAccessDenied()
+        {
+            // Arrange
+            SetupIndexMocks();
+            _service.GetAccessUsersBySystemIdAsync(1)
+                .Returns(SuccessResponse(new List<AccessUserDto>()));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("AccessDenied", redirect.ActionName);
+            Assert.Equal("Account", redirect.ControllerName);
         }
 
         #endregion
@@ -359,6 +408,46 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             var json    = Assert.IsType<JsonResult>(result);
             var element = GetJsonElement(json);
             Assert.False(element.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task SaveReport_NotEmailable_IgnoresMailFieldModelErrors_AndSavesSuccessfully()
+        {
+            // Arrange
+            var item = new ReportItem { Id = 0, ReportName = "New Report", Emailable = false };
+            var dto = new ReportDto { Id = 0, ReportName = "New Report", Type = "R", Emailable = false };
+            _mapper.Map<ReportDto>(item).Returns(dto);
+            _service.CreateReportAsync(dto).Returns(SuccessResponse(dto));
+
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailComment), "Mail Comment is required");
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailTitle), "Mail Title is required");
+
+            // Act
+            var result = await _controller.SaveReport(item);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.True(element.GetProperty("success").GetBoolean());
+            await _service.Received(1).CreateReportAsync(dto);
+        }
+
+        [Fact]
+        public async Task SaveReport_Emailable_WithMailFieldModelErrors_ReturnsValidationFailure()
+        {
+            // Arrange
+            var item = new ReportItem { Id = 0, ReportName = "New Report", Emailable = true };
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailComment), "Mail Comment is required");
+            _controller.ModelState.AddModelError(nameof(ReportItem.MailTitle), "Mail Title is required");
+
+            // Act
+            var result = await _controller.SaveReport(item);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var element = GetJsonElement(json);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            await _service.DidNotReceive().CreateReportAsync(Arg.Any<ReportDto>());
         }
 
         #endregion

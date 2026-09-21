@@ -5,9 +5,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 {
     public class YearlyFinancialDataViewModel
     {
-       
+
         public string Parentproject { get; set; } = string.Empty;
 
+        public string NavigationProject { get; set; } = string.Empty;
 
         public string? SelectedProject { get; set; } = null;
 

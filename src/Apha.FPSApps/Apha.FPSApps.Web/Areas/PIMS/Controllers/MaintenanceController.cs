@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using System.Security.Claims;
 
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 {
@@ -37,6 +38,11 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         public async Task<IActionResult> Index()
         {
+            if (!await CurrentUserHasMaintenanceAccessAsync())
+            {
+                return RedirectToAction("AccessDenied", "Account", new { area = string.Empty });
+            }
+
             var viewModel = new MaintenanceViewModel
             {
                 ReportsGrid = await BuildReportsGridAsync(new PaginationFilter<string> { Filter = "{}" })
@@ -199,6 +205,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveReport(ReportItem item)
         {
+            if (!item.Emailable)
+            {
+                ModelState.Remove(nameof(ReportItem.MailComment));
+                ModelState.Remove(nameof(ReportItem.MailTitle));
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new
@@ -1184,6 +1196,41 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             }
 
             return 1;
+        }
+
+        private string GetCurrentUserEmail()
+            => User.FindFirst("preferred_username")?.Value
+               ?? User.FindFirst(ClaimTypes.Email)?.Value
+               ?? User.FindFirst("emails")?.Value
+               ?? User.Identity?.Name
+               ?? string.Empty;
+
+        private async Task<bool> CurrentUserHasMaintenanceAccessAsync()
+        {
+            var currentUserEmail = GetCurrentUserEmail().Trim();
+            if (string.IsNullOrWhiteSpace(currentUserEmail))
+            {
+                return false;
+            }
+
+            var systemId = await ResolveDefaultAccessSystemIdAsync();
+            var usersResult = await _service.GetAccessUsersBySystemIdAsync(systemId);
+            if (usersResult is not { Success: true, Data: not null })
+            {
+                return false;
+            }
+
+            var accessUser = usersResult.Data.FirstOrDefault(x =>
+                !string.IsNullOrWhiteSpace(x.UserEmail)
+                && x.UserEmail.Trim().Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase));
+
+            if (string.IsNullOrWhiteSpace(accessUser?.NtLogin))
+            {
+                return false;
+            }
+
+            var accessLevelsResult = await _service.GetAccessUserLevelsByUserAsync(systemId, accessUser.NtLogin);
+            return accessLevelsResult is { Success: true, Data: not null } && accessLevelsResult.Data.Count > 0;
         }
 
         // ── Access Users Grid ────────────────────────────────────────────────────────

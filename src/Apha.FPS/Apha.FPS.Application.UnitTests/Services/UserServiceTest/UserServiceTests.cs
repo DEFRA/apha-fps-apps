@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -226,22 +227,22 @@ namespace Apha.FPS.Application.UnitTests.Services.UserPermissionServiceTest
         }
 
         [Fact]
-        public async Task AddUserAsync_ThrowsInvalidOperationException_WhenUsernameAlreadyExists()
+        public async Task AddUserAsync_ThrowsBusinessValidationErrorException_WhenUsernameAlreadyExists()
         {
             var dto = BuildDto();
             _mockRepository.GetUserByUsernameAsync("testuser").Returns(BuildEntity());
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddUserAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddUserAsync(dto));
         }
 
         [Fact]
-        public async Task AddUserAsync_ThrowsInvalidOperationException_WhenEmailAlreadyExists()
+        public async Task AddUserAsync_ThrowsBusinessValidationErrorException_WhenEmailAlreadyExists()
         {
             var dto = BuildDto();
             _mockRepository.GetUserByUsernameAsync("testuser").Returns((User?)null);
             _mockRepository.GetUserByEmailAsync("test@example.com").Returns(BuildEntity(2));
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddUserAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddUserAsync(dto));
         }
 
         [Fact]
@@ -346,24 +347,24 @@ namespace Apha.FPS.Application.UnitTests.Services.UserPermissionServiceTest
         }
 
         [Fact]
-        public async Task UpdateUserAsync_ThrowsInvalidOperationException_WhenUsernameAlreadyTakenByAnother()
+        public async Task UpdateUserAsync_ThrowsBusinessValidationErrorException_WhenUsernameAlreadyTakenByAnother()
         {
             var dto = BuildDto();
             _mockRepository.GetUserByIdAsync(1).Returns(BuildEntity());
             _mockRepository.GetUserByUsernameAsync("testuser").Returns(BuildEntity(2));
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateUserAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateUserAsync(dto));
         }
 
         [Fact]
-        public async Task UpdateUserAsync_ThrowsInvalidOperationException_WhenEmailAlreadyTakenByAnother()
+        public async Task UpdateUserAsync_ThrowsBusinessValidationErrorException_WhenEmailAlreadyTakenByAnother()
         {
             var dto = BuildDto();
             _mockRepository.GetUserByIdAsync(1).Returns(BuildEntity());
             _mockRepository.GetUserByUsernameAsync("testuser").Returns(BuildEntity(1));
             _mockRepository.GetUserByEmailAsync("test@example.com").Returns(BuildEntity(2));
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateUserAsync(dto));
+            await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateUserAsync(dto));
         }
 
         [Fact]

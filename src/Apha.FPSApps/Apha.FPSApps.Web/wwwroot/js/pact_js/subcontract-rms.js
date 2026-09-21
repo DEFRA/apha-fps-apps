@@ -462,14 +462,15 @@ function initializeProjectCostDropdown() {
             containerSelector: '#rmsProjectMultiDropdown',
             placeholder: 'Select Project',
             showSerialNumber: false,
-            searchPlaceholder: 'Search by project',
+            searchPlaceholder: 'Search by code or title',
             labelText: '',
             required: true,
             columns: [
-                { field: 'Text', header: 'Project', width: '300px' }
+                { field: 'Value', header: 'Project Code', width: '120px' },
+                { field: 'Text', header: 'Project Title', width: '300px' }
             ],
             data: projectsData || [],
-            displayField: 'Text',
+            displayField: 'Value',
             valueField: 'Value',
             clearButtonClearsSelection: true,
             callbacks: {

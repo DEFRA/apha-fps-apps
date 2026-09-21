@@ -382,7 +382,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var workGroups = await _jobCodeService.GetAllWorkGroupsAsync();
             var types = await _jobCodeService.GetTypesAsync();
-            ViewBag.WorkGroupsData = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName ??  w.WorkGroupName, w.ProfitCentre)).ToList() ?? [];
+            ViewBag.WorkGroupsData = workGroups.Data?.Select(w => new { Value = w.WorkGroupName, Text = (string.IsNullOrEmpty(w.ProfitCentre) ? "" : w.ProfitCentre) }).ToList() ?? [];
             ViewBag.Types = types.Data?.Select(t => new SelectListItem(t, t)).ToList() ?? [];
             return PartialView("_AddEditJobCode", new JobCodeViewModel { ParentProject = parentProject });
         }
@@ -770,6 +770,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new { success = true });
 
             return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Copy failed" });
+        }
+
+        /// <summary>Activates or deactivates ALL time codes for a job code (used by the Activate All / Deactivate All buttons).</summary>
+        [HttpPost]
+        public async Task<IActionResult> SetWorkgroupsActiveStatusByJobCode(string parentProject, string jobCodeId, bool isActive)
+        {
+            var result = await _timeCodeService.SetWorkgroupsActiveStatusByJobCodeAsync(jobCodeId, parentProject, isActive);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
         }
     }
 }

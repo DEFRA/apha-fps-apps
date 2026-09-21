@@ -10,6 +10,7 @@ public interface IYearlyDetailsService
     Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);
     Task<ProjectYearDto> UpdateProjectYearAsync(ProjectYearDto dto);
     Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string projectId, int year);
+    Task<(bool Copied, IReadOnlyList<string> Errors)> CopyYearDataAsync(string projectId, int sourceYear, int targetYear);
 
     // ?? Staff — now paginated ?????????????????????????????????????????????????
     Task<PaginatedResult<StaffRequirementDto>> GetStaffRequirementsAsync(string projectId, int year, QueryParameters<string> query);

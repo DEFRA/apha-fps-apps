@@ -11,13 +11,14 @@ public class ProjectYearRepository : IProjectYearRepository
 {
     private readonly CostbookDbContext _context;
     private readonly ISettingsRepository _settingsRepo;
-   
+    private readonly IProjectRepository _projectRepo;
+
 
     public ProjectYearRepository(CostbookDbContext context, ISettingsRepository settingsRepo, IProjectRepository projectRepo)
     {
         _context = context;
         _settingsRepo = settingsRepo;
-        
+        _projectRepo = projectRepo;
     }
 
     public async Task<IEnumerable<ProjectYear>> GetByProjectAsync(string project)
@@ -147,6 +148,283 @@ public class ProjectYearRepository : IProjectYearRepository
         return (true, Array.Empty<string>());
     }
 
+    public async Task<(bool Copied, IReadOnlyList<string> Errors)> CopyYearDataAsync(string project, int sourceYear, int targetYear)
+    {
+       
+        var decodedProject = HttpUtility.UrlDecode(project);
+
+        if (sourceYear <= 0 || targetYear <= 0)
+            return (false, new List<string> { "Source year and target year must be valid." });
+
+        if (sourceYear == targetYear)
+            return (false, new List<string> { "Source year and target year cannot be the same." });
+
+        var sourceProjectYear = await _context.ProjectYears
+            .AsNoTracking()
+            .FirstOrDefaultAsync(py => py.Project == decodedProject && py.YearValue == sourceYear);
+        if (sourceProjectYear is null)
+            return (false, new List<string> { "Source year does not exist for the selected project." });
+
+        var targetProjectYearExists = await _context.ProjectYears
+            .AsNoTracking()
+            .AnyAsync(py => py.Project == decodedProject && py.YearValue == targetYear);
+        if (!targetProjectYearExists)
+            return (false, new List<string> { "Target year does not exist for the selected project." });
+
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var targetStaff = await _context.StaffRequirements
+                    .Where(s => s.Project == decodedProject && s.Year == targetYear)
+                    .ToListAsync();
+                if (targetStaff.Count > 0)
+                    _context.StaffRequirements.RemoveRange(targetStaff);
+
+                var targetTests = await _context.TestRequirements
+                    .Where(t => t.Project == decodedProject && t.Year == targetYear)
+                    .ToListAsync();
+                if (targetTests.Count > 0)
+                    _context.TestRequirements.RemoveRange(targetTests);
+
+                var targetAnimals = await _context.AnimalRequirements
+                    .Where(a => a.Project == decodedProject && a.Year == targetYear)
+                    .ToListAsync();
+                if (targetAnimals.Count > 0)
+                    _context.AnimalRequirements.RemoveRange(targetAnimals);
+
+                var targetAdditionalCosts = await _context.AdditionalCosts
+                    .Where(a => a.Project == decodedProject && a.Year == targetYear)
+                    .ToListAsync();
+                if (targetAdditionalCosts.Count > 0)
+                    _context.AdditionalCosts.RemoveRange(targetAdditionalCosts);
+
+                var sourceStaff = await _context.StaffRequirements
+                    .AsNoTracking()
+                    .Where(s => s.Project == decodedProject && s.Year == sourceYear)
+                    .ToListAsync();
+                foreach (var staff in sourceStaff)
+                {
+                    _context.StaffRequirements.Add(new StaffRequirement
+                    {
+                        Project = decodedProject,
+                        Year = targetYear,
+                        WgGrade = staff.WgGrade,
+                        Name = staff.Name,
+                        Nohours = staff.Nohours,
+                        Nodays = staff.Nodays,
+                        Chargerate = staff.Chargerate,
+                        Payrate = staff.Payrate,
+                        Npr = staff.Npr,
+                        Ohr = staff.Ohr
+                    });
+                }
+
+                var sourceTests = await _context.TestRequirements
+                    .AsNoTracking()
+                    .Where(t => t.Project == decodedProject && t.Year == sourceYear)
+                    .ToListAsync();
+                foreach (var test in sourceTests)
+                {
+                    _context.TestRequirements.Add(new TestRequirement
+                    {
+                        Project = decodedProject,
+                        Year = targetYear,
+                        TestCode = test.TestCode,
+                        NumberOfTests = test.NumberOfTests,
+                        UnitPrice = test.UnitPrice
+                    });
+                }
+
+                var sourceAnimals = await _context.AnimalRequirements
+                    .AsNoTracking()
+                    .Where(a => a.Project == decodedProject && a.Year == sourceYear)
+                    .ToListAsync();
+                foreach (var animal in sourceAnimals)
+                {
+                    _context.AnimalRequirements.Add(new AnimalRequirement
+                    {
+                        Project = decodedProject,
+                        Year = targetYear,
+                        AnimalType = animal.AnimalType,
+                        NumberOfDays = animal.NumberOfDays,
+                        NumberOfAnimals = animal.NumberOfAnimals,
+                        DailyRate = animal.DailyRate
+                    });
+                }
+
+                var sourceAdditionalCosts = await _context.AdditionalCosts
+                    .AsNoTracking()
+                    .Where(a => a.Project == decodedProject && a.Year == sourceYear)
+                    .ToListAsync();
+                foreach (var additionalCost in sourceAdditionalCosts)
+                {
+                    _context.AdditionalCosts.Add(new AdditionalCost
+                    {
+                        Project = decodedProject,
+                        Year = targetYear,
+                        AccountCat = additionalCost.AccountCat,
+                        Description = additionalCost.Description,
+                        ItemCost = additionalCost.ItemCost,
+                        CostEntered = additionalCost.CostEntered,
+                        Freq = additionalCost.Freq
+                    });
+                }
+
+                var targetProjectYear = await _context.ProjectYears
+                    .FirstAsync(py => py.Project == decodedProject && py.YearValue == targetYear);
+                targetProjectYear.MarkupTime = sourceProjectYear.MarkupTime;
+                targetProjectYear.MarkupTests = sourceProjectYear.MarkupTests;
+                targetProjectYear.MarkupAnimals = sourceProjectYear.MarkupAnimals;
+                targetProjectYear.MarkupAdditional = sourceProjectYear.MarkupAdditional;
+                targetProjectYear.ProfitTime = sourceProjectYear.ProfitTime;
+                targetProjectYear.ProfitTests = sourceProjectYear.ProfitTests;
+                targetProjectYear.ProfitAnimals = sourceProjectYear.ProfitAnimals;
+                targetProjectYear.ProfitAdditional = sourceProjectYear.ProfitAdditional;
+
+                // Persist copied target-year rows first, then recost from tracked DB rows
+                await _context.SaveChangesAsync();
+
+                // Get CurrentYear setting for inflation calculations
+                var currentYearSetting = await _settingsRepo.GetSettingValueByIdAsync("CurrentYear");
+                if (string.IsNullOrEmpty(currentYearSetting) || !int.TryParse(currentYearSetting, out int fyear))
+                {
+                    throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
+                }
+
+                // Determine if project is DEFRA
+                bool isDefraProject = (await _context.Projects
+                    .Where(p => p.ProjectId == decodedProject)
+                    .Select(p => (int?)p.IsDefraProject)
+                    .FirstOrDefaultAsync() ?? 0) != 0;
+
+                // Recost target-year data
+                var projectRepo = (ProjectRepository)_projectRepo;
+
+                var testInflationFactor = await projectRepo.fnInflation("InflationTests", decodedProject, targetYear, fyear);
+                var animalInflationFactor = await projectRepo.fnInflation("InflationAnimals", decodedProject, targetYear, fyear);
+                var additionalInflationFactor = await projectRepo.fnInflation("InflationExceptional", decodedProject, targetYear, fyear);
+                var staffInflationFactor = await projectRepo.fnInflation("InflationStaff", decodedProject, targetYear, fyear);
+
+                #region RecostTests
+                var testRecords = await _context.TestRequirements
+                    .Where(r => r.Project == decodedProject && r.Year == targetYear)
+                    .ToListAsync();
+
+                var testData = await _context.FpsTestorProducts
+                    .ToDictionaryAsync(t => t.ItemCode);
+
+                foreach (var rec in testRecords)
+                {
+                    if (!testData.TryGetValue(rec.TestCode, out var test))
+                        continue;
+
+                    decimal basePriceDecimal = isDefraProject
+                        ? test.DefraUnitPrice
+                        : test.UnitPriceVla.GetValueOrDefault(0);
+
+                    double basePrice = (double)basePriceDecimal;
+                    rec.UnitPrice = basePrice * testInflationFactor;
+                }
+
+                _context.TestRequirements.UpdateRange(testRecords);
+                #endregion
+
+                #region RecostAnimals
+                var animalRecords = await _context.AnimalRequirements
+                    .Where(ar => ar.Project == decodedProject && ar.Year == targetYear)
+                    .ToListAsync();
+
+                var animalData = await _context.FpsAnimals
+                    .ToDictionaryAsync(a => a.AnimalType);
+
+                foreach (var rec in animalRecords)
+                {
+                    if (!animalData.TryGetValue(rec.AnimalType, out var animal))
+                        continue;
+
+                    decimal? baseRateDecimal = isDefraProject
+                        ? animal.DefraDailyRate
+                        : animal.DailyRate;
+
+                    double baseRate = (double)(baseRateDecimal ?? 0);
+
+                    rec.DailyRate = baseRate * animalInflationFactor;
+                }
+
+                _context.AnimalRequirements.UpdateRange(animalRecords);
+                #endregion
+
+                #region RecostAdditionalCosts
+                var additionalCostRecords = await _context.AdditionalCosts
+                    .Where(ac => ac.Project == decodedProject && ac.Year == targetYear)
+                    .ToListAsync();
+
+                foreach (var rec in additionalCostRecords)
+                {
+                    double inflatedCost;
+
+                    if (await projectRepo.fnUseInflation(rec.AccountCat))
+                    {
+                        inflatedCost = rec.CostEntered * additionalInflationFactor;
+                    }
+                    else
+                    {
+                        inflatedCost = rec.CostEntered;
+                    }
+
+                    rec.ItemCost = inflatedCost;
+                }
+
+                _context.AdditionalCosts.UpdateRange(additionalCostRecords);
+                #endregion
+
+                #region RecostStaff
+                var staffRecords = await _context.StaffRequirements
+                    .Where(sr => sr.Project == decodedProject && sr.Year == targetYear)
+                    .ToListAsync();
+
+                var payRatesQuery = from wg in _context.WorkGroupGrades
+                                    join pc in _context.ProfitCentreGrades
+                                    on wg.ProfitCentreGrade equals pc.PcGrade
+                                    select new
+                                    {
+                                        wg.WgGrade,
+                                        ChargeRate = isDefraProject 
+                                            ? pc.DefraChargeRate 
+                                            : pc.ChargeRate,
+                                        pc.PayRate,
+                                        pc.Npr,
+                                        Ohr = isDefraProject ? 0 : pc.Ohr
+                                    };
+
+                payRatesQuery = payRatesQuery.Where(x => x.ChargeRate != null && x.ChargeRate != 0);
+
+                var payRatesData = await payRatesQuery.ToDictionaryAsync(x => x.WgGrade);
+
+                foreach (var rec in staffRecords)
+                {
+                    if (!payRatesData.TryGetValue(rec.WgGrade, out var payRate))
+                        continue;
+
+                    rec.Chargerate = (double)(payRate.ChargeRate ?? 0) * staffInflationFactor;
+                    rec.Payrate = (double)(payRate.PayRate ?? 0) * staffInflationFactor;
+                    rec.Npr = (double)(payRate.Npr ?? 0) * staffInflationFactor;
+                    rec.Ohr = (double)(payRate.Ohr ?? 0) * staffInflationFactor;
+                }
+
+                _context.StaffRequirements.UpdateRange(staffRecords);
+                #endregion
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return (true, (IReadOnlyList<string>)Array.Empty<string>());
+        });
+    }
+
     private async Task<List<string>> GetChildValidationErrorsAsync(string project, int year)
     {
         var errors = new List<string>();
@@ -169,8 +447,6 @@ public class ProjectYearRepository : IProjectYearRepository
         if (count > 0)
             errors.Add($"Year has {count} {label}. Remove them first.");
     }
-
-   
 
     private async Task<double?> GetSettingDoubleAsync(string key)
     {

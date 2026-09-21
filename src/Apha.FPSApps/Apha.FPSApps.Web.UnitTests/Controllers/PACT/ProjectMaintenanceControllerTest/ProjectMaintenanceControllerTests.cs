@@ -8,8 +8,7 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Apha.FPSApps.Web.Mappings;
-using Mapster;
-using MapsterMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -616,6 +615,33 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             Assert.False(value.GetProperty("success").GetBoolean());
         }
 
+        [Fact]
+        public async Task Edit_Post_ManagerValidationError_ReturnsProjectManagerFieldError()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError(nameof(PactProjectViewModel.Manager), "Manager is required");
+
+            // Act
+            var result = await _controller.Edit(new PactProjectViewModel());
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+
+            string? managerErrorMessage = null;
+            foreach (var error in value.GetProperty("errors").EnumerateArray())
+            {
+                if (error.GetProperty("field").GetString() == "Project.Manager")
+                {
+                    managerErrorMessage = error.GetProperty("message").GetString();
+                    break;
+                }
+            }
+
+            Assert.Equal("Manager is required", managerErrorMessage);
+        }
+
         #endregion
 
         #region Delete (Project)
@@ -867,7 +893,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task DeleteJobCode_HasRelatedTimeCodeValidRecords_ReturnsJsonFailure()
         {
-            // Arrange ï¿½ API returns 409 BUSINESS_RULE_VIOLATION when related TimeCodeValid records exist
+            // Arrange — API returns 409 BUSINESS_RULE_VIOLATION when related TimeCodeValid records exist
             var errors = new List<ApiErrorDto>
             {
                 new() { Code = "BUSINESS_RULE_VIOLATION", Message = "This JobCode has related records in TimeCodeValid and cannot be deleted." }
@@ -1124,7 +1150,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task EditTimeCode_Post_WorkGroupChanged_DeleteAndCreateSucceed_ReturnsJsonSuccess()
         {
-            // Arrange ï¿½ OriginalWorkGroup differs from WorkGroup ? delete+create path
+            // Arrange — OriginalWorkGroup differs from WorkGroup ? delete+create path
             var model = new TimeCodeViewModel
             {
                 TimeCode = "TC1",
@@ -1207,7 +1233,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
         [Fact]
         public async Task EditTimeCode_Post_WorkGroupUnchanged_CallsUpdateNotDeleteCreate()
         {
-            // Arrange ï¿½ same WorkGroup ? standard update path
+            // Arrange — same WorkGroup ? standard update path
             var model = new TimeCodeViewModel
             {
                 TimeCode = "TC1",
@@ -1675,13 +1701,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
 
         #endregion
 
-        #region PactViewModelMapper profile ï¿½ Budget Ext (BudgetExt <-> CustIncome)
+        #region PactViewModelMapper profile — Budget Ext (BudgetExt <-> CustIncome)
 
         private static IMapper CreateRealPactMapper()
         {
-            var config = new TypeAdapterConfig();
-            config.Scan(typeof(PactViewModelMapper).Assembly);
-            return new ServiceMapper(null!, config);
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<PactViewModelMapper>(), NullLoggerFactory.Instance);
+            return config.CreateMapper();
         }
 
         [Fact]
@@ -1722,6 +1747,45 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
             dto.CustIncome = model.BudgetExt ?? 0;
 
             Assert.Equal(55.55m, dto.CustIncome);
+        }
+
+        #endregion
+
+        #region SetWorkgroupsActiveStatusByJobCode
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCode_ServiceSucceeds_ReturnsJsonSuccess(bool isActive)
+        {
+            // Arrange
+            _timeCodeService.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ001", isActive)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.SetWorkgroupsActiveStatusByJobCode("PRJ001", "JC1", isActive);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.True(value.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCode_ServiceFails_ReturnsJsonFailure()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "API_ERROR" } };
+            _timeCodeService.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ001", true)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.SetWorkgroupsActiveStatusByJobCode("PRJ001", "JC1", true);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
         }
 
         #endregion

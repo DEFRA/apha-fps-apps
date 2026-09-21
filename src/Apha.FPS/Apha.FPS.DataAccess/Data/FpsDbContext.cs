@@ -32,8 +32,10 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<JobCode> JobCodes { get; set; }
         public virtual DbSet<Status> Statuses { get; set; }
+        public virtual DbSet<MasterLookup> MasterLookups { get; set; }
         public virtual DbSet<Disease> Diseases { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
+        public virtual DbSet<Directorate> Directorates { get; set; }
         public virtual DbSet<Contract> Contracts { get; set; }
         public virtual DbSet<Animal> Animals { get; set; }
         public virtual DbSet<AnimalRequest> AnimalRequests { get; set; }
@@ -80,6 +82,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<PeriodProjSubContract> PeriodProjSubContracts { get; set; }
         public virtual DbSet<PeriodMonthlyOutput> PeriodMonthlyOutputs { get; set; }
+        public virtual DbSet<PeriodTimeCostCalcs> PeriodTimeCostCalcs { get; set; }
 
         public virtual DbSet<TimeCostCalcsView> TimeCostCalcsViews { get; set; }
         public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
@@ -128,6 +131,9 @@ namespace Apha.FPS.DataAccess.Data
                        
         public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
         public virtual DbSet<Period> Periods { get; set; }
+        public virtual DbSet<FpsSettingStaging> TblStagingSettings { get; set; }
+        public virtual DbSet<MonthHourStaging> MonthHourStagings { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -182,8 +188,10 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<JobCode>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new StatusMap());
+            modelBuilder.ApplyConfiguration(new MasterLookupMap());
             modelBuilder.ApplyConfiguration(new DiseaseMap());
             modelBuilder.ApplyConfiguration(new CustomerMap());
+            modelBuilder.ApplyConfiguration(new DirectorateMap());
 
             modelBuilder.ApplyConfiguration(new ContractMap());
             modelBuilder.Entity<Contract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -244,6 +252,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new AnimalRequestViewMap());
             modelBuilder.Entity<AnimalRequestView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new PeriodTimeCostCalcsMap());
+            modelBuilder.Entity<PeriodTimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new PactProjectViewMap());
             modelBuilder.Entity<PactProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -288,6 +299,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodProjSubContractMap());
+            modelBuilder.Entity<PeriodProjSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
 
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -396,7 +409,14 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PeriodMap());
             modelBuilder.Entity<Period>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new FpsSettingStagingMap());
+            modelBuilder.ApplyConfiguration(new MonthHourStagingMap());
+         
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
+            modelBuilder.Entity<PeriodMonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+
+
         }
-    }
-}
+            }
+        }

@@ -31,6 +31,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
        
         public async Task<IActionResult> Index(
             string? project = null,
+            string? parentproject = null,
             string? contract = null,
             int? year = null,
             string? program = null)
@@ -43,10 +44,17 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 FilterProgram  = program
             };
             await PopulateDropdownsAsync(viewModel);
-            string? resolvedProject = !string.IsNullOrWhiteSpace(project) &&
-                                      viewModel.ProjectList.Any(p => p.Value == project)
-                ? project
+            string? requestedProject = project ?? parentproject;
+            viewModel.NavigationProject = requestedProject ?? string.Empty;
+            string? resolvedProject = !string.IsNullOrWhiteSpace(requestedProject) &&
+                                      viewModel.ProjectList.Any(p => p.Value == requestedProject)
+                ? requestedProject
                 : null;
+            if (!string.IsNullOrWhiteSpace(requestedProject) && string.IsNullOrWhiteSpace(resolvedProject))
+            {
+                ViewBag.InvoMessage = $"Project not found: {requestedProject}";
+            }
+
             int currentCalendarYear = DateTime.Now.Year;
             int? resolvedYear = year ?? (viewModel.YearList.Count > 0
                 ? viewModel.YearList

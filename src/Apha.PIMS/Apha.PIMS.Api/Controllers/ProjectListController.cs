@@ -56,7 +56,26 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetProjectsDetailsForMilestoneAsync(string parentproject)
         {
             ProjectDetailsMilestoneDto? result = await _service.GetProjectsDetailsForMilestoneAsync(parentproject);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProjectDetailsMilestoneRes>();
+            }
+
             return Ok(_mapper.Map<ProjectDetailsMilestoneRes>(result));
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

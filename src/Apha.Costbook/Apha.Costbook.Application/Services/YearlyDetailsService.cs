@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Web;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
@@ -71,6 +72,9 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string projectId, int year)
         => await _projectYearRepo.DeleteProjectYearAsync(projectId, year);
+
+    public async Task<(bool Copied, IReadOnlyList<string> Errors)> CopyYearDataAsync(string projectId, int sourceYear, int targetYear)
+        => await _projectYearRepo.CopyYearDataAsync(projectId, sourceYear, targetYear);
 
     // ── Staff ─────────────────────────────────────────────────────────────────────
 
@@ -151,6 +155,16 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<TestRequirementDto> AddTestRequirementAsync(TestRequirementDto dto)
     {
         ValidateTestRequirement(dto);
+
+        var exists = await _testRepo.ExistsAsync(dto.Project, dto.Year ?? 0, dto.TestCode);
+        if (exists)
+        {
+            throw new BusinessValidationErrorException([
+                new BusinessValidationError(
+                    $"Test code '{dto.TestCode}' is already present for project '{HttpUtility.UrlDecode(dto.Project ?? string.Empty)}' in year '{dto.Year}'.",
+                    "TEST_TESTCODE_ALREADY_EXISTS")]);
+        }
+
         var entity = _mapper.Map<TestRequirement>(dto);
         var result = await _testRepo.AddTestRequirementAsync(entity);
         return MapTestToDto(result);
@@ -159,6 +173,16 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<TestRequirementDto> UpdateTestRequirementAsync(TestRequirementDto dto)
     {
         ValidateTestRequirement(dto);
+
+        var exists = await _testRepo.ExistsAsync(dto.Project, dto.Year ?? 0, dto.TestCode);
+        if (!exists)
+        {
+            throw new BusinessValidationErrorException([
+                new BusinessValidationError(
+                    $"Test code '{dto.TestCode}' is not present for project '{HttpUtility.UrlDecode(dto.Project ?? string.Empty)}' in year '{dto.Year}'.",
+                    "TEST_TESTCODE_NOT_PRESENT_TO_UPDATE")]);
+        }
+
         var entity = _mapper.Map<TestRequirement>(dto);
         var result = await _testRepo.UpdateTestRequirementAsync(entity);
         return MapTestToDto(result);

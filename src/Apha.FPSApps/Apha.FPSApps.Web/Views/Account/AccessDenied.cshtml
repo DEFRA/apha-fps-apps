@@ -1,2 +1,37 @@
-﻿<h1>Access Denied</h1>
-<p>You do not have permission to view this page.</p>
+@{
+    ViewData["Title"] = "Access Denied";
+}
+@using System.Security.Claims
+@{
+    var displayName = User.FindFirst("name")?.Value
+                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
+                       ?? User.FindFirst(ClaimTypes.Name)?.Value
+                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
+                      ?? "Unknown User";
+}
+
+<div class="parent access-denied-page">
+    <div class="uklogo">
+        <img src="~/images/govuklog.png" alt="GOV.UK Logo" />
+    </div>
+    <div class="tile-wrapper access-denied-wrapper">
+        <div class="access-denied-message">
+            <h1 class="govuk-heading-l">Access Denied</h1>
+            <p class="govuk-body">You don't have access to this page, please contact your administrator.</p>
+            <a asp-controller="Home" asp-action="Index" class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">
+                Back
+            </a>
+        </div>
+    </div>
+    <div class="footer-circle-one">
+        <div class="circle1"></div>
+        <div class="circle2"></div>
+        <div class="circle3"></div>
+    </div>
+
+    <div class="footer-circle-two">
+        <div class="circle1"></div>
+        <div class="circle2"></div>
+        <div class="circle3"></div>
+    </div>
+</div>

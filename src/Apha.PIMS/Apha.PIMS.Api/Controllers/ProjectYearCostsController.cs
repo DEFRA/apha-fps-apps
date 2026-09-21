@@ -111,7 +111,12 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{project}/{year}/projectyeardetails")]
         public async Task<IActionResult> GetProjectYearDetails(string project, short year)
         {
-            ProjectYearDetailsDto result = await _service.GetProjectYearDetailsAsync(project, year);
+            ProjectYearDetailsDto? result = await _service.GetProjectYearDetailsAsync(project, year);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProjectYearDetailsRes>();
+            }
+
             return Ok(_mapper.Map<ProjectYearDetailsRes>(result));
         }
 
@@ -139,7 +144,11 @@ namespace Apha.PIMS.Api.Controllers
             public async Task<IActionResult> GetFpsYearTotals(string project, short year)
             {
                 FpsYearTotalsDto? result = await _service.GetFpsYearTotalsAsync(project, year);
-                if (result == null) return NotFound();
+                if (result is null)
+                {
+                    return CreateNullSuccessResponse<FpsYearTotalsRes>();
+                }
+
                 return Ok(_mapper.Map<FpsYearTotalsRes>(result));
             }
                 /// <summary>Exports Staff, Test, Animal and Additional Cost plan vs actuals as an Excel workbook (8 sheets).</summary>
@@ -150,5 +159,19 @@ namespace Apha.PIMS.Api.Controllers
                     string fileName = $"ProjectYearCosts_{project}_{year}.xlsx";
                     return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
                 }
+
+            private static JsonResult CreateNullSuccessResponse<T>()
+            {
+                return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+                {
+                    Success = true,
+                    Data = default,
+                    Meta = new Apha.Common.Contracts.ApiMeta
+                    {
+                        CorrelationId = Guid.NewGuid().ToString(),
+                        TimestampUtc = DateTime.UtcNow
+                    }
+                });
+            }
             }
         }

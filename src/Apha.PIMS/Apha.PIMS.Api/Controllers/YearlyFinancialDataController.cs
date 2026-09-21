@@ -39,9 +39,14 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("{year:int}/{project}")]
         public async Task<IActionResult> GetByKey(int year, string project)
         {
-            
+
             YearlyFinancialDataDto? result = await _service.GetByKeyAsync((short)year, project);
-            return result is null ? NotFound() : Ok(_mapper.Map<YearlyFinancialDataRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<YearlyFinancialDataRes>();
+            }
+
+            return Ok(_mapper.Map<YearlyFinancialDataRes>(result));
         }
 
       
@@ -89,6 +94,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             string? result = await _service.GetSettingValueByIdAsync(id ?? string.Empty);
             return Ok(result ?? string.Empty);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -19,6 +19,12 @@ namespace Apha.PACT.Application.Services
         private readonly ITimeCodeValidRepository _timeCodeValidRepository;
         private readonly IMapper _mapper;
 
+        // Max lengths of the live fps.monthlytime columns (staging columns are text).
+        private const int PactIdMaxLength = 50;
+        private const int TimeCodeMaxLength = 50;
+        private const int ParentProjectMaxLength = 20;
+        private const int WorkGroupMaxLength = 50;
+
         public MonthlyTimeService(
             IMonthlyTimeRepository repository,
             IMapper mapper,
@@ -320,16 +326,30 @@ namespace Apha.PACT.Application.Services
             var month = record.Month;
             var hours = record.Hours;
 
+            var failureCount = failures.Count;
             ValidateHours(hours, failures);
+            var isHoursValid = failures.Count == failureCount;
+
+            failureCount = failures.Count;
             ValidateWorkGroup(ref workGroup, context.ValidWorkGroups, failures);
+            var isWorkGroupValid = failures.Count == failureCount;
+
             ValidateStaff(staffId, name, workGroup, record, context.StaffByWorkGroup, failures);
 
             staffId = string.IsNullOrWhiteSpace(record.PactStaffId) ? staffId : record.PactStaffId.Trim();
             name = string.IsNullOrWhiteSpace(record.Name) ? name : record.Name.Trim();
 
+            failureCount = failures.Count;
             ValidateTimeCode(ref timeCode, ref workGroup, context.TimeCodeRows, failures);
+            var isTimeCodeValid = failures.Count == failureCount;
+
+            failureCount = failures.Count;
             ValidateParentProject(ref parentProject, ref workGroup, ref timeCode, context.TimeCodeRows, failures);
+            var isParentProjectValid = failures.Count == failureCount;
+
+            failureCount = failures.Count;
             ValidateMonth(month, context.ValidMonths, failures);
+            var isMonthValid = failures.Count == failureCount;
 
             record.WorkGroup = workGroup;
             record.PactStaffId = staffId;
@@ -337,9 +357,38 @@ namespace Apha.PACT.Application.Services
             record.TimeCode = timeCode;
             record.ParentProject = parentProject;
 
+            ValidateLiveColumnConstraints(record, isWorkGroupValid, isTimeCodeValid, isParentProjectValid, isHoursValid, isMonthValid, failures);
+
             ValidateDuplicates(record, failures, context, stagingKeys);
 
             return failures;
+        }
+
+        private static void ValidateLiveColumnConstraints(
+            StagingMonthlyTime record,
+            bool isWorkGroupValid,
+            bool isTimeCodeValid,
+            bool isParentProjectValid,
+            bool isHoursValid,
+            bool isMonthValid,
+            List<string> failures)
+        {
+            ExcelValidationHelper.ValidateMaxLength(record.PactId, PactIdMaxLength, "Staff ID", failures);
+
+            if (isWorkGroupValid)
+                ExcelValidationHelper.ValidateMaxLength(record.WorkGroup, WorkGroupMaxLength, "Work Group", failures);
+
+            if (isTimeCodeValid)
+                ExcelValidationHelper.ValidateMaxLength(record.TimeCode, TimeCodeMaxLength, "Timecode", failures);
+
+            if (isParentProjectValid)
+                ExcelValidationHelper.ValidateMaxLength(record.ParentProject, ParentProjectMaxLength, "Project", failures);
+
+            if (isHoursValid)
+                ExcelValidationHelper.ValidateFiniteDouble(record.Hours, "The hours", failures);
+
+            if (isMonthValid)
+                ExcelValidationHelper.ValidateFiniteDouble(record.Month, "The month No.", failures);
         }
 
         private static void ValidateHours(double? hours, List<string> failures)

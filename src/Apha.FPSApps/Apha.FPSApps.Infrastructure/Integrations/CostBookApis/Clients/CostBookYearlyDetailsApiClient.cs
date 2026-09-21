@@ -1,11 +1,11 @@
-using Apha.Common.Constants;
+﻿using Apha.Common.Constants;
 using Apha.Common.Contracts.Costbook;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using MapsterMapper;
+using AutoMapper;
 using System.Web;
 using Apha.FPSApps.Application.Pagination;
 using Apha.Common.Contracts;
@@ -88,7 +88,25 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
-    // -- Staff -----------------------------------------------------------------
+    public async Task<ApiResponseDto<bool>> CopyYearDataAsync(string projectId, int sourceYear, int targetYear)
+    {
+        var req = new CopyYearDataReq
+        {
+            SourceYear = sourceYear,
+            TargetYear = targetYear
+        };
+
+        var response = await _http.PostAsync<CopyYearDataReq, bool>(
+            string.Format(CostBookApiEndpoints.CopyYearData, HttpUtility.UrlEncode(projectId)), req);
+
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    // ── Staff ─────────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(
         string projectId, int year, QueryParameters<string> query)
@@ -98,7 +116,7 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         var url = QueryStringHelper.AddQueryString(endpoint, query);
 
         // BuildOk() in the API wraps PaginationRes inside ApiResponse<PaginationRes<...>>,
-        // so the filter leaves it intact � $.data is the PaginationRes object, not a flat list.
+        // so the filter leaves it intact — $.data is the PaginationRes object, not a flat list.
         var response = await _http.GetAsync<PaginationRes<StaffRequirementRes>>(url);
 
 
@@ -152,7 +170,7 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
-    // -- Tests -----------------------------------------------------------------
+    // ── Tests ─────────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<TestRequirementDto>>> GetTestRequirementsAsync(
         string projectId, int year, QueryParameters<string> query)
@@ -213,7 +231,7 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
-    // -- Animals ---------------------------------------------------------------
+    // ── Animals ───────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<AnimalRequirementDto>>> GetAnimalRequirementsAsync(
         string projectId, int year, QueryParameters<string> query)
@@ -274,7 +292,7 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
-    // -- Additional Costs ------------------------------------------------------
+    // ── Additional Costs ──────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<AdditionalCostDto>>> GetAdditionalCostsAsync(
         string projectId, int year, QueryParameters<string> query)
@@ -335,7 +353,7 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
-    // -- Lookups ---------------------------------------------------------------
+    // ── Lookups ───────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {

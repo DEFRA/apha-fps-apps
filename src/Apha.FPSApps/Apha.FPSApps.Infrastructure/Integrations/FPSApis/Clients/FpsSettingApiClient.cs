@@ -89,5 +89,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var dto = _mapper.Map<ApiResponseDto<SettingDto>>(response);
             return ApiResponseDto<SettingDto>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<SettingDto>> SaveYearEndSettingAsync(SettingDto settingDto)
+        {
+            var request = _mapper.Map<FpsSettingReq>(settingDto);
+            var response = await _http.PostAsync<FpsSettingReq, FpsSettingRes>(FpsApiEndpoints.SaveYearEndSetting, request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<SettingDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<SettingDto>>(response);
+            return ApiResponseDto<SettingDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

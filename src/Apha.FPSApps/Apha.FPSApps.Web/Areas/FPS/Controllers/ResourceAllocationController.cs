@@ -137,7 +137,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var pagination = BuildPaginationModel(response.Pagination, request);
             var filters = ParseFilters(request.Filter);
 
-            return PartialView("_DataGrid", BuildStaffAllocationGridConfig(items, pagination, filters));
+            return PartialView("_DataGrid", BuildStaffAllocationGridConfig(items, workGroupGrade, pagination, filters));
         }
 
         [HttpGet]
@@ -179,7 +179,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadStaffJobsGrid(PaginationFilter<string> request, [FromForm] string? staffId)
+        public async Task<IActionResult> LoadStaffJobsGrid(PaginationFilter<string> request, [FromForm] string? staffId, [FromForm] string? staffName = null)
         {
             if (string.IsNullOrWhiteSpace(staffId))
                 return PartialView("_DataGrid", BuildStaffJobsGridConfig([]));
@@ -193,7 +193,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var pagination = BuildPaginationModel(response.Pagination, request);
             var filters = ParseFilters(request.Filter);
 
-            return PartialView("_DataGrid", BuildStaffJobsGridConfig(items, pagination, filters));
+            return PartialView("_DataGrid", BuildStaffJobsGridConfig(items, staffName, pagination, filters));
         }
 
         // --- Private helpers -----------------------------------------------------
@@ -213,12 +213,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private static DataGridConfig<ResourceStaffAllocationItem> BuildStaffAllocationGridConfig(
             List<ResourceStaffAllocationItem> data,
+            string? workGroupGrade = null,
             PaginationModel? pagination = null,
             Dictionary<string, string>? filters = null) =>
             new()
             {
                 GridId = "StaffAllocationGrid",
-                Title = "",
+                Title = $"Staff of this Grade: " + (string.IsNullOrWhiteSpace(workGroupGrade) ? "" : workGroupGrade),
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffId",
@@ -243,12 +244,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private static DataGridConfig<ResourceStaffJobItem> BuildStaffJobsGridConfig(
             List<ResourceStaffJobItem> data,
+            string? staffName = null,
             PaginationModel? pagination = null,
             Dictionary<string, string>? filters = null) =>
             new()
             {
                 GridId = "StaffJobsGrid",
-                Title = "",
+                Title = $"Jobs for staff: " + (string.IsNullOrWhiteSpace(staffName) ? "" : staffName),
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffId",

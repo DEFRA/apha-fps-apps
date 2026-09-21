@@ -41,7 +41,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedId = HttpUtility.UrlDecode(number);
             MilestoneDto? result = await _service.GetMilestoneAsync(project, decodedId);
-            return Ok(result is null ? null : _mapper.Map<MilestoneRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<MilestoneRes>();
+            }
+
+            return Ok(_mapper.Map<MilestoneRes>(result));
         }
 
         /// <summary>Create a milestone.</summary>
@@ -107,7 +112,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetMilestoneFormDates(string parentProject, short year)
         {
             MilestoneFormDatesDto? result = await _service.GetMilestoneFormDatesAsync(year, parentProject);
-            return Ok(result is null ? null : _mapper.Map<MilestoneFormDatesRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<MilestoneFormDatesRes>();
+            }
+
+            return Ok(_mapper.Map<MilestoneFormDatesRes>(result));
         }
 
         /// <summary>Create or update a financial form dates record.</summary>
@@ -234,6 +244,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             string next = await _service.GetNextMilestoneNumberAsync(project, year);
             return Ok(new { next });
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

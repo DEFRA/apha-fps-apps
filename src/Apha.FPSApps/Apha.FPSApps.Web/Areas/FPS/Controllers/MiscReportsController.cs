@@ -52,7 +52,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ProfitCentreOptions = profitCentreOptions,
                 SelectedProfitCentre = profitCentre,
                 SelectedReport = selectedReport,
-                SelectedReportTitle = GetReportTitle(selectedReport),
                 FpsYear = year
             });
         }
@@ -151,6 +150,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<Dictionary<string, string?>>
             {
                 GridId            = "miscReportsGrid",
+                Title             = GetReportTitle(report),
                 KeyProperty       = "TestCode",
                 AllowAdd          = false,
                 AllowEdit         = false,

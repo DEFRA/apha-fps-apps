@@ -3,9 +3,7 @@
     padding: 0;
     box-sizing: border-box;
 }
-body{
-    padding-bottom: 10vh;
-}
+
 .main-content {
 
     margin: 0 auto;
@@ -2926,7 +2924,7 @@ table.custom-table th {
 .project-code-section.ppf-header-project-controls {
     position: absolute;
     top: 0;
-    right: 0;
+    right: 40px;
     z-index: 2;
     height: 50px;
     padding: 0 10px;
@@ -2943,11 +2941,12 @@ table.custom-table th {
     padding: 2px 5px;
 }
 
-.project-code-section.ppf-header-project-controls .govuk-button {
-    margin-bottom: 0;
-    padding: 3px 10px;
-    white-space: nowrap;
-}
+    .project-code-section.ppf-header-project-controls .govuk-button {
+        margin-bottom: 0;
+        padding: 7px 10px;
+        white-space: nowrap;
+        font-size: 16px !important;
+    }
 
 .project-code-section.ppf-header-project-controls label {
     margin-bottom: 0;
@@ -3014,13 +3013,12 @@ table.custom-table th {
     white-space: nowrap;
 }
 
-/* Bold the figures in the totals controls (value + £ prefix). Qualified with
-   the #id so it outranks `.govuk-input` in govuk-frontend, which loads first
+/* Bold the figures in the totals controls. The £ prefix is deliberately left at
+   the normal weight so these currency controls match the rest of FPS. Qualified
+   with the #id so it outranks `.govuk-input` in govuk-frontend, which loads first
    but would otherwise tie on the plain-class selector. */
 #projectProfitabilityTotalSummary .govuk-input,
-#projectProfitabilityTotalSummary .govuk-input__prefix,
-#projectProfitabilitySummary .govuk-input,
-#projectProfitabilitySummary .govuk-input__prefix {
+#projectProfitabilitySummary .govuk-input {
     font-weight: 700;
 }
 
@@ -3036,10 +3034,17 @@ table.custom-table th {
 }
 
 /* Programme Target / Surplus-Shortfall are totals too, so match the bold
-   treatment. Two-class prefix keeps this above `.govuk-input`. */
-.summary-row.ppf-summary-column .govuk-input,
-.summary-row.ppf-summary-column .govuk-input__prefix {
+   treatment. The £ prefix stays at the normal weight. Two-class prefix keeps
+   this above `.govuk-input`. */
+.summary-row.ppf-summary-column .govuk-input {
     font-weight: 700;
+}
+
+/* The £ prefix must not inherit the bold treatment from the rules above. */
+#projectProfitabilityTotalSummary .govuk-input__prefix,
+#projectProfitabilitySummary .govuk-input__prefix,
+.summary-row.ppf-summary-column .govuk-input__prefix {
+    font-weight: 400;
 }
 
 .ac-table th:nth-child(5),
@@ -3189,16 +3194,6 @@ table.custom-table th {
 }
 
 /* -- Budget Resource Level ---------------------------------------- */
-.brl-workgroup-grid #gridContainer_workGroupGrid .editable-grid-container {
-    min-height: unset !important;
-    height: auto !important;
-}
-
-.brl-workgroup-grid #gridContainer_workGroupGrid .grid-scroll-container {
-    height: 300px !important;
-    max-height: 300px !important;
-}
-
 .brl-action-buttons {
     display: flex;
     flex-direction: column;
@@ -5586,11 +5581,6 @@ input.govuk-input.ssr-total-input[readonly] {
         overflow-y: auto;
     }
 }
-#gridContainer_compareStaff2Grid .grid-scroll-container,
-#gridContainer_projectGrid .editable-grid-container div .grid-scroll-container {
-    height: 410px;
-    max-height: 410px;
-}
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
@@ -5620,27 +5610,6 @@ input.govuk-input.ssr-total-input[readonly] {
     .govuk-select {
         vertical-align: middle;
     }
-}
-
-#gridContainer_wgGradeGrid .editable-grid-container {
-    min-height: unset;
-}
-
-#gridContainer_wgGradeGrid table thead th,
-#gridContainer_wgGradeGrid table tbody td {
-    text-align: left !important;
-}
-
-/* Right-align numeric columns in wgStaffGrid (HrsPaid, Leave, SickSp, AtWork = columns 3-6) */
-#gridContainer_wgStaffGrid table thead th:nth-child(3),
-#gridContainer_wgStaffGrid table thead th:nth-child(4),
-#gridContainer_wgStaffGrid table thead th:nth-child(5),
-#gridContainer_wgStaffGrid table thead th:nth-child(6),
-#gridContainer_wgStaffGrid table tbody td:nth-child(3),
-#gridContainer_wgStaffGrid table tbody td:nth-child(4),
-#gridContainer_wgStaffGrid table tbody td:nth-child(5),
-#gridContainer_wgStaffGrid table tbody td:nth-child(6) {
-    text-align: right !important;
 }
 
 /* Border on the 4 numeric total cells */
@@ -5673,12 +5642,12 @@ input.govuk-input.ssr-total-input[readonly] {
 #cs-summary-grid .cs-summary-box-title-text {
     text-decoration: underline;
 }
-    .govuk-footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        z-index: 1000;
-    }
+.govuk-footer {
+    margin-top: 5vh;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
+}
 .isSideNav {
     .sidenav{
         padding-left: 0 !important;
@@ -5687,13 +5656,6 @@ input.govuk-input.ssr-total-input[readonly] {
 .isTestSupplierPage {
     .multicolumn-dropdown-panel {
         left: -154px !important;
-    }
-}
-#gridContainer_testListVlaGrid {
-    .editable-grid-container {
-        .sup_border_bottom_0 {
-            display: none;
-        }
     }
 }
 #ProjectDropdownPanel {

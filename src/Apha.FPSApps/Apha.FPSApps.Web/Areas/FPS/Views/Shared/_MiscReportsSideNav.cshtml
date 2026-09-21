@@ -18,7 +18,7 @@
             url += (url.indexOf('?') >= 0 ? '&' : '?') + 'profitCentre=' + encodeURIComponent(pc);
         }
         if (yr) {
-            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'year=' + encodeURIComponent(yr);
+            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'fpsContextYear=' + encodeURIComponent(yr);
         }
         window.location.href = url;
     }
@@ -30,14 +30,14 @@
     <ul>
         <li>
             <a class="dropdown-item@(Model == "TestManagerWgPivot" ? " sidenav-title" : "")"
-               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot", year = FyContext.Year })"
+               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot", fpsContextYear = FyContext.Year })"
                onclick="miscReportsNavigate(event, '@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot" })')">
                 Test Manager WG Pivot
             </a>
         </li>
         <li>
             <a class="dropdown-item@(Model == "TestManagerRcPivot" ? " sidenav-title" : "")"
-               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot", year = FyContext.Year })"
+               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot", fpsContextYear = FyContext.Year })"
                onclick="miscReportsNavigate(event, '@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot" })')">
                 Test Manager RC Pivot
             </a>

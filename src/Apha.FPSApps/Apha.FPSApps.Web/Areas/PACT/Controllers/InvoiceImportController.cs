@@ -240,7 +240,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Import([FromForm] IFormFile file)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
@@ -470,6 +471,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AllowAdd = false,
                 AllowEdit = true,
                 AllowDelete = true,
+                AllowExcelExport = false,
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<InvoiceImportFailedItem>(),
                 Pagination = pagination,

@@ -50,10 +50,20 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             await PopulateDropdownsAsync(viewModel);
 
-            viewModel.SelectedProject = project ?? null;
+            string? requestedProject = parentproject ?? project;
+            string? resolvedProject = !string.IsNullOrWhiteSpace(requestedProject)
+                && viewModel.ProjectList.Any(item => string.Equals(item.Value, requestedProject, StringComparison.OrdinalIgnoreCase))
+                    ? requestedProject
+                    : null;
 
+            viewModel.NavigationProject = requestedProject ?? string.Empty;
+            viewModel.SelectedProject = resolvedProject;
+            viewModel.Parentproject = resolvedProject ?? string.Empty;
 
-            viewModel.Parentproject = parentproject ?? viewModel.SelectedProject ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(requestedProject) && string.IsNullOrWhiteSpace(resolvedProject))
+            {
+                ViewBag.YfdMessage = $"Project not found: {requestedProject}";
+            }
 
             viewModel.HoursInDay = await GetRequiredDoubleSettingAsync("HoursInDay");
             viewModel.DaysInYear = await GetRequiredDoubleSettingAsync("DaysInYear");
@@ -82,28 +92,30 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 }
             }
 
-           
-            viewModel.CostCenterListGrid = new DataGridConfig<YearlyFinancialDataItem>
-            {
-                GridId             = "costCenterListGrid",
-                Title              = "Yearly Financial Details",
-                ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "Year",
-                AllowAdd           = true,
-                AddFunction        = "addYearlyFinancialData",
-                AllowEdit          = true,
-                EditFunction       = "editYearlyFinancialData",
-                AllowDelete        = true,
-                DeleteFunction     = "deleteYearlyFinancialData",
-                AllowView          = false, 
-                ViewFunction       = "viewYearlyFinancialData",
-                ExtraFilterMethod  = "getYearlyFinancialDataExtraFilters",
-                BindGridUrl        = "/PIMS/YearlyFinancialData/LoadYearlyFinancialDataGrid",
-                Data               = [], 
-                Columns            = GridDataProvider.GetColumnsDefination<YearlyFinancialDataItem>(null),
-                Pagination         = new PaginationModel()
-            };
+            PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
+            viewModel.CostCenterListGrid = !string.IsNullOrWhiteSpace(viewModel.SelectedProject)
+                ? await BuildYearlyFinancialDataGridAsync(defaultRequest, viewModel.SelectedProject)
+                : new DataGridConfig<YearlyFinancialDataItem>
+                {
+                    GridId             = "costCenterListGrid",
+                    Title              = "Yearly Financial Details",
+                    ShowCheckboxColumn = false,
+                    ShowPagination     = true,
+                    KeyProperty        = "Year",
+                    AllowAdd           = true,
+                    AddFunction        = "addYearlyFinancialData",
+                    AllowEdit          = true,
+                    EditFunction       = "editYearlyFinancialData",
+                    AllowDelete        = true,
+                    DeleteFunction     = "deleteYearlyFinancialData",
+                    AllowView          = false,
+                    ViewFunction       = "viewYearlyFinancialData",
+                    ExtraFilterMethod  = "getYearlyFinancialDataExtraFilters",
+                    BindGridUrl        = "/PIMS/YearlyFinancialData/LoadYearlyFinancialDataGrid",
+                    Data               = [],
+                    Columns            = GridDataProvider.GetColumnsDefination<YearlyFinancialDataItem>(null),
+                    Pagination         = new PaginationModel()
+                };
 
             return View(viewModel);
         }

@@ -1030,7 +1030,13 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             {
                 new() { Year = TestYear, Subcontcounter = 2, Project = TestProject, Acctcode = "MISC", Month = 1d, Amount = 300m, Description = "Equipment", Supplier = "SupplierX" }
             };
+            var monthlyPactData = new List<ProjectMonthFinal>
+            {
+                new() { Year = TestYear, Project = TestProject, Monthno = 1d, Periodname = "Jan", Subcontracts = 1000m, Animals = 500m, Nonanimals = 200m, Timecosts = 3000m, Transfercosts = 500m, Totalcost = 5200m, Totalhours = 100d, Invoices = 5000m, Coiw = 100m }
+            };
 
+            _mockRepository.GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
+                .Returns(new PagedData<ProjectMonthFinal>(monthlyPactData, MakePaginationData(1)));
             _mockRepository.GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
                 .Returns(new PagedData<ProjectStaffPlan>(staffPlans, MakePaginationData(1)));
             _mockRepository.GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
@@ -1058,36 +1064,52 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             using var stream = new MemoryStream(result);
             using var workbook = new XLWorkbook(stream);
 
-            workbook.Worksheet("StaffPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            static void AssertNoPoundCurrencyFormat(IXLWorkbook wb, string sheetName, int row, int column)
+            {
+                var cell = wb.Worksheet(sheetName).Cell(row, column);
+                cell.Style.NumberFormat.Format.Should().NotBe("£#,##0.00");
+                cell.GetFormattedString().Should().NotStartWith("£");
+            }
 
-            workbook.Worksheet("StaffActuals").Cell(2, 7).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffActuals").Cell(2, 8).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffActuals").Cell(3, 8).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 3);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 7);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 9);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 10);
 
-            workbook.Worksheet("TestPlan").Cell(2, 3).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "StaffPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "StaffPlan", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "StaffPlan", 3, 5);
 
-            workbook.Worksheet("TestActuals").Cell(2, 6).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestActuals").Cell(2, 7).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestActuals").Cell(3, 7).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 2, 7);
+            AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 2, 8);
+            AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 3, 8);
 
-            workbook.Worksheet("AnimalPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 3);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 3, 5);
 
-            workbook.Worksheet("AnimalActuals").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalActuals").Cell(2, 6).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalActuals").Cell(3, 6).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 7);
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 3, 7);
 
-            workbook.Worksheet("AdditionalPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AdditionalPlan").Cell(3, 4).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 3, 5);
 
-            workbook.Worksheet("AdditionalActuals").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AdditionalActuals").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 3, 6);
 
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 3, 4);
+
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 3, 5);
+
+            await _mockRepository.Received(1).GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetTestPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
@@ -1102,6 +1124,8 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
         public async Task ExportProjectYearCostsToExcelAsync_WithEmptyData_ReturnsValidByteArray()
         {
             // Arrange
+            _mockRepository.GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
+                .Returns(new PagedData<ProjectMonthFinal>(new List<ProjectMonthFinal>(), EmptyPaginationData()));
             _mockRepository.GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
                 .Returns(new PagedData<ProjectStaffPlan>(new List<ProjectStaffPlan>(), EmptyPaginationData()));
             _mockRepository.GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>())
@@ -1126,6 +1150,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             result.Should().NotBeNull();
             result.Should().NotBeEmpty();
 
+            await _mockRepository.Received(1).GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffActualsAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetTestPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());

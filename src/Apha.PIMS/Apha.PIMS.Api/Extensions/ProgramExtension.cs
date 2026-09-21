@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using System.Globalization;
+using Apha.Common.Helpers.Converter;
 
 namespace Apha.PIMS.Api.Extensions
 {
@@ -62,7 +63,11 @@ namespace Apha.PIMS.Api.Extensions
             services.AddControllers(options =>
             {
                 options.Filters.Add<ApiResponseActionFilter>();
-            });
+            })
+             .AddJsonOptions(options =>
+              {
+                  options.JsonSerializerOptions.Converters.Add(new TrimDecimalJsonConverter());
+              });
 
             // API Versioning
             services.AddApiVersioning(options =>

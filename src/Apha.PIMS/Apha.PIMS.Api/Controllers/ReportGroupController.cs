@@ -55,7 +55,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetReportGroupById(int groupId)
         {
             ReportGroupDto? result = await _service.GetReportGroupByIdAsync(groupId);
-            return result is null ? NotFound() : Ok(_mapper.Map<ReportGroupRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ReportGroupRes>();
+            }
+
+            return Ok(_mapper.Map<ReportGroupRes>(result));
         }
 
         /// <summary>Create a new report group.</summary>
@@ -84,6 +89,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeleteReportGroupAsync(groupId);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

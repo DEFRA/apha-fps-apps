@@ -627,6 +627,33 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
 
         #endregion
 
+        #region SetWorkgroupsActiveStatusByJobCodeAsync
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_ValidJobCode_ReturnsTrue(bool isActive)
+        {
+            _mockRepository.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive).Returns(true);
+
+            var result = await _sut.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive);
+
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive);
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_NotFound_ReturnsFalse()
+        {
+            _mockRepository.SetWorkgroupsActiveStatusByJobCodeAsync("JC_MISSING", "PRJ1", true).Returns(false);
+
+            var result = await _sut.SetWorkgroupsActiveStatusByJobCodeAsync("JC_MISSING", "PRJ1", true);
+
+            result.Should().BeFalse();
+        }
+
+        #endregion
+
         #region CopyWorkGroupAsync
 
         [Fact]

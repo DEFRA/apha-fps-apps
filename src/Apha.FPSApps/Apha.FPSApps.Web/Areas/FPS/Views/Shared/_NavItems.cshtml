@@ -93,6 +93,7 @@
             @if (User.IsInRole("FPSAdmin"))
             {
                 <a class="dropdown-item" asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">Maintenance Menu</a>
+                <a class="dropdown-item" asp-area="FPS" asp-controller="MasterLookup" asp-action="Index">Master Lookup Maintenance</a>
             }
             <a class="dropdown-item" asp-area="FPS" asp-controller="AnimalCosts" asp-action="Index">ASU Data View</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitabilityVla" asp-action="Index">VLA Project Totals</a>

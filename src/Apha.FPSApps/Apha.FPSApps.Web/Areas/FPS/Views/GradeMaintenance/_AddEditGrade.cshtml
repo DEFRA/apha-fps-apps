@@ -48,7 +48,7 @@
                                        name="GradeCode"
                                        type="text"
                                        required
-                                       maxlength="50"
+                                       maxlength="10"
                                        aria-required="true" />
                                 <span data-valmsg-for="GradeCode" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                             }
@@ -76,6 +76,7 @@
                                    id="Description"
                                    name="Description"
                                    type="text"
+                                   maxlength="30"
                                    value="@(Model?.Description ?? string.Empty)" />
                             <span data-valmsg-for="Description" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                         </div>

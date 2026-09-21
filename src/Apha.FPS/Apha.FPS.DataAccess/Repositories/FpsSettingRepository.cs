@@ -41,10 +41,10 @@ namespace Apha.FPS.DataAccess.Repositories
             return setting;
         }
 
-        [ExcludeFromCodeCoverage]
+       // [ExcludeFromCodeCoverage]
         public async Task<FpsSetting> SaveAsync(FpsSetting setting)
         {
-            var existing = await _dbContext.TblSettings.IgnoreQueryFilters()
+            var existing = await _dbContext.TblSettings
                 .FirstOrDefaultAsync(m =>
                     m.Id == setting.Id &&
                     m.FpsYear == setting.FpsYear);
@@ -69,9 +69,25 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing ?? setting;
         }
 
-        [ExcludeFromCodeCoverage]
+        public async Task<FpsSetting> SaveYearEndSettingAsync(FpsSetting setting)
+        {
+            int? plannedYear = await GetPlannedYear();
+
+            if (plannedYear is null)
+            {
+                return await SaveStagingAsync(setting);
+            }
+            else 
+            {
+                return await SaveAsync(setting);
+            }
+        }
+
+       // [ExcludeFromCodeCoverage]
         public async Task<List<YearEndFpsSetting>> GetYearEndSettingsAsync()
         {
+            List<FpsSetting> settings;
+
             var settingIds = new[]
                {
                     "HoursInDay",
@@ -83,12 +99,43 @@ namespace Apha.FPS.DataAccess.Repositories
             int? plannedYear = await GetPlannedYear();
 
             var settingIdsLower = settingIds.Select(id => id.ToLowerInvariant()).ToArray();
-
-            var settings = await _dbContext.TblSettings.IgnoreQueryFilters()
+           
+            if (plannedYear is null)
+            {
+                plannedYear = openYear + 1;
+                var openSettings = await _dbContext.TblSettings
                 .AsNoTracking()
-                .Where(s => (s.FpsYear == openYear || s.FpsYear == plannedYear) &&
+                .Where(s => (s.FpsYear == openYear ) &&
                             settingIdsLower.Contains(s.Id.ToLower()))
                 .ToListAsync();
+
+                var stagingSettings = await _dbContext.TblStagingSettings
+               .AsNoTracking()
+               .Where(s => (s.FpsYear == plannedYear) &&
+                           settingIdsLower.Contains(s.Id.ToLower()))
+               .ToListAsync();
+
+                var plannedSettings = stagingSettings.Select(s => new FpsSetting
+                {
+                    Id = s.Id,
+                    FpsYear = s.FpsYear,
+                    Notes = s.Notes,
+                    Setting=s.Setting,
+                    UpdatedAt=s.UpdatedAt,
+                    UpdatedBy=s.UpdatedBy
+                }).ToList();
+
+                settings = openSettings.Concat(plannedSettings).ToList();
+            }
+            else
+            {
+                 settings = await _dbContext.TblSettings
+                               .AsNoTracking()
+                               .Where(s => ( s.FpsYear == plannedYear) &&
+                                           settingIdsLower.Contains(s.Id.ToLower()))
+                               .ToListAsync();
+            }
+               
 
             //Remove duplicates based on Id and prioritize planned year over open year
             settings = settings
@@ -101,6 +148,44 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
+        private async Task<FpsSetting> SaveStagingAsync(FpsSetting setting)
+        {
+            var stagingSetting = new FpsSettingStaging
+            {
+                Id = setting.Id,
+                FpsYear = setting.FpsYear,
+                Setting = setting.Setting,
+                Notes = setting.Notes,
+                UpdatedBy = _requestContext.UserEmailId,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var existing = await _dbContext.TblStagingSettings
+                .FirstOrDefaultAsync(m =>
+                    m.Id == stagingSetting.Id &&
+                    m.FpsYear == stagingSetting.FpsYear);
+
+            stagingSetting.UpdatedBy = _requestContext.UserEmailId;
+            stagingSetting.UpdatedAt = DateTime.UtcNow;
+
+            if (existing is null)
+            {
+                _dbContext.TblStagingSettings.Add(stagingSetting);
+            }
+            else
+            {
+                existing.Setting = stagingSetting.Setting;
+                existing.Notes = stagingSetting.Notes;
+                existing.UpdatedBy = stagingSetting.UpdatedBy;
+                existing.UpdatedAt = stagingSetting.UpdatedAt;
+                _dbContext.TblStagingSettings.Update(existing);
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            return setting;
+        }
+        
         private static List<YearEndFpsSetting> GetSettingList( string[] settingIds, int openYear, int? plannedYear, List<FpsSetting> settings)
         {
             var result = new List<YearEndFpsSetting>();
@@ -129,7 +214,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         Id = id,
                         FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
-                        Setting = null,
+                        Setting = id.ToLower() == "capapprovalreceivedforreset"? "No": null,
                         Notes = null,
                         UpdatedBy = null,
                         UpdatedAt = DateTime.MinValue,

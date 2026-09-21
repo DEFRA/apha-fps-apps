@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -64,8 +65,12 @@ namespace Apha.FPS.Application.Services
 
             var exists = await _repository.ExistsAsync(dto.TestCode, dto.Buyer, dto.ProfitCentre);
             if (exists)
-                throw new InvalidOperationException(
-                    $"A TestRequirementRCCost entry with TestCode '{dto.TestCode}', Buyer '{dto.Buyer}', ProfitCentre '{dto.ProfitCentre}' already exists for the current FPS year.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"A TestRequirementRCCost entry with TestCode '{dto.TestCode}', Buyer '{dto.Buyer}', ProfitCentre '{dto.ProfitCentre}' already exists for the current FPS year.",
+                        "TESTREQUIREMENTRCCOST_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<TestRequirementRCCost>(dto);
             var created = await _repository.AddAsync(entity);

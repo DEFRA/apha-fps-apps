@@ -49,12 +49,17 @@ namespace Apha.PIMS.Api.Controllers
 
         /// <summary>Retrieves a single publication type by its type code.</summary>
         /// <param name="type">The publication type code (string PK, max 3 chars).</param>
-        /// <returns>Returns <c>200 OK</c> with the matching <see cref="PublicationTypeRes"/>, or <c>404 Not Found</c>.</returns>
+        /// <returns>Returns <c>200 OK</c> with the matching <see cref="PublicationTypeRes"/>.</returns>
         [HttpGet("{type}")]
         public async Task<IActionResult> GetPublicationTypeByCode(string type)
         {
             PublicationTypeDto? result = await _service.GetPublicationTypeByCodeAsync(type);
-            return result is null ? NotFound() : Ok(_mapper.Map<PublicationTypeRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<PublicationTypeRes>();
+            }
+
+            return Ok(_mapper.Map<PublicationTypeRes>(result));
         }
 
         /// <summary>Creates a new publication type.</summary>
@@ -90,6 +95,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeletePublicationTypeAsync(type);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

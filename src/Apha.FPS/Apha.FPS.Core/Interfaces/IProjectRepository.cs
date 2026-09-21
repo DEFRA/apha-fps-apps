@@ -11,6 +11,7 @@ namespace Apha.FPS.Core.Interfaces
 
         Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(PaginationParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
         Task<IEnumerable<ProjectView>> GetAllProjectsAsync();
+        Task<IEnumerable<Project>> GetDistinctParentProjectsAsync();
         Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync();
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);

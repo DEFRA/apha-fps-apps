@@ -1,5 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using MapsterMapper;
@@ -152,7 +153,7 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         }
 
         [Fact]
-        public async Task AddPurchaseAsync_WhenItemAlreadyExists_ThrowsInvalidOperationException()
+        public async Task AddPurchaseAsync_WhenItemAlreadyExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto      = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
@@ -160,7 +161,11 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddPurchaseAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddPurchaseAsync(dto));
+
+            exception.Errors.Should().ContainSingle(e =>
+                e.Message == "A purchase with Workgroup 'WG01', Account 'ACC1' and Item Description 'Item A' already exists." &&
+                e.Code == "PURCHASE_ALREADY_EXISTS");
         }
 
         #endregion
@@ -236,14 +241,18 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         }
 
         [Fact]
-        public async Task UpdatePurchaseAsync_WhenItemNotFound_ThrowsInvalidOperationException()
+        public async Task UpdatePurchaseAsync_WhenItemNotFound_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns((Purchase?)null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdatePurchaseAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdatePurchaseAsync(dto));
+
+            exception.Errors.Should().ContainSingle(e =>
+                e.Message == "Purchase with Workgroup 'WG01', Account 'ACC1' and Item Description 'Item A' was not found." &&
+                e.Code == "PURCHASE_NOT_FOUND");
         }
 
         #endregion

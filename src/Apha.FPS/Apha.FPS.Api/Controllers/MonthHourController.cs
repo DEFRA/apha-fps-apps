@@ -92,5 +92,19 @@ namespace Apha.FPS.Api.Controllers
             var result = await _service.SaveMonthHourAsync(dto);
             return Ok(_mapper.Map<MonthHourRes>(result));
         }
+
+        /// <summary>
+        /// Creates or updates a month-hour record identified by its composite key
+        /// (<c>Year</c>, <c>Month</c>, <c>FpsYear</c>) in stage or main database based on planned year.
+        /// </summary>
+        /// <param name="request">The month-hour values to save.</param>
+        /// <returns><c>200 OK</c> with the saved <see cref="MonthHourRes"/>.</returns>
+        [HttpPost("save-yearend")]
+        public async Task<IActionResult> SaveYearEndMonthHour([FromBody] MonthHourReq request)
+        {
+            var dto = _mapper.Map<MonthHourDto>(request);
+            var result = await _service.SaveYearEndMonthHourAsync(dto);
+            return Ok(_mapper.Map<MonthHourRes>(result));
+        }
     }
 }

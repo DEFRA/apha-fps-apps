@@ -10,7 +10,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public string? JobCode { get; set; }
 
         [Display(Name = "Name")]
-        [GridColumn(Width = 180, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Width = 180, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? Name { get; set; }
 
         [Display(Name = "WG")]
@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public string? GradeCode { get; set; }
 
         [Display(Name = "Month")]
-        [GridColumn(Width = 70, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Width = 70, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public double? Month { get; set; }
 
         [Display(Name = "Time")]

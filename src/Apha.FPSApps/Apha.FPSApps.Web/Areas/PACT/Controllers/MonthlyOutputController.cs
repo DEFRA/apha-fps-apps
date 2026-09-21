@@ -543,6 +543,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "monthlyOutputStagingGrid",
                 Title = "Imported Output Records",
                 AllowExport = false,
+                AllowExcelExport = false,
                 ShowCheckboxColumn = false,
                 KeyProperty = "Id",
                 AddFunction = "addStagingMonthlyOutput",

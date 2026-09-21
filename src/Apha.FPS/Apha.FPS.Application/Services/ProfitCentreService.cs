@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -55,7 +56,12 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreDto.ProfitCentreName);
 
             if (await _repository.ProfitCentreExistsAsync(profitCentreDto.ProfitCentreId))
-                throw new InvalidOperationException($"Profit centre '{profitCentreDto.ProfitCentreId}' already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Profit centre '{profitCentreDto.ProfitCentreId}' already exists.",
+                        "PROFITCENTRE_ALREADY_EXISTS")
+                ]);
 
             var entity = _mapper.Map<ProfitCentre>(profitCentreDto);
             var created = await _repository.CreateProfitCentreAsync(entity);
@@ -68,7 +74,12 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(originalProfitCentreId);
 
             if (!await _repository.ProfitCentreExistsAsync(originalProfitCentreId))
-                throw new InvalidOperationException($"Profit centre '{originalProfitCentreId}' not found.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Profit centre '{originalProfitCentreId}' not found.",
+                        "PROFITCENTRE_NOT_FOUND")
+                ]);
 
             var entity = _mapper.Map<ProfitCentre>(profitCentreDto);
             var updated = await _repository.UpdateProfitCentreAsync(originalProfitCentreId, entity);
@@ -80,10 +91,20 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             if (await _repository.HasLinkedGradesAsync(profitCentreId))
-                throw new InvalidOperationException("Cannot delete profit centre: it is referenced by profit centre grade records.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Cannot delete profit centre: it is referenced by profit centre grade records.",
+                        "PROFITCENTRE_REFERENCED_BY_GRADE")
+                ]);
 
             if (await _repository.HasLinkedWorkgroupsAsync(profitCentreId))
-                throw new InvalidOperationException("Cannot delete profit centre: it is referenced by work group records.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Cannot delete profit centre: it is referenced by work group records.",
+                        "PROFITCENTRE_REFERENCED_BY_WORKGROUP")
+                ]);
 
             return await _repository.DeleteProfitCentreAsync(profitCentreId);
         }
