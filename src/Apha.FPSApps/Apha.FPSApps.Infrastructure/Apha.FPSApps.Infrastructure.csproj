@@ -7,8 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Email\" />
-    <Folder Include="ExcelImportExport\" />
+    <Compile Remove="Email\**" />
+    <Compile Remove="ExcelImportExport\**" />
+    <EmbeddedResource Remove="Email\**" />
+    <EmbeddedResource Remove="ExcelImportExport\**" />
+    <None Remove="Email\**" />
+    <None Remove="ExcelImportExport\**" />
   </ItemGroup>
 
   <ItemGroup>
