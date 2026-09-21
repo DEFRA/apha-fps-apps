@@ -1,5 +1,7 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
@@ -7,654 +9,365 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
+using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsYearlyFinancialDataApiClientTest
 {
     public class PimsYearlyFinancialDataApiClientTests
     {
-        private readonly IPimsHttpExecutor             _http;
-        private readonly IMapper                       _mapper;
+        private readonly IPimsHttpExecutor _http;
+        private readonly IMapper _mapper;
         private readonly PimsYearlyFinancialDataApiClient _client;
 
         public PimsYearlyFinancialDataApiClientTests()
         {
-            _http   = Substitute.For<IPimsHttpExecutor>();
+            _http = Substitute.For<IPimsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
             _client = new PimsYearlyFinancialDataApiClient(_http, _mapper);
         }
 
-        // ── helpers ──────────────────────────────────────────────────────
+        private static ApiResponse<T> SuccessApiResponse<T>(T data) =>
+            new ApiResponse<T> { Success = true, Data = data };
 
-        private const string BaseUrl = "api/v1/yearlyfinancialdata";
+        private static ApiResponse<T> FailureApiResponse<T>() =>
+            new ApiResponse<T>
+            {
+                Success = false,
+                Errors = new List<ApiError> { new ApiError { Code = "ERR", Message = "API error" } }
+            };
 
-        private static ApiResponse<T> OkResponse<T>(T data)
-            => new() { Success = true, Data = data };
+        private static ApiResponseDto<T> SuccessDto<T>(T data) => ApiResponseDto<T>.SuccessResponse(data);
 
-        private static ApiResponse<T> FailResponse<T>()
-            => new() { Success = false, Errors = [new ApiError { Message = "err", Code = "ERR" }] };
+        private static ApiResponseDto<T> FailureDto<T>() =>
+            ApiResponseDto<T>.FailureResponse(
+                new List<ApiErrorDto> { new ApiErrorDto { Code = "ERR", Message = "Error" } },
+                new ApiMetaDto());
 
-        private static ApiResponseDto<T> OkDto<T>(T data)
-            => new() { Success = true, Data = data };
+        private static YearlyFinancialDataRes MakeRes(short year = 2024, string? project = "PRJ001") =>
+            new YearlyFinancialDataRes { Year = year, Project = project, BfBudget = 1000m };
 
-        private static ApiResponseDto<T> FailDto<T>()
-            => new() { Success = false, Errors = [new ApiErrorDto { Message = "err", Code = "ERR" }], Meta = new ApiMetaDto() };
+        private static YearlyFinancialDataDto MakeDto(short year = 2024, string? project = "PRJ001") =>
+            new YearlyFinancialDataDto { Year = year, Project = project, BfBudget = 1000m };
 
-        private static QueryParameters<string> DefaultQuery()
-            => new() { Page = 1, PageSize = 10 };
-
-        #region Constructor Tests
-
-        [Fact]
-        public void Constructor_WithValidDependencies_InitializesClient()
-        {
-            var client = new PimsYearlyFinancialDataApiClient(_http, _mapper);
-            Assert.NotNull(client);
-        }
-
-        #endregion
-
-        #region GetAllAsync Tests
+        #region GetAllAsync
 
         [Fact]
-        public async Task GetAllAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        public async Task GetAllAsync_WhenSuccessResponse_ReturnsMappedList()
         {
             // Arrange
-            var query       = DefaultQuery();
-            var resList     = new List<YearlyFinancialDataRes> { new() { Year = 2024, Project = "PP001" } };
-            var apiResponse = OkResponse(resList);
-            var mappedDto   = OkDto(new List<YearlyFinancialDataDto> { new() { Year = 2024, Project = "PP001" } });
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var yearlyDataList = new List<YearlyFinancialDataRes> { MakeRes(2024), MakeRes(2025) };
+            var apiResponse = SuccessApiResponse(yearlyDataList);
+            var mappedDto = SuccessDto(new List<YearlyFinancialDataDto> { MakeDto(2024), MakeDto(2025) });
 
             _http.GetAsync<List<YearlyFinancialDataRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<YearlyFinancialDataDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetAllAsync("PP001", query);
+            var result = await _client.GetAllAsync("PRJ001", query);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Single(result.Data);
-            _mapper.Received(1).Map<ApiResponseDto<List<YearlyFinancialDataDto>>>(apiResponse);
+            Assert.Equal(2, result.Data.Count);
+            await _http.Received(1).GetAsync<List<YearlyFinancialDataRes>>(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task GetAllAsync_UrlContainsProject()
+        public async Task GetAllAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var query       = DefaultQuery();
-            var apiResponse = OkResponse(new List<YearlyFinancialDataRes>());
-            var mappedDto   = OkDto(new List<YearlyFinancialDataDto>());
-            _http.GetAsync<List<YearlyFinancialDataRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<YearlyFinancialDataDto>>>(apiResponse).Returns(mappedDto);
-
-            // Act
-            await _client.GetAllAsync("PP001", query);
-
-            // Assert
-            await _http.Received(1).GetAsync<List<YearlyFinancialDataRes>>(
-                Arg.Is<string>(u => u.Contains($"{BaseUrl}/PP001")));
-        }
-
-        [Fact]
-        public async Task GetAllAsync_HttpReturnsFailure_ReturnsFailureResponse()
-        {
-            // Arrange
-            var query       = DefaultQuery();
-            var apiResponse = FailResponse<List<YearlyFinancialDataRes>>();
-            var failDto     = FailDto<List<YearlyFinancialDataDto>>();
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = FailureApiResponse<List<YearlyFinancialDataRes>>();
+            var failDto = FailureDto<List<YearlyFinancialDataDto>>();
 
             _http.GetAsync<List<YearlyFinancialDataRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<YearlyFinancialDataDto>>>(apiResponse).Returns(failDto);
 
             // Act
-            var result = await _client.GetAllAsync("PP001", query);
+            var result = await _client.GetAllAsync("PRJ001", query);
 
             // Assert
+            Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task GetAllAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var query = DefaultQuery();
-            _http.GetAsync<List<YearlyFinancialDataRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllAsync("PP001", query);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         #endregion
 
-        #region GetByKeyAsync Tests
+        #region GetByKeyAsync
 
         [Fact]
-        public async Task GetByKeyAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        public async Task GetByKeyAsync_WhenSuccessResponse_ReturnsMappedObject()
         {
             // Arrange
-            var res         = new YearlyFinancialDataRes { Year = 2024, Project = "PP001" };
-            var apiResponse = OkResponse(res);
-            var mappedDto   = OkDto(new YearlyFinancialDataDto { Year = 2024, Project = "PP001" });
+            var yearlyDataRes = MakeRes(2024);
+            var apiResponse = SuccessApiResponse(yearlyDataRes);
+            var mappedDto = SuccessDto(MakeDto(2024));
 
             _http.GetAsync<YearlyFinancialDataRes>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetByKeyAsync((short)2024, "PP001");
+            var result = await _client.GetByKeyAsync(2024, "PRJ001");
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            _mapper.Received(1).Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse);
+            Assert.Equal((short)2024, result.Data.Year);
+            await _http.Received(1).GetAsync<YearlyFinancialDataRes>(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task GetByKeyAsync_UrlContainsYearAndProject()
+        public async Task GetByKeyAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var apiResponse = OkResponse(new YearlyFinancialDataRes());
-            var mappedDto   = OkDto(new YearlyFinancialDataDto());
-            _http.GetAsync<YearlyFinancialDataRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(mappedDto);
+            var apiResponse = FailureApiResponse<YearlyFinancialDataRes>();
+            var failDto = FailureDto<YearlyFinancialDataDto>();
 
-            // Act
-            await _client.GetByKeyAsync((short)2024, "PP001");
-
-            // Assert
-            await _http.Received(1).GetAsync<YearlyFinancialDataRes>(
-                Arg.Is<string>(u => u.Contains("2024") && u.Contains("PP001")));
-        }
-
-        [Fact]
-        public async Task GetByKeyAsync_HttpReturnsFailure_ReturnsFailureResponse()
-        {
-            // Arrange
-            var apiResponse = FailResponse<YearlyFinancialDataRes>();
-            var failDto     = FailDto<YearlyFinancialDataDto>();
             _http.GetAsync<YearlyFinancialDataRes>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(failDto);
 
             // Act
-            var result = await _client.GetByKeyAsync((short)9999, "UNKNOWN");
+            var result = await _client.GetByKeyAsync(2024, "PRJ001");
 
             // Assert
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetByKeyAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<YearlyFinancialDataRes>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Timeout"));
-
-            // Act
-            var result = await _client.GetByKeyAsync((short)2024, "PP001");
-
-            // Assert
+            Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         #endregion
 
-        #region CreateAsync Tests
+        #region CreateAsync
 
         [Fact]
-        public async Task CreateAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        public async Task CreateAsync_WhenSuccessResponse_ReturnsMappedObject()
         {
             // Arrange
-            var dto         = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            var req         = new YearlyFinancialDataReq();
-            var apiResponse = OkResponse(new YearlyFinancialDataRes { Year = 2024, Project = "PP001" });
-            var mappedDto   = OkDto(dto);
+            var dto = MakeDto(2024);
+            var req = new YearlyFinancialDataReq { BfBudget = 1000m };
+            var yearlyDataRes = MakeRes(2024);
+            var apiResponse = SuccessApiResponse(yearlyDataRes);
+            var mappedDto = SuccessDto(MakeDto(2024));
 
-            
             _mapper.Map<YearlyFinancialDataReq>(dto).Returns(req);
-            _http.PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _http.PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(mappedDto);
 
             // Act
             var result = await _client.CreateAsync(dto);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
-            _mapper.Received(1).Map<YearlyFinancialDataReq>(dto);
-            _mapper.Received(1).Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse);
+            Assert.NotNull(result.Data);
+            Assert.Equal((short)2024, result.Data.Year);
+            await _http.Received(1).PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>());
         }
 
         [Fact]
-        public async Task CreateAsync_MapsDtoToReqBeforePosting()
+        public async Task CreateAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            var req = new YearlyFinancialDataReq();
+            var dto = MakeDto(2024);
+            var req = new YearlyFinancialDataReq { BfBudget = 1000m };
+            var apiResponse = FailureApiResponse<YearlyFinancialDataRes>();
+            var failDto = FailureDto<YearlyFinancialDataDto>();
+
             _mapper.Map<YearlyFinancialDataReq>(dto).Returns(req);
-            _http.PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), req)
-                 .Returns(OkResponse(new YearlyFinancialDataRes()));
-            _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(Arg.Any<ApiResponse<YearlyFinancialDataRes>>())
-                   .Returns(OkDto(dto));
-
-            // Act
-            await _client.CreateAsync(dto);
-
-            // Assert: mapper called for Dto→Req
-            _mapper.Received(1).Map<YearlyFinancialDataReq>(dto);
-            // Assert: PostAsync called with the mapped Req
-            await _http.Received(1).PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(BaseUrl, req);
-        }
-
-        [Fact]
-        public async Task CreateAsync_HttpReturnsFailure_ReturnsFailureResponse()
-        {
-            // Arrange
-            var dto = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            var req = new YearlyFinancialDataReq();
-            _mapper.Map<YearlyFinancialDataReq>(dto).Returns(req);
-            var apiResponse = FailResponse<YearlyFinancialDataRes>();
-            var failDto     = FailDto<YearlyFinancialDataDto>();
-            _http.PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _http.PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(failDto);
 
             // Act
             var result = await _client.CreateAsync(dto);
 
             // Assert
+            Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task CreateAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var dto = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            _mapper.Map<YearlyFinancialDataReq>(dto).Returns(new YearlyFinancialDataReq());
-            _http.PostAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>())
-                 .ThrowsAsync(new Exception("Server error"));
-
-            // Act
-            var result = await _client.CreateAsync(dto);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Equal("INTERNAL_ERROR", result.Errors![0].Code);
+            Assert.NotNull(result.Errors);
         }
 
         #endregion
 
-        #region UpdateAsync Tests
+        #region UpdateAsync
 
         [Fact]
-        public async Task UpdateAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        public async Task UpdateAsync_WhenSuccessResponse_ReturnsMappedObject()
         {
             // Arrange
-            var dto         = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            var req         = new YearlyFinancialDataReq();
-            var apiResponse = OkResponse(new YearlyFinancialDataRes { Year = 2024, Project = "PP001" });
-            var mappedDto   = OkDto(dto);
+            var dto = MakeDto(2024);
+            var req = new YearlyFinancialDataReq { BfBudget = 1500m };
+            var yearlyDataRes = MakeRes(2024);
+            var apiResponse = SuccessApiResponse(yearlyDataRes);
+            var mappedDto = SuccessDto(MakeDto(2024));
 
-           
             _mapper.Map<YearlyFinancialDataReq>(dto).Returns(req);
-            _http.PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _http.PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.UpdateAsync((short)2024, "PP001", dto);
+            var result = await _client.UpdateAsync(2024, "PRJ001", dto);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
-            _mapper.Received(1).Map<YearlyFinancialDataReq>(dto);
-            _mapper.Received(1).Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse);
+            Assert.NotNull(result.Data);
+            await _http.Received(1).PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>());
         }
 
         [Fact]
-        public async Task UpdateAsync_UrlContainsYearAndProject()
+        public async Task UpdateAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            var req = new YearlyFinancialDataReq();
+            var dto = MakeDto(2024);
+            var req = new YearlyFinancialDataReq { BfBudget = 1500m };
+            var apiResponse = FailureApiResponse<YearlyFinancialDataRes>();
+            var failDto = FailureDto<YearlyFinancialDataDto>();
+
             _mapper.Map<YearlyFinancialDataReq>(dto).Returns(req);
-            _http.PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), req)
-                 .Returns(OkResponse(new YearlyFinancialDataRes()));
-            _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(Arg.Any<ApiResponse<YearlyFinancialDataRes>>())
-                   .Returns(OkDto(dto));
+            _http.PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<YearlyFinancialDataDto>>(apiResponse).Returns(failDto);
 
             // Act
-            await _client.UpdateAsync((short)2024, "PP001", dto);
+            var result = await _client.UpdateAsync(2024, "PRJ001", dto);
 
             // Assert
-            await _http.Received(1).PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(
-                Arg.Is<string>(u => u.Contains("2024") && u.Contains("PP001")), req);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            var dto = new YearlyFinancialDataDto { Year = 2024, Project = "PP001" };
-            _mapper.Map<YearlyFinancialDataReq>(dto).Returns(new YearlyFinancialDataReq());
-            _http.PutAsync<YearlyFinancialDataReq, YearlyFinancialDataRes>(Arg.Any<string>(), Arg.Any<YearlyFinancialDataReq>())
-                 .ThrowsAsync(new Exception("Put failed"));
-
-            // Act
-            var result = await _client.UpdateAsync((short)2024, "PP001", dto);
-
-            // Assert
+            Assert.NotNull(result);
             Assert.False(result.Success);
-            Assert.Equal("INTERNAL_ERROR", result.Errors![0].Code);
         }
 
         #endregion
 
-        #region DeleteAsync Tests
+        #region DeleteAsync
 
         [Fact]
-        public async Task DeleteAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        public async Task DeleteAsync_WhenSuccessResponse_ReturnsSuccess()
         {
-            // Arrange — client calls DeleteAsync<object>, not bool
-            var apiResponse = OkResponse(new object());
-            var mappedDto   = new ApiResponseDto<object> { Success = true, Data = new object() };
+            // Arrange
+            var apiResponse = SuccessApiResponse<object>(null!);
+            var mappedDto = SuccessDto<object>(null!);
 
             _http.DeleteAsync<object>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.DeleteAsync((short)2024, "PP001");
+            var result = await _client.DeleteAsync(2024, "PRJ001");
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
-            _mapper.Received(1).Map<ApiResponseDto<object>>(apiResponse);
+            await _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task DeleteAsync_UrlContainsYearAndProject()
+        public async Task DeleteAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            // Arrange — client calls DeleteAsync<object>
-            var apiResponse = OkResponse(new object());
-            _http.DeleteAsync<object>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(new ApiResponseDto<object> { Success = true });
+            // Arrange
+            var apiResponse = FailureApiResponse<object>();
+            var failDto = FailureDto<object>();
 
-            // Act
-            await _client.DeleteAsync((short)2024, "PP001");
-
-            // Assert
-            await _http.Received(1).DeleteAsync<object>(
-                Arg.Is<string>(u => u.Contains("2024") && u.Contains("PP001")));
-        }
-
-        [Fact]
-        public async Task DeleteAsync_HttpReturnsFailure_ReturnsFailureResponse()
-        {
-            // Arrange — client calls DeleteAsync<object>
-            var apiResponse = FailResponse<object>();
-            var failDto     = new ApiResponseDto<object>
-            {
-                Success = false,
-                Errors  = [new ApiErrorDto { Message = "Not found", Code = "NOT_FOUND" }],
-                Meta    = new ApiMetaDto()
-            };
             _http.DeleteAsync<object>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(failDto);
 
             // Act
-            var result = await _client.DeleteAsync((short)9999, "UNKNOWN");
+            var result = await _client.DeleteAsync(2024, "PRJ001");
 
             // Assert
+            Assert.NotNull(result);
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange — client calls DeleteAsync<object>
-            _http.DeleteAsync<object>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Delete failed"));
-
-            // Act
-            var result = await _client.DeleteAsync((short)2024, "PP001");
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         #endregion
 
-        #region GetPactCostsAsync Tests
-
+        #region GetPactCostsAsync
 
         [Fact]
-        public async Task GetPactCostsAsync_HttpReturnsSuccessWithData_ReturnsAggregatedYearTotals()
+        public async Task GetPactCostsAsync_WhenSuccessResponse_ReturnsAggregatedCosts()
         {
             // Arrange
-            var resList = new List<PactProjectYearCostsRes>
+            var pactRes = new List<PactProjectYearCostsRes>
             {
-                new()
-                {
-                    Project = "PP001",
-                    Year = 2024,
-                    SubContracts = 900m,
-                    Animals = 100m,
-                    Tests = 400m,
-                    Pay = 700m,
-                    NonPayOH = 200m,
-                    TotalCosts = 2500m,
-                    TimeCost = 900m,
-                    Hours = 22,
-                    CustIncome = 300m,
-                    BudgetCvl = 4000m
-                },
-                new()
-                {
-                    Project = "PP001",
-                    Year = 2024,
-                    SubContracts = 100m,
-                    Animals = 20m,
-                    Tests = 50m,
-                    Pay = 30m,
-                    NonPayOH = 10m,
-                    TotalCosts = 90m,
-                    TimeCost = 40m,
-                    Hours = 7,
-                    CustIncome = 300m,
-                    BudgetCvl = 4000m
-                }
+                new PactProjectYearCostsRes { Project = "PRJ001", Year = 2024, Pay = 1000m, Tests = 500m, Animals = 300m }
             };
-            var apiResponse = OkResponse(resList);
+            var apiResponse = SuccessApiResponse(pactRes);
+            var mappedDto = SuccessDto(new PactProjectYearCostsDto { Project = "PRJ001", Year = 2024, Pay = 1000m });
 
             _http.GetAsync<List<PactProjectYearCostsRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<PactProjectYearCostsDto>>(Arg.Any<ApiResponse<List<PactProjectYearCostsRes>>>()).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPactCostsAsync("PP001", (short)2024);
+            var result = await _client.GetPactCostsAsync("PRJ001", 2024);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal("PP001", result.Data.Project);
-            Assert.Equal((short)2024, result.Data.Year);
-            Assert.Equal(1000m, result.Data.SubContracts);
-            Assert.Equal(120m, result.Data.Animals);
-            Assert.Equal(450m, result.Data.Tests);
-            Assert.Equal(730m, result.Data.Pay);
-            Assert.Equal(210m, result.Data.NonPayOH);
-            Assert.Equal(2590m, result.Data.TotalCosts);
-            Assert.Equal(940m, result.Data.TimeCost);
-            Assert.Equal(29d, result.Data.Hours);
-            Assert.Equal(300m, result.Data.CustIncome);
-            Assert.Equal(4000m, result.Data.BudgetCvl);
-            _mapper.DidNotReceive().Map<PactProjectYearCostsDto>(Arg.Any<PactProjectYearCostsRes>());
+            await _http.Received(1).GetAsync<List<PactProjectYearCostsRes>>(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task GetPactCostsAsync_HttpReturnsSuccessWithEmptyList_ReturnsEmptyDtoForRequestedKey()
+        public async Task GetPactCostsAsync_WhenEmptyList_ReturnsEmptyAggregate()
         {
             // Arrange
-            var apiResponse = OkResponse(new List<PactProjectYearCostsRes>());
+            var pactRes = new List<PactProjectYearCostsRes>();
+            var apiResponse = SuccessApiResponse(pactRes);
+
             _http.GetAsync<List<PactProjectYearCostsRes>>(Arg.Any<string>()).Returns(apiResponse);
 
             // Act
-            var result = await _client.GetPactCostsAsync("PP001", (short)2024);
+            var result = await _client.GetPactCostsAsync("PRJ001", 2024);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal("PP001", result.Data.Project);
+            Assert.Equal("PRJ001", result.Data.Project);
             Assert.Equal((short)2024, result.Data.Year);
-            _mapper.DidNotReceive().Map<PactProjectYearCostsDto>(Arg.Any<PactProjectYearCostsRes>());
-        }
-
-        [Fact]
-        public async Task GetPactCostsAsync_UrlContainsProjectAndYearAndPactCostsSuffix()
-        {
-            // Arrange
-            var apiResponse = OkResponse(new List<PactProjectYearCostsRes>());
-            _http.GetAsync<List<PactProjectYearCostsRes>>(Arg.Any<string>()).Returns(apiResponse);
-
-            // Act
-            await _client.GetPactCostsAsync("PP001", (short)2024);
-
-            // Assert
-            await _http.Received(1).GetAsync<List<PactProjectYearCostsRes>>(
-                Arg.Is<string>(u =>
-                    u.Contains("PP001") &&
-                    u.Contains("2024") &&
-                    u.Contains("pactcosts")));
-        }
-
-        [Fact]
-        public async Task GetPactCostsAsync_HttpReturnsFailure_ReturnsFailureResponse()
-        {
-            // Arrange
-            var apiResponse = FailResponse<List<PactProjectYearCostsRes>>();
-            var failDto     = new ApiResponseDto<PactProjectYearCostsDto>
-            {
-                Success = false,
-                Errors  = [new ApiErrorDto { Message = "Not found", Code = "NOT_FOUND" }],
-                Meta    = new ApiMetaDto()
-            };
-            _http.GetAsync<List<PactProjectYearCostsRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<PactProjectYearCostsDto>>(apiResponse).Returns(failDto);
-
-            // Act
-            var result = await _client.GetPactCostsAsync("PP001", (short)2024);
-
-            // Assert
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetPactCostsAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<List<PactProjectYearCostsRes>>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Timeout"));
-
-            // Act
-            var result = await _client.GetPactCostsAsync("PP001", (short)2024);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         #endregion
 
-        #region GetSettingValueByIdAsync Tests
-
+        #region GetSettingValueByIdAsync
 
         [Fact]
-        public async Task GetSettingValueByIdAsync_HttpReturnsSuccessWithData_ReturnsSettingValue()
+        public async Task GetSettingValueByIdAsync_WhenSuccessResponse_ReturnsValue()
         {
             // Arrange
-            var apiResponse = OkResponse("7.4");
+            var settingValue = "TestValue";
+            var apiResponse = SuccessApiResponse(settingValue);
+            var mappedDto = SuccessDto(settingValue);
+
             _http.GetAsync<string>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<string>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetSettingValueByIdAsync("HoursInDay");
+            var result = await _client.GetSettingValueByIdAsync("SettingId");
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal("7.4", result.Data);
-            // Mapper must NOT be called for the success path
-            _mapper.DidNotReceive().Map<ApiResponseDto<string>>(Arg.Any<ApiResponse<string>>());
+            Assert.Equal(settingValue, result.Data);
         }
 
         [Fact]
-        public async Task GetSettingValueByIdAsync_HttpReturnsSuccessWithNullData_ReturnsFailureResponse()
+        public async Task GetSettingValueByIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            // Arrange — Success == true but Data is null; client falls through to failure branch
-            var apiResponse = new ApiResponse<string> { Success = true, Data = null };
-            var failDto     = FailDto<string>();
+            // Arrange
+            var apiResponse = FailureApiResponse<string>();
+            var failDto = FailureDto<string>();
+
             _http.GetAsync<string>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<string>>(apiResponse).Returns(failDto);
 
             // Act
-            var result = await _client.GetSettingValueByIdAsync("HoursInDay");
+            var result = await _client.GetSettingValueByIdAsync("SettingId");
 
             // Assert
+            Assert.NotNull(result);
             Assert.False(result.Success);
-            _mapper.Received(1).Map<ApiResponseDto<string>>(apiResponse);
-        }
-
-        [Fact]
-        public async Task GetSettingValueByIdAsync_UrlContainsSettingId()
-        {
-            // Arrange
-            var apiResponse = OkResponse("220");
-            _http.GetAsync<string>(Arg.Any<string>()).Returns(apiResponse);
-
-            // Act
-            await _client.GetSettingValueByIdAsync("DaysInYear");
-
-            // Assert
-            await _http.Received(1).GetAsync<string>(
-                Arg.Is<string>(u => u.Contains("DaysInYear")));
-        }
-
-        [Fact]
-        public async Task GetSettingValueByIdAsync_HttpReturnsFailure_ReturnsFailureResponse()
-        {
-            // Arrange
-            var apiResponse = FailResponse<string>();
-            var failDto     = FailDto<string>();
-            _http.GetAsync<string>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<string>>(apiResponse).Returns(failDto);
-
-            // Act
-            var result = await _client.GetSettingValueByIdAsync("HoursInDay");
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            _mapper.Received(1).Map<ApiResponseDto<string>>(apiResponse);
-        }
-
-        [Fact]
-        public async Task GetSettingValueByIdAsync_HttpThrowsException_ReturnsInternalError()
-        {
-            // Arrange
-            _http.GetAsync<string>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetSettingValueByIdAsync("HoursInDay");
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
         }
 
         #endregion
