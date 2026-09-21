@@ -18,14 +18,16 @@ namespace Apha.PACT.Application.Services
         private readonly IBatchJobRepository _repository;
         private readonly IRecreateAndReleaseSummaryRepository _releaseRepository;
         private readonly IEventPublisherService _eventPublisherService;
+        private readonly IMonthRepository _monthRepository;
         private readonly IMapper _mapper;
 
         public BatchJobService(IBatchJobRepository repository, IRecreateAndReleaseSummaryRepository releaseRepository,
-            IEventPublisherService eventPublisherService, IMapper mapper)
+            IEventPublisherService eventPublisherService, IMonthRepository monthRepository, IMapper mapper)
         {
             _repository = repository;
             _releaseRepository = releaseRepository;
             _eventPublisherService= eventPublisherService;
+            _monthRepository = monthRepository;
             _mapper = mapper;
         }
 
@@ -44,8 +46,10 @@ namespace Apha.PACT.Application.Services
         public async Task<BatchJobEventTriggerDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
-            
-            var note = $"'{RecreateSummariesJobName}' is initiated for {month} - {contextyear}.";
+
+            var months = await _monthRepository.GetAllMonthsAsync();
+            var monthName = months.FirstOrDefault(m => m.MonthNumber == month)?.MonthName;
+            var note = monthName is null ? $"{month} - {contextyear}" : $"{month} - {monthName} {contextyear}";
 
             if (month < 1 || month > 12)
                 errors.Add(new BusinessValidationError("Month must be a numeric value between 1 and 12.", "INVALID_MONTH"));

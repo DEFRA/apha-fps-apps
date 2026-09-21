@@ -16,12 +16,14 @@ namespace Apha.PACT.Application.UnitTests.Services.BatchJobServiceTest
         private readonly IBatchJobRepository _repository;
         private readonly IRecreateAndReleaseSummaryRepository _releaseRepository;
         private readonly IEventPublisherService _eventPublisher;
+        private readonly IMonthRepository _monthRepository;
         private readonly IMapper _mapper;
         private readonly BatchJobService _service;
 
         private const string JobName = "RecreateSummary";
         private const string RequestedBy = "user@test.com";
         private const int ValidMonth = 6;
+        private const string ValidMonthName = "September";
         private const int ValidYear = 2024;
 
         public BatchJobServiceTests()
@@ -29,8 +31,10 @@ namespace Apha.PACT.Application.UnitTests.Services.BatchJobServiceTest
             _repository = Substitute.For<IBatchJobRepository>();
             _releaseRepository = Substitute.For<IRecreateAndReleaseSummaryRepository>();
             _eventPublisher = Substitute.For<IEventPublisherService>();
+            _monthRepository = Substitute.For<IMonthRepository>();
+            _monthRepository.GetAllMonthsAsync().Returns([new Month { MonthNumber = ValidMonth, MonthName = ValidMonthName }]);
             _mapper = Substitute.For<IMapper>();
-            _service = new BatchJobService(_repository, _releaseRepository, _eventPublisher, _mapper);
+            _service = new BatchJobService(_repository, _releaseRepository, _eventPublisher, _monthRepository, _mapper);
         }
 
         #region GetBatchJobsHistoryAsync
@@ -283,7 +287,7 @@ namespace Apha.PACT.Application.UnitTests.Services.BatchJobServiceTest
         }
 
         [Fact]
-        public async Task TriggerRecreateSummariesJobAsync_ValidInput_NoteContainsJobNameAndMonth()
+        public async Task TriggerRecreateSummariesJobAsync_ValidInput_NoteContainsMonthNumberAndName()
         {
             // Arrange
             var correlationId = Guid.NewGuid().ToString();
@@ -301,9 +305,30 @@ namespace Apha.PACT.Application.UnitTests.Services.BatchJobServiceTest
             await _service.TriggerRecreateSummariesJobAsync(ValidMonth, ValidYear, RequestedBy, correlationId);
 
             // Assert
-            Assert.NotNull(capturedNote);
-            Assert.Contains(JobName, capturedNote);
-            Assert.Contains(ValidMonth.ToString(), capturedNote);
+            Assert.Equal($"{ValidMonth} - {ValidMonthName} {ValidYear}", capturedNote);
+        }
+
+        [Fact]
+        public async Task TriggerRecreateSummariesJobAsync_MonthNameNotFound_NoteFallsBackToNumberOnly()
+        {
+            // Arrange
+            const int unknownMonth = 11;
+            var correlationId = Guid.NewGuid().ToString();
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy, StartDateTime = DateTime.UtcNow };
+            string? capturedNote = null;
+
+            SetupReleasePeriods([]);
+            _repository.CanRunBatchJobAsync(JobName).Returns(true);
+            _repository.EnqueueBatchJobAsync(JobName, RequestedBy, correlationId, Arg.Do<string>(n => capturedNote = n))
+                       .Returns(queueEntry);
+            _eventPublisher.PublishAsync(Arg.Any<EventDetail>(), Arg.Any<CancellationToken>()).Returns("ev-1");
+            _mapper.Map<BatchJobEventTriggerDto>(queueEntry).Returns(new BatchJobEventTriggerDto());
+
+            // Act — unknownMonth has no matching entry in _monthRepository's stub data
+            await _service.TriggerRecreateSummariesJobAsync(unknownMonth, ValidYear, RequestedBy, correlationId);
+
+            // Assert
+            Assert.Equal($"{unknownMonth} - {ValidYear}", capturedNote);
         }
 
         [Fact]

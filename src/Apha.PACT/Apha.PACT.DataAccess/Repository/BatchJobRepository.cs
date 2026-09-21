@@ -22,6 +22,14 @@ namespace Apha.PACT.DataAccess.Repository
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
+                let initiatedNote = (
+                    from l in _context.BatchJobQueueLogs.AsNoTracking()
+                    join ls in _context.BatchJobStatuses.AsNoTracking()
+                        on new { l.StatusId, jq.JobId } equals new { ls.StatusId, ls.JobId }
+                    where l.JobqueueId == jq.JobqueueId && ls.Status.ToLower() == "initiated"
+                    orderby l.LogTime, l.JobqueueLogId
+                    select l.Note
+                ).FirstOrDefault()
                where EF.Functions.ILike(jm.JobName, jobName)
                 select new BatchJobHistory
                 {
@@ -33,14 +41,10 @@ namespace Apha.PACT.DataAccess.Repository
                     EndDateTime = jq.EndDateTime,
                     ErrorMessage = jq.ErrorMessage,
                     Status = js.Status,
-                    Remarks = (
-                        from l in _context.BatchJobQueueLogs.AsNoTracking()
-                        join ls in _context.BatchJobStatuses.AsNoTracking()
-                            on new { l.StatusId, jq.JobId } equals new { ls.StatusId, ls.JobId }
-                        where l.JobqueueId == jq.JobqueueId && ls.Status.ToLower() == "initiated"
-                        orderby l.LogTime, l.JobqueueLogId
-                        select l.Note
-                    ).FirstOrDefault()
+                    // Remarks always carries the original request context (never overwritten after
+                    // Initiated) combined with the job's current status, so it stays accurate as the
+                    // job progresses without losing what it was originally for.
+                    Remarks = initiatedNote == null ? null : initiatedNote + " — " + js.Status
                 };
 
             jobHistoriesQuery = (IQueryable<BatchJobHistory>)ApplySorting(jobHistoriesQuery, query.SortBy?.ToLower(), query.Descending);
