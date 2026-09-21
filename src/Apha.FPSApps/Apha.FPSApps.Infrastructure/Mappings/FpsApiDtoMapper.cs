@@ -71,8 +71,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             config.NewConfig<DivisionDto, DivisionReq>().TwoWays();
 
             // Master Lookup
-            CreateMap<MasterLookupDto, MasterLookupRes>().ReverseMap();
-            CreateMap<LookupItemDto, LookupItemRes>().ReverseMap();
+            config.NewConfig<MasterLookupDto, MasterLookupRes>().TwoWays();
+            config.NewConfig<LookupItemDto, LookupItemRes>().TwoWays();
 
             // Division Grade
             config.NewConfig<DivisionGradeDto, DivisionGradeRes>().TwoWays();

@@ -9,6 +9,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Npgsql;
 using Xunit;
+using MapsterMapper;
 
 namespace Apha.FPS.Application.UnitTests.Services.MasterLookupServiceTest
 {
