@@ -335,7 +335,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateTest(string projectId, int year, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(projectId, year, isDefra);
+        await GetTestCodeOptionsAsync(projectId, year, isDefra, string.Empty);
         return PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
     }
 
@@ -359,7 +359,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(projectId, year, isDefra);
+        await GetTestCodeOptionsAsync(projectId, year, isDefra, testCode);
         var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
         var row = listResponse.Data?.data?.FirstOrDefault(t => t.TestCode == testCode);
@@ -831,11 +831,17 @@ public class YearlyDetailsController : Controller
             : new List<AccountCategoryDto>();
     }
 
-    private async Task GetTestCodeOptionsAsync(string projectId, int year, bool isDefra)
+    private async Task GetTestCodeOptionsAsync(string projectId, int year, bool isDefra, string testCode = "")
     {
         var response = await _service.GetTestCodeLookupsAsync(projectId, year, isDefra);
-        ViewBag.TestCodeOptions = response.Success && response.Data is not null
+        if (!response.Success || response.Data is null)
+        {
+            ViewBag.TestCodeOptions = new List<TestCodeLookupDto>();
+            return;
+        }
+
+        ViewBag.TestCodeOptions = string.IsNullOrWhiteSpace(testCode)
             ? response.Data
-            : new List<TestCodeLookupDto>();
+            : response.Data.Where(x => x.ItemCode == testCode).ToList();
     }
 }

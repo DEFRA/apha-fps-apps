@@ -42,24 +42,22 @@
                                 <th style="padding:6px 8px; text-align:left;">Unit Price</th>
                             </tr>
                         </thead>
-                        <tbody id="testCodeDropdownBody"></tbody>
+                        <tbody id="testCodeDropdownBody">
+                            @foreach (var t in testCodes)
+                            {
+                                <tr data-value="@t.ItemCode"
+                                    data-description="@t.ItemDescription"
+                                    data-unitprice="@(t.UnitPrice?.ToString() ?? "")"
+                                    data-unitpricewithinflamation="@(t.UnitPriceWithInflamation?.ToString() ?? "")"
+                                    style="cursor:pointer;">
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@t.ItemCode</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@t.ItemDescription</td>
+                                    <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(t.UnitPrice?.ToString("F2") ?? "N/A")</td>
+                                </tr>
+                            }
+                        </tbody>
                     </table>
                 </div>
-                @* Rows are rendered lazily (in chunks) so the modal is not held up by
-                   the full list. This is an inert JSON block rather than an executable
-                   <script>, because the modal markup is injected via innerHTML, which
-                   does not run scripts. *@
-                <script type="application/json" id="testCodePanelData">
-                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                        testCodes.Select(t => new
-                        {
-                            v = t.ItemCode,
-                            d = t.ItemDescription,
-                            up = t.UnitPrice?.ToString() ?? "",
-                            upi = t.UnitPriceWithInflamation?.ToString() ?? "",
-                            upd = t.UnitPrice?.ToString("F2") ?? "N/A"
-                        })))
-                </script>
             </div>
             <span asp-validation-for="TestCode" class="govuk-error-message" style="display:none;"></span>
         </div>
