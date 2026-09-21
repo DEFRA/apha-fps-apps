@@ -582,7 +582,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var currentYear = HttpContext.Items["SelectedFPSYear"]?.ToString();
 
             // Redirect to Test Purchase Requirements, preserving the year
-            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject, year = currentYear });
+            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject, fpsContextYear = currentYear });
         }
 
     }

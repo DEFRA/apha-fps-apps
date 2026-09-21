@@ -121,6 +121,13 @@ namespace Apha.PACT.Api.Controllers
             return Ok(isDeleted);
         }
 
+        [HttpPost("setworkgroupsactivestatusbyjobcode")]
+        public async Task<IActionResult> SetWorkgroupsActiveStatusByJobCode([FromQuery] string jobCode, [FromQuery] string parentProject, [FromQuery] bool isActive)
+        {
+            var result = await _service.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+            return Ok(result);
+        }
+
         [HttpPost("copy")]
         public async Task<IActionResult> CopyWorkGroup([FromQuery] string sourceJobCode, [FromQuery] string targetJobCode, [FromQuery] string parentProject)
         {

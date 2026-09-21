@@ -82,17 +82,10 @@
 
                                             <div class="s2cra-main-layout">
                                                 <div class="s2cra-grids-column">
-
-                                                    <h3 class="govuk-heading-s s2cra-staff-title">
-                                                        Staff of this Grade: <span id="stage2SelectedWorkGroupGrade">@Model.SelectedResourceCentre</span>
-                                                    </h3>
                                                     <div id="gridContainer_StaffAllocationGrid" class="s2cra-grid-host">
                                                         @await Html.PartialAsync("_DataGrid", Model.StaffAllocationGrid)
                                                     </div>
 
-                                                    <h3 class="govuk-heading-s s2cra-jobs-title">
-                                                        Jobs for staff — <span id="stage2SelectedStaffName">@Model.SelectedPersonName</span>
-                                                    </h3>
                                                     <div id="gridContainer_StaffJobsGrid" class="s2cra-grid-host s2cra-jobs-grid-host">
                                                         @await Html.PartialAsync("_DataGrid", Model.StaffJobsGrid)
                                                     </div>

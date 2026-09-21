@@ -309,16 +309,16 @@
                                 </td>
                                 <td class="govuk-table__cell">
                                     <div id="IsDefraProjectFormGroup" class="govuk-form-group govuk-!-margin-bottom-0">
-                                        <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select sup_select_option_width_100" style="width: 100%">
-                                            <option value="">Select IsDefraProject </option>
-                                        </select>
-                                        <span asp-validation-for="IsDefraProject" class="govuk-error-message"></span>
-                                    </div>
-                                </td>
-                                <td class="govuk-table__cell">
-                                    <span class="warning-text" style="margin-left: -10px;font-weight:bold; margin-bottom: 20px;display:block; font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
-                                        Changing this option will recost existing projects with current rates.
-                                    </span>
+                                            <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" aria-describedby="IsDefraProjectHint" class="govuk-select sup_select_option_width_100" style="width: 100%">
+                                                <option value="">Select IsDefraProject </option>
+                                            </select>
+                                                <span asp-validation-for="IsDefraProject" class="govuk-error-message"></span>
+                                            </div>
+                                        </td>
+                                        <td class="govuk-table__cell">
+                                            <span id="IsDefraProjectHint" class="warning-text" style="margin-left: -10px;font-weight:bold; margin-bottom: 20px;display:block; font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
+                                                Changing this option will recost existing projects with current rates.
+                                            </span>
                                 </td>
                             </tr>
 
@@ -384,13 +384,14 @@
                                                    name="Inflation"
                                                    value="-1"
                                                    class="govuk-checkboxes__input"
+                                                   aria-describedby="chkInflationHint"
                                                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.checked = !this.checked; }"
                                             @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
                                             <label class="govuk-checkboxes__label" for="chkInflation">
                                                 <span class="govuk-visually-hidden">Include Inflation</span>
                                             </label>
                                         </div>
-                                        <span class="warning-text isCustomInfo">
+                                        <span id="chkInflationHint" class="warning-text isCustomInfo">
                                             Changing this option will recost existing projects with current rates as well as affecting inflation.
                                         </span>
                                     </div>
@@ -519,6 +520,7 @@
             // ── Client-side validation for StartDate (custom date picker) ─────
             // jQuery Validate ignores hidden inputs by default, so intercept submit
             $('form').on('submit', function (e) {
+                var $form = $(this);
                 var $startBinding = $('#StartdateBinding');
                 var $startMsg = $('[data-valmsg-for="StartDate"]');
                 var $startDisplay = $('#StartdateDisplay');
@@ -526,12 +528,21 @@
 
                 if (!$startBinding.val()) {
                     e.preventDefault();
+                    hideLoader();
                     $startFg.addClass('govuk-form-group--error');
                     $startDisplay.addClass('govuk-input--error');
                     $startMsg.text('Start Date is required.')
                              .removeClass('field-validation-valid')
                              .addClass('field-validation-error')
                              .show();
+                    setTimeout(syncCreateFormErrorStyling, 0);
+                    return;
+                }
+
+                if (!$form.valid()) {
+                    hideLoader();
+                    setTimeout(syncCreateFormErrorStyling, 0);
+                    return;
                 }
 
                 // Clear StartDate error as soon as a date is picked

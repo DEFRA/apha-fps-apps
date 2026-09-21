@@ -270,9 +270,9 @@ namespace Apha.FPS.Application.Services
         // ── Validation rules (moved from StaffAnimalValidationService's Staff half) ──────
 
         /// <summary>
-        /// Invalid-data checks (missing/duplicate key, negative rate) take priority over
-        /// NotFound — they're a property of the uploaded row itself, independent of whether a
-        /// live counterpart exists — so a row failing both is reported as Invalid, not NotFound.
+        /// Invalid-data checks (missing/duplicate key) take priority over NotFound — they're a
+        /// property of the uploaded row itself, independent of whether a live counterpart
+        /// exists — so a row failing both is reported as Invalid, not NotFound.
         /// </summary>
         private static List<StaffValidationResult> ValidateStaff(StaffValidationContext ctx)
         {
@@ -304,12 +304,6 @@ namespace Apha.FPS.Application.Services
 
                 if (duplicates.Contains(key))
                     errors.Add(Error("DUPLICATE_GRADE", row.SourceRow, $"Grade '{row.PcGrade}' appears more than once.", row.PcGrade));
-                if (row.PayRate is < 0)
-                    errors.Add(Error("NEGATIVE_RATE", row.SourceRow, "Negative rates are not permitted.", row.PcGrade, "payrate"));
-                if (row.Npr is < 0)
-                    errors.Add(Error("NEGATIVE_RATE", row.SourceRow, "Negative rates are not permitted.", row.PcGrade, "npr"));
-                if (row.Ohr is < 0)
-                    errors.Add(Error("NEGATIVE_RATE", row.SourceRow, "Negative rates are not permitted.", row.PcGrade, "ohr"));
 
                 var hasLive = ctx.LiveStaffLookup.TryGetValue(key, out var live);
                 var effectivePayRate = StaffAnimalFieldComparer.NormalizeAmount(row.PayRate);

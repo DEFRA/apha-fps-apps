@@ -617,6 +617,22 @@ public class ProjectYearRepositoryTests
 
     #endregion
 
+    #region CopyYearDataAsync
+
+    [Fact]
+    public async Task CopyYearDataAsync_ReturnsFailure_WhenSourceAndTargetYearAreSame()
+    {
+        var (repo, _, _, _) = CreateRepository();
+
+        var (copied, errors) = await repo.CopyYearDataAsync("2024/001", 2024, 2024);
+
+        Assert.False(copied);
+        Assert.Single(errors);
+        Assert.Contains("cannot be the same", errors[0]);
+    }
+
+    #endregion
+
     #region AddProjectYearAsync - additional cases
 
     [Fact]

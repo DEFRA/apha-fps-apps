@@ -29,6 +29,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .OrderBy(x=>x.ParentProject).ToListAsync();
         }
 
+        public async Task<IEnumerable<Project>> GetDistinctParentProjectsAsync()
+        {
+            return await _dbContext.Projects
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
+                .Select(p => p.ParentProject)
+                .Distinct()
+                .OrderBy(x => x)
+                .Select(parentProject => new Project { ParentProject = parentProject })
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync()
         {
             return await _dbContext.Projects

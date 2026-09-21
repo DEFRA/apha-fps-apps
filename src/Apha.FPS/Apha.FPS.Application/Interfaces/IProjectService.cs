@@ -6,6 +6,7 @@ namespace Apha.FPS.Application.Interfaces
     public interface IProjectService
     {
         Task<IEnumerable<ProjectDto>> GetAllProjectsAsync();
+        Task<IEnumerable<ProjectDto>> GetDistinctParentProjectsAsync();
         Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync();
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query);
