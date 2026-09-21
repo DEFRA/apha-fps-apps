@@ -109,7 +109,11 @@
     // shared script, which is loaded on every area layout.
     // Additive: does not modify the existing restoreFocusAfterRefresh logic.
     function makePageHeadingFocusable() {
-        var heading = document.querySelector('main h1, .content-wrapper h1, h1');
+        // Some areas (e.g. PIMS) use a lower-level heading (h5) as the visual
+        // page title instead of h1. Look for the first heading of any level
+        // within the main content region so those pages are covered too,
+        // falling back to any h1 on the page.
+        var heading = document.querySelector('main h1, main h2, main h3, main h4, main h5, main h6, .content-wrapper h1, .content-wrapper h2, .content-wrapper h3, .content-wrapper h4, .content-wrapper h5, .content-wrapper h6, h1');
         if (!heading || !isVisible(heading)) return;
         if (!heading.hasAttribute('tabindex')) {
             heading.setAttribute('tabindex', '0');
@@ -152,14 +156,241 @@
         }
     }
 
+    // ── Announce message/confirm dialog content on open ───────────────────
+    // The shared dialog builder (govuk-modal-dialog.js) moves focus straight
+    // to the OK button when a message popup opens (e.g. after a successful
+    // save/delete/edit), so screen readers announce only "OK, button" and the
+    // actual message is never read out.
+    //
+    // Critically, the dialog carries aria-modal="true", which makes assistive
+    // technology ignore ALL content outside the dialog - including any global
+    // live region appended to document.body. The announcement must therefore
+    // be injected INSIDE the dialog element itself to be spoken.
+    //
+    // Implemented here as a new, additive function so the common dialog file
+    // is left untouched. Matching on the ARIA role means every dialog of this
+    // shape is covered across all areas.
+    // Timestamp used to detect dialogs that open immediately on page load, so
+    // their announcement can be delayed until the screen reader has finished
+    // reading the newly loaded document.
+    var PAGE_LOAD_TIME = Date.now();
+
+    function announceDialogContent(dialog) {
+        if (!dialog || dialog.getAttribute('data-sr-announced') === 'true') return;
+        if (!isVisible(dialog)) return;
+        dialog.setAttribute('data-sr-announced', 'true');
+
+        var descId = dialog.getAttribute('aria-describedby');
+        var descEl = descId ? document.getElementById(descId) : dialog.querySelector('p');
+        if (!descEl || !(descEl.textContent || '').trim()) return;
+
+        // Move focus onto the message text itself rather than using a live
+        // region. A live region produces a SECOND, separate announcement on
+        // top of NVDA's own focus announcement for the dialog, which is why
+        // the dialog name and heading were being read twice. Focusing the
+        // message makes the screen reader announce the dialog context and the
+        // message exactly once, in a single pass.
+        if (!descEl.hasAttribute('tabindex')) {
+            descEl.setAttribute('tabindex', '-1');
+        }
+
+        // Deferred so the dialog is fully in the accessibility tree and the
+        // dialog builder's own focus() call has already run, otherwise it
+        // would immediately move focus away again.
+        //
+        // When a dialog is opened straight away on page load (e.g. a success
+        // message rendered from TempData after a redirect), the screen reader
+        // is still busy announcing the newly loaded document and would talk
+        // over / discard the message. In that case wait longer so the message
+        // is announced after the page-load chatter has finished.
+        var openedDuringPageLoad = (Date.now() - PAGE_LOAD_TIME) < 1500;
+        var delay = openedDuringPageLoad ? 900 : 100;
+
+        window.setTimeout(function () {
+            if (!isVisible(dialog)) return;
+            descEl.focus();
+        }, delay);
+    }
+
+    function watchForDialogs() {
+        // Catch any dialog already present when this script initialises.
+        Array.prototype.forEach.call(
+            document.querySelectorAll('[role="dialog"], [role="alertdialog"]'),
+            announceDialogContent
+        );
+
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    if (node.matches && node.matches('[role="dialog"], [role="alertdialog"]')) {
+                        announceDialogContent(node);
+                    }
+                    if (node.querySelectorAll) {
+                        Array.prototype.forEach.call(
+                            node.querySelectorAll('[role="dialog"], [role="alertdialog"]'),
+                            announceDialogContent
+                        );
+                    }
+                });
+            });
+        });
+
+        // Observe from the document element so this works even when the
+        // script runs in <head> before <body> exists. Observation starts
+        // immediately (not on DOMContentLoaded) because pages can open a
+        // dialog inside jQuery's ready handler, which fires on that same
+        // event and could otherwise be missed.
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    watchForDialogs();
+
+    // ── Make static data tables keyboard reachable and announced ──────────
+    // Plain <table> markup is not in the tab order, so keyboard/screen-reader
+    // users tab straight past read-only tables (e.g. the FPS Yearly Details
+    // tab) and never hear their contents. Scrollable wrappers around such
+    // tables are also unreachable by keyboard, which additionally fails
+    // WCAG 2.1.1.
+    //
+    // This adds the required semantics at runtime (focusable scroll region,
+    // accessible name, and column/row header scopes) so no existing view
+    // markup has to change. Only tables that are not already handled - i.e.
+    // those outside the shared editable DataGrid, which manages its own
+    // keyboard behaviour - are processed.
+    function makeStaticTablesAccessible(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+
+        Array.prototype.forEach.call(scope.querySelectorAll('table'), function (table) {
+            if (table.getAttribute('data-a11y-table') === 'true') return;
+            // Skip grids handled by the shared DataGrid component.
+            if (table.closest('.editable-grid-container')) return;
+            table.setAttribute('data-a11y-table', 'true');
+
+            // Give every header cell an explicit scope so screen readers can
+            // associate data cells with their column heading.
+            Array.prototype.forEach.call(table.querySelectorAll('thead th'), function (th) {
+                if (!th.hasAttribute('scope')) th.setAttribute('scope', 'col');
+            });
+
+            // Derive an accessible name for the table from the nearest
+            // preceding heading, or the tab that labels its panel.
+            var name = '';
+            var caption = table.querySelector('caption');
+            if (caption) {
+                name = (caption.textContent || '').trim();
+            }
+            if (!name) {
+                var panel = table.closest('[role="tabpanel"]');
+                var labelledBy = panel && panel.getAttribute('aria-labelledby');
+                var labelEl = labelledBy ? document.getElementById(labelledBy) : null;
+                if (labelEl) name = (labelEl.textContent || '').trim();
+            }
+            if (name && !table.hasAttribute('aria-label')) {
+                table.setAttribute('aria-label', name);
+            }
+
+            // Make the scrollable wrapper (or the table itself) focusable so
+            // the content can be reached and scrolled using the keyboard.
+            var target = table.parentElement;
+            var scrollable = false;
+            if (target) {
+                var style = window.getComputedStyle(target);
+                scrollable = style.overflowY === 'auto' || style.overflowY === 'scroll' ||
+                    style.overflowX === 'auto' || style.overflowX === 'scroll';
+            }
+            if (!scrollable) target = table;
+
+            if (!target.hasAttribute('tabindex')) {
+                target.setAttribute('tabindex', '0');
+            }
+            if (scrollable && !target.hasAttribute('role')) {
+                target.setAttribute('role', 'region');
+                if (name) target.setAttribute('aria-label', name);
+            }
+
+            makeTableRowsFocusable(table);
+        });
+    }
+
+    // Make every data row focusable and give it an accessible name built from
+    // each column header paired with that row's cell value, so tabbing through
+    // the table announces the full row, e.g.
+    // "Year 2023, Program Surveillance, Customer APHA, Manager J Smith".
+    // Row-level focus is used (rather than per-cell) so a screen reader user
+    // hears the complete record in one stop without needing table-navigation
+    // commands.
+    function makeTableRowsFocusable(table) {
+        var headers = Array.prototype.map.call(
+            table.querySelectorAll('thead th'),
+            function (th) { return (th.textContent || '').trim(); }
+        );
+
+        var bodyRows = table.querySelectorAll('tbody tr');
+        Array.prototype.forEach.call(bodyRows, function (row) {
+            if (row.getAttribute('data-a11y-row') === 'true') return;
+            row.setAttribute('data-a11y-row', 'true');
+
+            // Skip rows that already opt into per-cell accessibility (e.g. the
+            // Invoice totals row, where each value cell is individually
+            // focusable and carries its own "label: value" aria-label via
+            // data-total-label). Adding whole-row tabindex/aria-label on top
+            // of that would create a duplicate, mislabeled tab stop.
+            if (row.querySelector('[data-total-label]')) return;
+
+            var cells = row.querySelectorAll('th, td');
+            if (!cells.length) return;
+
+            // A single full-width cell is a placeholder such as
+            // "No records found." - announce it as-is.
+            var parts = [];
+            if (cells.length === 1) {
+                parts.push((cells[0].textContent || '').trim());
+            } else {
+                Array.prototype.forEach.call(cells, function (cell, index) {
+                    var value = (cell.textContent || '').trim();
+                    if (!value) return;
+                    var header = headers[index] || '';
+                    parts.push(header ? header + ' ' + value : value);
+                });
+            }
+
+            var label = parts.join(', ');
+            if (!label) return;
+
+            if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '0');
+            if (!row.hasAttribute('aria-label')) row.setAttribute('aria-label', label);
+        });
+    }
+
+    // Re-apply to tables rendered later (AJAX grid refreshes, tab switches).
+    function watchForStaticTables() {
+        makeStaticTablesAccessible(document);
+
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    if (node.tagName === 'TABLE' || (node.querySelector && node.querySelector('table'))) {
+                        makeStaticTablesAccessible(node.parentElement || document);
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restoreFocusAfterRefresh);
         document.addEventListener('DOMContentLoaded', makePageHeadingFocusable);
         document.addEventListener('DOMContentLoaded', makeFooterReadable);
+        document.addEventListener('DOMContentLoaded', watchForStaticTables);
     } else {
         restoreFocusAfterRefresh();
         makePageHeadingFocusable();
         makeFooterReadable();
+        watchForStaticTables();
     }
 
     // Resolve the flyout panel + row-container ("body") associated with a trigger input.
@@ -487,9 +718,57 @@
         return isModalVisible(modal);
     }
 
+    var emptyDescriptionCounter = 0;
+
+    // ── Stop the whole modal body being read out on open ──────────────────
+    // These dialogs are marked up as role="dialog"/<dialog> with
+    // aria-modal="true" and an aria-labelledby title. When such a dialog
+    // becomes visible and focus moves into it, screen readers announce the
+    // dialog's name AND read out its entire static contents - which is why
+    // opening an Add/Edit modal reads every field label and value in one
+    // burst, and then reads each field again as it is tabbed onto.
+    //
+    // Setting aria-describedby to an empty node is not enough on its own:
+    // reading the contents on entry is the dialog's built-in behaviour, not a
+    // description fallback. The reliable way to stop it - without changing any
+    // markup or UI - is to take the modal BODY out of the accessibility tree
+    // for the brief moment the dialog is being announced, then put it straight
+    // back. The screen reader therefore finds only the title to announce on
+    // open, and every field is still fully exposed (and announced normally)
+    // by the time the user tabs to it.
+    function prepareModalAnnouncement(modal) {
+        if (!modal.hasAttribute('aria-describedby')) {
+            var descId = 'js-modal-empty-desc-' + (++emptyDescriptionCounter);
+            var desc = document.createElement('span');
+            desc.id = descId;
+            desc.className = 'govuk-visually-hidden';
+            modal.appendChild(desc);
+            modal.setAttribute('aria-describedby', descId);
+        }
+    }
+
+    // Hides the modal's content region from assistive technology while the
+    // open announcement happens, restoring it as soon as focus has settled on
+    // the title. aria-hidden has no visual effect, so the UI is untouched.
+    function muteModalBodyDuringOpen(modal) {
+        var body = modal.querySelector('.govuk-edit-modal__body, .modal-body');
+        if (!body || body.getAttribute('aria-hidden') === 'true') return;
+
+        body.setAttribute('aria-hidden', 'true');
+
+        // Restore after the announcement has been queued. Focus never lands
+        // inside the body during this window (it goes to the title), so no
+        // focused element is ever left inside an aria-hidden subtree.
+        window.setTimeout(function () {
+            body.removeAttribute('aria-hidden');
+        }, 600);
+    }
+
     function attachModal(modal, openClass, focusScopeSelector, toggleDisplay) {
         if (!modal || trackedModals.has(modal)) return;
         trackedModals.add(modal);
+
+        prepareModalAnnouncement(modal);
 
         var focusScope = focusScopeSelector ? modal.querySelector(focusScopeSelector) : null;
         var previouslyFocused = null;
@@ -504,14 +783,36 @@
             });
         }
 
-        // When a modal opens, focus should land on its close ("X") button
-        // rather than the first form field, so keyboard/screen-reader users
-        // land on a predictable, always-available control (form fields can be
-        // disabled/hidden depending on modal state, the close button is not).
-        // The close button often lives in the modal header, outside the
-        // narrower focusScope used for Tab-trapping, so it is looked up
-        // against the whole modal rather than the getFocusableElements() list.
+        // When a modal opens, focus should land on its TITLE heading so the
+        // screen reader announces only the dialog name (e.g. "Edit Yearly
+        // Record, heading"). Focus used to go straight to the close ("X")
+        // button; a bare button carries no text content of its own, so the
+        // screen reader read the dialog's whole subtree as surrounding
+        // context - i.e. every field label and value. Landing on the heading
+        // (the WAI-ARIA dialog pattern's recommended target) gives a short,
+        // predictable announcement instead.
+        //
+        // The heading is given tabindex="-1" so it is focusable
+        // programmatically only and never joins the Tab sequence: the very
+        // first Tab still moves to the close button exactly as before, so the
+        // keyboard order and the UI are unchanged.
+        function getModalTitle() {
+            return modal.querySelector(
+                '.govuk-edit-modal__title, .modal-title, ' +
+                '.govuk-edit-modal__header h1, .govuk-edit-modal__header h2, .govuk-edit-modal__header h3, ' +
+                '.modal-header h1, .modal-header h2, .modal-header h3'
+            );
+        }
+
         function getInitialFocusTarget(focusable) {
+            var title = getModalTitle();
+            if (title && title.offsetParent !== null) {
+                if (!title.hasAttribute('tabindex')) {
+                    title.setAttribute('tabindex', '-1');
+                }
+                return title;
+            }
+
             var closeButton = modal.querySelector(
                 '.btn-close, [data-bs-dismiss="modal"], [aria-label="Close"], [aria-label="close"]'
             );
@@ -582,6 +883,7 @@
 
                 isOpen = true;
                 previouslyFocused = document.activeElement;
+                muteModalBodyDuringOpen(modal);
 
                 setTimeout(function () {
                     var focusable = getFocusableElements();
@@ -619,6 +921,7 @@
         // background"). Detect that up front and move focus in immediately.
         if (isOpen) {
             previouslyFocused = document.activeElement;
+            muteModalBodyDuringOpen(modal);
 
             setTimeout(function () {
                 var focusable = getFocusableElements();
@@ -959,26 +1262,51 @@
     }
 
     // Column headings for a grid, indexed to match the cell position in a row.
+    // When the grid has a group header row above the column header row (e.g.
+    // "Total Planned Time" spanning "PlanHrs, FEC, % Planned"), each column
+    // name is prefixed with its group label so NVDA announces both levels,
+    // e.g. "Total Planned Time PlanHrs, 1200.00" instead of just "PlanHrs,
+    // 1200.00" with no indication of which group the column belongs to.
     function getColumnNames(table) {
         var headerRow = null;
+        var groupRow = null;
         var headRows = table.querySelectorAll('thead tr');
         // Use the last header row that isn't the filter row - that's the one
-        // holding the real column labels.
+        // holding the real column labels. The group row (if present) is the
+        // one immediately above it, carrying wider "section" headings.
         for (var i = 0; i < headRows.length; i++) {
-            if (!headRows[i].classList.contains('filter-row') &&
-                !headRows[i].classList.contains('grid-column-group-row')) {
+            if (headRows[i].classList.contains('grid-column-group-row')) {
+                groupRow = headRows[i];
+            } else if (!headRows[i].classList.contains('filter-row')) {
                 headerRow = headRows[i];
             }
         }
         if (!headerRow) return [];
 
-        return Array.prototype.map.call(headerRow.children, function (th) {
+        var columnNames = Array.prototype.map.call(headerRow.children, function (th) {
             // Strip the sort-indicator glyph so it isn't announced.
             var clone = th.cloneNode(true);
             Array.prototype.forEach.call(clone.querySelectorAll('.sort-icon, .column-resizer'), function (n) {
                 n.parentNode.removeChild(n);
             });
             return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+        });
+
+        if (!groupRow) return columnNames;
+
+        // Expand the group row (which uses colspan) into one group label per
+        // column index, then prefix each column name with its group label.
+        var groupNames = [];
+        Array.prototype.forEach.call(groupRow.children, function (th) {
+            var span = th.colSpan || 1;
+            var label = (th.textContent || '').replace(/\s+/g, ' ').trim();
+            for (var s = 0; s < span; s++) groupNames.push(label);
+        });
+
+        return columnNames.map(function (name, idx) {
+            var group = groupNames[idx];
+            if (!group) return name;
+            return name ? group + ' ' + name : group;
         });
     }
 

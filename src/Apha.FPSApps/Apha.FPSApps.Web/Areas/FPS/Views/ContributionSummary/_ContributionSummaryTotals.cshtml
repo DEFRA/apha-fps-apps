@@ -48,7 +48,7 @@
 
     @* ── Box 2: Total Time (Access shows "+ Animals Sold" only for ASU) ── *@
     <div id="cs-summary-total-time-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-box-title"><span class="cs-summary-box-title-text">@(t.IsAsuMode ? "Total Time + Animals Sold" : "Total Time")</span></div>
+        <div class="fps-dg-summary-box-title" role="heading" aria-level="3" tabindex="0" aria-label="@(t.IsAsuMode ? "Total Time + Animals Sold" : "Total Time")"><span class="cs-summary-box-title-text" aria-hidden="true">@(t.IsAsuMode ? "Total Time + Animals Sold" : "Total Time")</span></div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-total-time-fee">Fee from PlanHrs:</label>
             <div class="govuk-input__wrapper">
@@ -77,7 +77,7 @@
 
     @* ── Box 3: Assured Time Only ── *@
     <div id="cs-summary-assured-time-box" class="fps-dg-summary-box sup_border">
-        <div class="fps-dg-summary-box-title"><span class="cs-summary-box-title-text">Assured Time Only</span></div>
+        <div class="fps-dg-summary-box-title" role="heading" aria-level="3" tabindex="0" aria-label="Assured Time Only"><span class="cs-summary-box-title-text" aria-hidden="true">Assured Time Only</span></div>
         <div class="fps-dg-summary-item">
             <label class="govuk-label--s govuk-!-font-size-16 fps-dg-summary-label" for="cs-assured-time-fee">Fee from PlanHrs:</label>
             <div class="govuk-input__wrapper">
