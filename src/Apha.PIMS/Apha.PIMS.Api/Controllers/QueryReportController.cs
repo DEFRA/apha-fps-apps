@@ -3,7 +3,7 @@ using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

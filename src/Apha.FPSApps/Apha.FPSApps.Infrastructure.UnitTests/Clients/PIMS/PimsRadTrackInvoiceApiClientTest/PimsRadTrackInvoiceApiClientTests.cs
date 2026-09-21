@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -168,10 +168,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<List<RadTrackInvoiceRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<RadTrackInvoiceDto>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetAllAsync(query));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllAsync(query));
         }
 
         #endregion
@@ -294,10 +294,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<RadTrackInvoiceTotalsDto>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<RadTrackInvoiceTotalsDto>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetTotalsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetTotalsAsync());
         }
 
         #endregion
@@ -402,10 +402,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<RadTrackInvoiceRes>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<RadTrackInvoiceDto>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetByIdAsync(id));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetByIdAsync(id));
         }
 
         #endregion
@@ -517,10 +517,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
         {
             // Arrange
             var dto = new RadTrackInvoiceDto { Project = "PP001" };
-            _mapper.Map<RadTrackInvoiceReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<RadTrackInvoiceReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.CreateAsync(dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.CreateAsync(dto));
         }
 
         #endregion
@@ -636,10 +636,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
             // Arrange
             const int id = 1;
             var dto = new RadTrackInvoiceDto { InvoiceCounter = id };
-            _mapper.Map<RadTrackInvoiceReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<RadTrackInvoiceReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.UpdateAsync(id, dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.UpdateAsync(id, dto));
         }
 
         #endregion
@@ -736,10 +736,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.DeleteAsync<object>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<object>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.DeleteAsync(id));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.DeleteAsync(id));
         }
 
         #endregion
@@ -815,10 +815,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetRadTrackInvoiceProjects).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProjectsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetProjectsAsync());
         }
 
         [Fact]
@@ -912,10 +912,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<List<int>>(PimsApiEndpoints.GetRadTrackInvoiceYears).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<int>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetYearsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetYearsAsync());
         }
 
         [Fact]
@@ -1009,10 +1009,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetRadTrackInvoiceContracts).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetContractsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetContractsAsync());
         }
 
         [Fact]
@@ -1106,10 +1106,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsRadTrackInvoice
 
             _http.GetAsync<List<string>>(PimsApiEndpoints.GetRadTrackInvoicePrograms).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProgramsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetProgramsAsync());
         }
 
         [Fact]

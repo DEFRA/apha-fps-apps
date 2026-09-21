@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Application.Pagination
+namespace Apha.PIMS.Application.Pagination
 {
     public class QueryParameters<TFilter>
     {

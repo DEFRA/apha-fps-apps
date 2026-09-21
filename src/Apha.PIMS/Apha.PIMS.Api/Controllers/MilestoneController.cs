@@ -1,10 +1,10 @@
-﻿    using Apha.Common.Contracts;
+    using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
@@ -41,7 +41,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedId = HttpUtility.UrlDecode(number);
             MilestoneDto? result = await _service.GetMilestoneAsync(project, decodedId);
-            return Ok(result is null ? null : _mapper.Map<MilestoneRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<MilestoneRes>();
+            }
+
+            return Ok(_mapper.Map<MilestoneRes>(result));
         }
 
         /// <summary>Create a milestone.</summary>
@@ -107,7 +112,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetMilestoneFormDates(string parentProject, short year)
         {
             MilestoneFormDatesDto? result = await _service.GetMilestoneFormDatesAsync(year, parentProject);
-            return Ok(result is null ? null : _mapper.Map<MilestoneFormDatesRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<MilestoneFormDatesRes>();
+            }
+
+            return Ok(_mapper.Map<MilestoneFormDatesRes>(result));
         }
 
         /// <summary>Create or update a financial form dates record.</summary>
@@ -136,7 +146,7 @@ namespace Apha.PIMS.Api.Controllers
             PaginatedResult<LogMilestoneDto> result = await _service.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
             return Ok(_mapper.Map<PaginationRes<LogMilestoneRes>>(result));
         }
-        // ── Staging / Import ─────────────────────────────────────────────────
+        // -- Staging / Import -------------------------------------------------
         /// <summary>Get staging milestone rows, optionally filtered by project.</summary>
         [HttpGet("allstaging")]
         public async Task<IActionResult> GetAllStagingRows([FromQuery] QueryParameters<string> parameters)
@@ -195,7 +205,7 @@ namespace Apha.PIMS.Api.Controllers
             return Ok(new { deleted = rows });
         }
 
-        /// <summary>Validate staging rows — checks dates, number format and duplicate detection.</summary>
+        /// <summary>Validate staging rows � checks dates, number format and duplicate detection.</summary>
         [HttpPost("{project}/staging/validate")]
         public async Task<IActionResult> ValidateStaging(
             string project,
@@ -218,7 +228,7 @@ namespace Apha.PIMS.Api.Controllers
             return Ok(new { imported });
         }
 
-        /// <summary>Import with overwrite — updates existing milestones from staging then clears matched rows.</summary>
+        /// <summary>Import with overwrite � updates existing milestones from staging then clears matched rows.</summary>
         [HttpPost("{project}/staging/import-overwrite")]
         public async Task<IActionResult> ImportWithOverwrite(string project)
         {
@@ -234,6 +244,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             string next = await _service.GetNextMilestoneNumberAsync(project, year);
             return Ok(new { next });
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

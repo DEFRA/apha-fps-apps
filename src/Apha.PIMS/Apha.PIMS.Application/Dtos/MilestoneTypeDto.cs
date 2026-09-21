@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Application.Dtos
+namespace Apha.PIMS.Application.Dtos
 {
     public class MilestoneTypeDto
     {

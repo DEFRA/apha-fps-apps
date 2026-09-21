@@ -5,89 +5,93 @@ using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.Costbook.Api.Mappings;
 
-public class RequestMapper : Profile
+public class RequestMapper : IRegister
 {
-    public RequestMapper()
+    public void Register(TypeAdapterConfig config)
     {
         // ── Pagination ────────────────────────────────────────────────────────
-        CreateMap(typeof(PaginationReq<>),       typeof(QueryParameters<>)).ReverseMap();
-        CreateMap(typeof(PaginationRes<>),        typeof(PaginatedResult<>)).ReverseMap();
-        CreateMap(typeof(QueryParameters<>),      typeof(PaginationParameters<>)).ReverseMap();
-        CreateMap(typeof(PagedData<>),            typeof(PaginatedResult<>)).ReverseMap();
-        CreateMap<Pagination,     PaginationDto>().ReverseMap();
-        CreateMap<PaginationData, PaginationDto>().ReverseMap();
+        config.NewConfig(typeof(PaginationReq<>),       typeof(QueryParameters<>));
+        config.NewConfig(typeof(QueryParameters<>),      typeof(PaginationReq<>));
+        config.NewConfig(typeof(PaginationRes<>),        typeof(PaginatedResult<>));
+        config.NewConfig(typeof(PaginatedResult<>),      typeof(PaginationRes<>));
+        config.NewConfig(typeof(QueryParameters<>),      typeof(PaginationParameters<>));
+        config.NewConfig(typeof(PaginationParameters<>), typeof(QueryParameters<>));
+        config.NewConfig(typeof(PagedData<>),            typeof(PaginatedResult<>));
+        config.NewConfig(typeof(PaginatedResult<>),      typeof(PagedData<>));
+        config.NewConfig<Pagination,     PaginationDto>().TwoWays();
+        config.NewConfig<PaginationData, PaginationDto>().TwoWays();
 
         // ── Project entity ↔ Dto/Res/Req ─────────────────────────────────────
-        CreateMap<Project, ProjectDto>().ReverseMap();
-        CreateMap<Project, ProjectHeaderDto>()
-            .ForMember(dest => dest.EuroConvRate, opt => opt.MapFrom(src => src.Euroconvrate));
-        CreateMap<ProjectDto, ProjectRes>().ReverseMap();
-        CreateMap<ProjectDto, ProjectReq>().ReverseMap();
+        config.NewConfig<Project, ProjectDto>().TwoWays();
+        config.NewConfig<Project, ProjectHeaderDto>()
+            .Map(dest => dest.EuroConvRate, src => src.Euroconvrate);
+        config.NewConfig<ProjectDto, ProjectRes>().TwoWays();
+        config.NewConfig<ProjectDto, ProjectReq>().TwoWays();
 
         // ── Lookup entities ───────────────────────────────────────────────────
-        CreateMap<Customer,    CustomerDto>().ReverseMap();
-        CreateMap<Disease,     DiseaseDto>().ReverseMap();
-        CreateMap<Program,     ProgramDto>().ReverseMap();
-        CreateMap<Staff,       StaffDto>().ReverseMap();
-        CreateMap<CustomerDto, CustomerRes>().ReverseMap();
-        CreateMap<DiseaseDto,  DiseaseRes>().ReverseMap();
-        CreateMap<ProgramDto,  ProgramRes>().ReverseMap();
-        CreateMap<StaffDto,    StaffRes>().ReverseMap();
+        config.NewConfig<Customer,    CustomerDto>().TwoWays();
+        config.NewConfig<Disease,     DiseaseDto>().TwoWays();
+        config.NewConfig<Program,     ProgramDto>().TwoWays();
+        config.NewConfig<Staff,       StaffDto>().TwoWays();
+        config.NewConfig<CustomerDto, CustomerRes>().TwoWays();
+        config.NewConfig<DiseaseDto,  DiseaseRes>().TwoWays();
+        config.NewConfig<ProgramDto,  ProgramRes>().TwoWays();
+        config.NewConfig<StaffDto,    StaffRes>().TwoWays();
 
         // ── Yearly details: entity ↔ Dto ─────────────────────────────────────
-        CreateMap<ProjectYear,        ProjectYearDto>().ReverseMap();
-        CreateMap<StaffRequirement,   StaffRequirementDto>().ReverseMap();
-        CreateMap<TestRequirement,    TestRequirementDto>().ReverseMap();
-        CreateMap<AnimalRequirement,  AnimalRequirementDto>().ReverseMap();
-        CreateMap<AdditionalCost,     AdditionalCostDto>().ReverseMap();
+        config.NewConfig<ProjectYear,        ProjectYearDto>().TwoWays();
+        config.NewConfig<StaffRequirement,   StaffRequirementDto>().TwoWays();
+        config.NewConfig<TestRequirement,    TestRequirementDto>().TwoWays();
+        config.NewConfig<AnimalRequirement,  AnimalRequirementDto>().TwoWays();
+        config.NewConfig<AdditionalCost,     AdditionalCostDto>().TwoWays();
 
         // ── Yearly details: Dto ↔ Res/Req ────────────────────────────────────
-        CreateMap<ProjectHeaderDto,       ProjectHeaderRes>().ReverseMap();
-        CreateMap<ProjectYearDto,         ProjectYearRes>().ReverseMap();
-        CreateMap<ProjectYearDto,         ProjectYearReq>().ReverseMap();
-        CreateMap<AddProjectYearReq,      ProjectYearDto>()
-            .ForMember(dest => dest.YearValue, opt => opt.MapFrom(src => src.Year));
-        CreateMap<StaffRequirementDto,    StaffRequirementRes>().ReverseMap();
-        CreateMap<StaffRequirementDto,    StaffRequirementReq>().ReverseMap();
-        CreateMap<TestRequirementDto,     TestRequirementRes>().ReverseMap();
-        CreateMap<TestRequirementDto,     TestRequirementReq>().ReverseMap();
-        CreateMap<AnimalRequirementDto,   AnimalRequirementRes>().ReverseMap();
-        CreateMap<AnimalRequirementDto,   AnimalRequirementReq>().ReverseMap();
-        CreateMap<AdditionalCostDto,      AdditionalCostRes>().ReverseMap();
-        CreateMap<AdditionalCostDto,      AdditionalCostReq>().ReverseMap();
-        CreateMap<PayRateDto,             PayRateRes>().ReverseMap();
-        CreateMap<AnimalRateDto,          AnimalRateRes>().ReverseMap();
-        CreateMap<AccountCategoryDto,     AccountCategoryRes>().ReverseMap();
-        CreateMap<TestCodeLookupDto,       TestCodeLookupRes>().ReverseMap();
-        CreateMap<AnimalLookupDto,         AnimalLookupRes>().ReverseMap();
+        config.NewConfig<ProjectHeaderDto,       ProjectHeaderRes>().TwoWays();
+        config.NewConfig<ProjectYearDto,         ProjectYearRes>().TwoWays();
+        config.NewConfig<ProjectYearDto,         ProjectYearReq>().TwoWays();
+        config.NewConfig<AddProjectYearReq,      ProjectYearDto>()
+            .Map(dest => dest.YearValue, src => src.Year);
+        config.NewConfig<StaffRequirementDto,    StaffRequirementRes>().TwoWays();
+        config.NewConfig<StaffRequirementDto,    StaffRequirementReq>().TwoWays();
+        config.NewConfig<TestRequirementDto,     TestRequirementRes>().TwoWays();
+        config.NewConfig<TestRequirementDto,     TestRequirementReq>().TwoWays();
+        config.NewConfig<AnimalRequirementDto,   AnimalRequirementRes>().TwoWays();
+        config.NewConfig<AnimalRequirementDto,   AnimalRequirementReq>().TwoWays();
+        config.NewConfig<AdditionalCostDto,      AdditionalCostRes>().TwoWays();
+        config.NewConfig<AdditionalCostDto,      AdditionalCostReq>().TwoWays();
+        config.NewConfig<PayRateDto,             PayRateRes>().TwoWays();
+        config.NewConfig<AnimalRateDto,          AnimalRateRes>().TwoWays();
+        config.NewConfig<AccountCategoryDto,     AccountCategoryRes>().TwoWays();
+        config.NewConfig<TestCodeLookupDto,       TestCodeLookupRes>().TwoWays();
+        config.NewConfig<AnimalLookupDto,         AnimalLookupRes>().TwoWays();
 
-        CreateMap<StaffYearsRowDto, StaffYearsRowRes>().ReverseMap();
-        CreateMap<StaffYearsPivotDto, StaffYearsPivotRes>().ReverseMap();
-        CreateMap<StaffEffortRowDto, StaffEffortRowRes>().ReverseMap();
-        CreateMap<StaffEffortPivotDto, StaffEffortPivotRes>().ReverseMap();
-        CreateMap<ProjectCostsRowDto, ProjectCostsRowRes>().ReverseMap();
-        CreateMap<ProjectCostsPivotDto, ProjectCostsPivotRes>().ReverseMap();
-        CreateMap<ProjectYearCostSummaryDto, ProjectYearCostSummaryRes>().ReverseMap();
+        config.NewConfig<StaffYearsRowDto, StaffYearsRowRes>().TwoWays();
+        config.NewConfig<StaffYearsPivotDto, StaffYearsPivotRes>().TwoWays();
+        config.NewConfig<StaffEffortRowDto, StaffEffortRowRes>().TwoWays();
+        config.NewConfig<StaffEffortPivotDto, StaffEffortPivotRes>().TwoWays();
+        config.NewConfig<ProjectCostsRowDto, ProjectCostsRowRes>().TwoWays();
+        config.NewConfig<ProjectCostsPivotDto, ProjectCostsPivotRes>().TwoWays();
+        config.NewConfig<ProjectYearCostSummaryDto, ProjectYearCostSummaryRes>().TwoWays();
 
         // ── Maintenance: CapsStaff (Tab 5) ───────────────────────────────────────
-        CreateMap<StaffDto, StaffRes>().ReverseMap();
-        CreateMap<StaffDto, StaffReq>().ReverseMap();
+        config.NewConfig<StaffDto, StaffRes>().TwoWays();
+        config.NewConfig<StaffDto, StaffReq>().TwoWays();
 
         // ── Maintenance: AccountGroup / CSG7 (Tab 3) ────────────────────────────
-        CreateMap<AccountGroupDto, AccountGroupRes>().ReverseMap();
-        CreateMap<AccountGroupDto, AccountGroupReq>().ReverseMap();
+        config.NewConfig<AccountGroupDto, AccountGroupRes>().TwoWays();
+        config.NewConfig<AccountGroupDto, AccountGroupReq>().TwoWays();
 
         // ── Maintenance: Settings (Tabs 1 + 4) ──────────────────────────────────
-        CreateMap<MaintenanceSettingsDto, MaintenanceSettingsRes>().ReverseMap();
-        CreateMap<MaintenanceSettingsDto, MaintenanceSettingsReq>().ReverseMap();
+        config.NewConfig<MaintenanceSettingsDto, MaintenanceSettingsRes>().TwoWays();
+        config.NewConfig<MaintenanceSettingsDto, MaintenanceSettingsReq>().TwoWays();
 
         // ── Maintenance: AccountCategory (Tab 2) ─────────────────────────────────
-        CreateMap<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceRes>().ReverseMap();
-        CreateMap<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceReq>().ReverseMap();
+        config.NewConfig<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceRes>().TwoWays();
+        config.NewConfig<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceReq>().TwoWays();
 
     }
 }

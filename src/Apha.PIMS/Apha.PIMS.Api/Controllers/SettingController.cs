@@ -2,7 +2,7 @@ using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
@@ -46,7 +46,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decoded = HttpUtility.UrlDecode(id);
             SettingDto? result = await _service.GetSettingByIdAsync(decoded);
-            return result is null ? NotFound() : Ok(_mapper.Map<SettingRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<SettingRes>();
+            }
+
+            return Ok(_mapper.Map<SettingRes>(result));
         }
 
         /// <summary>Update an existing setting value.</summary>
@@ -59,6 +64,20 @@ namespace Apha.PIMS.Api.Controllers
             dto.Id = decoded;
             SettingDto updated = await _service.UpdateSettingAsync(dto);
             return Ok(_mapper.Map<SettingRes>(updated));
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

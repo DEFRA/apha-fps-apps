@@ -1,6 +1,6 @@
-﻿using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
+using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 {

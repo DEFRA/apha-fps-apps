@@ -1,8 +1,8 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using System;
 using System.Collections.Generic;
 using System.Text;

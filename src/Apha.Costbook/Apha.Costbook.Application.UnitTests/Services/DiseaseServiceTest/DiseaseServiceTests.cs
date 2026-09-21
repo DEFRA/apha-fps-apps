@@ -2,7 +2,7 @@
 using Apha.Costbook.Application.Services;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.Costbook.Application.UnitTests.Services.DiseaseServiceTest

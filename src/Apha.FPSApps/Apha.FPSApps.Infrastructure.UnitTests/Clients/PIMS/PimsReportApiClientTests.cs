@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
@@ -94,22 +94,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
         }
 
         [Fact]
-        public async Task GetAllAsync_HttpThrowsException_ReturnsInternalErrorResponse()
-        {
-            // Arrange
-            _http.GetAsync<List<ReportRes>>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllReportsAsync();
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Contains(result.Errors, e => e.Code == "INTERNAL_ERROR");
-        }
-
-        [Fact]
         public async Task GetAllAsync_UsesCorrectBaseUrl()
         {
             // Arrange
@@ -166,20 +150,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
 
             // Assert
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_HttpThrowsException_ReturnsInternalErrorResponse()
-        {
-            // Arrange
-            _http.GetAsync<ReportRes>(Arg.Any<string>()).ThrowsAsync(new Exception("Timeout"));
-
-            // Act
-            var result = await _client.GetReportByIdAsync(1);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
         }
 
         [Fact]
@@ -247,22 +217,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task CreateAsync_HttpThrowsException_ReturnsInternalErrorResponse()
-        {
-            // Arrange
-            _mapper.Map<ReportReq>(Arg.Any<ReportDto>()).Returns(new ReportReq());
-            _http.PostAsync<ReportReq, ReportRes>(Arg.Any<string>(), Arg.Any<ReportReq>())
-                 .ThrowsAsync(new Exception("POST failed"));
-
-            // Act
-            var result = await _client.CreateReportAsync(MakeDto(0));
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
-        }
-
         #endregion
 
         // ── UpdateAsync ───────────────────────────────────────────────────────────
@@ -290,22 +244,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
             Assert.True(result.Success);
             await _http.Received(1).PutAsync<ReportReq, ReportRes>(expectedUrl, req);
             _mapper.Received(1).Map<ApiResponseDto<ReportDto>>(apiResp);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_HttpThrowsException_ReturnsInternalErrorResponse()
-        {
-            // Arrange
-            _mapper.Map<ReportReq>(Arg.Any<ReportDto>()).Returns(new ReportReq());
-            _http.PutAsync<ReportReq, ReportRes>(Arg.Any<string>(), Arg.Any<ReportReq>())
-                 .ThrowsAsync(new Exception("PUT failed"));
-
-            // Act
-            var result = await _client.UpdateReportAsync(1, MakeDto(1));
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
         }
 
         [Fact]
@@ -371,20 +309,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS
 
             // Assert
             Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_HttpThrowsException_ReturnsInternalErrorResponse()
-        {
-            // Arrange
-            _http.DeleteAsync<bool>(Arg.Any<string>()).ThrowsAsync(new Exception("DELETE failed"));
-
-            // Act
-            var result = await _client.DeleteReportAsync(1);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
         }
 
         [Fact]

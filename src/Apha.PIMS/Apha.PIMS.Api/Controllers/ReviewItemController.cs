@@ -4,7 +4,7 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,7 +47,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetReviewItemById(int itemId)
         {
             ReviewItemDto? result = await _service.GetReviewItemByIdAsync(itemId);
-            return result is null ? NotFound() : Ok(_mapper.Map<ReviewItemRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ReviewItemRes>();
+            }
+
+            return Ok(_mapper.Map<ReviewItemRes>(result));
         }
 
         /// <summary>Create a new review item.</summary>
@@ -76,6 +81,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeleteReviewItemAsync(itemId);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -5,10 +5,10 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
 using System.Web;
 using Apha.FPSApps.Application.Pagination;
 using Apha.Common.Contracts;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 
