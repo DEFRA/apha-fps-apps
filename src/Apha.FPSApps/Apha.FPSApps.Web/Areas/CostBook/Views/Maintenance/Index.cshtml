@@ -91,7 +91,7 @@
                                             <p class="govuk-!-font-size-16 govuk-!-font-weight-bold maint-panel-subheading">
                                                 % Inflation Figures
                                             </p>
-                                            <p class="govuk-body maint-hint-text">(To set the inflation rate to 2.5%, enter 2.5.)</p>
+                                            <p id="inflFiguresHint" class="govuk-body maint-hint-text">(To set the inflation rate to 2.5%, enter 2.5.)</p>
 
                                             <div class="govuk-form-group maint-inline-form-group" id="fg-inflAnimals">
                                                 <div class="maint-field-row">
@@ -103,7 +103,7 @@
                                                            asp-for="InflationAnimals"
                                                            id="inflAnimals" name="inflAnimals" type="text"
                                                            required aria-required="true"
-                                                           aria-describedby="inflAnimals-error" />
+                                                           aria-describedby="inflFiguresHint inflAnimals-error" />
                                                 </div>
                                                 <span id="inflAnimals-error" data-valmsg-for="inflAnimals" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                                             </div>
@@ -118,7 +118,7 @@
                                                            asp-for="InflationExceptionalCosts"
                                                            id="inflExceptionalCosts" name="inflExceptionalCosts" type="text"
                                                            required aria-required="true"
-                                                           aria-describedby="inflExceptionalCosts-error" />
+                                                           aria-describedby="inflFiguresHint inflExceptionalCosts-error" />
                                                 </div>
                                                 <span id="inflExceptionalCosts-error" data-valmsg-for="inflExceptionalCosts" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                                             </div>
@@ -133,7 +133,7 @@
                                                            asp-for="InflationStaff"
                                                            id="inflStaff" name="inflStaff" type="text"
                                                            required aria-required="true"
-                                                           aria-describedby="inflStaff-error" />
+                                                           aria-describedby="inflFiguresHint inflStaff-error" />
                                                 </div>
                                                 <span id="inflStaff-error" data-valmsg-for="inflStaff" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                                             </div>
@@ -148,7 +148,7 @@
                                                            asp-for="InflationTests"
                                                            id="inflTests" name="inflTests" type="text"
                                                            required aria-required="true"
-                                                           aria-describedby="inflTests-error" />
+                                                           aria-describedby="inflFiguresHint inflTests-error" />
                                                 </div>
                                                 <span id="inflTests-error" data-valmsg-for="inflTests" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                                             </div>
@@ -172,11 +172,11 @@
                                                            id="inflCurrentFinancialYear" name="inflCurrentFinancialYear" type="text"
                                                            maxlength="4"
                                                            required aria-required="true"
-                                                           aria-describedby="inflCurrentFinancialYear-error" />
+                                                           aria-describedby="inflCurrentFinancialYearHint inflCurrentFinancialYear-error" />
                                                 </div>
                                                 <span id="inflCurrentFinancialYear-error" data-valmsg-for="inflCurrentFinancialYear" class="govuk-error-message field-validation-valid" style="display:none;"></span>
 
-                                                <p class="govuk-body maint-hint-text govuk-!-margin-bottom-2">
+                                                <p id="inflCurrentFinancialYearHint" class="govuk-body maint-hint-text govuk-!-margin-bottom-2">
                                                     Changing this value links the lookup tables to the relevant FPS version. Do not use this option with FPS versions earlier than 2001.
                                                 </p>
                                             </div>

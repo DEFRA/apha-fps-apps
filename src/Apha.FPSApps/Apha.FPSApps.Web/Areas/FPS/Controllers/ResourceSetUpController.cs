@@ -130,6 +130,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 DeleteFunction = "deleteWgGrade",
                 ExtraFilterMethod = "getWgGradeExtraFilters",
                 BindGridUrl = "/FPS/ResourceSetUp/LoadWgGradeGrid",
+                AllowExcelExport = false,
                 Data = new List<WorkGroupGradeItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
                 Pagination = new PaginationModel()
@@ -138,6 +139,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             viewModel.WgStaffGrid = new DataGridConfig<WorkGroupEmployeeItem>
             {
                 GridId = "wgStaffGrid",
+                Title = "Staff Details",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "PactId",
@@ -273,6 +275,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getWgGradeExtraFilters",
                 BindGridUrl = "/FPS/ResourceSetUp/LoadWgGradeGrid",
                 Data = pagedItems,
+                AllowExcelExport = false,
                 Columns = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
                 Pagination = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
                 CurrentFilters = filterDict
@@ -330,6 +333,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = new DataGridConfig<WorkGroupEmployeeItem>
             {
                 GridId = "wgStaffGrid",
+                Title = "Staff Details",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "PactId",

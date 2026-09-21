@@ -395,20 +395,206 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
 
         #endregion
 
-        #region SaveAsync and GetYearEndSettingsAsync — infrastructure limitations
+        #region SaveAsync
 
-        // SaveAsync calls _dbContext.TblSettings.IgnoreQueryFilters().FirstOrDefaultAsync(...).
-        // IgnoreQueryFilters() wraps the mock queryable in an EF-specific expression node; when
-        // LINQ-to-Objects subsequently evaluates that expression it re-enters IgnoreQueryFilters
-        // recursively, causing a StackOverflowException that cannot be caught.  SaveAsync tests
-        // are therefore omitted — integration tests are the appropriate vehicle.
-        //
-        // GetYearEndSettingsAsync additionally calls GetOpenYear(), which uses
-        // .Select(y => y.FpsYear).FirstAsync().  The .Select() step calls
-        // TestAsyncQueryProvider.CreateQuery<int>(), and TestAsyncEnumerable<T> has a
-        // 'where T : class' constraint; int violates it, throwing ArgumentException
-        // before any business logic is reached.  These tests are also omitted for the
-        // same reason as the existing codebase pattern.
+        [Fact]
+        public async Task SaveAsync_WhenSettingDoesNotExist_AddsNewSettingAndReturnsIt()
+        {
+            // Arrange
+            var (repo, mockContext, dbSet) = CreateRepositoryWithMocks();
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "8", FpsYear = DefaultTestFpsYear };
+
+            // Act
+            var result = await repo.SaveAsync(setting);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("HoursInDay", result.Id);
+            Assert.Equal("8", result.Setting);
+            dbSet.Verify(x => x.Add(It.Is<FpsSetting>(s => s.Id == "HoursInDay")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenSettingDoesNotExist_SetsUpdatedByAndUpdatedAt()
+        {
+            // Arrange
+            var (repo, _, _) = CreateRepositoryWithMocks(userEmail: "user@example.com");
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "8", FpsYear = DefaultTestFpsYear };
+
+            // Act
+            var result = await repo.SaveAsync(setting);
+
+            // Assert
+            Assert.Equal("user@example.com", result.UpdatedBy);
+            Assert.True(result.UpdatedAt > DateTime.MinValue);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenSettingExists_UpdatesExistingSettingAndReturnsIt()
+        {
+            // Arrange
+            var existing = new FpsSetting { Id = "HoursInDay", Setting = "8", Notes = "Old note", FpsYear = DefaultTestFpsYear };
+            var (repo, mockContext, dbSet) = CreateRepositoryWithMocks(new[] { existing });
+            var updated = new FpsSetting { Id = "HoursInDay", Setting = "9", Notes = "New note", FpsYear = DefaultTestFpsYear };
+
+            // Act
+            var result = await repo.SaveAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Same(existing, result);
+            Assert.Equal("9", result.Setting);
+            Assert.Equal("New note", result.Notes);
+            dbSet.Verify(x => x.Update(It.Is<FpsSetting>(s => s.Id == "HoursInDay")), Times.Once);
+            dbSet.Verify(x => x.Add(It.IsAny<FpsSetting>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenSettingExists_SetsUpdatedByAndUpdatedAtOnExisting()
+        {
+            // Arrange
+            var existing = new FpsSetting { Id = "HoursInDay", Setting = "8", FpsYear = DefaultTestFpsYear };
+            var (repo, _, _) = CreateRepositoryWithMocks(new[] { existing }, userEmail: "admin@example.com");
+            var updated = new FpsSetting { Id = "HoursInDay", Setting = "9", FpsYear = DefaultTestFpsYear };
+
+            // Act
+            var result = await repo.SaveAsync(updated);
+
+            // Assert
+            Assert.Equal("admin@example.com", result.UpdatedBy);
+            Assert.True(result.UpdatedAt > DateTime.MinValue);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenSettingExistsForDifferentYear_TreatsAsNewAndAdds()
+        {
+            // Arrange — same Id but different FpsYear should not match the composite key
+            var existing = new FpsSetting { Id = "HoursInDay", Setting = "8", FpsYear = 2023 };
+            var (repo, mockContext, dbSet) = CreateRepositoryWithMocks(new[] { existing });
+            var newSetting = new FpsSetting { Id = "HoursInDay", Setting = "9", FpsYear = 2024 };
+
+            // Act
+            var result = await repo.SaveAsync(newSetting);
+
+            // Assert
+            Assert.Same(newSetting, result);
+            dbSet.Verify(x => x.Add(It.Is<FpsSetting>(s => s.FpsYear == 2024)), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        #endregion
+
+        #region SaveYearEndSettingAsync
+
+        /// <summary>
+        /// Creates a repository with both TblSettings and YearMasters mocked, so that
+        /// SaveYearEndSettingAsync's GetPlannedYear()/GetOpenYear() lookups resolve
+        /// against controllable fixture data.
+        /// </summary>
+        private static (FpsSettingRepository Repo, Mock<FpsDbContext> Context, Mock<DbSet<FpsSetting>> SettingsDbSet, Mock<DbSet<FpsSettingStaging>> StagingDbSet)
+            CreateRepositoryWithYearMasters(
+                IEnumerable<FpsSetting>? settings,
+                IEnumerable<YearMaster> yearMasters,
+                IEnumerable<FpsSettingStaging>? stagingSettings = null,
+                int fpsYear = DefaultTestFpsYear,
+                string userEmail = "test@example.com")
+        {
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
+            fpsYearContext.FpsYear.Returns(fpsYear);
+            fpsYearContext.UserEmailId.Returns(userEmail);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var settingsDbSet = RepositoryTestHelper.CreateMockDbSet(settings ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(settingsDbSet);
+            mockContext.Setup(x => x.TblSettings).Returns(settingsDbSet.Object);
+
+            var stagingDbSet = RepositoryTestHelper.CreateMockDbSet(stagingSettings ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(stagingDbSet);
+            mockContext.Setup(x => x.TblStagingSettings).Returns(stagingDbSet.Object);
+
+            var yearMastersDbSet = RepositoryTestHelper.CreateMockDbSet(yearMasters);
+            mockContext.Setup(x => x.YearMasters).Returns(yearMastersDbSet.Object);
+
+            return (new FpsSettingRepository(mockContext.Object, fpsYearContext), mockContext, settingsDbSet, stagingDbSet);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenNoPlannedYearExists_SavesToStagingTable()
+        {
+            // Arrange — no "Planned" YearMaster row means GetPlannedYear() returns null,
+            // routing SaveYearEndSettingAsync through SaveStagingAsync instead of SaveAsync.
+            var yearMasters = new List<YearMaster>
+            {
+                new() { FpsYear = 2024, YearStatus = "Open", Active = true }
+            };
+            var (repo, mockContext, settingsDbSet, stagingDbSet) =
+                CreateRepositoryWithYearMasters(settings: null, yearMasters);
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "9", FpsYear = 2025 };
+
+            // Act
+            var result = await repo.SaveYearEndSettingAsync(setting);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("HoursInDay", result.Id);
+            Assert.Equal("9", result.Setting);
+            stagingDbSet.Verify(x => x.Add(It.Is<FpsSettingStaging>(s => s.Id == "HoursInDay")), Times.Once);
+            settingsDbSet.Verify(x => x.Add(It.IsAny<FpsSetting>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenPlannedYearExists_SavesToSettingsTable()
+        {
+            // Arrange — an active "Planned" YearMaster row means GetPlannedYear() returns a
+            // value, routing SaveYearEndSettingAsync through SaveAsync instead of staging.
+            var yearMasters = new List<YearMaster>
+            {
+                new() { FpsYear = 2024, YearStatus = "Open", Active = true },
+                new() { FpsYear = 2025, YearStatus = "Planned", Active = true }
+            };
+            var (repo, mockContext, settingsDbSet, stagingDbSet) =
+                CreateRepositoryWithYearMasters(settings: null, yearMasters);
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "9", FpsYear = 2025 };
+
+            // Act
+            var result = await repo.SaveYearEndSettingAsync(setting);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("HoursInDay", result.Id);
+            Assert.Equal("9", result.Setting);
+            settingsDbSet.Verify(x => x.Add(It.Is<FpsSetting>(s => s.Id == "HoursInDay")), Times.Once);
+            stagingDbSet.Verify(x => x.Add(It.IsAny<FpsSettingStaging>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveYearEndSettingAsync_WhenNoPlannedYearAndStagingRowExists_UpdatesStagingRow()
+        {
+            // Arrange
+            var existingStaging = new FpsSettingStaging { Id = "HoursInDay", Setting = "8", FpsYear = 2025 };
+            var yearMasters = new List<YearMaster>
+            {
+                new() { FpsYear = 2024, YearStatus = "Open", Active = true }
+            };
+            var (repo, mockContext, _, stagingDbSet) =
+                CreateRepositoryWithYearMasters(settings: null, yearMasters, stagingSettings: new[] { existingStaging });
+            var setting = new FpsSetting { Id = "HoursInDay", Setting = "10", FpsYear = 2025 };
+
+            // Act
+            var result = await repo.SaveYearEndSettingAsync(setting);
+
+            // Assert
+            Assert.Equal("10", result.Setting);
+            stagingDbSet.Verify(x => x.Update(It.Is<FpsSettingStaging>(s => s.Id == "HoursInDay")), Times.Once);
+            stagingDbSet.Verify(x => x.Add(It.IsAny<FpsSettingStaging>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
 
         #endregion
     }

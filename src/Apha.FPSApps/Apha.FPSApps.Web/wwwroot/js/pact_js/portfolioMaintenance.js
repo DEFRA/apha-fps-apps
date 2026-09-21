@@ -156,9 +156,14 @@ $(document).ready(function () {
         if (fn && window[fn]) window[fn]();
     });
 
-    // ── Re-select first row after constituent tests grid reloads (filter/sort) ─
+    // ── Handle grid reloads (filter/sort/paging) ─
     document.addEventListener('gridReloaded', function (e) {
-        if (e.detail.gridId !== 'constituentTestGrid') return;
+        if (e.detail && e.detail.gridId === 'portfolioTimeCodeGrid') {
+            enablePortfolioTimeCodeActiveCheckboxes();
+            return;
+        }
+
+        if (!e.detail || e.detail.gridId !== 'constituentTestGrid') return;
 
         var $firstRow = $('#tbl_constituentTestGrid tbody tr').first();
         var firstTestCode = ($firstRow.length && $firstRow.data('id')) ? String($firstRow.data('id')) : '';

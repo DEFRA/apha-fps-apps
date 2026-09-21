@@ -10,12 +10,15 @@ var selectedJobCodeId = null;
 // Multicolumn dropdown instances
 var programDropdown = null;
 var contractDropdown = null;
+var customerDropdown = null;
 
 // Data for dropdowns
 var programListData = [];
 var contractListData = [];
+var customerListData = [];
 var selectedProgramValue = '';
 var selectedContractValue = '';
+var selectedCustomerValue = '';
 
 // Initialize the page
 function initializeProjectMaintenanceDetails(config) {
@@ -24,13 +27,16 @@ function initializeProjectMaintenanceDetails(config) {
     timeCodeGridId = config.timeCodeGridId;
     programListData = config.programListData;
     contractListData = config.contractListData;
+    customerListData = config.customerListData;
     selectedProgramValue = config.selectedProgramValue;
     selectedContractValue = config.selectedContractValue;
+    selectedCustomerValue = config.selectedCustomerValue;
 
     // Initialize dropdowns when page loads
     $(document).ready(function () {
         initializeProgramDropdown();
         initializeContractDropdown();
+        initializeCustomerDropdown();
         // Initialize form validation (unobtrusive + numeric)
         initializeFormValidation('#projectDetailForm');
     });
@@ -236,6 +242,7 @@ function reloadTimeCodeGrid(jobCodeId) {
         success: function(html) {
             $('#gridContainer_' + timeCodeGridId).html(html);
             enableTimeCodeActiveCheckboxes();
+            updateTimeCodeBulkActiveButtonsVisibility();
         },
         error: function() { showAlertMessage('An error occurred while loading time codes.', AlertType.ERROR); }
     });
@@ -251,9 +258,25 @@ function reloadTimeCodeEmptyGrid() {
         success: function(html) {
             $('#gridContainer_' + timeCodeGridId).html(html);
             enableTimeCodeActiveCheckboxes();
+            updateTimeCodeBulkActiveButtonsVisibility();
         },
         error: function() { showAlertMessage('An error occurred while loading empty time code grid.', AlertType.ERROR); }
     });
+}
+
+// Show the Activate All / Deactivate All buttons only when the time code grid has data rows.
+// For a closed / read-only year the buttons are disabled, matching how the Active
+// checkboxes and Edit/Delete actions are disabled by FPSReadOnlyTagHelper.
+function updateTimeCodeBulkActiveButtonsVisibility() {
+    var gridId = timeCodeGridId || 'timeCodeGrid';
+    // Match the "Delete All" pattern: show the bulk buttons whenever the grid
+    // renders real data rows. Data rows carry a data-id attribute, whereas the
+    // "No records found." placeholder row does not.
+    var hasData = $('#tbl_' + gridId + ' tbody tr[data-id]').length > 0;
+    $('#timeCodeBulkActiveButtons').css('display', hasData ? 'flex' : 'none');
+
+    var yearClosed = typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed;
+    $('#timeCodeActivateAllBtn, #timeCodeDeactivateAllBtn').prop('disabled', yearClosed);
 }
 
 function getTimeCodeExtraFilters() {
@@ -267,6 +290,16 @@ function getTimeCodeExtraFilters() {
 // Register the toggle handler and enable the checkboxes on initial load
 $(document).ready(function () {
     enableTimeCodeActiveCheckboxes();
+    updateTimeCodeBulkActiveButtonsVisibility();
+
+    // Re-enable Active checkboxes whenever the time code grid reloads
+    // (e.g. sorting, paging, filtering), because grid HTML is re-rendered.
+    document.addEventListener('gridReloaded', function (e) {
+        if (e.detail && e.detail.gridId === (timeCodeGridId || 'timeCodeGrid')) {
+            enableTimeCodeActiveCheckboxes();
+            updateTimeCodeBulkActiveButtonsVisibility();
+        }
+    });
 
     $(document).on('change', 'td.checkbox-cell[data-property="Active"] input[type="checkbox"]', function () {
         if ($(this).closest('table').attr('id') === 'tbl_' + (timeCodeGridId || 'timeCodeGrid')) {
@@ -631,7 +664,7 @@ function deleteBulkTimeCode(selection) {
         return; 
     }
     if (!selection || !selection.ids || selection.ids.length === 0) {
-        showAlertMessage('Please select at least one time code row to delete.', AlertType.INFO); 
+        showAlertMessage('Select the top checkbox to delete all time codes, or select individual rows to delete specific time codes.', AlertType.INFO); 
         return;
     }
 
@@ -698,6 +731,47 @@ function deleteBulkTimeCode(selection) {
     }
 }
 
+// Bulk Activate / Deactivate Time Codes (applies to ALL time codes for the selected job code)
+function activateAllTimeCodes() {
+    setActiveAllTimeCodes(true);
+}
+
+function deactivateAllTimeCodes() {
+    setActiveAllTimeCodes(false);
+}
+
+function setActiveAllTimeCodes(isActive) {
+    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+        return;
+    }
+    if (!selectedJobCodeId) {
+        showAlertMessage('Please select a job code first.', AlertType.INFO);
+        return;
+    }
+
+    var actionLabel = isActive ? 'activate' : 'deactivate';
+    showGovukConfirm(actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1) +
+        ' ALL time codes of job code "' + selectedJobCodeId + '"?').then(function(confirmed) {
+        if (!confirmed) return;
+        $.ajax({
+            url: '/PACT/ProjectMaintenance/SetWorkgroupsActiveStatusByJobCode',
+            type: 'POST',
+            data: { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId, isActive: isActive },
+            success: function(response) {
+                if (response.success) {
+                    reloadTimeCodeGrid(selectedJobCodeId);
+                    showAlertMessage('All time codes ' + actionLabel + 'd successfully.', AlertType.SUCCESS);
+                } else {
+                    showAlertMessage('Error: ' + (response.message || 'Update failed.'), AlertType.ERROR);
+                }
+            },
+            error: function() {
+                showAlertMessage('An error occurred while updating.', AlertType.ERROR);
+            }
+        });
+    });
+}
+
 // Initialize multicolumn dropdowns
 function initializeProgramDropdown() {
     programDropdown = new MultiColumnDropdownComponent({
@@ -722,7 +796,6 @@ function initializeProgramDropdown() {
             },
             onClear: function (dropdown) {
                 $('#Project_Program').val('');
-                programDropdown.clear();
             }
         }
     });
@@ -757,7 +830,6 @@ function initializeContractDropdown() {
             },
             onClear: function (dropdown) {
                 $('#Project_Contract').val('');
-                contractDropdown.clear();
             }
         }
     });
@@ -766,6 +838,40 @@ function initializeContractDropdown() {
     if (selectedContractValue && selectedContractValue !== '') {
         setTimeout(function() {
             contractDropdown.setValue(selectedContractValue);
+        }, 0);
+    }
+}
+
+function initializeCustomerDropdown() {
+    customerDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'customerDropdown',
+        containerSelector: '#customerMultiDropdown',
+        placeholder: 'Select a Customer',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by customer',
+        labelText: 'Customer',
+        required: true,
+        columns: [
+            { field: 'Text', header: 'Customer', width: '250px' }
+        ],
+        data: customerListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                $('#Project_Customer').val(selectedItem.Value).trigger('change');
+            },
+            onClear: function (dropdown) {
+                $('#Project_Customer').val('');
+            }
+        }
+    });
+
+    // Set initial value if exists (defer to next tick to ensure dropdown is fully rendered)
+    if (selectedCustomerValue && selectedCustomerValue !== '') {
+        setTimeout(function() {
+            customerDropdown.setValue(selectedCustomerValue);
         }, 0);
     }
 }
@@ -797,7 +903,6 @@ function initializeJobCodeWorkGroupDropdown(config) {
                 },
                 onClear: function (dropdown) {
                     $('#JobCodeWorkGroup').val('');
-                    jobCodeWorkGroupDropdown.clear();
                 }
             }
         });

@@ -204,15 +204,28 @@ namespace Apha.FPS.DataAccess.Repositories
                     .AsNoTracking().FirstOrDefaultAsync(j => j.JobqueueId == jobqueue.JobqueueId)
                     ?? throw new KeyNotFoundException($"Batch job queue for job '{jobName}' was not found.");
 
-                    //update the status of the job queue entry to "approved"
+                    // RequestedBy/RequestedAtUtc reflect the original request and stay untouched;
+                    // decision identity/time go on the Approved*/Rejected* fields below.
+                    var decidedAtUtc = DateTime.UtcNow;
                     queueRow.StatusId = jobStatus.StatusId;
-                    queueRow.RequestedBy = requestedBy;
-                    queueRow.RequestedAtUtc = DateTime.UtcNow;
-                    queueRow.StartDateTime = DateTime.UtcNow;
+                    queueRow.StartDateTime = decidedAtUtc;
                     queueRow.ErrorMessage = note;
+
+                    if (isReject)
+                    {
+                        queueRow.RejectedBy = requestedBy;
+                        queueRow.RejectedAtUtc = decidedAtUtc;
+                        queueRow.RejectionReason = note;
+                    }
+                    else
+                    {
+                        queueRow.ApprovedBy = requestedBy;
+                        queueRow.ApprovedAtUtc = decidedAtUtc;
+                    }
+
                     _context.BatchJobQueues.Update(queueRow);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId, queueRow.FpsYear);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -253,7 +266,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId, jobQueueEntry.FpsYear);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -314,7 +327,7 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        private static BatchJobQueueLog BuildJobQueueLogEntry(string requestedBy, Guid jobqueueId, string note, DateTime logtime, int statusId)
+        private static BatchJobQueueLog BuildJobQueueLogEntry(string requestedBy, Guid jobqueueId, string note, DateTime logtime, int statusId, int fpsYear)
         {
             return new BatchJobQueueLog
             {
@@ -322,7 +335,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 StatusId = statusId,
                 PerformedBy = requestedBy,
                 LogTime = logtime,
-                Note = note
+                Note = note,
+                FpsYear = fpsYear
             };
         }
     }

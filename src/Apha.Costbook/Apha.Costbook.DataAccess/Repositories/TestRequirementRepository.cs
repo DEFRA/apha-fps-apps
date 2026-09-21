@@ -58,6 +58,16 @@ public class TestRequirementRepository : RepositoryBase, ITestRequirementReposit
         return await ApplyPaging(baseQuery, query.Page, query.PageSize);
     }
 
+    public async Task<bool> ExistsAsync(string project, int year, string testCode)
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        var decodedTestCode = HttpUtility.UrlDecode(testCode);
+
+        return await _context.TestRequirements
+            .AsNoTracking()
+            .AnyAsync(t => t.Project == decodedProject && t.Year == year && t.TestCode == decodedTestCode);
+    }
+
     public async Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement)
     {
         testRequirement.Project= HttpUtility.UrlDecode(testRequirement.Project);

@@ -4,6 +4,7 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
@@ -414,6 +415,182 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.MonthHourRepositoryTest
 
             // Assert
             Assert.Equal((short)2024, Assert.Single(result));
+        }
+
+        #endregion
+
+        #region SaveAsync
+
+        /// <summary>
+        /// Creates a MonthHourRepository and exposes the mocked DbSet/DbContext so that
+        /// Add / Update / SaveChanges calls can be verified.
+        /// </summary>
+        private static (MonthHourRepository Repo, Mock<FpsDbContext> Context, Mock<DbSet<MonthHour>> DbSet)
+            CreateRepositoryWithMocks(
+                IEnumerable<MonthHour>? monthHours = null,
+                int fpsYear = DefaultFpsYear)
+        {
+            var mockRequestContext = new Mock<IFpsRequestContext>();
+            mockRequestContext.Setup(x => x.FpsYear).Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var dbSet = RepositoryTestHelper.CreateMockDbSet(monthHours ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(dbSet);
+            mockContext.Setup(x => x.MonthHours).Returns(dbSet.Object);
+
+            return (new MonthHourRepository(mockContext.Object), mockContext, dbSet);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenRecordDoesNotExist_AddsNewRecordAndReturnsIt()
+        {
+            // Arrange
+            var (repo, mockContext, dbSet) = CreateRepositoryWithMocks();
+            var monthHour = new MonthHour { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = DefaultFpsYear };
+
+            // Act
+            var result = await repo.SaveAsync(monthHour);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal((short)2024, result.Year);
+            Assert.Equal((short)1, result.Month);
+            Assert.Equal(20, result.Days);
+            dbSet.Verify(x => x.Add(It.Is<MonthHour>(m => m.Year == 2024 && m.Month == 1)), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenRecordExists_UpdatesExistingRecordAndReturnsIt()
+        {
+            // Arrange
+            var existing = new MonthHour { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, Fmonth = 1, FpsYear = DefaultFpsYear };
+            var (repo, mockContext, dbSet) = CreateRepositoryWithMocks(new[] { existing });
+            var updated = new MonthHour { Year = 2024, Month = 1, Days = 22, VidHours = 6, CvlHours = 4, Fmonth = 2, FpsYear = DefaultFpsYear };
+
+            // Act
+            var result = await repo.SaveAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Same(existing, result);
+            Assert.Equal(22, result.Days);
+            Assert.Equal(6, result.VidHours);
+            Assert.Equal(4, result.CvlHours);
+            Assert.Equal((short)2, result.Fmonth);
+            dbSet.Verify(x => x.Update(It.Is<MonthHour>(m => m.Year == 2024 && m.Month == 1)), Times.Once);
+            dbSet.Verify(x => x.Add(It.IsAny<MonthHour>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveAsync_WhenRecordExistsForDifferentFpsYear_TreatsAsNewAndAdds()
+        {
+            // Arrange — same Year/Month but different FpsYear should not match the composite key
+            var existing = new MonthHour { Year = 2024, Month = 1, Days = 20, FpsYear = 2023 };
+            var (repo, mockContext, dbSet) = CreateRepositoryWithMocks(new[] { existing });
+            var newRecord = new MonthHour { Year = 2024, Month = 1, Days = 22, FpsYear = 2024 };
+
+            // Act
+            var result = await repo.SaveAsync(newRecord);
+
+            // Assert
+            Assert.Same(newRecord, result);
+            dbSet.Verify(x => x.Add(It.Is<MonthHour>(m => m.FpsYear == 2024)), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        #endregion
+
+        #region SaveYearEndMonthHourAsync
+
+        /// <summary>
+        /// Creates a repository with both MonthHours and YearMasters mocked, so that
+        /// SaveYearEndMonthHourAsync's GetPlannedYear() lookup resolves against
+        /// controllable fixture data. GetYearEndMonthHoursAsync (invoked indirectly via
+        /// SavePlannedYearFmonthHoursAsync on the staging path) additionally needs
+        /// MonthHourStagings mocked.
+        /// </summary>
+        private static (MonthHourRepository Repo, Mock<FpsDbContext> Context, Mock<DbSet<MonthHour>> MonthHoursDbSet, Mock<DbSet<MonthHourStaging>> StagingDbSet)
+            CreateRepositoryWithYearMasters(
+                IEnumerable<MonthHour>? monthHours,
+                IEnumerable<YearMaster> yearMasters,
+                IEnumerable<MonthHourStaging>? stagingMonthHours = null,
+                int fpsYear = DefaultFpsYear)
+        {
+            var mockRequestContext = new Mock<IFpsRequestContext>();
+            mockRequestContext.Setup(x => x.FpsYear).Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var monthHoursDbSet = RepositoryTestHelper.CreateMockDbSet(monthHours ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(monthHoursDbSet);
+            mockContext.Setup(x => x.MonthHours).Returns(monthHoursDbSet.Object);
+
+            var stagingDbSet = RepositoryTestHelper.CreateMockDbSet(stagingMonthHours ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(stagingDbSet);
+            mockContext.Setup(x => x.MonthHourStagings).Returns(stagingDbSet.Object);
+
+            var yearMastersDbSet = RepositoryTestHelper.CreateMockDbSet(yearMasters);
+            mockContext.Setup(x => x.YearMasters).Returns(yearMastersDbSet.Object);
+
+            return (new MonthHourRepository(mockContext.Object), mockContext, monthHoursDbSet, stagingDbSet);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenPlannedYearExists_SavesToMonthHoursTable()
+        {
+            // Arrange — an active "Planned" YearMaster row means GetPlannedYear() returns a
+            // value, routing SaveYearEndMonthHourAsync through SaveAsync instead of staging.
+            var yearMasters = new List<YearMaster>
+            {
+                new() { FpsYear = 2024, YearStatus = "Open", Active = true },
+                new() { FpsYear = 2025, YearStatus = "Planned", Active = true }
+            };
+            var (repo, mockContext, monthHoursDbSet, stagingDbSet) =
+                CreateRepositoryWithYearMasters(monthHours: null, yearMasters);
+            var monthHour = new MonthHour { Year = 2025, Month = 1, Days = 20, VidHours = 5, CvlHours = 3, FpsYear = 2025 };
+
+            // Act
+            var result = await repo.SaveYearEndMonthHourAsync(monthHour);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal((short)2025, result.Year);
+            Assert.Equal(20, result.Days);
+            monthHoursDbSet.Verify(x => x.Add(It.Is<MonthHour>(m => m.Year == 2025 && m.Month == 1)), Times.Once);
+            stagingDbSet.Verify(x => x.Add(It.IsAny<MonthHourStaging>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenNoPlannedYearAndStagingRowExists_UpdatesStagingRow()
+        {
+            // Arrange — no "Planned" YearMaster row means GetPlannedYear() returns null,
+            // routing SaveYearEndMonthHourAsync through SaveStagingAsync. An existing staging
+            // row for the same key should be updated rather than duplicated. To keep the test
+            // isolated from SavePlannedYearFmonthHoursAsync's indirect GetYearEndMonthHoursAsync
+            // call, the open year's MonthHours data is left empty so no fmonth-0 rows are found.
+            var existingStaging = new MonthHourStaging { Year = 2025, Month = 1, Days = 18, FpsYear = 2025 };
+            var yearMasters = new List<YearMaster>
+            {
+                new() { FpsYear = 2024, YearStatus = "Open", Active = true }
+            };
+            var (repo, mockContext, _, stagingDbSet) =
+                CreateRepositoryWithYearMasters(monthHours: null, yearMasters, stagingMonthHours: new[] { existingStaging });
+            var monthHour = new MonthHour { Year = 2025, Month = 1, Days = 21, VidHours = 6, CvlHours = 4, FpsYear = 2025 };
+
+            // Act
+            var result = await repo.SaveYearEndMonthHourAsync(monthHour);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(21, result.Days);
+            stagingDbSet.Verify(x => x.Update(It.Is<MonthHourStaging>(m => m.Year == 2025 && m.Month == 1)), Times.Once);
+            stagingDbSet.Verify(x => x.Add(It.Is<MonthHourStaging>(m => m.Year == 2025 && m.Month == 1)), Times.Never);
         }
 
         #endregion

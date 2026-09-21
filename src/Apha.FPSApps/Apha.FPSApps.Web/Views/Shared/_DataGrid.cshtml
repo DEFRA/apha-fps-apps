@@ -15,9 +15,9 @@
     <div class="sup_border_bottom_0">
         @if (hasHeaderContent)
         {
-            <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
+            <div class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
                 <div class="sup_flex_space_between">
-                        @Model.Title
+                    <h2 class="govuk-heading-s sup_align_heading" id="@($"{Model.GridId}_title")" tabindex="0" style="border-bottom: none">@Model.Title</h2>
                         <div style="margin-left:auto; display:flex; justify-content:flex-end; align-items:center; gap:10px">
                             @if (Model.AllowExport)
                             {
@@ -46,8 +46,8 @@
                             @if (Model.AllowAdd)
                             {
                                 <button type="button" class="govuk-button sup_margin_0 sup_p_8"
-                                                      id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction">
-                                    <i class="fa fa-plus"></i> Add
+                                                      id="@($"{Model.GridId}_addRowBtn")" data-add-function="@Model.AddFunction" aria-label="Add Button">
+                                    <i class="fa fa-plus" aria-hidden="true"></i> Add
                                 </button>
                             }
                             @if (Model.AllowBulkCopy)
@@ -66,7 +66,7 @@
                             }
                         </div>
                     </div>
-                </h2>
+                </div>
         }
        <div class="grid-toolbar">
             <div class="sup_flex_center_gap_0">
@@ -358,8 +358,8 @@
                     {
                         <tr>
                             <td colspan="100" class="govuk-table__cell"
-                                style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">
-                                No records found.
+                                style="text-align:center; color:#505a5f; font-style:italic; padding:16px;" >
+                                <span role="status" aria-live="polite" aria-label="No records found." tabindex="0">No records found.</span>
                             </td>
                         </tr>
                     }
@@ -373,7 +373,7 @@
              <div class="sup_pagination_wrapper">
                  <div class="sup_margin_top_bottom_5_10 sup_flex_center">
                     <label for="@($"{Model.GridId}_pageSize")" class="sup_margin_right_5 sup_font_weight_700">Records per page</label>&nbsp;
-                    <select id="@($"{Model.GridId}_pageSize")" class="sup_max_width_3 govuk-select govuk-!-font-size-16">
+                    <select id="@($"{Model.GridId}_pageSize")" class="sup_max_width_3 govuk-select govuk-!-font-size-16" aria-describedby="@($"{Model.GridId}_totalRecords")">
                          @{
                              var sizes = new[] { 5, 10, 20, 50, 100 };
                              int currentSize = Model.Pagination?.PageSize ?? 5;
@@ -385,7 +385,7 @@
                              </option>
                          }
                      </select>
-                    <span class="sup_font_weight_700 govuk-!-font-size-16">
+                    <span id="@($"{Model.GridId}_totalRecords")" class="sup_font_weight_700 govuk-!-font-size-16">
                         of @Model.Pagination.TotalRecords
                       </span>
                  </div>

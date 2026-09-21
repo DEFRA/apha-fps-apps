@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
                 new() { AccntsPeriod = 2, MonthName = "May",     MonthNumber = 5 },
             };
 
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetDistinctParentProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects));
             _departmentIncomeService.GetPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodLookupDto>>.SuccessResponse(periods));
@@ -82,7 +82,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         public async Task Index_ProjectServiceReturnsFailure_ReturnsViewWithEmptyProjectList()
         {
             // Arrange
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetDistinctParentProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "API down", Code = "ERROR" } },
                     new ApiMetaDto()));
@@ -104,7 +104,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         public async Task Index_PeriodsServiceReturnsFailure_ReturnsViewWithEmptyPeriodList()
         {
             // Arrange
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetDistinctParentProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
             _departmentIncomeService.GetPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodLookupDto>>.FailureResponse(
@@ -126,7 +126,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.DepartmentIncomeControllerT
         public async Task Index_SnapshotGridConfig_HasCorrectProperties()
         {
             // Arrange
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetDistinctParentProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
             _departmentIncomeService.GetPeriodsAsync()
                 .Returns(ApiResponseDto<List<PeriodLookupDto>>.SuccessResponse(new List<PeriodLookupDto>()));
