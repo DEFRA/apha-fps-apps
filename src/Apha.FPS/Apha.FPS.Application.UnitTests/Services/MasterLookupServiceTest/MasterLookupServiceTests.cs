@@ -4,6 +4,7 @@ using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Npgsql;
