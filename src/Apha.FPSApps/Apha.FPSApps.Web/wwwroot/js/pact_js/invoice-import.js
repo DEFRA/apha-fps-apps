@@ -118,6 +118,7 @@ function editFailedInvoiceImport(btn) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
             initializeFormValidation('#formEditFailedInvoice');
+            initializeFailedInvoiceProjectDropdown();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -250,3 +251,58 @@ $(document).ready(function () {
         deleteAllFailedInvoiceImport();
     });
 });
+
+// ========================================
+// Multi-Column Dropdown for Edit Failed Invoice Modal
+// ========================================
+function initializeFailedInvoiceProjectDropdown() {
+    var container = document.querySelector('#failedInvoiceProjectMultiDropdown');
+    if (!container || typeof MultiColumnDropdownComponent === 'undefined') {
+        return;
+    }
+
+    var projectsData = [];
+    var raw = container.getAttribute('data-projects');
+    if (raw) {
+        try { projectsData = JSON.parse(raw); } catch (e) { projectsData = []; }
+    }
+    var selectedProject = container.getAttribute('data-selected') || '';
+
+    setTimeout(function () {
+        var projectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'failedInvoiceProjectDropdown',
+            containerSelector: '#failedInvoiceProjectMultiDropdown',
+            placeholder: 'Select Project',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by project',
+            labelText: '',
+            required: true,
+            columns: [
+                { field: 'Text', header: 'Project', width: '300px' }
+            ],
+            data: projectsData || [],
+            displayField: 'Text',
+            valueField: 'Value',
+            clearButtonClearsSelection: true,
+            callbacks: {
+                onSelect: function (selectedItem, dropdown) {
+                    $('#ProjectParent').val(selectedItem.Value).trigger('change');
+                    setTimeout(function () {
+                        if (dropdown && typeof dropdown.closeDropdown === 'function') {
+                            dropdown.closeDropdown();
+                        }
+                    }, 50);
+                },
+                onClear: function (dropdown) {
+                    $('#ProjectParent').val('').trigger('change');
+                }
+            }
+        });
+
+        var initialProject = selectedProject || $('#ProjectParent').val();
+        if (initialProject) {
+            projectDropdown.setValue(initialProject);
+        }
+    }, 100);
+}
+window.initializeFailedInvoiceProjectDropdown = initializeFailedInvoiceProjectDropdown;
