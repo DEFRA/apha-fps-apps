@@ -1877,6 +1877,18 @@
         window.setTimeout(applyFocus, 150);
     }
 
+    // A side-nav item that only expands/collapses its own sub-list is NOT a
+    // navigation: the user stays on the same page, so focus must remain on the
+    // menu option they just operated (otherwise it jumps to the app logo and
+    // they lose their place). Detected via the ARIA disclosure contract
+    // (aria-expanded / aria-controls) or a nested sub-list.
+    function isSubmenuDisclosure(link) {
+        if (!link) return false;
+        if (link.hasAttribute('aria-expanded') || link.hasAttribute('aria-controls')) return true;
+        var parent = link.parentElement;
+        return !!(parent && parent.querySelector(':scope > ul, :scope > .sidenav-children, :scope > .dropdown-menu, :scope > .sub-dropdown-menu'));
+    }
+
     // Some screens (e.g. FPS Master Lookup) use side-nav links with href="#"
     // that swap the content pane over AJAX instead of navigating. No page load
     // fires, so focus would otherwise stay on the clicked link. Treat those the
@@ -1888,6 +1900,18 @@
             : null;
         if (!link) return;
         if (!link.closest('.sidenav, #shortnav, .side-nav, .project-side-nav, .main-nav')) return;
+        if (isSubmenuDisclosure(link)) {
+            // Expanding a sub-list keeps the user on the same page, so re-assert
+            // focus on the option itself in case a later pass tries to move it.
+            window.setTimeout(function () {
+                try {
+                    link.focus({ preventScroll: true });
+                } catch (err) {
+                    link.focus();
+                }
+            }, 0);
+            return;
+        }
 
         // Let the page's own handler run and render first.
         window.setTimeout(applyFocus, 0);
