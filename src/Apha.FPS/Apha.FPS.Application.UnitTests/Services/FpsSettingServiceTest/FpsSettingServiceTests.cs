@@ -1,9 +1,9 @@
-ï»¿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -415,7 +415,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         [Fact]
         public async Task SaveSettingAsync_WhenIdIsUnrecognised_DoesNotValidateAndCallsRepositoryDirectly()
         {
-            // Arrange â€” SaveSettingAsync performs no validation regardless of Id
+            // Arrange — SaveSettingAsync performs no validation regardless of Id
             var dto = new FpsSettingDto { Id = "OtherKey", Setting = "anything" };
             var entity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
             var savedEntity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
@@ -438,7 +438,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         [Fact]
         public async Task SaveSettingAsync_WhenHoursInDayValueIsInvalid_DoesNotThrowAndCallsRepository()
         {
-            // Arrange â€” SaveSettingAsync does not perform the HoursInDay validation
+            // Arrange — SaveSettingAsync does not perform the HoursInDay validation
             // (that validation only exists in SaveYearEndSettingAsync)
             var dto = new FpsSettingDto { Id = "HoursInDay", Setting = "not-a-number" };
             var entity = new FpsSetting { Id = "HoursInDay", Setting = "not-a-number" };
@@ -478,10 +478,10 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         #endregion
 
         // -----------------------------------------------------------------------
-        // SaveYearEndSettingAsync â€” validation
+        // SaveYearEndSettingAsync — validation
         // -----------------------------------------------------------------------
 
-        #region SaveYearEndSettingAsync â€” validation
+        #region SaveYearEndSettingAsync — validation
 
         [Theory]
         [InlineData(null)]
@@ -577,7 +577,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         [Fact]
         public async Task SaveYearEndSettingAsync_WhenCapApprovalValueIsNullOrEmpty_SkipsValidationAndCallsRepository()
         {
-            // Arrange â€” empty/null value is allowed through (no validation fires for CapApproval)
+            // Arrange — empty/null value is allowed through (no validation fires for CapApproval)
             var dto = new FpsSettingDto { Id = "CapApprovalReceivedForReset", Setting = null };
             var entity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = null };
             var savedEntity = new FpsSetting { Id = "CapApprovalReceivedForReset", Setting = null };
@@ -598,7 +598,7 @@ namespace Apha.FPS.Application.UnitTests.Services.FpsSettingServiceTest
         [Fact]
         public async Task SaveYearEndSettingAsync_WhenIdIsUnrecognised_CallsRepositoryDirectly()
         {
-            // Arrange â€” no validation rules apply to unrecognised IDs
+            // Arrange — no validation rules apply to unrecognised IDs
             var dto = new FpsSettingDto { Id = "OtherKey", Setting = "anything" };
             var entity = new FpsSetting { Id = "OtherKey", Setting = "anything" };
             var savedEntity = new FpsSetting { Id = "OtherKey", Setting = "anything" };

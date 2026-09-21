@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTimeApiClientTest

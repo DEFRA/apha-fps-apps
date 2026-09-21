@@ -5,7 +5,7 @@ using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.Graph.Models;
 using System.Text.Json;
 

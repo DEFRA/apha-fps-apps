@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Application.Pagination;
+using Apha.PACT.Application.Pagination;
 
 namespace Apha.PACT.Application.Dtos
 {

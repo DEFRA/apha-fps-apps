@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Context;
 
 namespace Apha.PACT.Api.Middleware

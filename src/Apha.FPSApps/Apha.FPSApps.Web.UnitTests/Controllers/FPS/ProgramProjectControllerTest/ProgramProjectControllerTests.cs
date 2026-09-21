@@ -7,7 +7,8 @@ using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Apha.FPSApps.Web.Mappings;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -1528,8 +1529,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
 
         private static IMapper CreateRealMapper()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
-            return config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(FpsViewModelMapper).Assembly);
+            return new ServiceMapper(null!, config);
         }
 
         [Fact]

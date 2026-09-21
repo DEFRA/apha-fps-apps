@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -86,7 +86,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StatusRepositoryTest
         [Fact]
         public async Task GetAllStatusesAsync_ReturnsStatusesOrderedByStatusValue_WhenDataIsUnordered()
         {
-            // Arrange — seed data intentionally out of order to verify OrderBy(s => s.StatusValue)
+            // Arrange � seed data intentionally out of order to verify OrderBy(s => s.StatusValue)
             var statuses = new List<Status>
             {
                 new() { StatusValue = "Pending" },

@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
@@ -380,7 +380,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 UpdateType           = updateType
             };
 
-        // ── Staging / Import ─────────────────────────────────────────────────
+        // -- Staging / Import -------------------------------------------------
         public async Task<PagedData<StagingMilestone>> GetAllStagingRowsAsync(PaginationParameters<string> parameters, string? createdBy = null)
         {
 
@@ -704,7 +704,7 @@ namespace Apha.PIMS.DataAccess.Repository
             return int.TryParse(number[(slash + 1)..], out int seq) ? seq : 0;
         }
 
-        // ── Project Year Manager ─────────────────────────────────────────────────
+        // -- Project Year Manager -------------------------------------------------
 
         /// <summary>
         /// Gets project year manager details by filtering projects by year and joining with manager information

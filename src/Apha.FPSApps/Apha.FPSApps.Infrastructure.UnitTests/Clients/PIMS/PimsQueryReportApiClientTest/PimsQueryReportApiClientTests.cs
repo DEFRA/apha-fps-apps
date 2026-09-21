@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -116,10 +116,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
 
             _http.GetAsync<List<MonitoringReportDataRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<MonitoringReportDataDto>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("map failed"));
+                .Throws(new Exception("map failed"));
 
             // Act + Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetMonitoringReportDataAsync(query, 2025, 8));
+            await Assert.ThrowsAsync<Exception>(() => _client.GetMonitoringReportDataAsync(query, 2025, 8));
         }
 
         [Fact]
@@ -205,10 +205,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsQueryReportApiC
 
             _http.GetAsync<List<ProgramCustomerMonitoringReportDataRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramCustomerMonitoringReportDataDto>>>(apiResponse)
-                .Throws(new AutoMapperMappingException("map failed"));
+                .Throws(new Exception("map failed"));
 
             // Act + Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2));
+            await Assert.ThrowsAsync<Exception>(() => _client.GetProgramCustomerMonitoringReportDataAsync(query, 2026, 2));
         }
     }
 }

@@ -5,7 +5,7 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -356,10 +356,10 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
         {
             // Arrange
             var request = new RadTrackInvoiceReq { Project = "PP001" };
-            _mapper.Map<RadTrackInvoiceDto>(request).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<RadTrackInvoiceDto>(request).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.Create(request));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Create(request));
             _mapper.Received(1).Map<RadTrackInvoiceDto>(request);
             await _service.DidNotReceive().CreateAsync(Arg.Any<RadTrackInvoiceDto>());
         }
@@ -438,10 +438,10 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.RadTrackInvoiceControllerTest
             // Arrange
             const int id = 1;
             var request  = new RadTrackInvoiceReq { Project = "PP001" };
-            _mapper.Map<RadTrackInvoiceDto>(request).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<RadTrackInvoiceDto>(request).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.Update(id, request));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.Update(id, request));
             _mapper.Received(1).Map<RadTrackInvoiceDto>(request);
             await _service.DidNotReceive().UpdateAsync(Arg.Any<RadTrackInvoiceDto>());
         }

@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Core.Interfaces
+namespace Apha.FPS.Core.Interfaces
 {
     public interface IFpsRequestContext
     {
