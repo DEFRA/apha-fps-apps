@@ -79,6 +79,10 @@
             // become the containing block and offset the fixed coordinates.
             function positionManagerPanel() {
                 if (managerPanel.parentNode !== document.body) {
+                    // Marks the panel as a floating extension of the open modal so the
+                    // shared modal focus trap does not pull focus out of the search box
+                    // (the panel is no longer a DOM descendant of the modal).
+                    managerPanel.setAttribute('data-floating-dropdown-panel', '1');
                     document.body.appendChild(managerPanel);
                 }
                 var rect = managerDisplay.getBoundingClientRect();

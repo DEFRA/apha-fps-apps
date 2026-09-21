@@ -76,6 +76,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffPlanViewItem>
             {
                 GridId         = "staffPlanGrid",
+                Title          = "Planned Staff Details",
                 KeyProperty    = "ParentProject",
                 AllowAdd       = false,
                 AllowEdit      = false,

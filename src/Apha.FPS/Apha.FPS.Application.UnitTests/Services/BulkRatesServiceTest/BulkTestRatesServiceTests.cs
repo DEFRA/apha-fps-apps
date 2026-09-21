@@ -20,11 +20,17 @@ namespace Apha.FPS.Application.UnitTests.Services.BulkRatesServiceTest;
 /// cover the still-fully-operational old classes until Phase 8 deletes them — this file does
 /// not need to be a line-for-line port of those to avoid a coverage regression during the move.
 ///
-/// Not covered here: ValidationContext.IncludeWorkerOnlyChecks=true (the BC-05 live/snapshot
-/// interim rule's worker-only variant). Every current FPS caller — old and new — leaves this
+/// Not covered here: ValidationContext.IncludeWorkerOnlyChecks=true (the live/snapshot
+/// withdrawal-conflict rule's worker-only variant). Every current FPS caller — old and new — leaves this
 /// false; there is no reachable seam on BulkTestRatesService's public API to exercise the
 /// true branch, same as before this move (only a hand-built ValidationContext in
 /// BulkRatesValidationServiceTests could reach it). That test class still covers it directly.
+///
+/// ValidateLiveWithdrawalConflicts was made sign-agnostic alongside the rest of the negative-rate
+/// change, so a withdrawn FEC now conflicts with a live AGRUP rate of either sign once worker-only
+/// checks are reachable — but IncludeWorkerOnlyChecks is still hardcoded false everywhere, so
+/// that branch has no live-path coverage today. Pre-existing gap, not introduced by this change;
+/// no new seam was added to manufacture coverage for it.
 /// </summary>
 public class BulkTestRatesServiceTests
 {
@@ -44,22 +50,16 @@ public class BulkTestRatesServiceTests
         string testCode, decimal? rate, string? item = "desc", string? shortDesc = "short", string? owner = "PT")
         => new() { TestCode = testCode, FecNewRate = rate, ItemDescription = item, ShortDescription = shortDesc, Owner = owner };
 
-    private static TestRequirementStagingRow Agrup(
-        string testCode, string buyer, decimal? rate,
-        string? projectBuyerCode = null, string? testBuyerCode = null, string? testBuyerWorkGroup = null, string? comments = null)
-        => new()
-        {
-            TestCode = testCode, Buyer = buyer, AgrupNew = rate,
-            ProjectBuyerCode = projectBuyerCode, TestBuyerCode = testBuyerCode, TestBuyerWorkGroup = testBuyerWorkGroup,
-            Comments = comments
-        };
+    // Mirrors what BulkRatesExcelParser now does: Buyer is the only routing input the user
+    // supplies, and ProjectBuyerCode is derived from it (SIT-1).
+    private static TestRequirementStagingRow Agrup(string testCode, string buyer, decimal? rate, string? comments = null)
+        => new() { TestCode = testCode, Buyer = buyer, AgrupNew = rate, ProjectBuyerCode = buyer, Comments = comments };
 
     private static TestOrProductStagingRow LiveFec(string testCode, decimal? unitPriceVla, decimal? defraUnitPrice)
         => new() { TestCode = testCode, UnitPriceVla = unitPriceVla, DefraUnitPrice = defraUnitPrice };
 
-    private static TestRequirementStagingRow LiveAgrup(
-        string testCode, string buyer, decimal? unitPrice, string? projectBuyerCode = null, string? testBuyerCode = null)
-        => new() { TestCode = testCode, Buyer = buyer, Agrup = unitPrice, ProjectBuyerCode = projectBuyerCode, TestBuyerCode = testBuyerCode };
+    private static TestRequirementStagingRow LiveAgrup(string testCode, string buyer, decimal? unitPrice)
+        => new() { TestCode = testCode, Buyer = buyer, Agrup = unitPrice };
 
     private static BulkRatesParseResult ParseResult(
         IReadOnlyList<TestOrProductStagingRow>? fec = null,
@@ -77,7 +77,6 @@ public class BulkTestRatesServiceTests
         IReadOnlyList<TestOrProductStagingRow>? liveFec = null,
         IReadOnlyList<TestRequirementStagingRow>? liveAgrup = null,
         IReadOnlySet<string>? projectCodes = null,
-        IReadOnlySet<(string TestCode, string WorkGroup)>? capabilityPairs = null,
         IReadOnlyList<TestOrProductStagingRow>? snapshotFec = null,
         IReadOnlyList<TestRequirementStagingRow>? snapshotAgrup = null)
     {
@@ -88,8 +87,6 @@ public class BulkTestRatesServiceTests
             .Returns(liveAgrup ?? Array.Empty<TestRequirementStagingRow>());
         repo.GetExistingProjectCodesAsync(Arg.Any<IEnumerable<string>>(), FpsYear, Arg.Any<CancellationToken>())
             .Returns(projectCodes ?? new HashSet<string>());
-        repo.GetExistingCapabilityPairsAsync(Arg.Any<IEnumerable<(string, string)>>(), FpsYear, Arg.Any<CancellationToken>())
-            .Returns(capabilityPairs ?? new HashSet<(string, string)>());
         repo.GetFecSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(snapshotFec ?? Array.Empty<TestOrProductStagingRow>());
         repo.GetAgrupSnapshotRowsAsync(QueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -182,15 +179,37 @@ public class BulkTestRatesServiceTests
     }
 
     [Fact]
-    public async Task FecRow_NegativeRate_IsBlockingError_RegardlessOfNewOrExisting()
+    public async Task NewFecRow_NegativeRate_ClassifiesAsInsert()
+    {
+        var sut = CreateService(RepoWith());
+
+        var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("TC999", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.FecInsert.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingFecRow_PositiveToNegativeRate_ClassifiesAsUpdate()
     {
         var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)]);
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("TC001", -5)]), FpsYear, 1, null);
 
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "NEGATIVE_RATE" && e.SheetName == "FEC");
-        result.RowCounts.FecInsert.Should().Be(0);
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.FecUpdate.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingFecRow_SameNegativeRate_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith(liveFec: [LiveFec("TC001", -5, -5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("TC001", -5)]), FpsYear, 1, null);
+
+        result.RowCounts.FecUnchanged.Should().Be(1);
         result.RowCounts.FecUpdate.Should().Be(0);
     }
 
@@ -229,9 +248,52 @@ public class BulkTestRatesServiceTests
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 0, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "PRJ001", 0)]), FpsYear, 1, null);
 
         result.Errors.Should().ContainSingle(e => e.ValidationCode == "NEW_AGRUP_ZERO_RATE_BLOCKED");
+    }
+
+    [Fact]
+    public async Task NewAgrupRow_NegativeRate_ClassifiesAsInsert()
+    {
+        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)], projectCodes: new HashSet<string> { "PRJ001" });
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "PRJ001", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.AgrupInsert.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingAgrupRow_PositiveToNegativeRate_ClassifiesAsUpdate()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", 10)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.AgrupUpdate.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingAgrupRow_SameNegativeRate_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", -5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", -5)]), FpsYear, 1, null);
+
+        result.RowCounts.AgrupUnchanged.Should().Be(1);
+        result.RowCounts.AgrupUpdate.Should().Be(0);
     }
 
     [Fact]
@@ -241,7 +303,7 @@ public class BulkTestRatesServiceTests
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(
-            ParseResult(agrup: [Agrup("UNKNOWN", "B001", 5, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
+            ParseResult(agrup: [Agrup("UNKNOWN", "PRJ001", 5)]), FpsYear, 1, null);
 
         result.Errors.Should().ContainSingle(e => e.ValidationCode == "TEST_CODE_NOT_FOUND");
     }
@@ -253,122 +315,58 @@ public class BulkTestRatesServiceTests
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC999", 5)], agrup: [Agrup("TC999", "B001", 5, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
+            ParseResult(fec: [Fec("TC999", 5)], agrup: [Agrup("TC999", "PRJ001", 5)]), FpsYear, 1, null);
 
         result.Errors.Should().NotContain(e => e.ValidationCode == "TEST_CODE_NOT_FOUND");
     }
 
-    // ── AGRUP routing fields (BC-02) ─────────────────────────────────────────────
+    // ── AGRUP routing: Buyer must be a valid project (SIT-1) ──────────────────────
 
     [Fact]
-    public async Task NewAgrupRow_NoRoutingFieldSupplied_RaisesMissingRoutingField()
-    {
-        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)]);
-        var sut = CreateService(repo);
-
-        var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 5)]), FpsYear, 1, null);
-
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "MISSING_ROUTING_FIELD");
-    }
-
-    [Fact]
-    public async Task NewAgrupRow_InvalidProjectBuyerCode_RaisesError()
-    {
-        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)]);
-        var sut = CreateService(repo);
-
-        var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 5, projectBuyerCode: "BOGUS")]), FpsYear, 1, null);
-
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "INVALID_PROJECT_BUYER_CODE");
-    }
-
-    [Fact]
-    public async Task NewAgrupRow_ValidProjectBuyerCode_NoRoutingError()
+    public async Task NewAgrupRow_BuyerNotAValidProject_RaisesInvalidBuyerProject()
     {
         var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)], projectCodes: new HashSet<string> { "PRJ001" });
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 5, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "NOT_A_PROJECT", 5)]), FpsYear, 1, null);
 
-        result.Errors.Should().NotContain(e => e.ValidationCode == "MISSING_ROUTING_FIELD" || e.ValidationCode == "INVALID_PROJECT_BUYER_CODE");
+        result.Errors.Should().ContainSingle(e => e.ValidationCode == "INVALID_BUYER_PROJECT" && e.FieldName == "buyer");
     }
 
+    // End-to-end proof: Excel row (Buyer only, no J/K/L) -> parser derives ProjectBuyerCode ->
+    // Buyer validated against fps.tlkpproject -> Insert allowed.
     [Fact]
-    public async Task NewAgrupRow_InvalidTestBuyerWorkGroup_RaisesError()
+    public async Task NewAgrupRow_BuyerIsValidProject_ClassifiesAsInsert()
     {
-        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)]);
+        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)], projectCodes: new HashSet<string> { "EXOR1051" });
         var sut = CreateService(repo);
 
         var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 5, testBuyerWorkGroup: "WG-BOGUS")]), FpsYear, 1, null);
+            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "EXOR1051", 5)]), FpsYear, 1, null);
 
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "INVALID_TEST_BUYER_WORKGROUP");
+        result.Errors.Should().NotContain(e => e.ValidationCode == "INVALID_BUYER_PROJECT");
+        result.RowCounts.AgrupInsert.Should().Be(1);
     }
 
     [Fact]
-    public async Task NewAgrupRow_ValidTestBuyerWorkGroup_NoRoutingError()
+    public async Task PrepareForReleaseAsync_BuyerNotAValidProject_ThrowsAndBlocksRelease()
     {
-        var repo = RepoWith(
-            liveFec: [LiveFec("TC001", 10, 10)],
-            capabilityPairs: new HashSet<(string, string)> { ("TC001", "WG1") });
+        var repo = RepoWith(liveFec: [LiveFec("TC001", 10, 10)], projectCodes: new HashSet<string> { "PRJ001" });
+        repo.GetTestOrProductStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns([Fec("TC001", 10)]);
+        repo.GetTestRequirementStagingRowsAsync(QueueId, Arg.Any<CancellationToken>())
+            .Returns([Agrup("TC001", "NOT_A_PROJECT", 5)]);
         var sut = CreateService(repo);
 
-        var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B999", 5, testBuyerWorkGroup: "WG1")]), FpsYear, 1, null);
+        var act = async () => await sut.PrepareForReleaseAsync(QueueId, FpsYear, 1, null);
 
-        result.Errors.Should().NotContain(e => e.ValidationCode == "MISSING_ROUTING_FIELD" || e.ValidationCode == "INVALID_TEST_BUYER_WORKGROUP");
+        await act.Should().ThrowAsync<BusinessValidationErrorException>();
+        await repo.DidNotReceive().FreezeStagingCalculatedActionsAsync(
+            Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<IReadOnlyList<TestFreezeEntry>>(), Arg.Any<IReadOnlyList<TestFreezeEntry>>(), Arg.Any<CancellationToken>());
     }
 
-    // ── AGRUP existing-row routing immutability ──────────────────────────────────
-
-    [Fact]
-    public async Task ExistingAgrupRow_ChangedProjectBuyerCode_RaisesRoutingFieldChanged()
-    {
-        var repo = RepoWith(
-            liveFec: [LiveFec("TC001", 10, 10)],
-            liveAgrup: [LiveAgrup("TC001", "B001", 5, projectBuyerCode: "PRJ001")]);
-        var sut = CreateService(repo);
-
-        var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", 5, projectBuyerCode: "PRJ002")]), FpsYear, 1, null);
-
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "ROUTING_FIELD_CHANGED" && e.FieldName == "projectbuyercode");
-    }
-
-    [Fact]
-    public async Task ExistingAgrupRow_SameProjectBuyerCode_DifferentCase_IsNotChanged_CitextSemantics()
-    {
-        var repo = RepoWith(
-            liveFec: [LiveFec("TC001", 10, 10)],
-            liveAgrup: [LiveAgrup("TC001", "B001", 5, projectBuyerCode: "PRJ001")]);
-        var sut = CreateService(repo);
-
-        var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", 5, projectBuyerCode: "prj001")]), FpsYear, 1, null);
-
-        result.Errors.Should().NotContain(e => e.ValidationCode == "ROUTING_FIELD_CHANGED");
-    }
-
-    [Fact]
-    public async Task ExistingAgrupRow_UnchangedRoutingFields_NoRoutingCapabilityRevalidation()
-    {
-        // Existing rows aren't re-checked against ProjectLookup/CapabilityLookup at all — only
-        // new rows are (immutability, not re-validation): projectCodes deliberately left empty.
-        var repo = RepoWith(
-            liveFec: [LiveFec("TC001", 10, 10)],
-            liveAgrup: [LiveAgrup("TC001", "B001", 5, projectBuyerCode: "PRJ001")]);
-        var sut = CreateService(repo);
-
-        var result = await sut.ProcessUploadAsync(
-            ParseResult(fec: [Fec("TC001", 10)], agrup: [Agrup("TC001", "B001", 5, projectBuyerCode: "PRJ001")]), FpsYear, 1, null);
-
-        result.Errors.Should().NotContain(e => e.ValidationCode == "INVALID_PROJECT_BUYER_CODE" || e.ValidationCode == "MISSING_ROUTING_FIELD");
-    }
-
-    // ── FEC-withdrawal / AGRUP conflict (interim BC-05, staged variant) ──────────────
+    // ── FEC-withdrawal / AGRUP conflict, staged variant ──────────────────────────────
 
     [Fact]
     public async Task WithdrawnFecTestCode_StagedPositiveAgrupRow_RaisesConflictError()
@@ -396,6 +394,36 @@ public class BulkTestRatesServiceTests
             ParseResult(fec: [Fec("TC001", null)], agrup: [Agrup("TC001", "B001", 0)]), FpsYear, 1, null);
 
         result.Errors.Should().NotContain(e => e.ValidationCode == "AGRUP_POSITIVE_FOR_WITHDRAWN_FEC");
+    }
+
+    [Fact]
+    public async Task WithdrawnFecTestCode_StagedNegativeAgrupRow_RaisesConflictError()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", 5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", null)], agrup: [Agrup("TC001", "B001", -5)]), FpsYear, 1, null);
+
+        result.Errors.Should().ContainSingle(e => e.ValidationCode == "AGRUP_POSITIVE_FOR_WITHDRAWN_FEC");
+    }
+
+    [Fact]
+    public async Task NegativeFecAndNegativeAgrup_BothNonZero_NoWithdrawalConflict()
+    {
+        var repo = RepoWith(
+            liveFec: [LiveFec("TC001", 10, 10)],
+            liveAgrup: [LiveAgrup("TC001", "B001", 5)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(
+            ParseResult(fec: [Fec("TC001", -20)], agrup: [Agrup("TC001", "B001", -10)]), FpsYear, 1, null);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "AGRUP_POSITIVE_FOR_WITHDRAWN_FEC");
+        result.RowCounts.FecUpdate.Should().Be(1);
+        result.RowCounts.AgrupUpdate.Should().Be(1);
     }
 
     // ── Downloaded-snapshot preservation ──────────────────────────────────────────

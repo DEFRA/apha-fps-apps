@@ -54,6 +54,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Store parameters in ViewBag for the view to use
             ViewBag.SelectedPortfolio = portfolio;
             ViewBag.SourceWorkGroup = workgroup;
+            ViewBag.NavigationSource = TempData.Peek("NavigationSource")?.ToString();
 
             var allPortfolios = await _projectService.GetAllPactProjectsAsync();
             var programs = await _programService.GetAllProgramsForAllUsersAsync();

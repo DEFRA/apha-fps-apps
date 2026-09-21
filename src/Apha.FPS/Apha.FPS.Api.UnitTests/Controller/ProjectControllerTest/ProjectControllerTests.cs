@@ -777,6 +777,67 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
         #endregion
 
+        #region GetDistinctParentProjectsAsync
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001" },
+                new() { ParentProject = "PP002" }
+            };
+            var mappedResult = new List<ProjectRes>
+            {
+                new() { ParentProject = "PP001" },
+                new() { ParentProject = "PP002" }
+            };
+
+            _serviceMock.GetDistinctParentProjectsAsync().Returns(serviceResult);
+            _mapperMock.Map<List<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetDistinctParentProjectsAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetDistinctParentProjectsAsync();
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_EmptyResult_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var serviceResult = new List<ProjectDto>();
+            var mappedResult = new List<ProjectRes>();
+
+            _serviceMock.GetDistinctParentProjectsAsync().Returns(serviceResult);
+            _mapperMock.Map<List<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetDistinctParentProjectsAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetDistinctParentProjectsAsync()
+                        .Throws(new InvalidOperationException("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.GetDistinctParentProjectsAsync());
+        }
+
+        #endregion
+
         #region GetPagedProjectSpecificQueryAsync
 
         [Fact]

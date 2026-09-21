@@ -225,7 +225,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
                     _context.BatchJobQueues.Update(queueRow);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(requestedBy, jobqueue.JobqueueId, note, DateTime.UtcNow, jobStatus.StatusId, queueRow.FpsYear);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -266,7 +266,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
                     _context.BatchJobQueues.Add(jobQueueEntry);
 
-                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
+                    BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId, jobQueueEntry.FpsYear);
                     _context.BatchJobQueueLogs.Add(logEntry);
 
                     await _context.SaveChangesAsync();
@@ -327,7 +327,7 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        private static BatchJobQueueLog BuildJobQueueLogEntry(string requestedBy, Guid jobqueueId, string note, DateTime logtime, int statusId)
+        private static BatchJobQueueLog BuildJobQueueLogEntry(string requestedBy, Guid jobqueueId, string note, DateTime logtime, int statusId, int fpsYear)
         {
             return new BatchJobQueueLog
             {
@@ -335,7 +335,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 StatusId = statusId,
                 PerformedBy = requestedBy,
                 LogTime = logtime,
-                Note = note
+                Note = note,
+                FpsYear = fpsYear
             };
         }
     }

@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
         {
             entity.ToTable("period_proj_subcontract", "fps");
 
-            entity.HasKey(e => new { e.Period, e.SubContCounter })
+            entity.HasKey(e => new { e.Period, e.SubContCounter, e.FpsYear })
                   .HasName("pk_period_proj_subcontract");
 
             entity.Property(e => e.Period).HasColumnName("period");
@@ -24,6 +24,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Month).HasColumnName("month");
             entity.Property(e => e.Amount).HasColumnType("money").HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasMaxLength(30).HasColumnName("acctcode");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

@@ -256,13 +256,13 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task WriteJobQueueLogAsync(
             Guid jobQueueId, string note, string? actor, CancellationToken ct = default)
         {
-            // Resolve current statusid (required by fps.job_queue_log FK constraint)
-            var statusId = await _dbContext.BatchJobQueues.IgnoreQueryFilters()
+            // Resolve current statusid and fpsyear (required by fps.job_queue_log FK/not-null constraints)
+            var queueRow = await _dbContext.BatchJobQueues.IgnoreQueryFilters()
                 .Where(q => q.JobqueueId == jobQueueId)
-                .Select(q => (int?)q.StatusId)
+                .Select(q => new { q.StatusId, q.FpsYear })
                 .FirstOrDefaultAsync(ct);
 
-            if (statusId is null)
+            if (queueRow is null)
             {
                 _logger.LogWarning("WriteJobQueueLogAsync: jobqueueid {JobQueueId} not found; log entry skipped.", jobQueueId);
                 return;
@@ -271,13 +271,14 @@ namespace Apha.FPS.DataAccess.Repositories
             _dbContext.BatchJobQueueLogs.Add(new BatchJobQueueLog
             {
                 JobqueueId = jobQueueId,
-                StatusId = statusId.Value,
+                StatusId = queueRow.StatusId,
                 // BatchJobQueueLog.PerformedBy is modeled non-nullable (shared with YearEnd) —
                 // every real caller always passes a real actor (see BulkRatesRequestService),
                 // so this only matters in the never-hit null case; empty string rather than a
                 // literal DB NULL to keep the existing entity's own nullability contract intact.
                 PerformedBy = actor ?? string.Empty,
-                Note = note
+                Note = note,
+                FpsYear = queueRow.FpsYear
             });
             await _dbContext.SaveChangesAsync(ct);
         }

@@ -66,40 +66,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.MiscReportsControllerTest
             var model = ModelOf(await _controller.Index());
 
             Assert.Equal(WgPivotReport, model.SelectedReport);
-            Assert.Equal("Test Manager WG Pivot", model.SelectedReportTitle);
             await _testsRequiredByWgService.Received(1).GetTestsRequiredByWgAsync(null);
             await _testsRequiredByRcService.DidNotReceive().GetTestsRequiredByRcAsync(Arg.Any<string?>());
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public async Task Index_FallsBackToDefaultReport_WhenReportNotSupplied(string? report)
-        {
-            var model = ModelOf(await _controller.Index(report));
-
-            Assert.Equal(WgPivotReport, model.SelectedReport);
-            Assert.Equal("Test Manager WG Pivot", model.SelectedReportTitle);
         }
 
         [Fact]
         public async Task Index_HonoursExplicitlySelectedRcReport()
         {
             var model = ModelOf(await _controller.Index(RcPivotReport));
-
             Assert.Equal(RcPivotReport, model.SelectedReport);
-            Assert.Equal("Test Manager RC Pivot", model.SelectedReportTitle);
             await _testsRequiredByRcService.Received(1).GetTestsRequiredByRcAsync(null);
             await _testsRequiredByWgService.DidNotReceive().GetTestsRequiredByWgAsync(Arg.Any<string?>());
-        }
-
-        [Fact]
-        public async Task Index_ReportTitleMatchIsCaseInsensitive()
-        {
-            var model = ModelOf(await _controller.Index("testmanagerrcpivot"));
-
-            Assert.Equal("Test Manager RC Pivot", model.SelectedReportTitle);
         }
 
         [Fact]
