@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -18,7 +18,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         /// <summary>
         /// Creates a ProjectInvoiceRepository alongside mocked DbSet and context for call verification.
         /// AddAsync is set up explicitly since it differs from the base SetupDbSetOperations.
-        /// UpdateAsync uses Entry().State — tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
+        /// UpdateAsync uses Entry().State � tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
         /// </summary>
         private static (
             ProjectInvoiceRepository Repo,

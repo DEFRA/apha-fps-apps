@@ -2,7 +2,7 @@
 using Apha.Costbook.Application.Services;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using Xunit;
 

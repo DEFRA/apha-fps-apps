@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Core.Entities
 {
     public class BatchJobQueueLog
     {
@@ -8,5 +8,6 @@
         public string PerformedBy { get; set; } = null!;
         public DateTime LogTime { get; set; }
         public string? Note { get; set; }
+        public int FpsYear { get; set; }
     }
 }

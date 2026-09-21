@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -253,6 +253,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<AnimalRequestView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodTimeCostCalcsMap());
+            modelBuilder.Entity<PeriodTimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PactProjectViewMap());
             modelBuilder.Entity<PactProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -298,7 +299,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodProjSubContractMap());
-            
+            modelBuilder.Entity<PeriodProjSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
 
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
@@ -309,7 +311,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            // ── Cross-year tables: no HasQueryFilter — bulk rename operates across all years ──
+            // -- Cross-year tables: no HasQueryFilter � bulk rename operates across all years --
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
 
@@ -411,7 +413,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MonthHourStagingMap());
          
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
-            
+            modelBuilder.Entity<PeriodMonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
 
 
         }

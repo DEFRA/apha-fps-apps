@@ -132,7 +132,7 @@
                                                                     <td>@year</td>
                                                                     <td>
                                                                         <button type="button" class="btn btn-sm delete-row-btn" data-year="@year" onclick="deletetblProjectYear(this)">
-                                                                            <img src="/images/delete_gridicon.svg" alt="Delete icon" width="20" height="20" title="Delete Project Year">
+                                                                        <img src="/images/delete_gridicon.svg" aria-label="Delete Project Year @year" alt="Delete icon" width="20" height="20" title="Delete Project Year">
                                                                         </button>
                                                                     </td>
                                                                 </tr>
@@ -189,7 +189,7 @@
                                                     </span>
                                                     <span class="project-total-value-wrap">
                                                         <span class="total-amount">
-                                                            <input type="text" id="staffTotalAmount" aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly="" tabindex="-1">
+                                                            <input type="text" id="staffTotalAmount" aria-label="Total Staff Cost" class="govuk-input project-total-input" readonly="" tabindex="0">
                                                         </span>
                                                     </span>
                                                 </div>
@@ -203,7 +203,7 @@
                                                     </span>
                                                     <span class="project-total-value-wrap">
                                                         <span class="total-amount">
-                                                            <input type="text" id="testTotalAmount" aria-label="Total Test Cost" class="govuk-input project-total-input" readonly="" tabindex="-1">
+                                                            <input type="text" id="testTotalAmount" aria-label="Total Test Cost" class="govuk-input project-total-input" readonly="" tabindex="0">
                                                         </span>
                                                     </span>
                                                 </div>
@@ -217,7 +217,7 @@
                                                     </span>
                                                     <span class="project-total-value-wrap">
                                                         <span class="total-amount">
-                                                            <input type="text" id="animalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="" tabindex="-1">
+                                                            <input type="text" id="animalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="" tabindex="0">
                                                         </span>
                                                     </span>
                                                 </div>
@@ -231,7 +231,7 @@
                                                     </span>
                                                     <span class="project-total-value-wrap">
                                                         <span class="total-amount">
-                                                            <input type="text" id="additionalTotalAmount" aria-label="Total Animal Cost" class="govuk-input project-total-input" readonly="" tabindex="-1">
+                                                            <input type="text" id="additionalTotalAmount" aria-label="Total Additional Cost" class="govuk-input project-total-input" readonly="" tabindex="0">
                                                         </span>
                                                     </span>
                                                 </div>
@@ -261,7 +261,7 @@
                                                                 <input type="text"
                                                                        class="govuk-input project-year-total-input"
                                                                        id="year-total-staff" value="@Model?.StaffCostTotal.ToString("£#,##0.00")"
-                                                                       readonly="" tabindex="-1">
+                                                                       readonly="" tabindex="0">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
@@ -269,14 +269,14 @@
 
                                                                 <input type="text" value="@Model?.TestCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
-                                                                       id="year-total-test" tabindex="-1">
+                                                                       id="year-total-test" tabindex="0">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-animal">Animal Costs:</label>
                                                                 <input type="text" value="@Model?.AnimalCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
-                                                                       id="year-total-animal" tabindex="-1">
+                                                                       id="year-total-animal" tabindex="0">
                                                             </div>
                                                             <div class="total-item">
                                                                 <label class="govuk-label--s"
@@ -286,14 +286,14 @@
                                                                 </label>
                                                                 <input type="text" value="@Model?.AdditionalCostTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
-                                                                       id="year-total-additional" tabindex="-1">
+                                                                       id="year-total-additional" tabindex="0">
                                                             </div>
                                                             <div class="total-item grand-total">
                                                                 <label class="govuk-label--s"
                                                                        for="year-total-grand">Grand Totals:</label>
                                                                 <input type="text" value="@Model?.GrandTotal.ToString("£#,##0.00")" readonly=""
                                                                        class="govuk-input project-year-total-input"
-                                                                       id="year-total-grand" tabindex="-1">
+                                                                       id="year-total-grand" tabindex="0">
                                                             </div>
                                                         </div>
                                                     </div>

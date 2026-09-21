@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Interfaces;
 
 namespace Apha.PACT.DataAccess.Context
 {

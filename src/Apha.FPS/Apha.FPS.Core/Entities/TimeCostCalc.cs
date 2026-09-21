@@ -1,6 +1,6 @@
-﻿namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Core.Entities
 {
-    // Maps fps.timecostcalcs — cross-year table, no FpsYear query filter applied
+    // Maps fps.timecostcalcs � cross-year table, no FpsYear query filter applied
     public class TimeCostCalc
     {
         public string WorkGroup { get; set; } = null!;

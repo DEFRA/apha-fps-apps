@@ -11,7 +11,8 @@ using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -545,8 +546,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         [Fact]
         public void FpsViewModelMapper_TestListVlaItem_MapsToDto()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
-            var mapper = config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(FpsViewModelMapper).Assembly);
+            var mapper = new ServiceMapper(null!, config);
 
             var item = new TestListVlaItem { ItemCode = "VLA01" };
             var dto = mapper.Map<TestorProductDto>(item);
@@ -556,8 +558,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         [Fact]
         public void FpsViewModelMapper_TestRCCostItem_MapsToDto()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
-            var mapper = config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(FpsViewModelMapper).Assembly);
+            var mapper = new ServiceMapper(null!, config);
 
             var item = new TestRCCostItem { TestCode = "T001" };
             var dto = mapper.Map<TestRCCostDto>(item);
@@ -567,8 +570,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         [Fact]
         public void FpsViewModelMapper_TestRequirementRCCostItem_MapsToDto()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
-            var mapper = config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(FpsViewModelMapper).Assembly);
+            var mapper = new ServiceMapper(null!, config);
 
             var item = new TestRequirementRCCostItem { TestCode = "T001" };
             var dto = mapper.Map<TestRequirementRCCostDto>(item);
@@ -578,8 +582,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         [Fact]
         public void FpsViewModelMapper_TestRequirementItem_MapsToDto()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
-            var mapper = config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(FpsViewModelMapper).Assembly);
+            var mapper = new ServiceMapper(null!, config);
 
             var item = new TestRequirementItem { TestCode = "T001" };
             var dto = mapper.Map<TestRequirementDto>(item);

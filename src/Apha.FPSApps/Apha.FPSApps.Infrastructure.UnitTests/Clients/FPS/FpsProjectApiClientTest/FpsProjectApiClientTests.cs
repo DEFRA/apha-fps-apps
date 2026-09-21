@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using Xunit;
 
@@ -173,6 +173,66 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
             // Act
             var result = await _client.GetAllProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetDistinctParentProjectsAsync Tests
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_WithSuccessResponse_ReturnsMappedProjectList()
+        {
+            // Arrange
+            var projectList = new List<ProjectRes>
+            {
+                new() { ParentProject = "PP001" },
+                new() { ParentProject = "PP002" }
+            };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = true, Data = projectList };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto>
+                {
+                    new() { ParentProject = "PP001" },
+                    new() { ParentProject = "PP002" }
+                }
+            );
+
+            _http.GetAsync<List<ProjectRes>>("api/v1/project/distinct").Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetDistinctParentProjectsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).GetAsync<List<ProjectRes>>("api/v1/project/distinct");
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ProjectDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetDistinctParentProjectsAsync();
 
             // Assert
             Assert.NotNull(result);

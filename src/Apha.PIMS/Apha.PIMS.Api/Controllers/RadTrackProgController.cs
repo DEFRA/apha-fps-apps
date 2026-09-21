@@ -4,13 +4,13 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PIMS.Api.Controllers
 {
-    
+
     [ApiController]
     [Authorize(Roles = "API-PIMSUser,API-PIMSAdmin")]
     [ApiVersion("1.0")]
@@ -38,7 +38,12 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("programs")]
         public async Task<IActionResult> GetAllProgramNames()
         {
-            List<string> programs = await _service.GetAllProgramNamesAsync();
+            List<string>? programs = await _service.GetAllProgramNamesAsync();
+            if (programs is null)
+            {
+                return CreateNullSuccessResponse<List<string>>();
+            }
+
             return Ok(programs);
         }
 
@@ -54,7 +59,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetRadTrackProgByProgram(string program)
         {
             RadTrackProgDto? result = await _service.GetRadTrackProgByProgramAsync(program);
-            return result is null ? NotFound() : Ok(_mapper.Map<RadTrackProgRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<RadTrackProgRes>();
+            }
+
+            return Ok(_mapper.Map<RadTrackProgRes>(result));
         }
 
         /// <summary>Create a new RadTrack programme.</summary>
@@ -83,6 +93,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             bool deleted = await _service.DeleteRadTrackProgAsync(program);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -1,10 +1,10 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -205,6 +205,13 @@ namespace Apha.FPS.Api.Controllers
             var projects = await _projectService.GetAllProjectsForAllUsersAsync();
             if (projects == null)
                 throw new ArgumentException("Project records not found");
+            return Ok(_mapper.Map<List<ProjectRes>>(projects));
+        }
+
+        [HttpGet("distinct")]
+        public async Task<ActionResult<List<ProjectRes>>> GetDistinctParentProjectsAsync()
+        {
+            var projects = await _projectService.GetDistinctParentProjectsAsync();
             return Ok(_mapper.Map<List<ProjectRes>>(projects));
         }
 

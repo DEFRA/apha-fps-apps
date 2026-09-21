@@ -13,5 +13,6 @@ namespace Apha.FPS.Core.Entities
         public double? Month { get; set; }
         public decimal? Amount { get; set; }
         public string? AcctCode { get; set; }
+        public int FpsYear { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 
 using System.Web;
 
@@ -190,21 +190,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year)
         {
-            try
-            {
-                var response = await _http.DeleteAsync<object>(
-                    string.Format(PimsApiEndpoints.DeleteMilestoneFormDates, Uri.EscapeDataString(parentProject), year));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<object>>(response);
-                var dto = _mapper.Map<ApiResponseDto<object>>(response);
-                return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<object>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to delete milestone form dates", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var response = await _http.DeleteAsync<object>(
+                string.Format(PimsApiEndpoints.DeleteMilestoneFormDates, Uri.EscapeDataString(parentProject), year));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<object>>(response);
+            var dto = _mapper.Map<ApiResponseDto<object>>(response);
+            return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)

@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -54,6 +54,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Store parameters in ViewBag for the view to use
             ViewBag.SelectedPortfolio = portfolio;
             ViewBag.SourceWorkGroup = workgroup;
+            ViewBag.NavigationSource = TempData.Peek("NavigationSource")?.ToString();
 
             var allPortfolios = await _projectService.GetAllPactProjectsAsync();
             var programs = await _programService.GetAllProgramsForAllUsersAsync();
