@@ -110,10 +110,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsPublicationType
             };
 
             _http.GetAsync<PublicationTypeRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<PublicationTypeDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<PublicationTypeDto>>(apiResponse).Throws(new Exception("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetPublicationTypeByCodeAsync(type));
+            await Assert.ThrowsAsync<Exception>(() => _client.GetPublicationTypeByCodeAsync(type));
         }
 
         [Fact]
@@ -121,10 +121,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsPublicationType
         {
             // Arrange
             var dto = new PublicationTypeDto { Type = "JOU", Description = "Journal" };
-            _mapper.Map<PublicationTypeReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<PublicationTypeReq>(dto).Throws(new Exception("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.CreatePublicationTypeAsync(dto));
+            await Assert.ThrowsAsync<Exception>(() => _client.CreatePublicationTypeAsync(dto));
         }
 
         [Fact]
