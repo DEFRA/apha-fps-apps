@@ -33,6 +33,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? DefraDailyRate { get; set; }
 
         [Display(Name = "Plan Full Weeks")]
+        [GridColumn(Type = GridColumnType.Checkbox, IsFilterable = false)]
         public bool PlanByWeek { get; set; }
 
         public AnimalMaintenanceViewModel()

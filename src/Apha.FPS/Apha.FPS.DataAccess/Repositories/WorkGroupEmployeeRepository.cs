@@ -404,6 +404,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 "name" or "staffname" => ApplyOrder(query, x => x.Name, descending),
                 "workgroupgrade" or "wggrade" => ApplyOrder(query, x => x.WorkGroupGrade, descending),
                 "personstatus" => ApplyOrder(query, x => x.PersonStatus, descending),
+                "startdate" => ApplyOrder(query, x => x.StartDate, descending),
+                "enddate" => ApplyOrder(query, x => x.EndDate, descending),
+                "timerecorder" => ApplyOrder(query, x => x.TimeRecorder, descending),
                 _ => query.OrderBy(x => x.Name)
             };
         }
