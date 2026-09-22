@@ -530,7 +530,7 @@ namespace Apha.FPS.Application.Services
                     }
                     else
                     {
-                        var unchanged = row.FecNewRate == live.UnitPriceVla && row.FecNewRate == live.DefraUnitPrice;
+                        var unchanged = row.FecNewRate == live.DefraUnitPrice;
                         findings.Add(Classification("FEC", row.TestCode, row.SourceRow,
                             unchanged ? ValidationCalculatedAction.NoChange : ValidationCalculatedAction.Update,
                             row.FecNewRate));
