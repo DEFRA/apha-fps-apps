@@ -34,9 +34,9 @@ namespace Apha.PIMS.Api.Controllers
         }
 
         [HttpGet("AllProjectsList")]
-        public async Task<IActionResult> GetAllProjectsForDropDownAsync()
+        public async Task<IActionResult> GetAllProjectsForDropDownAsync([FromQuery] int showWhichProjects = 2)
         {
-            List<ProjectListViewDto> result = await _service.GetAllProjectsForDropDownAsync();
+            List<ProjectListViewDto> result = await _service.GetAllProjectsForDropDownAsync(showWhichProjects);
             return Ok(_mapper.Map<List<ProjectListRes>>(result));
         }
 

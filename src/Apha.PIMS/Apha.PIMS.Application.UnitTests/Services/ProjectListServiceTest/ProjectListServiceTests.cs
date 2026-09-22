@@ -230,7 +230,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
                 new() { Parentproject = "PP002", Program = "PROG2", Customer = "CUST2", OnFps = "Yes" }
             };
 
-            _mockRepository.GetAllProjectsForDropDownAsync().Returns(Task.FromResult(entities));
+            _mockRepository.GetAllProjectsForDropDownAsync(2).Returns(Task.FromResult(entities));
             _mockMapper.Map<List<ProjectListViewDto>>(entities).Returns(expectedDtos);
 
             // Act
@@ -242,7 +242,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
             result.First().Parentproject.Should().Be("PP001");
             result.Should().AllSatisfy(p => p.OnFps.Should().Be("Yes"));
 
-            await _mockRepository.Received(1).GetAllProjectsForDropDownAsync();
+            await _mockRepository.Received(1).GetAllProjectsForDropDownAsync(2);
             _mockMapper.Received(1).Map<List<ProjectListViewDto>>(entities);
         }
 
@@ -253,7 +253,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
             var emptyEntities = new List<ProjectListView>();
             var emptyDtos = new List<ProjectListViewDto>();
 
-            _mockRepository.GetAllProjectsForDropDownAsync().Returns(Task.FromResult(emptyEntities));
+            _mockRepository.GetAllProjectsForDropDownAsync(2).Returns(Task.FromResult(emptyEntities));
             _mockMapper.Map<List<ProjectListViewDto>>(emptyEntities).Returns(emptyDtos);
 
             // Act
@@ -263,7 +263,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
             result.Should().NotBeNull();
             result.Should().BeEmpty();
 
-            await _mockRepository.Received(1).GetAllProjectsForDropDownAsync();
+            await _mockRepository.Received(1).GetAllProjectsForDropDownAsync(2);
             _mockMapper.Received(1).Map<List<ProjectListViewDto>>(emptyEntities);
         }
 
@@ -273,7 +273,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
             // Arrange
             var expectedException = new Exception("Database connection failed");
 
-            _mockRepository.GetAllProjectsForDropDownAsync()
+            _mockRepository.GetAllProjectsForDropDownAsync(2)
                 .Returns(Task.FromException<List<ProjectListView>>(expectedException));
 
             // Act & Assert
@@ -283,7 +283,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectListServiceTest
 
             exception.Message.Should().Be("Database connection failed");
 
-            await _mockRepository.Received(1).GetAllProjectsForDropDownAsync();
+            await _mockRepository.Received(1).GetAllProjectsForDropDownAsync(2);
             _mockMapper.DidNotReceive().Map<List<ProjectListViewDto>>(Arg.Any<List<ProjectListView>>());
         }
 

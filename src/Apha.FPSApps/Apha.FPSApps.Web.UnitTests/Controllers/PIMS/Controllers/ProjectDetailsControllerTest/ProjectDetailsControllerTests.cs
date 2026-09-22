@@ -60,7 +60,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             _projectDetailsServiceMock.GetPimsDetailAsync(Arg.Any<string>())
                 .Returns(new ApiResponseDto<ProjectDetailDto> { Success = true, Data = pimsDetail });
 
-            _projectListServiceMock.GetAllProjectsListAsync()
+            _projectListServiceMock.GetAllProjectsListAsync(Arg.Any<int>())
                 .Returns(new ApiResponseDto<List<ProjectListViewDto>> { Success = true, Data = allProjects ?? [] });
 
             _projectDetailsServiceMock.GetAllRiskAsync()
@@ -214,7 +214,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             await _controller.Index("PP001");
 
             // Assert
-            await _projectListServiceMock.Received(1).GetAllProjectsListAsync();
+            await _projectListServiceMock.Received(1).GetAllProjectsListAsync(2);
         }
 
         [Fact]
@@ -371,7 +371,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         {
             // Arrange
             SetupSuccessfulIndexMocks();
-            _projectListServiceMock.GetAllProjectsListAsync()
+            _projectListServiceMock.GetAllProjectsListAsync(Arg.Any<int>())
                 .Returns(new ApiResponseDto<List<ProjectListViewDto>> { Success = true, Data = null });
 
             // Act
@@ -1149,7 +1149,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         {
             // Arrange
             var dto = new ProposedProjectDto { Projecttitle = "Updated Title" };
-            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto };
+            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto, ShowProjects = 1 };
             _projectDetailsServiceMock.UpdateProposedProjectAsync(Arg.Any<string>(), Arg.Any<ProposedProjectDto>())
                 .Returns(new ApiResponseDto<ProposedProjectDto> { Success = true, Data = dto });
 
@@ -1164,7 +1164,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         public async Task UpdateProposedProject_WhenProposedProjectDetailsIsNull_ReturnsRedirectToIndex()
         {
             // Arrange
-            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = null };
+            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = null, ShowProjects = 0 };
 
             // Act
             var result = await _controller.UpdateProposedProject("PP001", viewModel);
@@ -1173,6 +1173,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal(nameof(_controller.Index), redirectResult.ActionName);
             Assert.Equal("PP001", redirectResult.RouteValues?["parentproject"]);
+            Assert.Equal(0, redirectResult.RouteValues?["showprojects"]);
         }
 
         [Fact]
@@ -1180,7 +1181,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         {
             // Arrange
             var dto = new ProposedProjectDto();
-            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto };
+            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto, ShowProjects = 1 };
             _projectDetailsServiceMock.UpdateProposedProjectAsync(Arg.Any<string>(), Arg.Any<ProposedProjectDto>())
                 .Returns(new ApiResponseDto<ProposedProjectDto> { Success = true, Data = dto });
 
@@ -1196,7 +1197,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         {
             // Arrange
             var dto = new ProposedProjectDto();
-            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto };
+            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto, ShowProjects = 1 };
             _projectDetailsServiceMock.UpdateProposedProjectAsync(Arg.Any<string>(), Arg.Any<ProposedProjectDto>())
                 .Returns(new ApiResponseDto<ProposedProjectDto> { Success = true, Data = dto });
 
@@ -1212,7 +1213,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         {
             // Arrange
             var dto = new ProposedProjectDto { Parentproject = "PP001", TransferTo = "PP002", Projecttitle = "Updated Title" };
-            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto };
+            var viewModel = new ProjectDetailsViewModel { ProposedProjectDetails = dto, ShowProjects = 1 };
             SetupSuccessfulIndexMocks(proposedProject: new ProposedProjectDto { Parentproject = "PP001" });
             _projectDetailsServiceMock.UpdateProposedProjectAsync("PP001", dto)
                 .Returns(new ApiResponseDto<ProposedProjectDto>

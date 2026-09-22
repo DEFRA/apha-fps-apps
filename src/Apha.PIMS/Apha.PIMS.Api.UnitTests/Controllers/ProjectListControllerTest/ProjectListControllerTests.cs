@@ -113,7 +113,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
                 new ProjectListRes { Parentproject = "PP002", Program = "PROG2", Customer = "CUST2", OnFps = "No" }
             };
 
-            _service.GetAllProjectsForDropDownAsync().Returns(dtoList);
+            _service.GetAllProjectsForDropDownAsync(2).Returns(dtoList);
             _mapper.Map<List<ProjectListRes>>(dtoList).Returns(resList);
 
             // Act
@@ -123,7 +123,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(resList, okResult.Value);
 
-            await _service.Received(1).GetAllProjectsForDropDownAsync();
+            await _service.Received(1).GetAllProjectsForDropDownAsync(2);
             _mapper.Received(1).Map<List<ProjectListRes>>(dtoList);
         }
 
@@ -134,7 +134,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
             var emptyDtoList = new List<ProjectListViewDto>();
             var emptyResList = new List<ProjectListRes>();
 
-            _service.GetAllProjectsForDropDownAsync().Returns(emptyDtoList);
+            _service.GetAllProjectsForDropDownAsync(2).Returns(emptyDtoList);
             _mapper.Map<List<ProjectListRes>>(emptyDtoList).Returns(emptyResList);
 
             // Act
@@ -145,7 +145,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
             var value = Assert.IsType<List<ProjectListRes>>(okResult.Value);
             Assert.Empty(value);
 
-            await _service.Received(1).GetAllProjectsForDropDownAsync();
+            await _service.Received(1).GetAllProjectsForDropDownAsync(2);
             _mapper.Received(1).Map<List<ProjectListRes>>(emptyDtoList);
         }
 
@@ -153,12 +153,12 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
         public async Task GetAllProjectsForDropDownAsync_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            _service.GetAllProjectsForDropDownAsync().Throws(new Exception("Database error"));
+            _service.GetAllProjectsForDropDownAsync(2).Throws(new Exception("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAllProjectsForDropDownAsync());
 
-            await _service.Received(1).GetAllProjectsForDropDownAsync();
+            await _service.Received(1).GetAllProjectsForDropDownAsync(2);
             _mapper.DidNotReceive().Map<List<ProjectListRes>>(Arg.Any<List<ProjectListViewDto>>());
         }
 

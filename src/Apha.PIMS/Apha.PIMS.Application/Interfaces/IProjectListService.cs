@@ -6,7 +6,7 @@ namespace Apha.PIMS.Application.Interfaces
     public interface IProjectListService
     {
         Task<PaginatedResult<ProjectListViewDto>> GetAllProjectsAsync(QueryParameters<string> query, int showWhichProjects = 2);
-        Task<List<ProjectListViewDto>> GetAllProjectsForDropDownAsync();
+        Task<List<ProjectListViewDto>> GetAllProjectsForDropDownAsync(int showWhichProjects = 2);
         Task<List<ProjectsDto>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<List<ProjectListMilestoneDto>> GetAllProjectsForMilestoneAsync();
         Task<ProjectDetailsMilestoneDto?> GetProjectsDetailsForMilestoneAsync(string parentproject);

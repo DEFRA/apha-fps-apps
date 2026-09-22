@@ -123,9 +123,15 @@
             });
         }
 
+        function getSelectedShowProjectsRouteValue() {
+            return document.getElementById('rdactive')?.checked ? 1 : 0;
+        }
+
         function viewProject(btn) {
             var parentproject = $(btn).data('id');
-            window.location.href = '/PIMS/ProjectDetails/Index?parentproject=' + encodeURIComponent(parentproject);
+            var showprojects = getSelectedShowProjectsRouteValue();
+            window.location.href = '/PIMS/ProjectDetails/Index?parentproject=' + encodeURIComponent(parentproject)
+                + '&showprojects=' + encodeURIComponent(showprojects);
         }
     </script>
 }

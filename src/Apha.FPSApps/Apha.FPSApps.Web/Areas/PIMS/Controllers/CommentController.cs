@@ -43,11 +43,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         // ── Index ─────────────────────────────────────────────────────────────
 
-        public async Task<IActionResult> Index(string? parentproject)
+        public async Task<IActionResult> Index(string? parentproject, int? showprojects = null)
         {
             CommentViewModel viewModel = new()
             {
                 Parentproject = parentproject ?? string.Empty,
+                ShowProjects = showprojects == 0 ? 0 : 1,
                 SelectedProject = parentproject
             };
             await PopulateDropdownsAsync(viewModel);
@@ -67,15 +68,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         private async Task PopulateDropdownsAsync(CommentViewModel model)
         {
-            
-            QueryParameters<string> projectDropdownQuery = new()
-            {
-                Page = -1,
-                PageSize = 10,
-                Filter = "{}"
-            };
+
             Task<ApiResponseDto<List<ProjectListViewDto>>> projectsTask =
-                _projectListService.GetAllProjectsAsync(projectDropdownQuery, 1);
+                _projectListService.GetAllProjectsListAsync(model.ShowProjects);
 
             Task<ApiResponseDto<List<CommentTopicDto>>> topicsTask =
                 _commentService.GetCommentTopicsAsync();

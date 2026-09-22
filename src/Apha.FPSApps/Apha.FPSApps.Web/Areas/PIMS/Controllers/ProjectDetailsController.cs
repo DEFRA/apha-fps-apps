@@ -35,13 +35,14 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             _commentService = commentService;
         }
 
-        public async Task<IActionResult> Index(string parentproject)
+        public async Task<IActionResult> Index(string parentproject, int? showprojects = null)
         {
-            ProjectDetailsViewModel viewModel = await BuildViewModelAsync(parentproject);
+            int normalizedShowProjects = showprojects == 0 ? 0 : 1;
+            ProjectDetailsViewModel viewModel = await BuildViewModelAsync(parentproject, normalizedShowProjects);
             return View(viewModel);
         }
 
-        private async Task<ProjectDetailsViewModel> BuildViewModelAsync(string parentproject)
+        private async Task<ProjectDetailsViewModel> BuildViewModelAsync(string parentproject, int showProjects)
         {
             Task<ApiResponseDto<ProjectDto>> fpsTask = _projectDetailsService.GetFpsProjectAsync(parentproject);
             Task<ApiResponseDto<ProposedProjectDto>> proposedTask = _projectDetailsService.GetProposedProjectAsync(parentproject);
@@ -63,6 +64,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new ProjectDetailsViewModel
             {
                 Parentproject = parentproject,
+                ShowProjects = showProjects,
                 FpsProjectDetails = fpsTask.Result.Data,
                 YearlyDetails = (yearlyTask.Result.Data ?? [])
                     .OrderByDescending(y => y.Year)
@@ -201,12 +203,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             if (projectDetailsViewModel.ProposedProjectDetails is null)
             {
-                return RedirectToAction(nameof(Index), new { parentproject });
+                return RedirectToAction(nameof(Index), new { parentproject, showprojects = projectDetailsViewModel.ShowProjects });
             }
 
             if (!ModelState.IsValid)
             {
-                ProjectDetailsViewModel invalidViewModel = await BuildViewModelAsync(parentproject);
+                ProjectDetailsViewModel invalidViewModel = await BuildViewModelAsync(parentproject, projectDetailsViewModel.ShowProjects);
                 invalidViewModel.ProposedProjectDetails = projectDetailsViewModel.ProposedProjectDetails;
                 invalidViewModel.IsFPS = false;
                 invalidViewModel.IsProposedProjectUpdate = true;
@@ -221,10 +223,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             if (result.Success)
             {
                 string resolvedParentProject = result.Data?.Parentproject ?? parentproject;
-                return RedirectToAction(nameof(Index), new { parentproject = resolvedParentProject });
+                return RedirectToAction(nameof(Index), new { parentproject = resolvedParentProject, showprojects = projectDetailsViewModel.ShowProjects });
             }
 
-            ProjectDetailsViewModel viewModel = await BuildViewModelAsync(parentproject);
+            ProjectDetailsViewModel viewModel = await BuildViewModelAsync(parentproject, projectDetailsViewModel.ShowProjects);
             viewModel.ProposedProjectDetails = projectDetailsViewModel.ProposedProjectDetails;
             viewModel.IsFPS = false;
             viewModel.IsProposedProjectUpdate = true;
