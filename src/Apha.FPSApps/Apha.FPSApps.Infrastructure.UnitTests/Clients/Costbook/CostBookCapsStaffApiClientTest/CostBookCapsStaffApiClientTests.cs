@@ -110,14 +110,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookCapsSta
         }
 
         [Fact]
-        public async Task WhenHttpThrows_ReturnsFailureWithInternalCode()
+        public async Task WhenHttpThrows_PropagatesException()
         {
             _http.GetAsync<List<StaffRes>>(Arg.Any<string>()).Throws(new Exception("boom"));
 
-            var result = await _client.GetPaginatedCapsStaffAsync(new QueryParameters<string>());
+            var exception = await Assert.ThrowsAsync<Exception>(() =>
+                _client.GetPaginatedCapsStaffAsync(new QueryParameters<string>()));
 
-            Assert.False(result.Success);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
+            Assert.Equal("boom", exception.Message);
         }
     }
 }

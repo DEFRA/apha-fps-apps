@@ -71,6 +71,23 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
             Assert.Same(resList, okResult.Value);
         }
 
+        [Fact]
+        public async Task GetAllAccountGroups_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetAllAccountGroupAsync().Returns(Task.FromResult<List<AccountGroupDto>>(null!));
+
+            // Act
+            var result = await _controller.GetAllAccountGroups();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<AccountGroupRes>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+        }
+
         #endregion
 
         // ── GetPaginatedAccountGroups ─────────────────────────────────────────
@@ -104,6 +121,26 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
             await _service.Received(1).GetPaginatedAsync(queryParams);
         }
 
+        [Fact]
+        public async Task GetPaginatedAccountGroups_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
+            _service.GetPaginatedAsync(queryParams).Returns(Task.FromResult<PaginatedResult<AccountGroupDto>>(null!));
+
+            // Act
+            var result = await _controller.GetPaginatedAccountGroups(query);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<PaginationRes<AccountGroupRes>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+        }
+
         #endregion
 
         // ── GetAccountGroup ───────────────────────────────────────────────────
@@ -130,7 +167,7 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
         }
 
         [Fact]
-        public async Task GetAccountGroup_NonExistentKey_ReturnsNotFound()
+        public async Task GetAccountGroup_NonExistentKey_ReturnsNullSuccessResponse()
         {
             // Arrange
             var key = "NOTEXIST";
@@ -140,7 +177,11 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
             var result = await _controller.GetAccountGroup(key);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<AccountGroupRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
         }
 
         #endregion

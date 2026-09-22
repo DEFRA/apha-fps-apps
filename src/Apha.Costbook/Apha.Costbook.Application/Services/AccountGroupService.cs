@@ -62,7 +62,7 @@ namespace Apha.Costbook.Application.Services
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 
-            var normalizedCsg7Group = dto.Csg7group.Trim();
+            var normalizedCsg7Group = dto.Csg7group!.Trim();
 
             var exists = await _repository.ExistsAsync(normalizedCsg7Group);
             if (exists)
@@ -77,13 +77,9 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<AccountGroupDto> UpdateAccountGroupAsync(string csg7Group, AccountGroupDto dto)
         {
-            var errors = new List<BusinessValidationError>();
-
             if (dto is null)
-                errors.Add(new BusinessValidationError("AccountGroupDto must not be null.", "AccountGroupDto must not be null."));
-
-            if (errors.Count > 0)
-                throw new BusinessValidationErrorException(errors);
+                throw new BusinessValidationErrorException(
+                    [new BusinessValidationError("AccountGroupDto must not be null.", "AccountGroupDto must not be null.")]);
 
             dto.Csg7group = csg7Group;
             var entity = _mapper.Map<AccountGroup>(dto);

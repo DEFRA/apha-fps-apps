@@ -29,6 +29,9 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetAllAccountGroups()
         {
             var dtos = await _service.GetAllAccountGroupAsync();
+            if (dtos == null)
+                return CreateNullSuccessResponse<List<AccountGroupRes>>();
+
             return Ok(_mapper.Map<List<AccountGroupRes>>(dtos));
         }
 
@@ -37,6 +40,9 @@ namespace Apha.Costbook.Api.Controllers
         {
             var parameters = _mapper.Map<QueryParameters<string>>(query);
             var result = await _service.GetPaginatedAsync(parameters);
+            if (result == null)
+                return CreateNullSuccessResponse<PaginationRes<AccountGroupRes>>();
+
             return Ok(_mapper.Map<PaginationRes<AccountGroupRes>>(result));
         }
 
@@ -44,12 +50,14 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetAccountGroup(string csg7Group)
         {
             var dto = await _service.GetByCsg7GroupAsync(csg7Group);
-            if (dto == null) return NotFound();
+            if (dto == null)
+                return CreateNullSuccessResponse<AccountGroupRes>();
+
             return Ok(_mapper.Map<AccountGroupRes>(dto));
         }
 
         [HttpPost]
-        
+
         public async Task<IActionResult> AddAccountGroup([FromBody] AccountGroupReq req)
         {
             var dto = _mapper.Map<AccountGroupDto>(req);
@@ -58,7 +66,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPut("{csg7Group}")]
-        
+
         public async Task<IActionResult> UpdateAccountGroup(string csg7Group, [FromBody] AccountGroupReq req)
         {
             var dto = _mapper.Map<AccountGroupDto>(req);
@@ -67,7 +75,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpDelete("{csg7Group}")]
-        
+
         public async Task<IActionResult> DeleteAccountGroup(string csg7Group)
         {
             if (string.IsNullOrWhiteSpace(csg7Group))
@@ -75,6 +83,20 @@ namespace Apha.Costbook.Api.Controllers
 
             await _service.DeleteAccountGroupAsync(csg7Group);
             return Ok(new { success = true, message = "Deleted successfully" });
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }
