@@ -49,19 +49,23 @@
 
                         <!-- Step 2 — Copy instruction -->
                         <div class="sup_margin_bottom_10">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16">
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16"
+                               tabindex="0"
+                               aria-label="Step 2. Copy details from doc into panel.">
                                 2. Copy details from doc into panel. &mdash;&gt;&gt;&gt;
                             </p>
                         </div>
 
                         <!-- Step 3 — Check Data -->
                         <div class="govuk-!-margin-bottom-4">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0">
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0"
+                               id="lbl-check-data">
                                 3. Click to check data
                             </p>
                             <button type="button" id="btnValidate"
                                     class="govuk-button govuk-button--primary sup_margin_0 sup_select_option_width_100"
                                     data-module="govuk-button"
+                                    aria-describedby="lbl-check-data"
                                     onclick="validateImport()">
                                 Check Data
                             </button>
@@ -69,7 +73,7 @@
 
                         <!-- Step 3b — Overwrite? -->
                         <div class="govuk-!-margin-bottom-3 ">
-                            <fieldset class="govuk-fieldset" aria-required="true">
+                            <fieldset class="govuk-fieldset" aria-required="true" aria-labelledby="lbl-overwrite">
                                 <p class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0"
                                         id="lbl-overwrite">
                                     Overwrite?
@@ -98,11 +102,14 @@
                             <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0" id="lbl-import">
                                 4. Click to import &ndash; will not import any rows with any remark in the Error column.
                             </p>
+                            @* aria-disabled (rather than the native "disabled" attribute) keeps the
+                               button in the Tab order so its step-4 instruction is still announced;
+                               importRecords() ignores the click while it is unavailable. *@
                             <button type="button" id="btnImport"
                                     class="govuk-button sup_margin_0 govuk-button--disabled sup_select_option_width_100 "
                                     data-module="govuk-button"
-                                    disabled aria-disabled="true"
-                                    aria-label="Import validated milestone records"
+                                    aria-disabled="true"
+                                    aria-describedby="lbl-import"
                                     onclick="importRecords()">
                                 Import
                             </button>
@@ -110,12 +117,14 @@
 
                         <!-- Step 5 — Delete Unimported -->
                         <div class="govuk-!-margin-bottom-4">
-                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0">
+                            <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-0"
+                               id="lbl-clear-panel">
                                 5. Click to clear panel if necessary.
                             </p>
                             <button type="button" id="btnDeleteUnimported"
                                     class="govuk-button govuk-button--warning sup_margin_0 sup_select_option_width_100 "
                                     data-module="govuk-button"
+                                    aria-describedby="lbl-clear-panel"
                                     onclick="clearImport()">
                                 Delete All Unimported
                             </button>
@@ -171,7 +180,6 @@
     function disableImportButton() {
         var btnImport = document.getElementById('btnImport');
         if (!btnImport) return;
-        btnImport.disabled = true;
         btnImport.classList.add('govuk-button--disabled');
         btnImport.setAttribute('aria-disabled', 'true');
     }
@@ -193,7 +201,6 @@
 
         var btnImport = document.getElementById('btnImport');
         if (!btnImport) return;
-        btnImport.disabled = false;
         btnImport.classList.remove('govuk-button--disabled');
         btnImport.removeAttribute('aria-disabled');
     }
@@ -429,6 +436,14 @@
     }
 
     function importRecords() {
+        // The button stays focusable while unavailable (so screen readers can
+        // still reach and announce step 4), so the disabled state is enforced
+        // here instead of by the native "disabled" attribute.
+        var btnImport = document.getElementById('btnImport');
+        if (btnImport && btnImport.getAttribute('aria-disabled') === 'true') {
+            return;
+        }
+
         const project = ensureProjectSelected();
         if (!project) {
             return;
