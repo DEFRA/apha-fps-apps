@@ -1711,6 +1711,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasColumnName("acctcode");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsTblWgEmployeeTable>(entity =>

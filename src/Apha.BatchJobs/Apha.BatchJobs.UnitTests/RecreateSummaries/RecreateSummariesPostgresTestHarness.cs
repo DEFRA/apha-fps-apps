@@ -11,7 +11,6 @@ namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
 internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
     private readonly string _connectionString;
     private readonly NpgsqlConnection _connection;
     private readonly NpgsqlTransaction _transaction;
@@ -92,11 +91,11 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 
         if (!File.Exists(settingsPath))
         {
-            return DefaultConnectionString;
+            return string.Empty;
         }
 
         var json = File.ReadAllText(settingsPath);
-        var config = JsonSerializer.Deserialize<LocalPostgresConfig>(json);
+        var config = JsonSerializer.Deserialize<LocalSettings>(json, JsonOptions)?.PostgresConfig;
 
         if (config is null
             || string.IsNullOrWhiteSpace(config.Host)
@@ -105,7 +104,7 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
             || string.IsNullOrWhiteSpace(config.Password)
             || config.Port <= 0)
         {
-            return DefaultConnectionString;
+            return string.Empty;
         }
 
         var builder = new NpgsqlConnectionStringBuilder
@@ -116,10 +115,18 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
             Username = config.User,
             Password = config.Password,
             Timeout = 30,
-            SslMode = config.Ssl ? SslMode.Prefer : SslMode.Disable,
+            SslMode = config.Ssl ? SslMode.Require : SslMode.Disable,
+            TrustServerCertificate = config.Ssl,
         };
 
         return builder.ConnectionString;
+    }
+
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+    private sealed class LocalSettings
+    {
+        public LocalPostgresConfig? PostgresConfig { get; set; }
     }
 
     private sealed class LocalPostgresConfig

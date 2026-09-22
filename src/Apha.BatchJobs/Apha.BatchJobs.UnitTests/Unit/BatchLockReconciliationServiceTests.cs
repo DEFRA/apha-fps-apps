@@ -21,7 +21,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class BatchLockReconciliationServiceTests : IAsyncLifetime
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -29,7 +28,7 @@ public sealed class BatchLockReconciliationServiceTests : IAsyncLifetime
     {
         _connectionString =
             Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     public async Task InitializeAsync()

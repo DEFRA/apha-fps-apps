@@ -19,8 +19,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class MabArchiveJobTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
-
     [Fact]
     public void Constructor_WhenDbContextIsNull_ShouldThrowArgumentNullException()
     {
@@ -337,7 +335,7 @@ public sealed class MabArchiveJobTests
     private static string GetConnectionString()
     {
         return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     private static BatchJobsDbContext CreateDbContext()

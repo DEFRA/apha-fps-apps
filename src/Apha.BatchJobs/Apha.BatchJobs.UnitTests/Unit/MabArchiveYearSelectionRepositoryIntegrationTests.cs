@@ -10,7 +10,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class MabArchiveYearSelectionRepositoryIntegrationTests : IAsyncLifetime
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";
     private const int SandboxClosedYear = 9701;
 
     private readonly string _connectionString;
@@ -23,7 +22,7 @@ public sealed class MabArchiveYearSelectionRepositoryIntegrationTests : IAsyncLi
     {
         _connectionString =
             Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     public async Task InitializeAsync()

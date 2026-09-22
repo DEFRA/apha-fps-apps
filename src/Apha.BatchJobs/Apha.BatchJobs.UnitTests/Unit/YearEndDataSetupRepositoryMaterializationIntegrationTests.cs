@@ -30,8 +30,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Collection("YearEndStaging")]
 public sealed class YearEndDataSetupRepositoryMaterializationIntegrationTests : IAsyncLifetime
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Timeout=30";
-
     // Fake far-future year — avoids any collision with real fps.tblyearmaster data.
     private const int TargetFpsYear = 9091;
 
@@ -50,7 +48,7 @@ public sealed class YearEndDataSetupRepositoryMaterializationIntegrationTests : 
     {
         _connectionString =
             Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     public async Task InitializeAsync()

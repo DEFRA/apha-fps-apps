@@ -24,12 +24,6 @@ namespace Apha.BatchJobs.UnitTests.MilestoneUpdateNotifications;
 [Trait("Category", "Integration")]
 public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifetime
 {
-    // ── Connection ──────────────────────────────────────────────────────────────
-    // Fallback used only when no local config file or env var is present (i.e. in CI/sandbox).
-    // Without a password the connection attempt fails → InitializeAsync sets _skipReason → all tests skip.
-    private const string DefaultConnectionString =
-        "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Timeout=5";
-
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -453,9 +447,9 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
                 return cs;
         }
 
-        // 3. No credentials available — return password-less fallback so InitializeAsync
-        //    catches the auth failure and skips cleanly (same as CI behaviour).
-        return DefaultConnectionString;
+        // 3. No credentials available — return empty so InitializeAsync
+        //    catches the connection failure and skips cleanly (same as CI behaviour).
+        return string.Empty;
     }
 
     private static string? FindWorkerLocalJson()
