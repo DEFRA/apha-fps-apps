@@ -17,7 +17,14 @@
         {
             <div class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
                 <div class="sup_flex_space_between">
-                    <h2 class="govuk-heading-s sup_align_heading" id="@($"{Model.GridId}_title")" tabindex="0" style="border-bottom: none">@Model.Title</h2>
+                    @if (!string.IsNullOrWhiteSpace(Convert.ToString(Model.Title)))
+                    {
+                        <h2 class="govuk-heading-s sup_align_heading" id="@($"{Model.GridId}_title")" tabindex="0" style="border-bottom: none">@Model.Title</h2>
+                    }
+                    else
+                    {
+                        <span class="govuk-heading-s sup_align_heading" id="@($"{Model.GridId}_title")" style="border-bottom: none"></span>
+                    }
                         <div style="margin-left:auto; display:flex; justify-content:flex-end; align-items:center; gap:10px">
                             @if (Model.AllowExport)
                             {
