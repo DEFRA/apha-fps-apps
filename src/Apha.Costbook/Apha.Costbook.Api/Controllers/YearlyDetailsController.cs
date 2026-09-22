@@ -32,7 +32,9 @@ public class YearlyDetailsController : ControllerBase
     public async Task<IActionResult> GetProjectHeader(string projectId)
     {
         var dto = await _service.GetProjectHeaderAsync(projectId);
-        if (dto is null) return NotFound();
+        if (dto is null)
+            return Ok(BuildOk<ProjectHeaderRes>(default!));
+
         return Ok(BuildOk(_mapper.Map<ProjectHeaderRes>(dto)));
     }
 
