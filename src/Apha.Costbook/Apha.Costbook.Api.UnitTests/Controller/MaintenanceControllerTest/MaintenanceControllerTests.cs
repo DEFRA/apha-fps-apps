@@ -4,7 +4,7 @@ using Apha.Costbook.Api.Controllers;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

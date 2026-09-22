@@ -1,66 +1,66 @@
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos.PIMS;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.FPSApps.Infrastructure.Mappings
 {
-    public class PimsMaintenanceApiDtoMapper : Profile
+    public class PimsMaintenanceApiDtoMapper : IRegister
     {
-        public PimsMaintenanceApiDtoMapper()
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap<ReportRes, ReportDto>().ReverseMap();
-            CreateMap<ReportDto, ReportReq>().ReverseMap();
+            config.NewConfig<ReportRes, ReportDto>().TwoWays();
+            config.NewConfig<ReportDto, ReportReq>().TwoWays();
 
-            CreateMap<ReportGroupRes, ReportGroupDto>().ReverseMap();
-            CreateMap<ReportGroupDto, ReportGroupReq>().ReverseMap();
+            config.NewConfig<ReportGroupRes, ReportGroupDto>().TwoWays();
+            config.NewConfig<ReportGroupDto, ReportGroupReq>().TwoWays();
 
-            CreateMap<ReportGroupLinkRes, ReportGroupLinkDto>().ReverseMap();
-            CreateMap<ReportGroupLinkDto, ReportGroupLinkReq>().ReverseMap();
+            config.NewConfig<ReportGroupLinkRes, ReportGroupLinkDto>().TwoWays();
+            config.NewConfig<ReportGroupLinkDto, ReportGroupLinkReq>().TwoWays();
 
-            CreateMap<ProjectManagerRes, ProjectManagerDto>().ReverseMap();
-            CreateMap<ProjectManagerDto, ProjectManagerReq>().ReverseMap();
+            config.NewConfig<ProjectManagerRes, ProjectManagerDto>().TwoWays();
+            config.NewConfig<ProjectManagerDto, ProjectManagerReq>().TwoWays();
 
-            CreateMap<ProgramManagerLinkRes, ProgramManagerLinkDto>().ReverseMap();
-            CreateMap<ProgramManagerLinkDto, ProgramManagerLinkReq>().ReverseMap();
+            config.NewConfig<ProgramManagerLinkRes, ProgramManagerLinkDto>().TwoWays();
+            config.NewConfig<ProgramManagerLinkDto, ProgramManagerLinkReq>().TwoWays();
 
-            CreateMap<ProfitCentreManagerLinkRes, ProfitCentreManagerLinkDto>().ReverseMap();
-            CreateMap<ProfitCentreManagerLinkDto, ProfitCentreManagerLinkReq>().ReverseMap();
+            config.NewConfig<ProfitCentreManagerLinkRes, ProfitCentreManagerLinkDto>().TwoWays();
+            config.NewConfig<ProfitCentreManagerLinkDto, ProfitCentreManagerLinkReq>().TwoWays();
 
-            CreateMap<SettingRes, SettingDto>()
-                .ForMember(dest => dest.SettingValue, opt => opt.MapFrom(src => src.Setting))
-                .ReverseMap()
-                .ForMember(dest => dest.Setting, opt => opt.MapFrom(src => src.SettingValue));
+            config.NewConfig<SettingRes, SettingDto>()
+                .Map(dest => dest.SettingValue, src => src.Setting);
+            config.NewConfig<SettingDto, SettingRes>()
+                .Map(dest => dest.Setting, src => src.SettingValue);
 
-            CreateMap<SettingDto, SettingReq>()
-                .ForMember(dest => dest.Setting, opt => opt.MapFrom(src => src.SettingValue))
-                .ReverseMap()
-                .ForMember(dest => dest.SettingValue, opt => opt.MapFrom(src => src.Setting));
+            config.NewConfig<SettingDto, SettingReq>()
+                .Map(dest => dest.Setting, src => src.SettingValue);
+            config.NewConfig<SettingReq, SettingDto>()
+                .Map(dest => dest.SettingValue, src => src.Setting);
 
-            CreateMap<AccessUserRes, AccessUserDto>().ReverseMap();
-            CreateMap<AccessUserDto, AccessUserReq>().ReverseMap();
+            config.NewConfig<AccessUserRes, AccessUserDto>().TwoWays();
+            config.NewConfig<AccessUserDto, AccessUserReq>().TwoWays();
 
-            CreateMap<AccessLevelRes, AccessLevelDto>().ReverseMap();
+            config.NewConfig<AccessLevelRes, AccessLevelDto>().TwoWays();
 
-            CreateMap<AccessUserLevelRes, AccessUserLevelDto>().ReverseMap();
-            CreateMap<AccessUserLevelDto, AccessUserLevelReq>().ReverseMap();
+            config.NewConfig<AccessUserLevelRes, AccessUserLevelDto>().TwoWays();
+            config.NewConfig<AccessUserLevelDto, AccessUserLevelReq>().TwoWays();
 
-            CreateMap<AccessSystemRes, AccessSystemDto>();
+            config.NewConfig<AccessSystemRes, AccessSystemDto>();
 
-            CreateMap<FrequencyRes, FrequencyDto>()
-                .ForMember(dest => dest.Frequencyid, opt => opt.MapFrom(src => src.Frequencyid))
-                .ReverseMap()
-                .ForMember(dest => dest.FrequencyValue, opt => opt.MapFrom(src => src.FrequencyValue));
+            config.NewConfig<FrequencyRes, FrequencyDto>()
+                .Map(dest => dest.Frequencyid, src => src.Frequencyid);
+            config.NewConfig<FrequencyDto, FrequencyRes>()
+                .Map(dest => dest.FrequencyValue, src => src.FrequencyValue);
 
-            CreateMap<FrequencyDto, FrequencyReq>()
-                .ForMember(dest => dest.FrequencyId, opt => opt.MapFrom(src => src.Frequencyid))
-                .ReverseMap()
-                .ForMember(dest => dest.FrequencyValue, opt => opt.MapFrom(src => src.FrequencyValue));
+            config.NewConfig<FrequencyDto, FrequencyReq>()
+                .Map(dest => dest.FrequencyId, src => src.Frequencyid);
+            config.NewConfig<FrequencyReq, FrequencyDto>()
+                .Map(dest => dest.FrequencyValue, src => src.FrequencyValue);
 
-            CreateMap<ReviewItemRes, ReviewItemDto>().ReverseMap();
-            CreateMap<ReviewItemDto, ReviewItemReq>().ReverseMap();
+            config.NewConfig<ReviewItemRes, ReviewItemDto>().TwoWays();
+            config.NewConfig<ReviewItemDto, ReviewItemReq>().TwoWays();
 
-            CreateMap<RadTrackProgRes, RadTrackProgDto>().ReverseMap();
-            CreateMap<RadTrackProgDto, RadTrackProgReq>().ReverseMap();
+            config.NewConfig<RadTrackProgRes, RadTrackProgDto>().TwoWays();
+            config.NewConfig<RadTrackProgDto, RadTrackProgReq>().TwoWays();
         }
     }
 }

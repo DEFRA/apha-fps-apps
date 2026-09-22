@@ -1,7 +1,7 @@
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;

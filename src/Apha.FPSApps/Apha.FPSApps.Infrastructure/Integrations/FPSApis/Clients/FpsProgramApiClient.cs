@@ -1,11 +1,11 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using System.Net.Http.Headers;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients

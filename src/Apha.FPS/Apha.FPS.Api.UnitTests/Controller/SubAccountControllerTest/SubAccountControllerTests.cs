@@ -2,7 +2,7 @@ using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -67,9 +67,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.SubAccountControllerTest
         {
             var serviceResult = new List<SubAccountDto> { new() { SubAccountCode = "SA1" } };
             _serviceMock.GetAllSubAccountsAsync().Returns(serviceResult);
-            _mapperMock.Map<IEnumerable<SubAccountRes>>(serviceResult).Throws(new AutoMapperMappingException("Mapping error"));
+            _mapperMock.Map<IEnumerable<SubAccountRes>>(serviceResult).Throws(new InvalidOperationException("Mapping error"));
 
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.GetAllSubAccountsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetAllSubAccountsAsync());
         }
     }
 }

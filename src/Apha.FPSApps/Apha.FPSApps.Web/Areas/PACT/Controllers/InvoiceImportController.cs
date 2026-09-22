@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -326,6 +326,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return NotFound();
 
             var item = _mapper.Map<InvoiceImportFailedItem>(result.Data);
+            ViewBag.Projects = await GetProjectsListAsync();
             return PartialView("_EditFailedInvoiceImport", item);
         }
 
