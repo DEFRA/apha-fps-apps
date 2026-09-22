@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients

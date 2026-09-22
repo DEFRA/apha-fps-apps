@@ -1,185 +1,184 @@
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Models;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.FPSApps.Web.Mappings
 {
-    public class PactViewModelMapper : Profile
+    public class PactViewModelMapper : IRegister
     {
-        public PactViewModelMapper() 
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
-            CreateMap<ProjectDto, Project>().ReverseMap();
-            CreateMap<ProfitCentreDto, ProfitCentre>().ReverseMap();
-            CreateMap<PactProjectViewModel, ProjectDto>().ReverseMap();
-            CreateMap<ProjectJobCodeViewModel, JobCodeDto>().ReverseMap();
-            CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
-            CreateMap<PortfolioJobCodeViewModel, JobCodeDto>().ReverseMap();
-            CreateMap<TimeCodeValidDto, TimeCodeViewModel>().ReverseMap();
-            CreateMap<TimeCodeValidDto, ValidTimeCodeViewModel>()
-                .ForMember(dest => dest.Project, opt => opt.MapFrom(src => src.ParentProject))
-                .ForMember(dest => dest.OriginalWorkGroup, opt => opt.Ignore())
-                .ReverseMap()
-                .ForMember(dest => dest.ParentProject, opt => opt.MapFrom(src => src.ParentProject));
-            CreateMap<ProjectInvoiceItem, ProjectInvoiceDto>().ReverseMap();
-            CreateMap<InvoiceItem, ProjectInvoiceDto>().ReverseMap();
-            CreateMap<ProjectSubContractItem, ProjectSubContractDto>().ReverseMap();
+            config.NewConfig<WorkGroupDto, WorkGroup>().TwoWays();
+            config.NewConfig<ProjectDto, Project>().TwoWays();
+            config.NewConfig<ProfitCentreDto, ProfitCentre>().TwoWays();
+            config.NewConfig<PactProjectViewModel, ProjectDto>().TwoWays();
+            config.NewConfig<ProjectJobCodeViewModel, JobCodeDto>().TwoWays();
+            config.NewConfig<JobCodeViewModel, JobCodeDto>().TwoWays();
+            config.NewConfig<PortfolioJobCodeViewModel, JobCodeDto>().TwoWays();
+            config.NewConfig<TimeCodeValidDto, TimeCodeViewModel>().TwoWays();
+            config.NewConfig<TimeCodeValidDto, ValidTimeCodeViewModel>()
+                .Map(dest => dest.Project, src => src.ParentProject)
+                .Ignore(dest => dest.OriginalWorkGroup);
+            config.NewConfig<ValidTimeCodeViewModel, TimeCodeValidDto>()
+                .Map(dest => dest.ParentProject, src => src.ParentProject);
+            config.NewConfig<ProjectInvoiceItem, ProjectInvoiceDto>().TwoWays();
+            config.NewConfig<InvoiceItem, ProjectInvoiceDto>().TwoWays();
+            config.NewConfig<ProjectSubContractItem, ProjectSubContractDto>().TwoWays();
             // Mapping for standalone SubContract page
-            CreateMap<SubContractItem, ProjectSubContractDto>()
-                .ForMember(dest => dest.DailyRate, opt => opt.Ignore())
-                .ForMember(dest => dest.AnimalDays, opt => opt.Ignore())
-                .ReverseMap()
-                .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
+            config.NewConfig<SubContractItem, ProjectSubContractDto>()
+                .Ignore(dest => dest.DailyRate)
+                .Ignore(dest => dest.AnimalDays);
+            config.NewConfig<ProjectSubContractDto, SubContractItem>()
+                .Map(dest => dest.Counter, src => src.SubContCounter);
 
-            CreateMap<SubContractRmsItem, ProjectSubContractDto>().ReverseMap();
-            CreateMap<SubContractRmsImportRowDto, SubContractRmsFailedItem>().ReverseMap();
-            CreateMap<InvoiceImportRowDto, InvoiceImportFailedItem>().ReverseMap();
+            config.NewConfig<SubContractRmsItem, ProjectSubContractDto>().TwoWays();
+            config.NewConfig<SubContractRmsImportRowDto, SubContractRmsFailedItem>().TwoWays();
+            config.NewConfig<InvoiceImportRowDto, InvoiceImportFailedItem>().TwoWays();
 
-            CreateMap<TestCapabilityItem, TestCapabilityDto>().ReverseMap();
-            CreateMap<ConstituentTestItem, TestCapabilityDto>().ReverseMap();
+            config.NewConfig<TestCapabilityItem, TestCapabilityDto>().TwoWays();
+            config.NewConfig<ConstituentTestItem, TestCapabilityDto>().TwoWays();
 
             // Mapping for WorkGroup-focused Test Capability view
-            CreateMap<WorkGroupTestCapabilityItem, TestCapabilityDto>().ReverseMap();
+            config.NewConfig<WorkGroupTestCapabilityItem, TestCapabilityDto>().TwoWays();
 
-            CreateMap<PortfolioTimeCodeViewModel, TimeCodeValidDto>().ReverseMap();
+            config.NewConfig<PortfolioTimeCodeViewModel, TimeCodeValidDto>().TwoWays();
 
-            CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
-            CreateMap<TestPurchaseRequirementItem, TestRequirementDto>().ReverseMap();
+            config.NewConfig<TestRequirementItem, TestRequirementDto>().TwoWays();
+            config.NewConfig<TestPurchaseRequirementItem, TestRequirementDto>().TwoWays();
 
-            CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
-            CreateMap<ProgramProjectItem, ProjectDto>().ReverseMap();
-            CreateMap<TestorProductDto, TestOrProductViewModel>().ReverseMap();
+            config.NewConfig<ProgramViewModel, ProgramDto>().TwoWays();
+            config.NewConfig<ProgramProjectItem, ProjectDto>().TwoWays();
+            config.NewConfig<TestorProductDto, TestOrProductViewModel>().TwoWays();
 
-            CreateMap<ProjectMonthItem, ProjectMonthDto>().ReverseMap();
-            CreateMap<PactStaffDto, WorkGroupPeopleItem>().ReverseMap();
-            CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
-            CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
-            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
-            CreateMap<MonthlyTimeDto, MonthlyTimeLiveItem>()
-                .ForMember(dest => dest.CompositeKey, opt => opt.MapFrom(src => $"{src.PactStaffId}|{src.TimeCode}|{src.Month}|{src.ParentProject}"));
-            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeItem>()
-                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => src.Passed ?? false));
-            CreateMap<MonthlyTimeLiveItem, MonthlyTimeDto>()
-                .ForMember(dest => dest.FpsYear, opt => opt.MapFrom(src => src.FpsYear ?? 0));
-            CreateMap<StagingMonthlyTimeItem, StagingMonthlyTimeDto>()
-                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => (bool?)src.Passed));
-            CreateMap<StagingMonthlyTimeDto, StagingMonthlyTimeExportItem>()
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Name) ? src.PactStaffId : src.Name))
-                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => src.Passed ?? false));
-            CreateMap<MonthlyTimeLogDto, MonthlyTimeLogItem>().ReverseMap();
-            CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
-            CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
-            CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
-            CreateMap<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRow>()
-     .ForMember(dest => dest.April, opt => opt.MapFrom(src => Math.Round(src.April, 2)))
-     .ForMember(dest => dest.May, opt => opt.MapFrom(src => Math.Round(src.May, 2)))
-     .ForMember(dest => dest.June, opt => opt.MapFrom(src => Math.Round(src.June, 2)))
-     .ForMember(dest => dest.July, opt => opt.MapFrom(src => Math.Round(src.July, 2)))
-     .ForMember(dest => dest.August, opt => opt.MapFrom(src => Math.Round(src.August, 2)))
-     .ForMember(dest => dest.September, opt => opt.MapFrom(src => Math.Round(src.September, 2)))
-     .ForMember(dest => dest.October, opt => opt.MapFrom(src => Math.Round(src.October, 2)))
-     .ForMember(dest => dest.November, opt => opt.MapFrom(src => Math.Round(src.November, 2)))
-     .ForMember(dest => dest.December, opt => opt.MapFrom(src => Math.Round(src.December, 2)))
-     .ForMember(dest => dest.January, opt => opt.MapFrom(src => Math.Round(src.January, 2)))
-     .ForMember(dest => dest.February, opt => opt.MapFrom(src => Math.Round(src.February, 2)))
-     .ForMember(dest => dest.March, opt => opt.MapFrom(src => Math.Round(src.March, 2)))
-     .ForMember(dest => dest.TotalTime, opt => opt.MapFrom(src => Math.Round(src.TotalTime, 2)))
-     .ForMember(dest => dest.TotalCost, opt => opt.MapFrom(src => Math.Round(src.TotalCost, 2)))
-     .ReverseMap();
-            CreateMap<WgSummarisedStaffTimeUsageSummaryDto, WgSummarisedStaffTimeUsageSummary>()
-                .ForMember(dest => dest.TotalApril, opt => opt.MapFrom(src => Math.Round(src.TotalApril, 2)))
-                .ForMember(dest => dest.TotalMay, opt => opt.MapFrom(src => Math.Round(src.TotalMay, 2)))
-                .ForMember(dest => dest.TotalJune, opt => opt.MapFrom(src => Math.Round(src.TotalJune, 2)))
-                .ForMember(dest => dest.TotalJuly, opt => opt.MapFrom(src => Math.Round(src.TotalJuly, 2)))
-                .ForMember(dest => dest.TotalAugust, opt => opt.MapFrom(src => Math.Round(src.TotalAugust, 2)))
-                .ForMember(dest => dest.TotalSeptember, opt => opt.MapFrom(src => Math.Round(src.TotalSeptember, 2)))
-                .ForMember(dest => dest.TotalOctober, opt => opt.MapFrom(src => Math.Round(src.TotalOctober, 2)))
-                .ForMember(dest => dest.TotalNovember, opt => opt.MapFrom(src => Math.Round(src.TotalNovember, 2)))
-                .ForMember(dest => dest.TotalDecember, opt => opt.MapFrom(src => Math.Round(src.TotalDecember, 2)))
-                .ForMember(dest => dest.TotalJanuary, opt => opt.MapFrom(src => Math.Round(src.TotalJanuary, 2)))
-                .ForMember(dest => dest.TotalFebruary, opt => opt.MapFrom(src => Math.Round(src.TotalFebruary, 2)))
-                .ForMember(dest => dest.TotalMarch, opt => opt.MapFrom(src => Math.Round(src.TotalMarch, 2)))
-                .ForMember(dest => dest.GrandTotalTime, opt => opt.MapFrom(src => Math.Round(src.GrandTotalTime, 2)))
-                .ForMember(dest => dest.GrandTotalCost, opt => opt.MapFrom(src => Math.Round(src.GrandTotalCost, 2)))
-                .ForMember(dest => dest.StandardHoursPerMonth, opt => opt.MapFrom(src => Math.Round(src.StandardHoursPerMonth, 2)))
-                .ForMember(dest => dest.TotalStandardHours, opt => opt.MapFrom(src => Math.Round(src.TotalStandardHours, 2)))
-                .ForMember(dest => dest.GrandTotalPercentAllocated, opt => opt.MapFrom(src => Math.Round(src.GrandTotalPercentAllocated, 2)))
-                .ForMember(dest => dest.PercentAllocatedApril, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedApril, 2)))
-                .ForMember(dest => dest.PercentAllocatedMay, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedMay, 2)))
-                .ForMember(dest => dest.PercentAllocatedJune, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedJune, 2)))
-                .ForMember(dest => dest.PercentAllocatedJuly, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedJuly, 2)))
-                .ForMember(dest => dest.PercentAllocatedAugust, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedAugust, 2)))
-                .ForMember(dest => dest.PercentAllocatedSeptember, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedSeptember, 2)))
-                .ForMember(dest => dest.PercentAllocatedOctober, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedOctober, 2)))
-                .ForMember(dest => dest.PercentAllocatedNovember, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedNovember, 2)))
-                .ForMember(dest => dest.PercentAllocatedDecember, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedDecember, 2)))
-                .ForMember(dest => dest.PercentAllocatedJanuary, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedJanuary, 2)))
-                .ForMember(dest => dest.PercentAllocatedFebruary, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedFebruary, 2)))
-                .ForMember(dest => dest.PercentAllocatedMarch, opt => opt.MapFrom(src => Math.Round(src.PercentAllocatedMarch, 2)))
-                .ReverseMap();
+            config.NewConfig<ProjectMonthItem, ProjectMonthDto>().TwoWays();
+            config.NewConfig<PactStaffDto, WorkGroupPeopleItem>().TwoWays();
+            config.NewConfig<WorkGroupPersonDto, WorkGroupPerson>().TwoWays();
+            config.NewConfig<MonthlyOutputLogDto, MonthlyOutputLogItem>().TwoWays();
+            config.NewConfig<MonthlyTimeDto, MonthlyTimeLiveItem>()
+                .Map(dest => dest.CompositeKey, src => $"{src.PactStaffId}|{src.TimeCode}|{src.Month}|{src.ParentProject}");
+            config.NewConfig<StagingMonthlyTimeDto, StagingMonthlyTimeItem>()
+                .Map(dest => dest.Passed, src => src.Passed ?? false);
+            config.NewConfig<MonthlyTimeLiveItem, MonthlyTimeDto>()
+                .Map(dest => dest.FpsYear, src => src.FpsYear ?? 0);
+            config.NewConfig<StagingMonthlyTimeItem, StagingMonthlyTimeDto>()
+                .Map(dest => dest.Passed, src => (bool?)src.Passed);
+            config.NewConfig<StagingMonthlyTimeDto, StagingMonthlyTimeExportItem>()
+                .Map(dest => dest.Name, src => string.IsNullOrWhiteSpace(src.Name) ? src.PactStaffId : src.Name)
+                .Map(dest => dest.Passed, src => src.Passed ?? false);
+            config.NewConfig<MonthlyTimeLogDto, MonthlyTimeLogItem>().TwoWays();
+            config.NewConfig<CalenderMonthDto, CalenderMonth>().TwoWays();
+            config.NewConfig<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().TwoWays();
+            config.NewConfig<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().TwoWays();
+            config.NewConfig<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRow>()
+                .Map(dest => dest.April, src => Math.Round(src.April, 2))
+                .Map(dest => dest.May, src => Math.Round(src.May, 2))
+                .Map(dest => dest.June, src => Math.Round(src.June, 2))
+                .Map(dest => dest.July, src => Math.Round(src.July, 2))
+                .Map(dest => dest.August, src => Math.Round(src.August, 2))
+                .Map(dest => dest.September, src => Math.Round(src.September, 2))
+                .Map(dest => dest.October, src => Math.Round(src.October, 2))
+                .Map(dest => dest.November, src => Math.Round(src.November, 2))
+                .Map(dest => dest.December, src => Math.Round(src.December, 2))
+                .Map(dest => dest.January, src => Math.Round(src.January, 2))
+                .Map(dest => dest.February, src => Math.Round(src.February, 2))
+                .Map(dest => dest.March, src => Math.Round(src.March, 2))
+                .Map(dest => dest.TotalTime, src => Math.Round(src.TotalTime, 2))
+                .Map(dest => dest.TotalCost, src => Math.Round(src.TotalCost, 2));
+            config.NewConfig<WgSummarisedStaffTimeUsageRow, WgSummarisedStaffTimeUsageRowDto>();
+            config.NewConfig<WgSummarisedStaffTimeUsageSummaryDto, WgSummarisedStaffTimeUsageSummary>()
+                .Map(dest => dest.TotalApril, src => Math.Round(src.TotalApril, 2))
+                .Map(dest => dest.TotalMay, src => Math.Round(src.TotalMay, 2))
+                .Map(dest => dest.TotalJune, src => Math.Round(src.TotalJune, 2))
+                .Map(dest => dest.TotalJuly, src => Math.Round(src.TotalJuly, 2))
+                .Map(dest => dest.TotalAugust, src => Math.Round(src.TotalAugust, 2))
+                .Map(dest => dest.TotalSeptember, src => Math.Round(src.TotalSeptember, 2))
+                .Map(dest => dest.TotalOctober, src => Math.Round(src.TotalOctober, 2))
+                .Map(dest => dest.TotalNovember, src => Math.Round(src.TotalNovember, 2))
+                .Map(dest => dest.TotalDecember, src => Math.Round(src.TotalDecember, 2))
+                .Map(dest => dest.TotalJanuary, src => Math.Round(src.TotalJanuary, 2))
+                .Map(dest => dest.TotalFebruary, src => Math.Round(src.TotalFebruary, 2))
+                .Map(dest => dest.TotalMarch, src => Math.Round(src.TotalMarch, 2))
+                .Map(dest => dest.GrandTotalTime, src => Math.Round(src.GrandTotalTime, 2))
+                .Map(dest => dest.GrandTotalCost, src => Math.Round(src.GrandTotalCost, 2))
+                .Map(dest => dest.StandardHoursPerMonth, src => Math.Round(src.StandardHoursPerMonth, 2))
+                .Map(dest => dest.TotalStandardHours, src => Math.Round(src.TotalStandardHours, 2))
+                .Map(dest => dest.GrandTotalPercentAllocated, src => Math.Round(src.GrandTotalPercentAllocated, 2))
+                .Map(dest => dest.PercentAllocatedApril, src => Math.Round(src.PercentAllocatedApril, 2))
+                .Map(dest => dest.PercentAllocatedMay, src => Math.Round(src.PercentAllocatedMay, 2))
+                .Map(dest => dest.PercentAllocatedJune, src => Math.Round(src.PercentAllocatedJune, 2))
+                .Map(dest => dest.PercentAllocatedJuly, src => Math.Round(src.PercentAllocatedJuly, 2))
+                .Map(dest => dest.PercentAllocatedAugust, src => Math.Round(src.PercentAllocatedAugust, 2))
+                .Map(dest => dest.PercentAllocatedSeptember, src => Math.Round(src.PercentAllocatedSeptember, 2))
+                .Map(dest => dest.PercentAllocatedOctober, src => Math.Round(src.PercentAllocatedOctober, 2))
+                .Map(dest => dest.PercentAllocatedNovember, src => Math.Round(src.PercentAllocatedNovember, 2))
+                .Map(dest => dest.PercentAllocatedDecember, src => Math.Round(src.PercentAllocatedDecember, 2))
+                .Map(dest => dest.PercentAllocatedJanuary, src => Math.Round(src.PercentAllocatedJanuary, 2))
+                .Map(dest => dest.PercentAllocatedFebruary, src => Math.Round(src.PercentAllocatedFebruary, 2))
+                .Map(dest => dest.PercentAllocatedMarch, src => Math.Round(src.PercentAllocatedMarch, 2));
+            config.NewConfig<WgSummarisedStaffTimeUsageSummary, WgSummarisedStaffTimeUsageSummaryDto>();
 
-            CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>()
-                .ForMember(dest => dest.April, opt => opt.MapFrom(src => Math.Round(src.April ?? 0, 2)))
-                .ForMember(dest => dest.May, opt => opt.MapFrom(src => Math.Round(src.May ?? 0, 2)))
-                .ForMember(dest => dest.June, opt => opt.MapFrom(src => Math.Round(src.June ?? 0, 2)))
-                .ForMember(dest => dest.July, opt => opt.MapFrom(src => Math.Round(src.July ?? 0, 2)))
-                .ForMember(dest => dest.August, opt => opt.MapFrom(src => Math.Round(src.August ?? 0, 2)))
-                .ForMember(dest => dest.September, opt => opt.MapFrom(src => Math.Round(src.September ?? 0, 2)))
-                .ForMember(dest => dest.October, opt => opt.MapFrom(src => Math.Round(src.October ?? 0, 2)))
-                .ForMember(dest => dest.November, opt => opt.MapFrom(src => Math.Round(src.November ?? 0, 2)))
-                .ForMember(dest => dest.December, opt => opt.MapFrom(src => Math.Round(src.December ?? 0, 2)))
-                .ForMember(dest => dest.January, opt => opt.MapFrom(src => Math.Round(src.January ?? 0, 2)))
-                .ForMember(dest => dest.February, opt => opt.MapFrom(src => Math.Round(src.February ?? 0, 2)))
-                .ForMember(dest => dest.March, opt => opt.MapFrom(src => Math.Round(src.March ?? 0, 2)))
-                .ForMember(dest => dest.SumOfTime, opt => opt.MapFrom(src => Math.Round(src.SumOfTime, 2)))
-                .ForMember(dest => dest.SumOfCost, opt => opt.MapFrom(src => Math.Round(src.SumOfCost, 2)))
-                .ForMember(dest => dest.Budget, opt => opt.MapFrom(src => src.Budget.HasValue ? Math.Round(src.Budget.Value, 2) : (decimal?)null))
-                .ForMember(dest => dest.PercentSpent, opt => opt.MapFrom(src => src.PercentSpent.HasValue ? Math.Round(src.PercentSpent.Value, 2) : (decimal?)null));
-            CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>()
-                .ForMember(dest => dest.TotalApril, opt => opt.MapFrom(src => Math.Round(src.TotalApril, 2)))
-                .ForMember(dest => dest.TotalMay, opt => opt.MapFrom(src => Math.Round(src.TotalMay, 2)))
-                .ForMember(dest => dest.TotalJune, opt => opt.MapFrom(src => Math.Round(src.TotalJune, 2)))
-                .ForMember(dest => dest.TotalJuly, opt => opt.MapFrom(src => Math.Round(src.TotalJuly, 2)))
-                .ForMember(dest => dest.TotalAugust, opt => opt.MapFrom(src => Math.Round(src.TotalAugust, 2)))
-                .ForMember(dest => dest.TotalSeptember, opt => opt.MapFrom(src => Math.Round(src.TotalSeptember, 2)))
-                .ForMember(dest => dest.TotalOctober, opt => opt.MapFrom(src => Math.Round(src.TotalOctober, 2)))
-                .ForMember(dest => dest.TotalNovember, opt => opt.MapFrom(src => Math.Round(src.TotalNovember, 2)))
-                .ForMember(dest => dest.TotalDecember, opt => opt.MapFrom(src => Math.Round(src.TotalDecember, 2)))
-                .ForMember(dest => dest.TotalJanuary, opt => opt.MapFrom(src => Math.Round(src.TotalJanuary, 2)))
-                .ForMember(dest => dest.TotalFebruary, opt => opt.MapFrom(src => Math.Round(src.TotalFebruary, 2)))
-                .ForMember(dest => dest.TotalMarch, opt => opt.MapFrom(src => Math.Round(src.TotalMarch, 2)))
-                .ForMember(dest => dest.GrandTotalTime, opt => opt.MapFrom(src => Math.Round(src.GrandTotalTime, 2)))
-                .ForMember(dest => dest.GrandTotalCost, opt => opt.MapFrom(src => Math.Round(src.GrandTotalCost, 2)));
+            config.NewConfig<SummarisedWgTimeDto, SummarisedWgTimePivotRow>()
+                .Map(dest => dest.April, src => Math.Round(src.April ?? 0, 2))
+                .Map(dest => dest.May, src => Math.Round(src.May ?? 0, 2))
+                .Map(dest => dest.June, src => Math.Round(src.June ?? 0, 2))
+                .Map(dest => dest.July, src => Math.Round(src.July ?? 0, 2))
+                .Map(dest => dest.August, src => Math.Round(src.August ?? 0, 2))
+                .Map(dest => dest.September, src => Math.Round(src.September ?? 0, 2))
+                .Map(dest => dest.October, src => Math.Round(src.October ?? 0, 2))
+                .Map(dest => dest.November, src => Math.Round(src.November ?? 0, 2))
+                .Map(dest => dest.December, src => Math.Round(src.December ?? 0, 2))
+                .Map(dest => dest.January, src => Math.Round(src.January ?? 0, 2))
+                .Map(dest => dest.February, src => Math.Round(src.February ?? 0, 2))
+                .Map(dest => dest.March, src => Math.Round(src.March ?? 0, 2))
+                .Map(dest => dest.SumOfTime, src => Math.Round(src.SumOfTime, 2))
+                .Map(dest => dest.SumOfCost, src => Math.Round(src.SumOfCost, 2))
+                .Map(dest => dest.Budget, src => src.Budget.HasValue ? Math.Round(src.Budget.Value, 2) : (decimal?)null)
+                .Map(dest => dest.PercentSpent, src => src.PercentSpent.HasValue ? Math.Round(src.PercentSpent.Value, 2) : (decimal?)null);
+            config.NewConfig<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>()
+                .Map(dest => dest.TotalApril, src => Math.Round(src.TotalApril, 2))
+                .Map(dest => dest.TotalMay, src => Math.Round(src.TotalMay, 2))
+                .Map(dest => dest.TotalJune, src => Math.Round(src.TotalJune, 2))
+                .Map(dest => dest.TotalJuly, src => Math.Round(src.TotalJuly, 2))
+                .Map(dest => dest.TotalAugust, src => Math.Round(src.TotalAugust, 2))
+                .Map(dest => dest.TotalSeptember, src => Math.Round(src.TotalSeptember, 2))
+                .Map(dest => dest.TotalOctober, src => Math.Round(src.TotalOctober, 2))
+                .Map(dest => dest.TotalNovember, src => Math.Round(src.TotalNovember, 2))
+                .Map(dest => dest.TotalDecember, src => Math.Round(src.TotalDecember, 2))
+                .Map(dest => dest.TotalJanuary, src => Math.Round(src.TotalJanuary, 2))
+                .Map(dest => dest.TotalFebruary, src => Math.Round(src.TotalFebruary, 2))
+                .Map(dest => dest.TotalMarch, src => Math.Round(src.TotalMarch, 2))
+                .Map(dest => dest.GrandTotalTime, src => Math.Round(src.GrandTotalTime, 2))
+                .Map(dest => dest.GrandTotalCost, src => Math.Round(src.GrandTotalCost, 2));
 
-            CreateMap<RecreateSummaryLogDto, RecreateSummaryLogItem>()
-                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
+            config.NewConfig<RecreateSummaryLogDto, RecreateSummaryLogItem>()
+                .Map(dest => dest.User, src => src.Comments);
 
-            CreateMap<Apha.FPSApps.Application.Dtos.PACT.BatchJobHistoryDto, BatchJobHistoryItem>();
+            config.NewConfig<Apha.FPSApps.Application.Dtos.PACT.BatchJobHistoryDto, BatchJobHistoryItem>();
 
-            CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
+            config.NewConfig<ProfitCentreCostDto, ProfitCenterCostItem>().TwoWays();
 
-            CreateMap<ReleasePeriodDto, PeriodMonth>().ReverseMap();
+            config.NewConfig<ReleasePeriodDto, PeriodMonth>().TwoWays();
 
-            CreateMap<ReleasePeriodDto, ReleasePeriodItem>().ReverseMap();
+            config.NewConfig<ReleasePeriodDto, ReleasePeriodItem>().TwoWays();
 
-            CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionItem>().ReverseMap();
+            config.NewConfig<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionItem>().TwoWays();
 
             // Monthly Output
-            CreateMap<Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto, MonthlyOutputLiveItem>()
-                .ForMember(dest => dest.CompositeKey, opt => opt.MapFrom(src => $"{src.TestCode}|{src.Buyer}|{src.Month}|{src.WorkGroup}"));
-            CreateMap<MonthlyOutputLiveItem, Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto>()
-                .ForMember(dest => dest.FpsYear, opt => opt.MapFrom(src => src.FpsYear ?? 0))
-                .ForMember(dest => dest.OriginalTestCode,  opt => opt.Ignore())
-                .ForMember(dest => dest.OriginalBuyer,     opt => opt.Ignore())
-                .ForMember(dest => dest.OriginalMonth,     opt => opt.Ignore())
-                .ForMember(dest => dest.OriginalWorkGroup, opt => opt.Ignore())
-                .ForMember(dest => dest.WgBuyer,           opt => opt.Ignore());
-            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputItem>()
-                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => src.Passed ?? false));
-            CreateMap<StagingMonthlyOutputItem, StagingMonthlyOutputDto>()
-                .ForMember(dest => dest.Passed, opt => opt.MapFrom(src => (bool?)src.Passed));
-            CreateMap<StagingMonthlyOutputDto, StagingMonthlyOutputExportItem>();
+            config.NewConfig<Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto, MonthlyOutputLiveItem>()
+                .Map(dest => dest.CompositeKey, src => $"{src.TestCode}|{src.Buyer}|{src.Month}|{src.WorkGroup}");
+            config.NewConfig<MonthlyOutputLiveItem, Apha.FPSApps.Application.Dtos.PACT.PactMonthlyOutputDto>()
+                .Map(dest => dest.FpsYear, src => src.FpsYear ?? 0)
+                .Ignore(dest => dest.OriginalTestCode)
+                .Ignore(dest => dest.OriginalBuyer)
+                .Ignore(dest => dest.OriginalMonth)
+                .Ignore(dest => dest.OriginalWorkGroup)
+                .Ignore(dest => dest.WgBuyer);
+            config.NewConfig<StagingMonthlyOutputDto, StagingMonthlyOutputItem>()
+                .Map(dest => dest.Passed, src => src.Passed ?? false);
+            config.NewConfig<StagingMonthlyOutputItem, StagingMonthlyOutputDto>()
+                .Map(dest => dest.Passed, src => (bool?)src.Passed);
+            config.NewConfig<StagingMonthlyOutputDto, StagingMonthlyOutputExportItem>();
         }
     }
 }

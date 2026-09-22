@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -72,7 +72,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         [Fact]
         public async Task GetAllContractsAsync_ReturnsEmpty_WhenUserEmailDoesNotMatch()
         {
-            // Arrange â€” user exists but UserEmail does not match UserEmailId, so JOIN filter excludes all
+            // Arrange — user exists but UserEmail does not match UserEmailId, so JOIN filter excludes all
             var contracts = new List<Contract>
             {
                 new() { ContractNo = "C001", Category = "CAT_A" }
@@ -98,7 +98,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         [Fact]
         public async Task GetAllContractsAsync_ReturnsEmpty_WhenCategoryDoesNotMatchUserCategory()
         {
-            // Arrange â€” contract category has no matching UserCategory row, JOIN produces nothing
+            // Arrange — contract category has no matching UserCategory row, JOIN produces nothing
             var contracts = new List<Contract>
             {
                 new() { ContractNo = "C001", Category = "CAT_UNMATCHED" }
@@ -146,7 +146,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         [Fact]
         public async Task GetAllContractsAsync_ReturnsOnlyMatchingUserEmailContracts_WhenMultipleUsersExist()
         {
-            // Arrange â€” two users share a category, only the matching email user should produce results
+            // Arrange — two users share a category, only the matching email user should produce results
             var contracts = new List<Contract>
             {
                 new() { ContractNo = "C001", Category = "CAT_A" },

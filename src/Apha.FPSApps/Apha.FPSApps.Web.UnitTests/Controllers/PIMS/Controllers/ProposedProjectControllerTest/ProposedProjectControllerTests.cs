@@ -3,7 +3,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;

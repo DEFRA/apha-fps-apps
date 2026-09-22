@@ -1,9 +1,9 @@
-﻿using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Validation;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.PIMS.Application.Services
 {

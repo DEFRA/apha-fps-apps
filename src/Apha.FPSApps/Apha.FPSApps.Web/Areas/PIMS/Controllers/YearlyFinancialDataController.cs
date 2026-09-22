@@ -1,10 +1,10 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             _projectDetailsService = projectDetailsService;
         }
 
-        // ── Index ─────────────────────────────────────────────────────────
+        // -- Index ---------------------------------------------------------
 
         public async Task<IActionResult> Index(string? project, string? parentproject = null)
         {
@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return View(viewModel);
         }
 
-        // ── PopulateDropdownsAsync ────────────────────────────────────────
+        // -- PopulateDropdownsAsync ----------------------------------------
         private async Task PopulateDropdownsAsync(YearlyFinancialDataViewModel model)
         {
             ApiResponseDto<List<ProjectListMilestoneDto>>? projectResult =
@@ -187,7 +187,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return Json(new { success = true, startDate, endDate });
         }
 
-        // ── DataGrid AJAX Reload ──────────────────────────────────────────
+        // -- DataGrid AJAX Reload ------------------------------------------
 
         
         [HttpPost]
@@ -261,7 +261,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             };
         }
 
-        // ── CRUD Endpoints ────────────────────────────────────────────────
+        // -- CRUD Endpoints ------------------------------------------------
 
         private void SetCurrentCostingUser()
         {

@@ -8,13 +8,14 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Apha.FPSApps.Web.Mappings;
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using System.Text.Json;
+using Mapster;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControllerTest
 {
@@ -1705,8 +1706,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProjectMaintenanceControll
 
         private static IMapper CreateRealPactMapper()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<PactViewModelMapper>(), NullLoggerFactory.Instance);
-            return config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            new PactViewModelMapper().Register(config);
+            return new Mapper(config);
         }
 
         [Fact]

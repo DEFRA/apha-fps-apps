@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Application.UnitTests.Services.YourServiceNameServiceTest
+namespace Apha.PIMS.Application.UnitTests.Services.YourServiceNameServiceTest
 {
     public class ProjectServiceTests
     {

@@ -1,5 +1,10 @@
 @model Apha.FPSApps.Web.Areas.PACT.Models.InvoiceImportFailedItem
 
+@{
+    var projectOptionsListData = Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Projects ?? new List<object>());
+    var preselectedProject = Model.ProjectParent ?? string.Empty;
+}
+
 <div class="modal-header flex-space-center">
     <h3 class="govuk-heading-s sup_margin_0">Edit Failed Invoice Import</h3>
     <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
@@ -36,11 +41,13 @@
         <div class="govuk-grid-row sup_margin_top_10">
             <div class="govuk-grid-column-one-half">
                 <div class="govuk-form-group sup_margin_bottom_10">
-                    <label class="govuk-label sup_font_weight_700" asp-for="ProjectParent">
+                    <label class="govuk-label sup_font_weight_700" for="failedInvoiceProjectMultiDropdown_input">
                         Project Parent:<span class="sup_color_red">*</span>
                     </label>
-                    <input type="text" class="govuk-input govuk-!-font-size-16"
-                           asp-for="ProjectParent" required />
+                    <div id="failedInvoiceProjectMultiDropdown"
+                         data-projects="@projectOptionsListData"
+                         data-selected="@preselectedProject"></div>
+                    <input type="hidden" asp-for="ProjectParent" id="ProjectParent" required />
                     <span asp-validation-for="ProjectParent" class="govuk-error-message"></span>
                 </div>
             </div>

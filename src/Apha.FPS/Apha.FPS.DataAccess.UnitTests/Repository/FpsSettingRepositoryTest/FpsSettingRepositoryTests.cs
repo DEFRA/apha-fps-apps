@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -16,7 +16,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         /// <summary>
         /// Creates a FpsSettingRepository with in-memory TblSettings data.
         /// IFpsYearContext is substituted via NSubstitute.
-        /// FpsSetting has a FpsCalYear query filter in FpsDbContext â€” the year value
+        /// FpsSetting has a FpsCalYear query filter in FpsDbContext — the year value
         /// controls which records are visible, so it is set explicitly per test where relevant.
         /// </summary>
         private static FpsSettingRepository CreateRepository(
@@ -92,7 +92,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task GetAllAsync_ReturnsList_NotNull()
         {
-            // Arrange â€” verifies the return type contract is always List, never null
+            // Arrange — verifies the return type contract is always List, never null
             var repo = CreateRepository(new List<FpsSetting>());
 
             // Act
@@ -105,7 +105,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task GetAllAsync_ReturnsSettingsForCorrectYear_WhenMultipleYearsExist()
         {
-            // Arrange â€” mock DbSet holds all years; the FpsCalYear query filter on FpsDbContext
+            // Arrange — mock DbSet holds all years; the FpsCalYear query filter on FpsDbContext
             // means only records matching the substituted FPSYear should be returned
             var settings = new List<FpsSetting>
             {
@@ -470,7 +470,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task SaveAsync_WhenSettingExistsForDifferentYear_TreatsAsNewAndAdds()
         {
-            // Arrange â€” same Id but different FpsYear should not match the composite key
+            // Arrange — same Id but different FpsYear should not match the composite key
             var existing = new FpsSetting { Id = "HoursInDay", Setting = "8", FpsYear = 2023 };
             var (repo, mockContext, dbSet) = CreateRepositoryWithMocks(new[] { existing });
             var newSetting = new FpsSetting { Id = "HoursInDay", Setting = "9", FpsYear = 2024 };
@@ -525,7 +525,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task SaveYearEndSettingAsync_WhenNoPlannedYearExists_SavesToStagingTable()
         {
-            // Arrange â€” no "Planned" YearMaster row means GetPlannedYear() returns null,
+            // Arrange — no "Planned" YearMaster row means GetPlannedYear() returns null,
             // routing SaveYearEndSettingAsync through SaveStagingAsync instead of SaveAsync.
             var yearMasters = new List<YearMaster>
             {
@@ -550,7 +550,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.FpsSettingRepositoryTest
         [Fact]
         public async Task SaveYearEndSettingAsync_WhenPlannedYearExists_SavesToSettingsTable()
         {
-            // Arrange â€” an active "Planned" YearMaster row means GetPlannedYear() returns a
+            // Arrange — an active "Planned" YearMaster row means GetPlannedYear() returns a
             // value, routing SaveYearEndSettingAsync through SaveAsync instead of staging.
             var yearMasters = new List<YearMaster>
             {

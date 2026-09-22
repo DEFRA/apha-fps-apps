@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Application.Pagination;
+using Apha.PACT.Application.Pagination;
 using System;
 using System.Collections.Generic;
 using System.Text;

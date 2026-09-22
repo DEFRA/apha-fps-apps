@@ -8,6 +8,7 @@ var currentPortfolio = '';
 let portfolioSelectDropdown = null;
 let selectedPortfolio = null;
 let programSelectDropdown = null;
+let managerSelectDropdown = null;
 let selectedProgram = null;
 let testCodeSelectDropdown = null;
 let selectedTestCodeDropdownValue = null;
@@ -31,6 +32,7 @@ function toggleSidebar() {
 $(document).ready(function () {
     initializePortfolioMultiColumnDropdown();
     initializeProgramMultiColumnDropdown();
+    initializeManagerMultiColumnDropdown();
 
    // Initialize form validation (unobtrusive + numeric)
     initializeFormValidation('#portfolioDetailForm');
@@ -229,6 +231,9 @@ function loadPortfolioData(parentProject) {
                 }
 
                 $('#dpManager').val(d.manager || '');
+                if (d.manager && managerSelectDropdown) {
+                    managerSelectDropdown.setValue(String(d.manager));
+                }
                 $('#txtBudgetCvl').val(formatDecimalTo4Places(d.budgetCvl));
                 $('#txtTransferIncome').val(formatDecimalTo4Places(d.transferIncome));
                 $('#txtComments').val(d.comments || '');
@@ -637,6 +642,33 @@ function initializeProgramMultiColumnDropdown() {
             onClear: function (dropdown) {
                 $('#dpProgramme').val('');
                 programSelectDropdown.clear();
+            }
+        }
+    });
+}
+
+function initializeManagerMultiColumnDropdown() {
+    managerSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'managerSelectDropdown',
+        containerSelector: '#managerSelectMultiDropdown',
+        placeholder: 'Select a Manager',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by Manager',
+        labelText: '',
+        columns: [
+            { field: 'Text', header: 'Manager', width: '200px' }
+        ],
+        data: managerOptionsListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: true,
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                $('#dpManager').val(selectedItem.Value);
+            },
+            onClear: function (dropdown) {
+                $('#dpManager').val('');
+                managerSelectDropdown.clear();
             }
         }
     });
