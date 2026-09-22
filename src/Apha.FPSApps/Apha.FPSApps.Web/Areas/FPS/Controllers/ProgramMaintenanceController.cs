@@ -1,11 +1,11 @@
-ï»¿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Enums;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -242,7 +242,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateDropdownsAsync(ProgramViewModel model)
         {
-            // Directorate dropdown â€” blank first item
+            // Directorate dropdown — blank first item
             var directorateResponse = await _masterLookupService.GetLookupItemsAsync(MasterLookupTable.Directorate.ToString());
             var directorates = directorateResponse.Data?.Select(d => d.Value).ToList() ?? new List<string>();
 
@@ -256,7 +256,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Directorate) })
                 .ToList();
 
-            // Manager dropdown â€” blank first item
+            // Manager dropdown — blank first item
             var managerResponse = await _employeeService.GetAllManagersAsync();
             model.ManagerList = (managerResponse.Data ?? new List<ManagerDto>())
                 .Where(m => !string.IsNullOrEmpty(m.Name))

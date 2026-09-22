@@ -1,8 +1,8 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Application.Dtos;
-using AutoMapper;
-using Microsoft.Extensions.Logging.Abstractions;
+using Mapster;
+using MapsterMapper;
 
 namespace Apha.FPS.Api.UnitTests.Mappings.RequestMapperTest
 {
@@ -12,10 +12,9 @@ namespace Apha.FPS.Api.UnitTests.Mappings.RequestMapperTest
 
         public StaffWorkgroupLookupMappingTests()
         {
-            var config = new MapperConfiguration(
-                cfg => cfg.AddProfile<RequestMapper>(),
-                NullLoggerFactory.Instance);
-            _mapper = config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(RequestMapper).Assembly);
+            _mapper = new Mapper(config);
         }
 
         [Fact]

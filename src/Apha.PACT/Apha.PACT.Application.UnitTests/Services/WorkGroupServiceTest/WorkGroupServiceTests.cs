@@ -1,11 +1,11 @@
-﻿using Apha.PACT.Application.Dtos;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -438,9 +438,9 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        // ════════════════════════════════════════════════════════════════════════════
+        // ----------------------------------------------------------------------------
         // Helpers shared by GetWgSummarisedStaffTimeUsageAsync tests
-        // ════════════════════════════════════════════════════════════════════════════
+        // ----------------------------------------------------------------------------
 
         /// <summary>Builds a minimal view entry with sensible defaults.</summary>
         private static WgSummarisedStaffTimeUsageView TimeUsageEntry(
@@ -469,7 +469,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         private static QueryParameters<string> DefaultQuery(int page = 1, int pageSize = 10) =>
             new() { Page = page, PageSize = pageSize };
 
-        #region GetWgSummarisedStaffTimeUsageAsync — validation
+        #region GetWgSummarisedStaffTimeUsageAsync � validation
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_NullWorkGroup_ThrowsBusinessValidationErrorException()
@@ -510,7 +510,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — repository interaction
+        #region GetWgSummarisedStaffTimeUsageAsync � repository interaction
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_ValidWorkGroup_CallsRepositoryOnceWithCorrectWorkGroup()
@@ -551,7 +551,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — HrsPaid calculation
+        #region GetWgSummarisedStaffTimeUsageAsync � HrsPaid calculation
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_SinglePerson_HrsPaidEqualsThatPersonsValue()
@@ -613,7 +613,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — BuildRows
+        #region GetWgSummarisedStaffTimeUsageAsync � BuildRows
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_SingleEntry_ProducesOneRowWithCorrectFields()
@@ -798,7 +798,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — JobTitleLookup
+        #region GetWgSummarisedStaffTimeUsageAsync � JobTitleLookup
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_SingleJobCode_LookupContainsOneItem()
@@ -947,7 +947,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_LookupBuiltFromAllRows_NotJustCurrentPage()
         {
-            // Seed 15 distinct job codes with a page size of 10 — page 1 only contains 10,
+            // Seed 15 distinct job codes with a page size of 10 � page 1 only contains 10,
             // but the lookup should reflect all 15 (built pre-pagination).
             var entries = Enumerable.Range(1, 15)
                 .Select(i => TimeUsageEntry(
@@ -968,7 +968,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — BuildSummary
+        #region GetWgSummarisedStaffTimeUsageAsync � BuildSummary
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Summary_TotalsAreCorrect()
@@ -992,7 +992,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Summary_StandardHoursPerMonthCorrect()
         {
-            // hrsPaid = 120 → standardHoursPerMonth = 120/12 = 10
+            // hrsPaid = 120 ? standardHoursPerMonth = 120/12 = 10
             _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
             [
                 TimeUsageEntry(name: "Alice", hrsPaid: 120.0, monthName: "April", totalTime: 8.0)
@@ -1006,7 +1006,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Summary_StandardHoursForMonthZeroWhenNoData()
         {
-            // Only April has data; May has no data → StandardHoursFor(May) = 0
+            // Only April has data; May has no data ? StandardHoursFor(May) = 0
             _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
             [
                 TimeUsageEntry(name: "Alice", hrsPaid: 120.0, monthName: "April", totalTime: 10.0)
@@ -1032,14 +1032,14 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            // standardHoursPerMonth = 10; two active months → TotalStandardHours = 20
+            // standardHoursPerMonth = 10; two active months ? TotalStandardHours = 20
             result.Summary.TotalStandardHours.Should().Be(20.0);
         }
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Summary_PercentAllocatedForMonthWithData()
         {
-            // standardHoursPerMonth = 10; April = 8 → 8/10*100 = 80.0
+            // standardHoursPerMonth = 10; April = 8 ? 8/10*100 = 80.0
             _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
             [
                 TimeUsageEntry(name: "Alice", hrsPaid: 120.0, monthName: "April", totalTime: 8.0)
@@ -1060,7 +1060,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            // May has no data → StandardHoursFor(0) = 0 → PercentAllocated(0, 0) = 0
+            // May has no data ? StandardHoursFor(0) = 0 ? PercentAllocated(0, 0) = 0
             result.Summary.PercentAllocatedMay.Should().Be(0.0);
         }
 
@@ -1085,7 +1085,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Summary_GrandTotalPercentAllocatedIsZeroWhenNoStandardHours()
         {
-            // hrsPaid = 0 → standardHoursPerMonth = 0 → TotalStandardHours = 0 → percent = 0
+            // hrsPaid = 0 ? standardHoursPerMonth = 0 ? TotalStandardHours = 0 ? percent = 0
             _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
             [
                 TimeUsageEntry(name: "Alice", hrsPaid: 0.0, monthName: "April", totalTime: 10.0)
@@ -1114,7 +1114,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Summary_SummaryComputedFromAllRowsNotJustPage()
         {
-            // 15 rows; page 1 has only 10 — but summary totals must cover all 15
+            // 15 rows; page 1 has only 10 � but summary totals must cover all 15
             const int totalRows  = 15;
             const double hoursPerEntry = 4.0;
             var entries = Enumerable.Range(1, totalRows)
@@ -1140,7 +1140,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — pagination
+        #region GetWgSummarisedStaffTimeUsageAsync � pagination
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_Pagination_TotalRecordsEqualsTotalRows()
@@ -1277,7 +1277,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — HrsPaid on returned Dto
+        #region GetWgSummarisedStaffTimeUsageAsync � HrsPaid on returned Dto
 
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_ReturnedDto_ContainsComputedHrsPaid()
@@ -1297,7 +1297,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         public async Task GetWgSummarisedStaffTimeUsageAsync_MapperCalledOnceForViewToEntryDtoConversion()
         {
             // The service calls the mapper exactly once: to convert IEnumerable<WgSummarisedStaffTimeUsageView>
-            // → IEnumerable<WgSummarisedStaffTimeUsageEntryDto>. No other mapper calls are made.
+            // ? IEnumerable<WgSummarisedStaffTimeUsageEntryDto>. No other mapper calls are made.
             var entries = new List<WgSummarisedStaffTimeUsageView>
             {
                 TimeUsageEntry(monthName: "April")
@@ -1311,9 +1311,9 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        // ════════════════════════════════════════════════════════════════════════════
+        // ----------------------------------------------------------------------------
         // Helpers shared by GetSummarisedWorkgroupTimeSummaryAsync tests
-        // ════════════════════════════════════════════════════════════════════════════
+        // ----------------------------------------------------------------------------
 
         /// <summary>Builds a minimal SummarisedWgTimeView entry with sensible defaults.</summary>
         private static SummarisedWgTimeView WgTimeEntry(
@@ -1336,9 +1336,9 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         private static QueryParameters<string> DefaultWgQuery(int page = 1, int pageSize = 10) =>
             new() { Page = page, PageSize = pageSize };
 
-        // ════════════════════════════════════════════════════════════════════════════
+        // ----------------------------------------------------------------------------
         // Setup helper: configure the mapper to pass-through SummarisedWgTimeView
-        // ════════════════════════════════════════════════════════════════════════════
+        // ----------------------------------------------------------------------------
 
         private void SetupWgTimeEntryMapper()
         {
@@ -1358,7 +1358,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 });
         }
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — validation
+        #region GetSummarisedWorkgroupTimeSummaryAsync � validation
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeSummaryAsync_NullWorkGroup_ThrowsBusinessValidationErrorException()
@@ -1405,7 +1405,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — repository interaction
+        #region GetSummarisedWorkgroupTimeSummaryAsync � repository interaction
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeSummaryAsync_ValidWorkGroup_CallsRepositoryOnceWithCorrectWorkGroup()
@@ -1448,7 +1448,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — BuildWgSummarisedTimeRows
+        #region GetSummarisedWorkgroupTimeSummaryAsync � BuildWgSummarisedTimeRows
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeSummaryAsync_SingleEntry_ProducesOneRowWithCorrectFields()
@@ -1577,7 +1577,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — BuildWgSummarisedTimeSummary
+        #region GetSummarisedWorkgroupTimeSummaryAsync � BuildWgSummarisedTimeSummary
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeSummaryAsync_Summary_MonthlyTotalsAreCorrect()
@@ -1646,7 +1646,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — ProjectTitleLookup
+        #region GetSummarisedWorkgroupTimeSummaryAsync � ProjectTitleLookup
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeSummaryAsync_SingleProject_LookupContainsOneItem()
@@ -1760,7 +1760,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — pagination
+        #region GetSummarisedWorkgroupTimeSummaryAsync � pagination
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_TotalRecordsEqualsTotalProjects()
@@ -1891,7 +1891,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetSummarisedWorkgroupTimeSummaryAsync — ApplySortToWgSummarisedTimeRows
+        #region GetSummarisedWorkgroupTimeSummaryAsync � ApplySortToWgSummarisedTimeRows
 
         [Theory]
         [InlineData("ParentProject", false)]
@@ -2065,7 +2065,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
         #endregion
 
-        #region GetWgSummarisedStaffTimeUsageAsync — ApplySortToWgStaffTimeRows
+        #region GetWgSummarisedStaffTimeUsageAsync � ApplySortToWgStaffTimeRows
 
         [Theory]
         [InlineData("ParentProject", false)]

@@ -1,59 +1,60 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using Mapster;
 
 namespace Apha.FPSApps.Web.Mappings
 {
-    public class PimsViewModelMapper : Profile
+    public class PimsViewModelMapper : IRegister
     {
-        public PimsViewModelMapper()
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();
-            CreateMap<PaginationModel, PaginationDto>().ReverseMap();
+            config.NewConfig(typeof(PaginationFilter<>), typeof(QueryParameters<>));
+            config.NewConfig(typeof(QueryParameters<>), typeof(PaginationFilter<>));
+            config.NewConfig<PaginationModel, PaginationDto>().TwoWays();
 
-            CreateMap<ProjectListItem, ProjectListViewDto>().ReverseMap();
-            CreateMap<ProjectListViewModel, ProposedProjectDto>().ReverseMap();
-            CreateMap<ProposedProjectViewModel, ProposedProjectDto>().ReverseMap();
-            CreateMap<ProjectDetailsViewModel, ProjectDetailDto>().ReverseMap();
-            CreateMap<ProjectDetailsViewModel, ProposedProjectDto>().ReverseMap();
-            CreateMap<ProjectCommentItem, CommentDto>()
-                .ForMember(dest => dest.CommentText, opt => opt.MapFrom(src => src.Comment))
-                .ForMember(dest => dest.MadeBy, opt => opt.MapFrom(src => src.MadeBy))
-                .ForMember(dest => dest.DateEntered, opt => opt.MapFrom(src => src.DateEntered))
-                .ReverseMap()
-                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CommentText))
-                .ForMember(dest => dest.MadeBy, opt => opt.MapFrom(src => src.MadeBy))
-                .ForMember(dest => dest.DateEntered, opt => opt.MapFrom(src => src.DateEntered));
+            config.NewConfig<ProjectListItem, ProjectListViewDto>().TwoWays();
+            config.NewConfig<ProjectListViewModel, ProposedProjectDto>().TwoWays();
+            config.NewConfig<ProposedProjectViewModel, ProposedProjectDto>().TwoWays();
+            config.NewConfig<ProjectDetailsViewModel, ProjectDetailDto>().TwoWays();
+            config.NewConfig<ProjectDetailsViewModel, ProposedProjectDto>().TwoWays();
+            config.NewConfig<ProjectCommentItem, CommentDto>()
+                .Map(dest => dest.CommentText, src => src.Comment)
+                .Map(dest => dest.MadeBy, src => src.MadeBy)
+                .Map(dest => dest.DateEntered, src => src.DateEntered);
+            config.NewConfig<CommentDto, ProjectCommentItem>()
+                .Map(dest => dest.Comment, src => src.CommentText)
+                .Map(dest => dest.MadeBy, src => src.MadeBy)
+                .Map(dest => dest.DateEntered, src => src.DateEntered);
             
-            // Maps CommentNo, Project, Year, Topic, CommentText → CommentDto fields; ReverseMap for pre-population on edit
-            CreateMap<AddEditCommentViewModel, CommentDto>().ReverseMap();
-            // Plan grid item — maps from plan fields on the shared DTO
-            CreateMap<AdditionalCostDto, AdditionalCostPlanItem>().ReverseMap();
-            CreateMap<AdditionalCostDto, AdditionalCostActualItem>().ReverseMap();
-            CreateMap<AnimalCostDto, AnimalCostPlanItem>().ReverseMap();
-            CreateMap<AnimalCostDto, AnimalCostActualItem>().ReverseMap();
-            CreateMap<TestCostDto, TestCostPlanItem>().ReverseMap();
-            CreateMap<TestCostDto, TestCostActualItem>().ReverseMap();
-            CreateMap<StaffCostDto, StaffCostPlanItem>().ReverseMap();
-            CreateMap<StaffCostDto, StaffCostActualItem>().ReverseMap();
-            CreateMap<PactPayDto, PactPayItem>().ReverseMap();
-            CreateMap<MonthlyPactDto, MonthlyPactItem>().ReverseMap();
-            CreateMap<MilestoneItem, MilestoneDto>().ReverseMap();
-            CreateMap<PMDMilestoneItem, MilestoneDto>().ReverseMap();
-            CreateMap<MilestoneDto, PMDMilestoneItem>().ReverseMap();
-            CreateMap<MilestoneFormDatesItem, MilestoneFormDatesDto>().ReverseMap();
-            CreateMap<LogMilestoneItem, LogMilestoneDto>().ReverseMap();
-            CreateMap<InvoiceItem, RadTrackInvoiceDto>().ReverseMap();
-            CreateMap<InvoiceViewModel, RadTrackInvoiceDto>().ReverseMap();
-            CreateMap<InvoiceTotalsItem, RadTrackInvoiceTotalsDto>().ReverseMap();
-            CreateMap<QueryResultItem, MonitoringReportDataDto>().ReverseMap();
-            CreateMap<ProgramCustomerMonitoringResultItem, ProgramCustomerMonitoringReportDataDto>().ReverseMap();
-            CreateMap<StagingMilestoneItem, StagingMilestoneDto>().ReverseMap();
-            CreateMap<YearlyFinancialDataItem, YearlyFinancialDataDto>().ReverseMap();
-            CreateMap<PactCostsItem, PactProjectYearCostsDto>().ReverseMap();
+            // Maps CommentNo, Project, Year, Topic, CommentText ? CommentDto fields; ReverseMap for pre-population on edit
+            config.NewConfig<AddEditCommentViewModel, CommentDto>().TwoWays();
+            // Plan grid item � maps from plan fields on the shared DTO
+            config.NewConfig<AdditionalCostDto, AdditionalCostPlanItem>().TwoWays();
+            config.NewConfig<AdditionalCostDto, AdditionalCostActualItem>().TwoWays();
+            config.NewConfig<AnimalCostDto, AnimalCostPlanItem>().TwoWays();
+            config.NewConfig<AnimalCostDto, AnimalCostActualItem>().TwoWays();
+            config.NewConfig<TestCostDto, TestCostPlanItem>().TwoWays();
+            config.NewConfig<TestCostDto, TestCostActualItem>().TwoWays();
+            config.NewConfig<StaffCostDto, StaffCostPlanItem>().TwoWays();
+            config.NewConfig<StaffCostDto, StaffCostActualItem>().TwoWays();
+            config.NewConfig<PactPayDto, PactPayItem>().TwoWays();
+            config.NewConfig<MonthlyPactDto, MonthlyPactItem>().TwoWays();
+            config.NewConfig<MilestoneItem, MilestoneDto>().TwoWays();
+            config.NewConfig<PMDMilestoneItem, MilestoneDto>().TwoWays();
+            config.NewConfig<MilestoneDto, PMDMilestoneItem>().TwoWays();
+            config.NewConfig<MilestoneFormDatesItem, MilestoneFormDatesDto>().TwoWays();
+            config.NewConfig<LogMilestoneItem, LogMilestoneDto>().TwoWays();
+            config.NewConfig<InvoiceItem, RadTrackInvoiceDto>().TwoWays();
+            config.NewConfig<InvoiceViewModel, RadTrackInvoiceDto>().TwoWays();
+            config.NewConfig<InvoiceTotalsItem, RadTrackInvoiceTotalsDto>().TwoWays();
+            config.NewConfig<QueryResultItem, MonitoringReportDataDto>().TwoWays();
+            config.NewConfig<ProgramCustomerMonitoringResultItem, ProgramCustomerMonitoringReportDataDto>().TwoWays();
+            config.NewConfig<StagingMilestoneItem, StagingMilestoneDto>().TwoWays();
+            config.NewConfig<YearlyFinancialDataItem, YearlyFinancialDataDto>().TwoWays();
+            config.NewConfig<PactCostsItem, PactProjectYearCostsDto>().TwoWays();
         }
     }
 }

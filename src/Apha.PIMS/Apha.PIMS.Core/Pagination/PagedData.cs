@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Core.Pagination
+namespace Apha.PIMS.Core.Pagination
 {
     
     public class PagedData<T>

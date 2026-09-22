@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Api.UnitTests.Controllers.YourControllerNameControllerTest
+namespace Apha.PIMS.Api.UnitTests.Controllers.YourControllerNameControllerTest
 {
     public class HomeControllerTests
     {

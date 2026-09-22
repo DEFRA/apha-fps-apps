@@ -162,13 +162,8 @@
                                         <span asp-validation-for="Project.Customer" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
-                                        <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.Manager">Manager <span class="sup_color_red">*</span></label>
-                                        <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                                                asp-for="Project.Manager"
-                                                asp-items="Model.Managers"
-                                                aria-label="manager select">
-                                            <option value="">--select manager--</option>
-                                        </select>
+                                        <div id="managerMultiDropdown"></div>
+                                        <input type="hidden" asp-for="Project.Manager" id="Project_Manager" />
                                         <span asp-validation-for="Project.Manager" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_0">
@@ -369,9 +364,11 @@
             programListData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs)),
             contractListData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Contracts)),
             customerListData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Customers)),
+            managerListData: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Managers)),
             selectedProgramValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Program)),
             selectedContractValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Contract)),
-            selectedCustomerValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Customer))
+            selectedCustomerValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Customer)),
+            selectedManagerValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Manager))
         });
     </script>
     @{

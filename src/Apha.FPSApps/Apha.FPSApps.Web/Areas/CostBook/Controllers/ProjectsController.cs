@@ -1,10 +1,10 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -168,7 +168,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProjectCreateEditViewModel viewModel)
         {
-            // Handle unchecked checkbox: null → 0, checked → -1
+            // Handle unchecked checkbox: null ? 0, checked ? -1
             viewModel.Inflation ??= 0;
             //ModelState.Remove(nameof(viewModel.ProjectId));
 
@@ -234,7 +234,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             if (decodedId != viewModel.ProjectId)
                 throw new ArgumentException("Project ID mismatch", nameof(id));
 
-            // Handle unchecked checkbox: null → 0, checked → -1
+            // Handle unchecked checkbox: null ? 0, checked ? -1
             viewModel.Inflation ??= 0;
 
             if (ModelState.IsValid)
@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return Json(new { success = true, message = "Project deleted successfully!" });
         }
 
-        // ── Copy (AJAX — returns JSON, matches FPS pattern) ──────────────────
+        // -- Copy (AJAX � returns JSON, matches FPS pattern) ------------------
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -315,7 +315,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             });
         }
 
-        // ── Recost (AJAX — returns JSON) ──────────────────────────────────────
+        // -- Recost (AJAX � returns JSON) --------------------------------------
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -359,7 +359,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             return Json(new { programs = customerPrograms });
         }
 
-        // ── Private helpers ───────────────────────────────────────────────────
+        // -- Private helpers ---------------------------------------------------
 
         private async Task<bool> ValidateProjectBusinessRules(ProjectDto project)
         {
@@ -509,7 +509,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 .ToList();
 
             // Available Defra Project Options with selected value
-            var selectedDefraProject = viewModel.IsDefraProject?.ToString() ?? string.Empty;  // ← was ?? "-1"
+            var selectedDefraProject = viewModel.IsDefraProject?.ToString() ?? string.Empty;  // ? was ?? "-1"
             viewModel.AvailableDefraProjectOptions = DefraProjectOptions
                 .Select(item => new SelectListItem
                 {
