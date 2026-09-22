@@ -72,7 +72,7 @@ BEGIN;
 --   3. Advance-only sync: only move the sequence forward if it is currently
 --      behind the table's data, using ALTER SEQUENCE ... RESTART WITH
 --      (transactional -- rolls back cleanly with everything else in this
---      changeset if a later step fails) rather than setval() (deliberately
+--      migration if a later step fails) rather than setval() (deliberately
 --      non-transactional in Postgres -- it would survive a rollback and
 --      silently leave the sequence advanced even on a failed run). Never
 --      move an already-safe sequence backward.
