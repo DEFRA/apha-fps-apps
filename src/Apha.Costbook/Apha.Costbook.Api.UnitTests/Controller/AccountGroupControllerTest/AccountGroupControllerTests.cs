@@ -148,22 +148,23 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
         #region GetAccountGroup Tests
 
         [Fact]
-        public async Task GetAccountGroup_ExistingKey_ReturnsOkWithMappedRes()
+        public async Task GetAccountGroup_EncodedKey_ReturnsOkWithMappedRes()
         {
             // Arrange
-            var key = "CSG001";
-            var dto = new AccountGroupDto { Csg7group = key, Useinflation = true };
-            var res = new AccountGroupRes { Csg7Group = key, UseInflation = true };
-            _service.GetByCsg7GroupAsync(key).Returns(dto);
+            var encodedKey = "other+costs";
+            var decodedKey = "other costs";
+            var dto = new AccountGroupDto { Csg7group = decodedKey, Useinflation = true };
+            var res = new AccountGroupRes { Csg7Group = decodedKey, UseInflation = true };
+            _service.GetByCsg7GroupAsync(decodedKey).Returns(dto);
             _mapper.Map<AccountGroupRes>(dto).Returns(res);
 
             // Act
-            var result = await _controller.GetAccountGroup(key);
+            var result = await _controller.GetAccountGroup(encodedKey);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Same(res, okResult.Value);
-            await _service.Received(1).GetByCsg7GroupAsync(key);
+            await _service.Received(1).GetByCsg7GroupAsync(decodedKey);
         }
 
         [Fact]
@@ -232,25 +233,26 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
         #region UpdateAccountGroup Tests
 
         [Fact]
-        public async Task UpdateAccountGroup_ValidRequest_ReturnsOkWithUpdatedRes()
+        public async Task UpdateAccountGroup_EncodedKey_ReturnsOkWithUpdatedRes()
         {
             // Arrange
-            var key = "CSG001";
-            var req = new AccountGroupReq { Csg7Group = key, UseInflation = false };
-            var dto = new AccountGroupDto { Csg7group = key, Useinflation = false };
-            var updated = new AccountGroupDto { Csg7group = key, Useinflation = false };
-            var res = new AccountGroupRes { Csg7Group = key, UseInflation = false };
+            var encodedKey = "other+costs";
+            var decodedKey = "other costs";
+            var req = new AccountGroupReq { Csg7Group = decodedKey, UseInflation = false };
+            var dto = new AccountGroupDto { Csg7group = decodedKey, Useinflation = false };
+            var updated = new AccountGroupDto { Csg7group = decodedKey, Useinflation = false };
+            var res = new AccountGroupRes { Csg7Group = decodedKey, UseInflation = false };
             _mapper.Map<AccountGroupDto>(req).Returns(dto);
-            _service.UpdateAccountGroupAsync(key, dto).Returns(updated);
+            _service.UpdateAccountGroupAsync(decodedKey, dto).Returns(updated);
             _mapper.Map<AccountGroupRes>(updated).Returns(res);
 
             // Act
-            var result = await _controller.UpdateAccountGroup(key, req);
+            var result = await _controller.UpdateAccountGroup(encodedKey, req);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Same(res, okResult.Value);
-            await _service.Received(1).UpdateAccountGroupAsync(key, dto);
+            await _service.Received(1).UpdateAccountGroupAsync(decodedKey, dto);
         }
 
         [Fact]
@@ -274,14 +276,15 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
         #region DeleteAccountGroup Tests
 
         [Fact]
-        public async Task DeleteAccountGroup_ExistingKey_ReturnsOkWithSuccessMessage()
+        public async Task DeleteAccountGroup_EncodedKey_ReturnsOkWithSuccessMessage()
         {
             // Arrange
-            var key = "CSG001";
-            _service.DeleteAccountGroupAsync(key).Returns(Task.CompletedTask);
+            var encodedKey = "other+costs";
+            var decodedKey = "other costs";
+            _service.DeleteAccountGroupAsync(decodedKey).Returns(Task.CompletedTask);
 
             // Act
-            var result = await _controller.DeleteAccountGroup(key);
+            var result = await _controller.DeleteAccountGroup(encodedKey);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -292,7 +295,7 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.AccountGroupControllerTest
             var messageProp = value.GetType().GetProperty("message");
             Assert.NotNull(messageProp);
             Assert.Equal("Deleted successfully", (string)messageProp.GetValue(value)!);
-            await _service.Received(1).DeleteAccountGroupAsync(key);
+            await _service.Received(1).DeleteAccountGroupAsync(decodedKey);
         }
 
         [Fact]

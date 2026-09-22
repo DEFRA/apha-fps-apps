@@ -7,6 +7,8 @@ using Asp.Versioning;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+
 
 namespace Apha.Costbook.Api.Controllers
 {
@@ -49,6 +51,8 @@ namespace Apha.Costbook.Api.Controllers
         [HttpGet("{csg7Group}")]
         public async Task<IActionResult> GetAccountGroup(string csg7Group)
         {
+            csg7Group = WebUtility.UrlDecode(csg7Group);
+
             var dto = await _service.GetByCsg7GroupAsync(csg7Group);
             if (dto == null)
                 return CreateNullSuccessResponse<AccountGroupRes>();
@@ -69,6 +73,8 @@ namespace Apha.Costbook.Api.Controllers
 
         public async Task<IActionResult> UpdateAccountGroup(string csg7Group, [FromBody] AccountGroupReq req)
         {
+            csg7Group = WebUtility.UrlDecode(csg7Group);
+
             var dto = _mapper.Map<AccountGroupDto>(req);
             var updated = await _service.UpdateAccountGroupAsync(csg7Group, dto);
             return Ok(_mapper.Map<AccountGroupRes>(updated));
@@ -78,6 +84,8 @@ namespace Apha.Costbook.Api.Controllers
 
         public async Task<IActionResult> DeleteAccountGroup(string csg7Group)
         {
+            csg7Group = WebUtility.UrlDecode(csg7Group);
+
             if (string.IsNullOrWhiteSpace(csg7Group))
                 throw new ArgumentException("Csg7Group is required for deletion.");
 
