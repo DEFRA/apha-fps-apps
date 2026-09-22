@@ -1,5 +1,4 @@
 // ── Global keyboard-navigation support for custom "flyout" dropdowns ─────────
-
 (function () {
     'use strict';
 
@@ -1821,6 +1820,204 @@
     });
 })();
 
+// ── Global "announce disabled fields" support (NVDA / screen-reader friendly) ──
+// Native disabled="disabled"/disabled inputs, selects and textareas are
+// removed from the accessibility tree entirely - the browser strips them out
+// regardless of any aria-* attributes placed on them, so NVDA (and every
+// other screen reader) skips over them in both Tab order and browse-mode
+// review. Sighted users still see the greyed-out field and its value, but
+// screen reader users get no indication the field - or its value - exists
+// at all.
+//
+// Fix: for every native disabled control, swap the semantics for
+// aria-disabled="true" (announces "unavailable"/"dimmed" instead of hiding
+// it) plus a mechanism that keeps the field inert:
+//   * input/textarea: add readonly (keeps the value focusable/readable,
+//     blocks typing) and drop the disabled attribute.
+//   * select: cannot be made readonly, so the disabled attribute is kept
+//     off the element itself; instead a tabindex="-1" avoids it being a
+//     natural Tab stop while pointer-events/focus handling below re-block
+//     interaction and keep it announced as "unavailable".
+// The visual look is unaffected: existing CSS rules already style
+// [readonly]/[disabled] the same way (see e.g. .fps-dg-summary-value,
+// .govuk-input[readonly]), so removing the disabled attribute causes no
+// visible change. Applied globally via this shared script - no per-page
+// markup changes needed.
+// Purely additive/behavioural, safe to re-run on every mutation.
+(function () {
+    'use strict';
+
+    function isVisible(el) {
+        if (!el) return false;
+        var style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    // Keys that must always be allowed through even on an inert field, so
+    // Tab/Shift+Tab moves focus to the next/previous control and Arrow/
+    // Home/End/PageUp/PageDown/Escape keep working for keyboard and screen
+    // reader navigation (browse-mode review, virtual cursor, etc.).
+    var NAVIGATION_KEYS = [
+        'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+        'Home', 'End', 'PageUp', 'PageDown', 'Escape'
+    ];
+
+    function textOf(el) {
+        return el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function findLabelText(field) {
+        var label = null;
+        if (field.id) label = document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
+        if (!label) label = field.closest('label');
+        if (label) return textOf(label);
+
+        var ariaLabel = field.getAttribute('data-kbd-original-aria-label') || field.getAttribute('aria-label');
+        if (ariaLabel) return ariaLabel;
+        var labelledBy = field.getAttribute('aria-labelledby');
+        if (labelledBy) {
+            var byId = document.getElementById(labelledBy);
+            if (byId) return textOf(byId);
+        }
+        return '';
+    }
+
+    function valueOf(field) {
+        if (field.tagName === 'SELECT') {
+            var selected = field.options[field.selectedIndex];
+            return selected ? textOf(selected) : '';
+        }
+        return (field.value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    // Build (or refresh) the accessible name announced for the disabled
+    // field as "<label>: <value>". Screen readers announce a control's
+    // aria-label instead of walking its label/value separately, so this is
+    // the most reliable way to have NVDA read both together for a field
+    // that remains reachable (readonly input/textarea, or a tabindex="-1"
+    // select reached via browse-mode/virtual cursor review).
+    function announceDisabledField(field) {
+        // Preserve whatever aria-label was originally authored (if any) so
+        // it can still contribute to the label text above, then overwrite
+        // it with the combined "label: value" accessible name.
+        if (!field.hasAttribute('data-kbd-original-aria-label') && field.hasAttribute('aria-label')) {
+            field.setAttribute('data-kbd-original-aria-label', field.getAttribute('aria-label'));
+        }
+
+        var labelText = findLabelText(field);
+        var valueText = valueOf(field);
+        var name = labelText && valueText ? labelText + ': ' + valueText
+                                          : (labelText || valueText);
+        if (!name) return;
+
+        field.setAttribute('aria-label', name);
+    }
+
+    // Re-block interaction natively blocked by the (removed) disabled
+    // attribute: typing/editing is suppressed so the field still behaves as
+    // inert, while remaining in the accessibility tree and Tab order for
+    // screen reader users. Navigation keys are explicitly excluded so focus
+    // can still move off the field via Tab/Shift+Tab/Arrow keys.
+    function blockInteraction(el) {
+        if (el.hasAttribute('data-kbd-disabled-guarded')) return;
+        el.setAttribute('data-kbd-disabled-guarded', 'true');
+
+        el.addEventListener('keydown', function (e) {
+            if (el.getAttribute('aria-disabled') !== 'true') return;
+            if (NAVIGATION_KEYS.indexOf(e.key) !== -1) return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return; // allow shortcuts (copy, browser nav, etc.)
+            e.preventDefault();
+        });
+        ['keypress', 'paste', 'cut', 'drop'].forEach(function (evt) {
+            el.addEventListener(evt, function (e) {
+                if (el.getAttribute('aria-disabled') === 'true') e.preventDefault();
+            });
+        });
+    }
+
+    function convertDisabledField(el) {
+        if (!el.disabled) return;
+
+        el.removeAttribute('disabled');
+        el.setAttribute('aria-disabled', 'true');
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.setAttribute('readonly', 'readonly');
+        } else if (el.tagName === 'SELECT') {
+            // A native <select> has no readonly equivalent; keep it out of the
+            // natural Tab order but still reachable via arrow-key/virtual
+            // cursor review so its current value is announced.
+            if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+            blockInteraction(el);
+            el.addEventListener('mousedown', function (e) {
+                if (el.getAttribute('aria-disabled') === 'true') e.preventDefault();
+            });
+        }
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            blockInteraction(el);
+        }
+
+        announceDisabledField(el);
+    }
+
+    function processAllDisabledFields(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(
+            scope.querySelectorAll('input:disabled, select:disabled, textarea:disabled'),
+            function (el) {
+                if (!isVisible(el)) return;
+                convertDisabledField(el);
+            }
+        );
+    }
+
+    function init() {
+        processAllDisabledFields(document);
+
+        // Disabled state is frequently toggled at runtime (form validation,
+        // conditional fields, grid row edit mode), so keep re-checking for
+        // newly disabled controls.
+        var observer = new MutationObserver(function (mutations) {
+            var needsCheck = false;
+            mutations.forEach(function (m) {
+                if (m.type === 'attributes' && m.attributeName === 'disabled') {
+                    needsCheck = true;
+                } else if (m.type === 'childList' && m.addedNodes.length) {
+                    needsCheck = true;
+                }
+            });
+            if (needsCheck) processAllDisabledFields(document);
+        });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['disabled']
+        });
+
+        // A field's value can change programmatically after it has already
+        // been converted (e.g. AJAX refresh sets el.value = ...), so keep
+        // the announced "label: value" text in sync.
+        document.addEventListener('input', function (e) {
+            if (e.target && e.target.getAttribute && e.target.getAttribute('aria-disabled') === 'true') {
+                announceDisabledField(e.target);
+            }
+        }, true);
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.getAttribute && e.target.getAttribute('aria-disabled') === 'true') {
+                announceDisabledField(e.target);
+            }
+        }, true);
+    }
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+})();
+
 // ── Global "read full textarea value" support (NVDA / screen-reader friendly) ──
 // A <textarea rows="1"> (or any textarea shorter than its content) clips the
 // value visually to one line, and only reveals the rest via internal
@@ -1877,11 +2074,84 @@
         textarea.setAttribute('aria-readonly', 'true');
     }
 
+    var MIRROR_ID_PREFIX = 'kbd-textarea-full-value-';
+    var mirrorIdCounter = 0;
+
+    function ensureMirror(textarea) {
+        var mirror = textarea.nextElementSibling;
+        if (mirror && mirror.hasAttribute && mirror.hasAttribute('data-kbd-textarea-mirror')) {
+            return mirror;
+        }
+        mirror = document.createElement('span');
+        mirror.setAttribute('data-kbd-textarea-mirror', 'true');
+        mirror.className = 'govuk-visually-hidden';
+        if (!textarea.id) textarea.id = 'kbd-textarea-' + (++mirrorIdCounter);
+        mirror.id = MIRROR_ID_PREFIX + textarea.id;
+        textarea.insertAdjacentElement('afterend', mirror);
+        return mirror;
+    }
+
+    function removeMirror(textarea) {
+        var mirror = textarea.nextElementSibling;
+        if (mirror && mirror.hasAttribute && mirror.hasAttribute('data-kbd-textarea-mirror')) {
+            mirror.parentNode.removeChild(mirror);
+        }
+        var describedBy = textarea.getAttribute('aria-describedby');
+        if (describedBy && describedBy.indexOf(MIRROR_ID_PREFIX) !== -1) {
+            var remaining = describedBy.split(/\s+/).filter(function (id) {
+                return id.indexOf(MIRROR_ID_PREFIX) !== 0;
+            }).join(' ');
+            if (remaining) {
+                textarea.setAttribute('aria-describedby', remaining);
+            } else {
+                textarea.removeAttribute('aria-describedby');
+            }
+        }
+    }
+
+    // Editable multi-line textareas (e.g. "Title"/"Comments" fields) must
+    // keep their native textbox semantics - typing, caret position, and
+    // in-place value announcement all need to work as usual - so they
+    // cannot use the read-only role="img" + aria-label swap above. But when
+    // the content overflows the visible rows and the field scrolls, NVDA
+    // (and other screen readers) only announce the portion currently
+    // scrolled into view rather than the complete value. Fix: mirror the
+    // full value into a visually-hidden element referenced via
+    // aria-describedby, so the complete text is announced alongside the
+    // (still fully native/editable) textarea, without altering its role,
+    // value, or interactivity.
+    function syncEditableMirror(textarea) {
+        if (textarea.readOnly || textarea.disabled) {
+            removeMirror(textarea);
+            return;
+        }
+
+        // Only needed once the content actually overflows the box - avoids
+        // adding no-op DOM/attributes to every ordinary textarea on the page.
+        var overflowing = textarea.scrollHeight > textarea.clientHeight + 1;
+        if (!overflowing || !textarea.value) {
+            removeMirror(textarea);
+            return;
+        }
+
+        var mirror = ensureMirror(textarea);
+        var value = textarea.value.replace(/\s+/g, ' ').trim();
+        if (mirror.textContent !== value) mirror.textContent = value;
+
+        var describedBy = textarea.getAttribute('aria-describedby') || '';
+        var ids = describedBy.split(/\s+/).filter(Boolean);
+        if (ids.indexOf(mirror.id) === -1) {
+            ids.push(mirror.id);
+            textarea.setAttribute('aria-describedby', ids.join(' '));
+        }
+    }
+
     function processAllTextareas(root) {
         var scope = root && root.querySelectorAll ? root : document;
         Array.prototype.forEach.call(scope.querySelectorAll('textarea'), function (textarea) {
             if (!isVisible(textarea)) return;
             syncAriaLabel(textarea);
+            syncEditableMirror(textarea);
         });
     }
 
@@ -1897,6 +2167,7 @@
                 if (m.type === 'childList' && m.addedNodes.length) {
                     Array.prototype.forEach.call(m.addedNodes, function (node) {
                         if (node.nodeType !== 1) return;
+                        if (node.hasAttribute && node.hasAttribute('data-kbd-textarea-mirror')) return;
                         if (node.tagName === 'TEXTAREA' || (node.querySelector && node.querySelector('textarea'))) {
                             needsCheck = true;
                         }
@@ -1909,14 +2180,27 @@
         });
         observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
+        // Overflow detection depends on layout (scrollHeight/clientHeight),
+        // which can change on viewport resize (responsive column widths) even
+        // without any value change, so re-check then too.
+        window.addEventListener('resize', function () {
+            processAllTextareas(document);
+        });
+
         // Textarea values changed via script (e.g. el.value = '...') don't
         // fire childList/attribute mutations, so also catch the standard
         // input/change events.
         document.addEventListener('input', function (e) {
-            if (e.target && e.target.tagName === 'TEXTAREA') syncAriaLabel(e.target);
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                syncAriaLabel(e.target);
+                syncEditableMirror(e.target);
+            }
         }, true);
         document.addEventListener('change', function (e) {
-            if (e.target && e.target.tagName === 'TEXTAREA') syncAriaLabel(e.target);
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                syncAriaLabel(e.target);
+                syncEditableMirror(e.target);
+            }
         }, true);
 
         // Dropdown/multi-select pages update these summary fields with a plain
@@ -1934,7 +2218,10 @@
                 get: valueDescriptor.get,
                 set: function (newValue) {
                     valueDescriptor.set.call(this, newValue);
-                    try { syncAriaLabel(this); } catch (ignored) { /* never break assignment */ }
+                    try {
+                        syncAriaLabel(this);
+                        syncEditableMirror(this);
+                    } catch (ignored) { /* never break assignment */ }
                 }
             });
         }
