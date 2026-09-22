@@ -55,7 +55,7 @@ namespace Apha.FPS.DataAccess.Data
 
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
 
-            // -- Bulk Rates workflow columns — see BatchJobQueue for why they're here --
+            // -- Bulk Rates workflow columns ï¿½ see BatchJobQueue for why they're here --
             entity.Property(e => e.UploadFilename).HasColumnName("upload_filename");
             entity.Property(e => e.UploadVersion).HasColumnName("upload_version");
             entity.Property(e => e.UploadValidatedAtUtc).HasColumnName("upload_validated_at_utc");
@@ -79,4 +79,5 @@ namespace Apha.FPS.DataAccess.Data
         }
     }
 }
+
 
