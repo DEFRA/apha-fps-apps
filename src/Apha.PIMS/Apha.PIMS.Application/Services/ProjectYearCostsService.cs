@@ -362,7 +362,7 @@ namespace Apha.PIMS.Application.Services
         private static void BuildTestPlanSheet(XLWorkbook wb, List<TestReqmt> data)
         {
             var ws = wb.Worksheets.Add("TestPlan");
-            string[] headers = ["Test Code", "Buyer", "Unit Price", "No. Required", "Cost"];
+            string[] headers = ["Test Code","Unit Price", "No. Required", "Cost"];
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -377,10 +377,9 @@ namespace Apha.PIMS.Application.Services
                     ? t.Unitprice.Value * (decimal)t.Norequired.Value
                     : 0m;
                 ws.Cell(row, 1).Value = t.Testcode;
-                ws.Cell(row, 2).Value = t.Buyer;
-                ws.Cell(row, 3).Value = (double)(t.Unitprice ?? 0m);
-                ws.Cell(row, 4).Value = t.Norequired ?? 0d;
-                ws.Cell(row, 5).Value = (double)cost;
+                ws.Cell(row, 2).Value = (double)(t.Unitprice ?? 0m);
+                ws.Cell(row, 3).Value = t.Norequired ?? 0d;
+                ws.Cell(row, 4).Value = (double)cost;
                 row++;
             }
 
@@ -388,10 +387,10 @@ namespace Apha.PIMS.Application.Services
                 t.Norequired.HasValue && t.Unitprice.HasValue
                     ? t.Unitprice.Value * (decimal)t.Norequired.Value
                     : 0m);
-            var totalLabelCell = ws.Cell(row, 4);
+            var totalLabelCell = ws.Cell(row, 3);
             totalLabelCell.Value = "Total";
             ApplyTotalsRowStyle(totalLabelCell);
-            var totalValCell = ws.Cell(row, 5);
+            var totalValCell = ws.Cell(row, 4);
             totalValCell.Value = (double)totalCost;
             ApplyTotalsRowStyle(totalValCell);
 
@@ -401,7 +400,7 @@ namespace Apha.PIMS.Application.Services
         private static void BuildTestActualsSheet(XLWorkbook wb, List<(MonthlyOutput Output, TestReqmt Reqmt)> data)
         {
             var ws = wb.Worksheets.Add("TestActuals");
-            string[] headers = ["Test Code", "Buyer", "Work Group", "Month", "Volume", "Unit Price", "Charge"];
+            string[] headers = ["Month", "Test Code","Work Group", "Volume", "Unit Price", "Charge"];
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -415,13 +414,12 @@ namespace Apha.PIMS.Application.Services
                 decimal charge = o.Volume.HasValue && r.Unitprice.HasValue
                     ? r.Unitprice.Value * (decimal)o.Volume.Value
                     : 0m;
-                ws.Cell(row, 1).Value = o.Testcode;
-                ws.Cell(row, 2).Value = o.Buyer;
+                ws.Cell(row, 1).Value = o.Month;
+                ws.Cell(row, 2).Value = o.Testcode;               
                 ws.Cell(row, 3).Value = o.Workgroup;
-                ws.Cell(row, 4).Value = o.Month;
-                ws.Cell(row, 5).Value = o.Volume ?? 0d;
-                ws.Cell(row, 6).Value = (double)(r.Unitprice ?? 0m);
-                ws.Cell(row, 7).Value = (double)charge;
+                ws.Cell(row, 4).Value = o.Volume ?? 0d;
+                ws.Cell(row, 5).Value = (double)(r.Unitprice ?? 0m);
+                ws.Cell(row, 6).Value = (double)charge;
                 row++;
             }
 
@@ -476,7 +474,7 @@ namespace Apha.PIMS.Application.Services
         {
             var ws = wb.Worksheets.Add("AnimalActuals");
 
-            string[] headers = ["Month", "Acct Code", "Description", "Daily Rate", "Animal Days", "Amount"];
+            string[] headers = ["Month", "Description", "Daily Rate", "Animal Days", "Amount"];
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -488,19 +486,18 @@ namespace Apha.PIMS.Application.Services
             foreach (var a in data)
             {
                 ws.Cell(row, 1).Value = a.Month ?? 0d;
-                ws.Cell(row, 2).Value = a.Acctcode;
-                ws.Cell(row, 3).Value = a.Description;
-                ws.Cell(row, 4).Value = (double)(a.DailyRate ?? 0m);
-                ws.Cell(row, 5).Value = a.AnimalDays ?? 0;
-                ws.Cell(row, 6).Value = (double)(a.Amount ?? 0m);
+                ws.Cell(row, 2).Value = a.Description;
+                ws.Cell(row, 3).Value = (double)(a.DailyRate ?? 0m);
+                ws.Cell(row, 4).Value = a.AnimalDays ?? 0;
+                ws.Cell(row, 5).Value = (double)(a.Amount ?? 0m);
                 row++;
             }
 
             decimal totalAmount = data.Sum(x => x.Amount ?? 0m);
-            var totalLabelCell = ws.Cell(row, 5);
+            var totalLabelCell = ws.Cell(row, 4);
             totalLabelCell.Value = "Total";
             ApplyTotalsRowStyle(totalLabelCell);
-            var totalValCell = ws.Cell(row, 6);
+            var totalValCell = ws.Cell(row, 5);
             totalValCell.Value = (double)totalAmount;
             ApplyTotalsRowStyle(totalValCell);
 
@@ -510,7 +507,7 @@ namespace Apha.PIMS.Application.Services
         private static void BuildAdditionalPlanSheet(XLWorkbook wb, List<AdditionalCosts> data)
         {
             var ws = wb.Worksheets.Add("AdditionalPlan");
-            string[] headers = ["Job Code", "Account", "Description", "Item Cost"];
+            string[] headers = ["Account", "Description", "Item Cost"];
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -521,10 +518,9 @@ namespace Apha.PIMS.Application.Services
             int row = 2;
             foreach (var a in data)
             {
-                ws.Cell(row, 1).Value = a.Jobcode;
-                ws.Cell(row, 2).Value = a.Account;
-                ws.Cell(row, 3).Value = a.Description;
-                ws.Cell(row, 4).Value = (double)a.Itemcost;
+                ws.Cell(row, 1).Value = a.Account;
+                ws.Cell(row, 2).Value = a.Description;
+                ws.Cell(row, 3).Value = (double)a.Itemcost;
                 row++;
             }
 
@@ -543,7 +539,7 @@ namespace Apha.PIMS.Application.Services
         {
             var ws = wb.Worksheets.Add("AdditionalActuals");
 
-            string[] headers = ["Month", "Acct Code", "Description", "Supplier", "Amount"];
+            string[] headers = ["Month", "Acct Code", "Description", "Supplier", "Supplier No", "Amount"];
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -558,7 +554,8 @@ namespace Apha.PIMS.Application.Services
                 ws.Cell(row, 2).Value = a.Acctcode;
                 ws.Cell(row, 3).Value = a.Description;
                 ws.Cell(row, 4).Value = a.Supplier;
-                ws.Cell(row, 5).Value = (double)(a.Amount ?? 0m);
+                ws.Cell(row, 5).Value = a.Suppliernumber;
+                ws.Cell(row, 6).Value = (double)(a.Amount ?? 0m);
                 row++;
             }
 

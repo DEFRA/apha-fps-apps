@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -18,7 +19,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         private readonly IMapper _mapper;
         private readonly PimsAccessUserApiClient _client;
 
-        private const string BaseUrl = "api/v1/accessuser";
+        private const string BaseUrl = PimsApiEndpoints.GetAllAccessUsers;
+        private const string PagedUrl = PimsApiEndpoints.GetAccessUsersPaged;
 
         public PimsAccessUserApiClientTests()
         {
@@ -62,7 +64,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             var apiResp = SuccessApiResponse(new List<AccessUserRes> { MakeRes(1, "dom\\u1"), MakeRes(1, "dom\\u2") });
             apiResp.Pagination = new Pagination { PageNumber = 2, PageSize = 5, TotalRecords = 20, TotalPages = 4 };
             var mappedItems = new List<AccessUserDto> { MakeDto(1, "dom\\u1"), MakeDto(1, "dom\\u2") };
-            _http.GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s.StartsWith("api/v1/accessuser/paged"))).Returns(apiResp);
+            _http.GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s.StartsWith(PagedUrl))).Returns(apiResp);
             _mapper.Map<List<AccessUserDto>>(apiResp.Data!).Returns(mappedItems);
 
             // Act
@@ -75,7 +77,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             Assert.Equal(2, result.Data.PageNumber);
             Assert.Equal(5, result.Data.PageSize);
             Assert.Equal(2, result.Data.data.Count());
-            await _http.Received(1).GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s.StartsWith("api/v1/accessuser/paged")));
+            await _http.Received(1).GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s.StartsWith(PagedUrl)));
             _mapper.Received(1).Map<List<AccessUserDto>>(apiResp.Data!);
         }
 
@@ -198,7 +200,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         {
             // Arrange
             const int systemid  = 2;
-            var expectedUrl     = $"{BaseUrl}/{systemid}";
+            var expectedUrl     = string.Format(PimsApiEndpoints.GetAccessUsersBySystemId, systemid);
             var resList         = new List<AccessUserRes> { MakeRes(systemid) };
             var apiResp         = SuccessApiResponse(resList);
             var dto             = SuccessDto(new List<AccessUserDto> { MakeDto(systemid) });
@@ -218,7 +220,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
         {
             // Arrange
             const int systemid  = 5;
-            var expectedUrl     = $"{BaseUrl}/{systemid}";
+            var expectedUrl     = string.Format(PimsApiEndpoints.GetAccessUsersBySystemId, systemid);
             var apiResp         = SuccessApiResponse(new List<AccessUserRes>());
             var dto             = SuccessDto(new List<AccessUserDto>());
             _http.GetAsync<List<AccessUserRes>>(expectedUrl).Returns(apiResp);
@@ -228,7 +230,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             await _client.GetBySystemIdAsync(systemid);
 
             // Assert
-            await _http.Received(1).GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s == $"{BaseUrl}/{systemid}"));
+            await _http.Received(1).GetAsync<List<AccessUserRes>>(Arg.Is<string>(s => s == expectedUrl));
         }
 
         [Fact]
@@ -256,8 +258,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             // Arrange
             const int systemid  = 1;
             const string ntlogin = "DOM\\user1";
-            var encodedLogin    = Uri.EscapeDataString(ntlogin);
-            var expectedUrl     = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl     = string.Format(PimsApiEndpoints.GetAccessUserById, systemid, Uri.EscapeDataString(ntlogin));
             var apiResp         = SuccessApiResponse(MakeRes(systemid, ntlogin));
             var dto             = SuccessDto(MakeDto(systemid, ntlogin));
             _http.GetAsync<AccessUserRes>(expectedUrl).Returns(apiResp);
@@ -279,7 +280,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             const int systemid   = 1;
             const string ntlogin = "DOM\\jsmith";
             var encodedLogin     = Uri.EscapeDataString(ntlogin); // "DOM%5Cjsmith"
-            var expectedUrl      = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl      = string.Format(PimsApiEndpoints.GetAccessUserById, systemid, encodedLogin);
             var apiResp          = SuccessApiResponse(MakeRes(systemid, ntlogin));
             var dto              = SuccessDto(MakeDto(systemid, ntlogin));
             _http.GetAsync<AccessUserRes>(expectedUrl).Returns(apiResp);
@@ -337,7 +338,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             var apiResp  = SuccessApiResponse(MakeRes(1, "DOM\\newuser"));
             var dto      = SuccessDto(MakeDto(1, "DOM\\newuser"));
             _mapper.Map<AccessUserReq>(inputDto).Returns(req);
-            _http.PostAsync<AccessUserReq, AccessUserRes>(BaseUrl, req).Returns(apiResp);
+            _http.PostAsync<AccessUserReq, AccessUserRes>(PimsApiEndpoints.CreateAccessUser, req).Returns(apiResp);
             _mapper.Map<ApiResponseDto<AccessUserDto>>(apiResp).Returns(dto);
 
             // Act
@@ -346,7 +347,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             // Assert
             Assert.True(result.Success);
             _mapper.Received(1).Map<AccessUserReq>(inputDto);
-            await _http.Received(1).PostAsync<AccessUserReq, AccessUserRes>(BaseUrl, req);
+            await _http.Received(1).PostAsync<AccessUserReq, AccessUserRes>(PimsApiEndpoints.CreateAccessUser, req);
             _mapper.Received(1).Map<ApiResponseDto<AccessUserDto>>(apiResp);
         }
 
@@ -378,7 +379,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             const int systemid   = 1;
             const string ntlogin = "DOM\\user";
             var encodedLogin     = Uri.EscapeDataString(ntlogin);
-            var expectedUrl      = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl      = string.Format(PimsApiEndpoints.UpdateAccessUser, systemid, encodedLogin);
             var inputDto         = MakeDto(systemid, ntlogin);
             var req              = new AccessUserReq { SystemId = systemid, NtLogin = ntlogin };
             var apiResp          = SuccessApiResponse(MakeRes(systemid, ntlogin));
@@ -445,7 +446,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             const int systemid   = 1;
             const string ntlogin = "DOM\\user";
             var encodedLogin     = Uri.EscapeDataString(ntlogin);
-            var expectedUrl      = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl      = string.Format(PimsApiEndpoints.DeleteAccessUser, systemid, encodedLogin);
             var apiResp          = SuccessApiResponse(true);
             var dto              = SuccessDto(true);
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);
@@ -467,7 +468,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             const int systemid   = 2;
             const string ntlogin = "DOM\\jsmith";
             var encodedLogin     = Uri.EscapeDataString(ntlogin);
-            var expectedUrl      = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl      = string.Format(PimsApiEndpoints.DeleteAccessUser, systemid, encodedLogin);
             var apiResp          = SuccessApiResponse(true);
             var dto              = SuccessDto(true);
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);
@@ -488,7 +489,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserApiCl
             const int systemid   = 99;
             const string ntlogin = "DOM\\unknown";
             var encodedLogin     = Uri.EscapeDataString(ntlogin);
-            var expectedUrl      = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl      = string.Format(PimsApiEndpoints.DeleteAccessUser, systemid, encodedLogin);
             var apiResp          = FailureApiResponse<bool>();
             var dto              = FailureDto<bool>();
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);

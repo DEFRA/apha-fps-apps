@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -18,7 +19,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
         private readonly IMapper _mapper;
         private readonly PimsAccessUserLevelApiClient _client;
 
-        private const string BaseUrl = "api/v1/accessuserlevel";
+        private const string BaseUrl = PimsApiEndpoints.CreateAccessUserLevel;
+        private const string PagedUrl = PimsApiEndpoints.GetAccessUserLevelsPaged;
 
         public PimsAccessUserLevelApiClientTests()
         {
@@ -60,7 +62,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
             var apiResp = SuccessApiResponse(new List<AccessUserLevelRes> { MakeRes(1, "dom\\u1", 1), MakeRes(1, "dom\\u2", 2) });
             apiResp.Pagination = new Pagination { PageNumber = 2, PageSize = 5, TotalRecords = 20, TotalPages = 4 };
             var mappedItems = new List<AccessUserLevelDto> { MakeDto(1, "dom\\u1", 1), MakeDto(1, "dom\\u2", 2) };
-            _http.GetAsync<List<AccessUserLevelRes>>(Arg.Is<string>(s => s.StartsWith("api/v1/accessuserlevel/paged"))).Returns(apiResp);
+            _http.GetAsync<List<AccessUserLevelRes>>(Arg.Is<string>(s => s.StartsWith(PagedUrl))).Returns(apiResp);
             _mapper.Map<List<AccessUserLevelDto>>(apiResp.Data!).Returns(mappedItems);
 
             var result = await _client.GetPagedAsync(request);
@@ -125,7 +127,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
         public async Task GetBySystemIdAsync_HttpReturnsSuccess_ReturnsMappedResponse()
         {
             const int systemid = 2;
-            var expectedUrl = $"{BaseUrl}/{systemid}";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetAccessUserLevelsBySystemId, systemid);
             var resList = new List<AccessUserLevelRes> { MakeRes(systemid, "dom\\u1", 1) };
             var apiResp = SuccessApiResponse(resList);
             var dto = SuccessDto(new List<AccessUserLevelDto> { MakeDto(systemid, "dom\\u1", 1) });
@@ -158,7 +160,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
             const int systemid = 1;
             const string ntlogin = "DOM\\user1";
             var encodedLogin = Uri.EscapeDataString(ntlogin);
-            var expectedUrl = $"{BaseUrl}/{systemid}/{encodedLogin}";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetAccessUserLevelsByUser, systemid, encodedLogin);
             var apiResp = SuccessApiResponse(new List<AccessUserLevelRes> { MakeRes(systemid, ntlogin, 1) });
             var dto = SuccessDto(new List<AccessUserLevelDto> { MakeDto(systemid, ntlogin, 1) });
             _http.GetAsync<List<AccessUserLevelRes>>(expectedUrl).Returns(apiResp);
@@ -206,7 +208,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
             const string ntlogin = "DOM\\user1";
             const int accesslevelid = 10;
             var encodedLogin = Uri.EscapeDataString(ntlogin);
-            var expectedUrl = $"{BaseUrl}/{systemid}/{encodedLogin}/{accesslevelid}";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetAccessUserLevelById, systemid, encodedLogin, accesslevelid);
             var apiResp = SuccessApiResponse(MakeRes(systemid, ntlogin, accesslevelid));
             var dto = SuccessDto(MakeDto(systemid, ntlogin, accesslevelid));
             _http.GetAsync<AccessUserLevelRes>(expectedUrl).Returns(apiResp);
@@ -240,14 +242,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
             var apiResp = SuccessApiResponse(MakeRes(1, "DOM\\newuser", 7));
             var dto = SuccessDto(MakeDto(1, "DOM\\newuser", 7));
             _mapper.Map<AccessUserLevelReq>(inputDto).Returns(req);
-            _http.PostAsync<AccessUserLevelReq, AccessUserLevelRes>(BaseUrl, req).Returns(apiResp);
+            _http.PostAsync<AccessUserLevelReq, AccessUserLevelRes>(PimsApiEndpoints.CreateAccessUserLevel, req).Returns(apiResp);
             _mapper.Map<ApiResponseDto<AccessUserLevelDto>>(apiResp).Returns(dto);
 
             var result = await _client.CreateAsync(inputDto);
 
             Assert.True(result.Success);
             _mapper.Received(1).Map<AccessUserLevelReq>(inputDto);
-            await _http.Received(1).PostAsync<AccessUserLevelReq, AccessUserLevelRes>(BaseUrl, req);
+            await _http.Received(1).PostAsync<AccessUserLevelReq, AccessUserLevelRes>(PimsApiEndpoints.CreateAccessUserLevel, req);
         }
 
         [Fact]
@@ -273,7 +275,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessUserLevel
             const string ntlogin = "DOM\\user";
             const int accesslevelid = 10;
             var encodedLogin = Uri.EscapeDataString(ntlogin);
-            var expectedUrl = $"{BaseUrl}/{systemid}/{encodedLogin}/{accesslevelid}";
+            var expectedUrl = string.Format(PimsApiEndpoints.DeleteAccessUserLevel, systemid, encodedLogin, accesslevelid);
             var apiResp = SuccessApiResponse(true);
             var dto = SuccessDto(true);
             _http.DeleteAsync<bool>(expectedUrl).Returns(apiResp);
