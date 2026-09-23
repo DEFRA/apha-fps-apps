@@ -48,35 +48,38 @@
         <form id="@formId">
             <input type="hidden" name="WorkGroupName" id="WorkGroupName" value="@bid!.WorkGroupName" />
             <div class="govuk-form-group sup_margin_bottom_10">
-                <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" aria-label="bid-workgroup-name" value="@bid.WorkGroupName" readonly />
+                <label class="govuk-label govuk-!-font-weight-bold" for="WorkGroupNameDisplay">Work Group</label>
+                <input type="text" id="WorkGroupNameDisplay" class="govuk-input govuk-!-font-size-16" value="@bid.WorkGroupName" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10">
-                <label class="govuk-label govuk-!-font-weight-bold">Account <span class="sup_error_text_color">*</span></label>
+                <label class="govuk-label govuk-!-font-weight-bold" for="@(isEditMode ? "AccountDisplay" : "AccountComboBox")">Account <span class="sup_error_text_color">*</span></label>
                 @if (isEditMode)
                 {
                     <input type="hidden" id="Account" name="Account" value="@bid.Account" />
-                    <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.Account" aria-label="bid-edit-account" readonly />
+                    <input type="text" id="AccountDisplay" class="govuk-input govuk-!-font-size-16" value="@bid.Account" readonly />
                 }
                 else
                 {
                     <input type="hidden" id="Account" name="Account" required />
                     <div class="tableselectdropdown input-group" data-empdropdown style="position:relative;">
-                        <div id="AccountComboBox"
-                             onclick="toggleAccountDropdown()"
-                             class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                             style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; min-height:40px; user-select:none; background:#fff;">
+                        <button type="button" id="AccountComboBox"
+                                onclick="toggleAccountDropdown()"
+                                aria-haspopup="listbox"
+                                aria-expanded="false"
+                                aria-controls="accountDropdownPanel"
+                                class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; min-height:40px; width:100%; text-align:left; user-select:none; background:#fff;">
                             <span id="AccountDisplayText" style="color:#505a5f; flex:1;">&#8211; Select Account &#8211;</span>
-                            <span style="font-size:12px; color:#505a5f;">&#9660;</span>
-                        </div>
+                            <span aria-hidden="true" style="font-size:12px; color:#505a5f;">&#9660;</span>
+                        </button>
                         <div id="accountDropdownPanel" class="tbl-dropdown-panel"
                              style="display:none; position:absolute; z-index:9999; background:#fff;
                                     border:2px solid #0b0c0c; width:100%; min-width:580px; top:100%; left:0;
                                     box-shadow:0 4px 8px rgba(0,0,0,0.2);">
                             <div style="display:flex; align-items:center; padding:4px; border-bottom:1px solid #b1b4b6; background:#f3f2f1; gap:4px;">
+                                <label for="accountSearch" class="govuk-visually-hidden">Search account</label>
                                 <input type="text" id="accountSearch" placeholder="Type to search account"
                                        class="select-search-box govuk-input govuk-!-font-size-16"
-                                       aria-label="bid-accountSearch"
                                        style="flex:1; font-size:13px; padding:2px 6px; height:32px;"
                                        oninput="filterAccountTable(this.value)" onclick="event.stopPropagation()" />
                                 <button type="button" class="govuk-button govuk-button--secondary clear-search-btn govuk-!-margin-bottom-0"
@@ -189,14 +192,21 @@
                 renderMoreAccountRows(ACCOUNT_ROW_CHUNK_SIZE);
             }
 
+            function setAccountExpanded(expanded) {
+                var combo = document.getElementById('AccountComboBox');
+                if (combo) combo.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            }
+
             function toggleAccountDropdown() {
                 var panel = document.getElementById('accountDropdownPanel');
                 if (panel.style.display === 'none') {
                     panel.style.display = 'block';
+                    setAccountExpanded(true);
                     if (accountBodyDirty) renderAccountRows();
                     document.getElementById('accountSearch').focus();
                 } else {
                     panel.style.display = 'none';
+                    setAccountExpanded(false);
                 }
             }
 
@@ -210,6 +220,7 @@
                 span.textContent = displayText;
                 span.style.color = '#0b0c0c';
                 document.getElementById('accountDropdownPanel').style.display = 'none';
+                setAccountExpanded(false);
                 document.getElementById('accountSearch').value = '';
                 filterAccountTable('');
             }
@@ -278,6 +289,7 @@
                 var combo = document.getElementById('AccountComboBox');
                 if (panel && combo && !panel.contains(e.target) && !combo.contains(e.target)) {
                     panel.style.display = 'none';
+                    setAccountExpanded(false);
                 }
             });
         </script>
@@ -292,12 +304,12 @@
                 <input type="hidden" name="OldItemDescription" id="OldItemDescription" value="@purchase.ItemDescription" />
             }
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
-                <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkGroupName" aria-label="bid-purchase-workgroup-name" readonly />
+                <label class="govuk-label govuk-!-font-weight-bold" for="WorkGroupNameDisplay">Work Group</label>
+                <input type="text" id="WorkGroupNameDisplay" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkGroupName" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
-                <label class="govuk-label govuk-!-font-weight-bold">Account</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.Account" aria-label="bid-purchase-account"  readonly />
+                <label class="govuk-label govuk-!-font-weight-bold" for="AccountDisplay">Account</label>
+                <input type="text" id="AccountDisplay" class="govuk-input govuk-!-font-size-16" value="@purchase.Account" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
                 <label for="ItemDescription" class="govuk-label govuk-!-font-weight-bold">

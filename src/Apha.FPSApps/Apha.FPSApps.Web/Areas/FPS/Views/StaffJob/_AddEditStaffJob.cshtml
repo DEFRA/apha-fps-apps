@@ -29,7 +29,7 @@
         }
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
-                <label for="Name" class="govuk-label p-0">Staff Name <span class="sup_color_red">*</span></label>
+                <label for="@(isEditMode ? "Name" : "StaffDisplay")" class="govuk-label p-0">Staff Name <span class="sup_color_red">*</span></label>
                 @if (isEditMode)
                 {
                     <input type="text" class="govuk-input sup_width_100" asp-for="Name" readonly />
@@ -43,6 +43,7 @@
                         <div id="StaffDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
                                 max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                 box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                            <label for="StaffSearchBox" class="govuk-visually-hidden">Search staff</label>
                             <input type="text" id="StaffSearchBox" placeholder="Type to search staff..."
                                    style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;"
                                    oninput="filterStaffPanel(this.value)" />
@@ -77,6 +78,7 @@
                                 })));
                     </script>
                     @* hidden select — keeps Name field binding + server-side validation *@
+                    <label for="Name" class="govuk-visually-hidden">Staff Name</label>
                     <select id="Name" name="Name" required style="display:none;" onchange="onStaffSelected(this)">
                         <option value="">-- Select Staff --</option>
                         @if (Model.StaffList != null)

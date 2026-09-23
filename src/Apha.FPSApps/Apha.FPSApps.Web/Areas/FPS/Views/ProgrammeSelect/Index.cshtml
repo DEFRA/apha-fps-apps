@@ -38,7 +38,7 @@
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 isNoBottomBorder">
                                 <input type="text" id="projectNameInput" placeholder="Select Project" autocomplete="off"
                                        class="govuk-input down-arrow-img isNoWrap"
-                                       value="@Model.ProjectName" aria-label="Filter project" aria-labelledby="projectNameInputLabel" aria-owns="ProjectDropdownBody" aria-haspopup="listbox" aria-expanded="false" aria-controls="ProjectDropdownBody" readonly />
+                                       value="@Model.ProjectName" readonly />
                                 <div id="ProjectDropdownPanel" style="display:none; position:absolute; top:100%; right: 26px; width:420px;
                                     max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                         box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000; top: 168px; left: 76.7vw !important;">
@@ -52,7 +52,7 @@
                                                 <th style="padding:6px 8px; text-align:left;">Program</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="ProjectDropdownBody" role="listbox" aria-label="Project results"></tbody>
+                                        <tbody id="ProjectDropdownBody"></tbody>
                                     </table>
                                 </div>
                             </td>

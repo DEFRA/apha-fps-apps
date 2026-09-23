@@ -44,6 +44,7 @@
                         <div id="TestCodeDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
                                 max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                                 box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                            <label for="TestCodeSearchBox" class="govuk-visually-hidden">Search test code</label>
                             <input type="text" id="TestCodeSearchBox" placeholder="Type to search..."
                                    style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;"
                                    oninput="filterTestCodePanel(this.value)" />
@@ -78,6 +79,7 @@
                                 })));
                     </script>
                     @* hidden select — keeps TestCode binding + server-side validation *@
+                    <label for="TestCode" class="govuk-visually-hidden">Test Code</label>
                     <select id="TestCode" name="TestCode" required style="display:none;" onchange="onTestCodeSelected(this)">
                         <option value="">-- Select Test Code --</option>
                         @foreach (var option in Model.TestCodeOptions)
@@ -103,8 +105,8 @@
             <!-- Test Code (read-only on edit) -->
             <div class="col-12">
                 <div class="govuk-form-group sup_margin_0">
-                    <label class="govuk-label p-0">Test Code <span class="sup_color_red">*</span></label>
-                    <input type="text" class="govuk-input" value="@Model.TestCode" readonly />
+                    <label for="TestCodeReadOnly" class="govuk-label p-0">Test Code <span class="sup_color_red">*</span></label>
+                    <input type="text" id="TestCodeReadOnly" class="govuk-input" value="@Model.TestCode" readonly />
                 </div>
             </div>
         }
