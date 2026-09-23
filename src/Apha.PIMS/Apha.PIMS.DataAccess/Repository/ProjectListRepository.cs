@@ -27,10 +27,11 @@ namespace Apha.PIMS.DataAccess.Repository
             return await ApplyPaging(query, queryFilter.Page, queryFilter.PageSize);
         }
 
-        public async Task<List<ProjectListView>> GetAllProjectsForDropDownAsync()
+        public async Task<List<ProjectListView>> GetAllProjectsForDropDownAsync(int showWhichProjects = 2)
         {
             return await _context.ProjectLatestDetails
                 .AsNoTracking()
+                .Where(v => showWhichProjects == 1 ? v.Active == "Y" : (v.Active == "Y" || v.Active == "N"))
                 .Join(_context.RadtrackProgs,
                       v => v.Program,
                       r => r.Program,

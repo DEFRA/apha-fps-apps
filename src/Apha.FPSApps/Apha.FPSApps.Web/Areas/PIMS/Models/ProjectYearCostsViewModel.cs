@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     public class ProjectYearCostsViewModel
     {
         public string Parentproject { get; set; } = string.Empty;
+        public int ShowProjects { get; set; } = 1;
         public short SelectedYear { get; set; }
 
         public List<SelectListItem> ProjectOptions { get; set; } = [];

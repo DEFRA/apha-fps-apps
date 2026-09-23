@@ -48,7 +48,17 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetProject(string id)
         {
             var project = await _service.GetProjectByIdAsync(id);
-            if (project == null) return NotFound();
+            if (project == null)
+            {
+                return Ok(new ApiResponse<ProjectRes>
+                {
+                    Success = true,
+                    Data = default,
+                    Errors = new List<ApiError>(),
+                    Meta = new ApiMeta()
+                });
+            }
+
             return Ok(_mapper.Map<ProjectRes>(project));
         }
 
@@ -193,5 +203,6 @@ namespace Apha.Costbook.Api.Controllers
             };
             return Ok(response);
         }
-    }
-}
+
+            }
+        }

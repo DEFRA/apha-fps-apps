@@ -438,6 +438,91 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
         }
 
+        [Fact]
+        public async Task EnqueueYearEndDataSetupInitiationJobAsync_WhenMonthHoursHaveNullDays_ThrowsBusinessValidationError()
+        {
+            // Arrange — a "confirmed" row (ExistsForPlannedYear = "Yes") with a null value proves the
+            // check is independent of the missing-row check above.
+            _fpsSettingRepository.GetYearEndSettingsAsync().Returns(ValidSettings());
+            var invalidMonthHours = new List<YearEndMonthHour>
+            {
+                new YearEndMonthHour { Month = 1, Days = null, VidHours = 5, CvlHours = 3, ExistsForPlannedYear = "Yes" }
+            };
+            _monthHourRepository.GetYearEndMonthHoursAsync().Returns(invalidMonthHours);
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
+            _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupInitiationJobAsync_WhenMonthHoursHaveNullVidHours_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _fpsSettingRepository.GetYearEndSettingsAsync().Returns(ValidSettings());
+            var invalidMonthHours = new List<YearEndMonthHour>
+            {
+                new YearEndMonthHour { Month = 1, Days = 20, VidHours = null, CvlHours = 3, ExistsForPlannedYear = "Yes" }
+            };
+            _monthHourRepository.GetYearEndMonthHoursAsync().Returns(invalidMonthHours);
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
+            _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupInitiationJobAsync_WhenMonthHoursHaveNullCvlHours_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            _fpsSettingRepository.GetYearEndSettingsAsync().Returns(ValidSettings());
+            var invalidMonthHours = new List<YearEndMonthHour>
+            {
+                new YearEndMonthHour { Month = 1, Days = 20, VidHours = 5, CvlHours = null, ExistsForPlannedYear = "Yes" }
+            };
+            _monthHourRepository.GetYearEndMonthHoursAsync().Returns(invalidMonthHours);
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
+            _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupInitiationJobAsync_WhenLastThreeMonthsAreConfirmedBlank_ThrowsBusinessValidationError()
+        {
+            // Arrange — reproduces the reported defect: the last 3 months were "confirmed"/saved
+            // (ExistsForPlannedYear = "Yes" for every month, e.g. an existing staging row saved before
+            // this fix) but carry no working-hours values. Initiation must still be blocked even though
+            // the "missing row" check alone does not catch it.
+            _fpsSettingRepository.GetYearEndSettingsAsync().Returns(ValidSettings());
+            var monthHoursWithBlankTail = Enumerable.Range(1, 9)
+                .Select(m => new YearEndMonthHour { Month = (short)m, Days = 20, VidHours = 5, CvlHours = 3, ExistsForPlannedYear = "Yes" })
+                .Concat(Enumerable.Range(10, 3)
+                    .Select(m => new YearEndMonthHour { Month = (short)m, Days = null, VidHours = null, CvlHours = null, ExistsForPlannedYear = "Yes" }))
+                .ToList();
+            _monthHourRepository.GetYearEndMonthHoursAsync().Returns(monthHoursWithBlankTail);
+            _yearMasterRepository.GetFpsYearByIdAsync(PlannedYear).Returns((YearMaster?)null);
+            _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.EnqueueYearEndDataSetupInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId));
+
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+        }
+
         #endregion
 
         #region EnqueueYearEndDataSetupInitiationJobAsync — success
@@ -467,6 +552,32 @@ namespace Apha.FPS.Application.UnitTests.Services.YearEndServiceTest
             await _yearEndRepository.Received(1).EnqueueDataSetupInitiationBatchJobAsync(
                 JobName, RequestedBy, CorrelationId, Arg.Any<string>());
             await _emailService.Received(1).SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task EnqueueYearEndDataSetupInitiationJobAsync_WhenMonthHoursAreZero_DoesNotThrowForMonthConfiguration()
+        {
+            // Arrange — zero is a valid business value, distinct from missing/negative
+            _fpsSettingRepository.GetYearEndSettingsAsync().Returns(ValidSettings());
+            var zeroMonthHours = Enumerable.Range(1, 12)
+                .Select(m => new YearEndMonthHour { Month = (short)m, Days = 0, VidHours = 0, CvlHours = 0, ExistsForPlannedYear = "Yes" })
+                .ToList();
+            _monthHourRepository.GetYearEndMonthHoursAsync().Returns(zeroMonthHours);
+            SetupYearMasterNotFound();
+            _yearEndRepository.CanInitiateYearEndDataSetupRequestAsync(JobName).Returns(true);
+
+            var queueEntry = new BatchJobQueue { JobqueueId = Guid.NewGuid(), RequestedBy = RequestedBy };
+            _yearEndRepository.EnqueueDataSetupInitiationBatchJobAsync(JobName, RequestedBy, CorrelationId, Arg.Any<string>())
+                .Returns(queueEntry);
+            _mapper.Map<BatchJobQueueDto>(queueEntry).Returns(new BatchJobQueueDto { RequestedBy = RequestedBy });
+
+            // Act
+            var result = await _sut.EnqueueYearEndDataSetupInitiationJobAsync(PlannedYear, ContextYear, RequestedBy, CorrelationId);
+
+            // Assert
+            result.Should().NotBeNull();
+            await _yearEndRepository.Received(1).EnqueueDataSetupInitiationBatchJobAsync(
+                JobName, RequestedBy, CorrelationId, Arg.Any<string>());
         }
 
         [Fact]

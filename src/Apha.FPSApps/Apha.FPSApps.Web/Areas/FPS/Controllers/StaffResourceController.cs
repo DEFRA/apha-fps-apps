@@ -193,7 +193,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<StaffResourceWorkgroupItem>
             {
                 GridId = "ruvWorkgroupGrid",
-                Title = "Staff Resource Utilisation",
+                // No title/export header for the workgroup selector panel: it holds a
+                // single column, so the empty heading strip and Excel icon are not needed.
+                Title = string.Empty,
+                AllowExcelExport = false,
                 ShowCheckboxColumn = false,
                 ShowPagination = false,
                 KeyProperty = "WorkGroupName",

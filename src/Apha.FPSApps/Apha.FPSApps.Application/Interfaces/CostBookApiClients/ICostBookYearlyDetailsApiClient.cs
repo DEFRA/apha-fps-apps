@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 
 public interface ICostBookYearlyDetailsApiClient
 {
+    Task<ApiResponseDto<MaintenanceSettingsDto>> GetSettingsAsync();
     Task<ApiResponseDto<ProjectHeaderDto>> GetProjectHeaderAsync(string projectId);
     Task<ApiResponseDto<List<ProjectYearDto>>> GetProjectYearsAsync(string projectId);
     Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);

@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
     {
         private readonly ICostBookHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
+        
 
         public CostBookDiseaseApiClient(ICostBookHttpExecutor http, IMapper mapper)
         {
@@ -22,8 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 
         public async Task<ApiResponseDto<List<DiseaseDto>>> GetAllDiseasesAsync()
         {
-            try
-            {
+           
                 var response = await _http.GetAsync<List<DiseaseRes>>(CostBookApiEndpoints.GetAllDiseases);
 
                 if (response.Success && response.Data != null)
@@ -31,13 +30,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 
                 var responseDto = _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(response);
                 return ApiResponseDto<List<DiseaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception ex)
-            {
-                return ApiResponseDto<List<DiseaseDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve diseases", Code = InternalCodeError, Details = ex.Message }],
-                    new ApiMetaDto());
-            }
+           
         }
     }
 }
