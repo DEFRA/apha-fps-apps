@@ -498,20 +498,16 @@ public class BulkRatesRequestServiceTests
     // ── ApproveAsync maker-checker ───────────────────────────────────────────
 
     [Fact]
-    public async Task Approve_WhenApproverIsInitiator_Succeeds()
+    public async Task Approve_WhenApproverIsInitiator_ThrowsBusinessValidation()
     {
-        // Maker-checker enforcement is temporarily disabled — see BulkRatesRequestService.ApproveAsync.
         var repo = RepoReturning(Entry(status: "ReleasedForApproval", uploadChecksum: "abc"));
         var svc  = CreateService(repo);
 
-        await svc.ApproveAsync(QueueId, Initiator);
+        await svc.Invoking(s => s.ApproveAsync(QueueId, Initiator))
+            .Should().ThrowAsync<BusinessValidationErrorException>()
+            .WithMessage("*cannot be the same person*");
 
-        await repo.Received(1).SetApprovalAsync(
-            Arg.Is<SetBulkRatesApprovalParams>(p =>
-                p.JobQueueId == QueueId && p.JobExecutionId == ExecId &&
-                p.ApprovedBy == Initiator && p.TriggeredBy == Initiator &&
-                p.ApprovedStatusId == 42),
-            Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().SetApprovalAsync(Arg.Any<SetBulkRatesApprovalParams>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -550,17 +546,18 @@ public class BulkRatesRequestServiceTests
     }
 
     [Fact]
-    public async Task Reject_WhenRejectorIsInitiator_Succeeds()
+    public async Task Reject_WhenRejectorIsInitiator_ThrowsBusinessValidation()
     {
-        // Maker-checker enforcement is temporarily disabled — see BulkRatesRequestService.RejectAsync.
         var repo = RepoReturning(Entry(status: "ReleasedForApproval"));
         var svc  = CreateService(repo);
 
-        await svc.RejectAsync(QueueId, Initiator, "some reason");
+        await svc.Invoking(s => s.RejectAsync(QueueId, Initiator, "some reason"))
+            .Should().ThrowAsync<BusinessValidationErrorException>()
+            .WithMessage("*cannot be the same person*");
 
-        await repo.Received(1).SetRejectionAsync(
-            QueueId, Initiator, Arg.Any<DateTime>(),
-            "some reason", 42, Arg.Any<CancellationToken>());
+        await repo.DidNotReceive().SetRejectionAsync(
+            Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime>(),
+            Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -1470,7 +1467,7 @@ public class BulkRatesRequestServiceTests
 
         capturedSheets.Should().NotBeNull();
         capturedSheets!.Should().HaveCountGreaterThanOrEqualTo(2);
-        // FEC sheet rows come from snapshot only (T200 present) � looked up by name, not
+        // FEC sheet rows come from snapshot only (T200 present) � looked up by name, not
         // position: BuildFecAgrupSheets now also emits a leading Instructions sheet.
         var fecSheet = capturedSheets.Single(s => s.SheetName == "FEC");
         fecSheet.Data.Cast<BulkRatesFecExportRowDto>().Should().Contain(r => r.TestCode == "T200");

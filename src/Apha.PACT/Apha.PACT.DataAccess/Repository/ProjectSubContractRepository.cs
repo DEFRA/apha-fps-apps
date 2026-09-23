@@ -351,8 +351,8 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable<ProjectSubContract> ApplyMonthFilter(IDictionary<string, object> dict, IQueryable<ProjectSubContract> query)
         {
-            if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthValue))
-                query = query.Where(x => (int?)x.Month == monthValue);
+            if (dict.TryGetValue("Month", out object? month) && month != null)
+                query = int.TryParse(month.ToString(), out int monthValue) ? query.Where(x => (int?)x.Month == monthValue) : query.Where(x => false);
             return query;
         }
 
