@@ -18,14 +18,9 @@
     <title>@ViewData["Title"]</title>
 
 
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
-    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/pact_styles/styles.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
+    <link rel="stylesheet" href="~/css/bundles/pact.css" />
     <!-- jQuery (required before any scripts) -->
-    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -53,8 +48,8 @@
 
     <!-- ── Scripts ───────────────────────────────────────────────────── -->    
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/common/keyboard/global-dropdown-keyboard.js"></script>
     <script src="~/js/govuk-modal-dialog.js"></script>
     <fps-year-script></fps-year-script>
@@ -104,9 +99,7 @@
         // Global variable for PACT year status (available to all PACT pages)
         const isFPSYearClosed = @Html.Raw(FyContext.IsReadOnly.ToString().ToLower());
     </script>
-    <script src="~/js/common/headernav/navmenu.js"></script>
-    <script src="~/js/number-validation.js"></script>
-    <script src="~/js/site.js"></script>
+    <script src="~/js/bundles/pact.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -6,6 +6,7 @@ using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
+using Apha.Costbook.DataAccess;
 using MapsterMapper;
 using NSubstitute;
 
@@ -19,7 +20,7 @@ public class YearlyDetailsServiceTests
     private readonly ITestRequirementRepository _testRepo;
     private readonly IAnimalRequirementRepository _animalRepo;
     private readonly IAdditionalCostRepository _additionalCostRepo;
-    private readonly ISettingsService _settingsService;
+    private readonly ISettingsRepository _settingsRepository;
     private readonly IMapper _mapper;
     private readonly YearlyDetailsService _sut;
 
@@ -31,13 +32,44 @@ public class YearlyDetailsServiceTests
         _testRepo = Substitute.For<ITestRequirementRepository>();
         _animalRepo = Substitute.For<IAnimalRequirementRepository>();
         _additionalCostRepo = Substitute.For<IAdditionalCostRepository>();
-        _settingsService = Substitute.For<ISettingsService>();
+        _settingsRepository = Substitute.For<ISettingsRepository>();
         _mapper = Substitute.For<IMapper>();
 
         _sut = new YearlyDetailsService(
             _projectRepo, _projectYearRepo, _staffRepo,
-            _testRepo, _animalRepo, _additionalCostRepo, _settingsService, _mapper);
+            _testRepo, _animalRepo, _additionalCostRepo, _settingsRepository, _mapper);
     }
+
+    #region GetSettingsAsync
+
+    [Fact]
+    public async Task GetSettingsAsync_ReturnsMappedSettings()
+    {
+        var settings = new List<Apha.Costbook.DataAccess.Settings>
+        {
+            new() { Id = "InflationAnimals", Setting = "2.5" },
+            new() { Id = "InflationExceptional", Setting = "1.8" },
+            new() { Id = "InflationStaff", Setting = "3.0" },
+            new() { Id = "InflationTests", Setting = "2.0" },
+            new() { Id = "CurrentYear", Setting = "2024" },
+            new() { Id = "HoursInDay", Setting = "7.4" },
+            new() { Id = "DaysInYear", Setting = "220" },
+            new() { Id = "Profitanimals", Setting = "15.0" },
+            new() { Id = "ProfitExceptional", Setting = "12.5" },
+            new() { Id = "Profitstaff", Setting = "10.0" },
+            new() { Id = "Profittests", Setting = "8.0" }
+        };
+
+        _settingsRepository.GetAllUserUpdatableAsync().Returns(Task.FromResult(settings));
+
+        var result = await _sut.GetSettingsAsync();
+
+        Assert.Equal(2.5m, result.InflationAnimals);
+        Assert.Equal(2024, result.CurrentFinancialYear);
+        await _settingsRepository.Received(1).GetAllUserUpdatableAsync();
+    }
+
+    #endregion
 
     #region GetProjectHeaderAsync
 

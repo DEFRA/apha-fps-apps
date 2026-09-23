@@ -273,17 +273,6 @@ public class ProjectYearRepository : IProjectYearRepository
                     });
                 }
 
-                var targetProjectYear = await _context.ProjectYears
-                    .FirstAsync(py => py.Project == decodedProject && py.YearValue == targetYear);
-                targetProjectYear.MarkupTime = sourceProjectYear.MarkupTime;
-                targetProjectYear.MarkupTests = sourceProjectYear.MarkupTests;
-                targetProjectYear.MarkupAnimals = sourceProjectYear.MarkupAnimals;
-                targetProjectYear.MarkupAdditional = sourceProjectYear.MarkupAdditional;
-                targetProjectYear.ProfitTime = sourceProjectYear.ProfitTime;
-                targetProjectYear.ProfitTests = sourceProjectYear.ProfitTests;
-                targetProjectYear.ProfitAnimals = sourceProjectYear.ProfitAnimals;
-                targetProjectYear.ProfitAdditional = sourceProjectYear.ProfitAdditional;
-
                 // Persist copied target-year rows first, then recost from tracked DB rows
                 await _context.SaveChangesAsync();
 

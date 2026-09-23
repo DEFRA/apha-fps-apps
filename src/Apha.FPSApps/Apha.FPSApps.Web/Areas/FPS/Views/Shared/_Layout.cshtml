@@ -11,16 +11,7 @@
         ViewData["Title"] = $"{fpsYearCode} : {pageTitle}";
     }
     <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
-    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/fps_styles/styles.css" />
-    <link rel="stylesheet" href="~/DataGrid/datagrid.css" />
-    <link rel="stylesheet" href="~/css/main_style.css" />
-    <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
-    @* Minified build: inline scripts in @section Scripts run before deferred
-       scripts, so jQuery must stay here and load synchronously. *@
+    <link rel="stylesheet" href="~/css/bundles/fps.css" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -97,9 +88,7 @@
             };
     </script>
 
-    <script src="~/js/common/headernav/navmenu.js"></script>
-    <script src="~/js/common/numeric-decimal-input.js"></script>
-    <script src="~/js/common/js-alphanumeric-field.js"></script>
+    <script src="~/js/bundles/fps.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

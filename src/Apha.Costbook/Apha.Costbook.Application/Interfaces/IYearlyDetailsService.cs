@@ -5,6 +5,7 @@ namespace Apha.Costbook.Application.Interfaces;
 
 public interface IYearlyDetailsService
 {
+    Task<MaintenanceSettingsDto> GetSettingsAsync();
     Task<ProjectHeaderDto?> GetProjectHeaderAsync(string projectId);
     Task<IEnumerable<ProjectYearDto>> GetProjectYearsAsync(string projectId);
     Task<ProjectYearDto> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);
