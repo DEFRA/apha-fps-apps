@@ -127,16 +127,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookAccount
             await _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
         }
 
-        [Fact]
-        public async Task Methods_OnHttpException_ReturnsFailureWithInternalError()
-        {
-            _http.GetAsync<List<AccountGroupRes>>(Arg.Any<string>()).Throws(new Exception("boom"));
-
-            var result = await _client.GetAllAccountGroupsAsync();
-
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
-        }
+        
     }
 }

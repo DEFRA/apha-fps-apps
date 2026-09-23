@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
             List<YearDto>?            years        = null,
             List<MonthlyPactDto>?     monthlyPact  = null)
         {
-            _projectListServiceMock.GetAllProjectsListAsync()
+            _projectListServiceMock.GetAllProjectsListAsync(Arg.Any<int>())
                 .Returns(new ApiResponseDto<List<ProjectListViewDto>>
                 {
                     Success = true,
@@ -148,7 +148,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
         {
             SetupDefaultIndexMocks();
             await _controller.Index(null, null);
-            await _projectListServiceMock.Received(1).GetAllProjectsListAsync();
+            await _projectListServiceMock.Received(1).GetAllProjectsListAsync(1);
         }
 
         [Fact]
@@ -233,7 +233,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
         [Fact]
         public async Task Index_WhenProjectsDataIsNull_ProjectOptionsIsEmpty()
         {
-            _projectListServiceMock.GetAllProjectsListAsync()
+            _projectListServiceMock.GetAllProjectsListAsync(Arg.Any<int>())
                 .Returns(new ApiResponseDto<List<ProjectListViewDto>> { Success = true, Data = null });
             _projectDetailsServiceMock.GetAllYearAsync()
                 .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = [new YearDto { Value = 2024 }] });
@@ -252,7 +252,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
         [Fact]
         public async Task Index_WhenYearsDataIsNull_YearOptionsIsEmpty()
         {
-            _projectListServiceMock.GetAllProjectsListAsync()
+            _projectListServiceMock.GetAllProjectsListAsync(Arg.Any<int>())
                 .Returns(new ApiResponseDto<List<ProjectListViewDto>>
                 {
                     Success = true,
@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
         [Fact]
         public async Task Index_WhenProjectListServiceThrowsException_PropagatesException()
         {
-            _projectListServiceMock.GetAllProjectsListAsync()
+            _projectListServiceMock.GetAllProjectsListAsync(Arg.Any<int>())
                 .ThrowsAsync(new Exception("Service unavailable"));
             _projectDetailsServiceMock.GetAllYearAsync()
                 .Returns(new ApiResponseDto<List<YearDto>> { Success = true, Data = [] });

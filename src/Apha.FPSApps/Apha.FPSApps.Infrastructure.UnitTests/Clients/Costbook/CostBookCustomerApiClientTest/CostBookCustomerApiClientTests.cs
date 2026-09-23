@@ -113,48 +113,32 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookCustome
         }
 
         [Fact]
-        public async Task GetAllCustomersAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetAllCustomersAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var exceptionMessage = "Network connection failed";
             _http.GetAsync<List<CustomerRes>>("api/v1/projects/customers")
                 .ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act
-            var result = await _client.GetAllCustomersAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _client.GetAllCustomersAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve customers", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal(exceptionMessage, result.Errors[0].Details);
-            Assert.NotNull(result.Meta);
+            Assert.Equal(exceptionMessage, exception.Message);
             await _http.Received(1).GetAsync<List<CustomerRes>>("api/v1/projects/customers");
         }
 
         [Fact]
-        public async Task GetAllCustomersAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetAllCustomersAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<CustomerRes>> { Success = true, Data = new List<CustomerRes> { new CustomerRes() } };
             _http.GetAsync<List<CustomerRes>>("api/v1/projects/customers").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<CustomerDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetAllCustomersAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllCustomersAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve customers", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            Assert.Equal("Mapping failed", exception.Message);
             await _http.Received(1).GetAsync<List<CustomerRes>>("api/v1/projects/customers");
         }
 

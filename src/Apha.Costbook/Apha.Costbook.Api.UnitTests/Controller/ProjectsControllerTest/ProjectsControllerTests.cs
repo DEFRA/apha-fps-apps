@@ -89,17 +89,21 @@ namespace Apha.Costbook.Api.UnitTests.Controller.ProjectsControllerTest
         }
 
         [Fact]
-        public async Task GetProject_WithInvalidId_ReturnsNotFound()
+        public async Task GetProject_WithInvalidId_ReturnsOkWithNullSuccessResponse()
         {
             // Arrange
             var projectId = "invalid";
-            _projectService.GetProjectByIdAsync(projectId).Returns((ProjectDto?)null);
+            _projectService.GetProjectByIdAsync(projectId).Returns(Task.FromResult<ProjectDto?>(null));
 
             // Act
             var result = await _controller.GetProject(projectId);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<ApiResponse<ProjectRes>>(okResult.Value!);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
             await _projectService.Received(1).GetProjectByIdAsync(projectId);
             _mapper.DidNotReceive().Map<ProjectRes>(Arg.Any<ProjectDto>());
         }

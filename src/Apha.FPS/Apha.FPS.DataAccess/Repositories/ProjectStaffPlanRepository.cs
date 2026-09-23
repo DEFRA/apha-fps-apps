@@ -99,6 +99,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "pcgrade"       => ApplyOrder(query, x => x.PcGrade,       descending),
                 "gradecode"     => ApplyOrder(query, x => x.GradeCode,     descending),
                 "plannedhours"  => ApplyOrder(query, x => x.PlannedHours,  descending),
+                "chargerate"    => ApplyOrder(query, x => x.ChargeRate,    descending),
                 "cost"          => ApplyOrder(query, x => x.Cost,          descending),
                 "paycost"       => ApplyOrder(query, x => x.PayCost,       descending),
                 _               => query.OrderBy(x => x.ProgramNo).ThenBy(x => x.ParentProject)

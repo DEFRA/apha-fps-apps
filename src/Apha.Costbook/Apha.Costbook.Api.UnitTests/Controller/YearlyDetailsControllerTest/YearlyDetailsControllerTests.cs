@@ -27,13 +27,17 @@ public class YearlyDetailsControllerTests
     #region GetProjectHeader
 
     [Fact]
-    public async Task GetProjectHeader_ReturnsNotFound_WhenProjectNotFound()
+    public async Task GetProjectHeader_ReturnsOkWithNullSuccessResponse_WhenProjectNotFound()
     {
-        _service.GetProjectHeaderAsync("NOTFOUND").Returns((ProjectHeaderDto?)null);
+        _service.GetProjectHeaderAsync("NOTFOUND").Returns(Task.FromResult<ProjectHeaderDto?>(null));
 
         var result = await _controller.GetProjectHeader("NOTFOUND");
 
-        Assert.IsType<NotFoundResult>(result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<ProjectHeaderRes>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Null(apiResponse.Data);
+        Assert.NotNull(apiResponse.Meta);
         await _service.Received(1).GetProjectHeaderAsync("NOTFOUND");
     }
 

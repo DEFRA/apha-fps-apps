@@ -29,7 +29,7 @@
 
                 
                 <div class="yfd-toolbar__item">
-                    <label class="govuk-label tab-font-size govuk-!-font-weight-bold" for="yfdProjectSelectMulti_input">Project</label>
+                    <label class="govuk-label tab-font-size govuk-!-font-weight-bold">Project</label>
                     <div id="yfdProjectSelectMultiDropdown" class="sup_select_option_width_100"></div>
                 </div>
 
@@ -113,7 +113,7 @@
                             </tr>
                         </thead>
                         <tbody class="govuk-table__body">
-                            <tr class="govuk-table__row">
+                            <tr class="govuk-table__row" id="yfdTotalsRow">
                                 <td class="govuk-table__cell yfd-total-label"  colspan="2">Totals</td>
                                 <td class="govuk-table__cell sup_text_right_align" id="totalCustomerIncome"></td>
                                 <td class="govuk-table__cell yfd-total-hidden"></td>
@@ -1013,6 +1013,71 @@
                 }
             }
         }
+            updateTotalsRowAriaLabel();
+        }
+
+        // Build an accessible name for the totals row from each column header
+        // paired with the corresponding cell's current value, so tabbing to
+        // the row announces e.g. "Totals, Customer Income £120.00, Actual
+        // Expenditure £45.00, ...". Called whenever the totals are recalculated
+        // so the announced values always match what is displayed.
+        function updateTotalsRowAriaLabel() {
+            var table = document.getElementById('tblYFDTotals');
+            var row = document.getElementById('yfdTotalsRow');
+            if (!table || !row) return;
+
+            var headers = Array.prototype.map.call(
+                table.querySelectorAll('thead th'),
+                function (th) { return (th.textContent || '').trim(); }
+            );
+
+            var cells = row.querySelectorAll('td');
+            var parts = [];
+            var headerIndex = 0;
+            Array.prototype.forEach.call(cells, function (cell) {
+                var span = cell.colSpan || 1;
+                var value = (cell.textContent || '').trim();
+                if (value) {
+                    var header = headers[headerIndex] || '';
+                    parts.push(header ? header + ' ' + value : value);
+                }
+                headerIndex += span;
+            });
+
+            row.setAttribute('aria-label', parts.join(', '));
+            makeTotalsCellsIndividuallyFocusable();
+        }
+
+        // ── Additive: make each totals cell individually focusable/announced ────
+        // Runs on top of the existing whole-row aria-label above, without any
+        // markup changes. Maps each td in #yfdTotalsRow to its corresponding
+        // column header (from the visually-hidden thead) at runtime, then gives
+        // the cell its own tabindex and an "label: value" aria-label, so tabbing
+        // through the row announces each column individually rather than the
+        // whole row at once.
+        function makeTotalsCellsIndividuallyFocusable() {
+            var table = document.getElementById('tblYFDTotals');
+            var row = document.getElementById('yfdTotalsRow');
+            if (!table || !row) return;
+
+            var headers = Array.prototype.map.call(
+                table.querySelectorAll('thead th'),
+                function (th) { return (th.textContent || '').trim(); }
+            );
+
+            var cells = row.querySelectorAll('td');
+            var headerIndex = 0;
+            Array.prototype.forEach.call(cells, function (cell) {
+                var span = cell.colSpan || 1;
+                var value = (cell.textContent || '').trim();
+                var header = headers[headerIndex] || '';
+                headerIndex += span;
+
+                if (!value || !header) return;
+
+                if (!cell.hasAttribute('tabindex')) cell.setAttribute('tabindex', '0');
+                cell.setAttribute('aria-label', header + ': ' + value);
+            });
         }
 
         // ── Utility helpers ──────────────────────────────────────────────────────────────
