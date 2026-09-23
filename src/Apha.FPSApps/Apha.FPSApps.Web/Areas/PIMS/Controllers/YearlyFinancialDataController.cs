@@ -123,10 +123,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         // -- PopulateDropdownsAsync ----------------------------------------
         private async Task PopulateDropdownsAsync(YearlyFinancialDataViewModel model)
         {
-            ApiResponseDto<List<ProjectListMilestoneDto>> projectResult =
+            ApiResponseDto<List<ProjectListMilestoneDto>>? projectResult =
                 await _projectListService.GetAllProjectsForMilestoneAsync();
 
-            if (projectResult.Success && projectResult.Data != null)
+            if (projectResult?.Success == true && projectResult.Data != null)
             {
                 model.ProjectList = projectResult.Data
                     .Where(p => !string.IsNullOrWhiteSpace(p.Parentproject))

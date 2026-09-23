@@ -29,14 +29,20 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetAllCapsStaff()
         {
             var dtos = await _service.GetAllStaffAsync();
+            if (dtos == null)
+                return CreateNullSuccessResponse<List<StaffRes>>();
+
             return Ok(_mapper.Map<List<StaffRes>>(dtos));
         }
-               
+
         [HttpGet("paginated")]
         public async Task<IActionResult> GetPaginatedCapsStaff([FromQuery] PaginationReq<string> query)
         {
             var parameters = _mapper.Map<QueryParameters<string>>(query);
             var result = await _service.GetPaginatedAsync(parameters);
+            if (result == null)
+                return CreateNullSuccessResponse<PaginationRes<StaffRes>>();
+
             return Ok(_mapper.Map<PaginationRes<StaffRes>>(result));
         }
 
@@ -44,12 +50,14 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetCapsStaff(string mNumber)
         {
             var dto = await _service.GetByMNumberAsync(mNumber);
-            if (dto == null) return NotFound();
+            if (dto == null)
+                return CreateNullSuccessResponse<StaffRes>();
+
             return Ok(_mapper.Map<StaffRes>(dto));
         }
 
         [HttpPost]
-        
+
         public async Task<IActionResult> AddCapsStaff([FromBody] StaffReq req)
         {
             var dto = _mapper.Map<StaffDto>(req);
@@ -58,7 +66,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpPut("{mNumber}")]
-        
+
         public async Task<IActionResult> UpdateCapsStaff(string mNumber, [FromBody] StaffReq req)
         {
             var dto = _mapper.Map<StaffDto>(req);
@@ -67,7 +75,7 @@ namespace Apha.Costbook.Api.Controllers
         }
 
         [HttpDelete("{mNumber}")]
-        
+
         public async Task<IActionResult> DeleteCapsStaff(string mNumber)
         {
             if (string.IsNullOrWhiteSpace(mNumber))
@@ -75,6 +83,20 @@ namespace Apha.Costbook.Api.Controllers
 
             await _service.DeleteStaffAsync(mNumber);
             return Ok(new { success = true, message = "Deleted successfully" });
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

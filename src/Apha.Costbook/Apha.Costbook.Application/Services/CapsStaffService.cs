@@ -28,13 +28,9 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<PaginatedResult<StaffDto>> GetPaginatedAsync(QueryParameters<string> queryParameters)
         {
-            var errors = new List<BusinessValidationError>();
-
-            if (queryParameters == null)
-                errors.Add(new BusinessValidationError("Query parameters must not be null.", "Query parameters must not be null."));
-
-            if (errors.Count > 0)
-                throw new BusinessValidationErrorException(errors);
+            if (queryParameters is null)
+                throw new BusinessValidationErrorException(
+                    [new BusinessValidationError("Query parameters must not be null.", "Query parameters must not be null.")]);
 
             var coreParams = _mapper.Map<PaginationParameters<string>>(queryParameters);
             var pagedData = await _repository.GetPaginatedAsync(coreParams);
@@ -60,15 +56,16 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<StaffDto> AddStaffAsync(StaffDto dto)
         {
+            if (dto is null)
+                throw new BusinessValidationErrorException(
+                    [new BusinessValidationError("StaffDto must not be null.", "StaffDto must not be null.")]);
+
             var errors = new List<BusinessValidationError>();
 
-            if (dto is null)
-                errors.Add(new BusinessValidationError("StaffDto must not be null.", "StaffDto must not be null."));
-
-            if (dto is not null && string.IsNullOrWhiteSpace(dto.Mnumber))
+            if (string.IsNullOrWhiteSpace(dto.Mnumber))
                 errors.Add(new BusinessValidationError("MNumber must not be null or empty.", "MNumber must not be null or empty."));
 
-            if (dto is not null && string.IsNullOrWhiteSpace(dto.Name))
+            if (string.IsNullOrWhiteSpace(dto.Name))
                 errors.Add(new BusinessValidationError("Name must not be null or empty.", "Name must not be null or empty."));
 
             if (errors.Count > 0)
@@ -89,12 +86,13 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<StaffDto> UpdateStaffAsync(string mNumber, StaffDto dto)
         {
+            if (dto is null)
+                throw new BusinessValidationErrorException(
+                    [new BusinessValidationError("StaffDto must not be null.", "StaffDto must not be null.")]);
+
             var errors = new List<BusinessValidationError>();
 
-            if (dto is null)
-                errors.Add(new BusinessValidationError("StaffDto must not be null.", "StaffDto must not be null."));
-
-            if (dto is not null && string.IsNullOrWhiteSpace(dto.Name))
+            if (string.IsNullOrWhiteSpace(dto.Name))
                 errors.Add(new BusinessValidationError("Name must not be null or empty.", "Name must not be null or empty."));
 
             if (errors.Count > 0)
