@@ -119,12 +119,18 @@ namespace Apha.FPS.Application.Services
                     .Select(f => new BusinessValidationError(f.Message, f.ValidationCode))
                     .ToList());
 
+            // ResolvedTestCode/ResolvedBuyer carry the live table's actual-cased key (falling
+            // back to the as-staged value for Insert, where there is no live row) so the
+            // worker's later exact-match UPDATE targets the real casing/whitespace rather than
+            // whatever the uploader happened to type — see TestFreezeEntry.
             var fecFreezes = findings
                 .Where(f => f.ValidationCode == "ROW_CLASSIFIED" && string.Equals(f.Sheet, "FEC", StringComparison.OrdinalIgnoreCase))
                 .Select(f =>
                 {
                     context.LiveFecLookup.TryGetValue(BulkRatesValidationKeys.TestCode(f.BusinessKey!), out var live);
-                    return new TestFreezeEntry(f.BusinessKey!, null, f.CalculatedAction!, f.EffectiveNewRate, live?.DefraUnitPrice);
+                    return new TestFreezeEntry(
+                        f.BusinessKey!, null, f.CalculatedAction!, f.EffectiveNewRate, live?.DefraUnitPrice,
+                        live?.TestCode ?? f.BusinessKey!, null);
                 })
                 .ToList();
 
@@ -134,7 +140,9 @@ namespace Apha.FPS.Application.Services
                 {
                     var (testCode, buyer) = BulkRatesValidationFindingMapper.SplitBusinessKey(f.Sheet, f.BusinessKey);
                     context.LiveAgrupLookup.TryGetValue(BulkRatesValidationKeys.AgrupKey(testCode!, buyer!), out var live);
-                    return new TestFreezeEntry(testCode!, buyer, f.CalculatedAction!, f.EffectiveNewRate, live?.UnitPrice);
+                    return new TestFreezeEntry(
+                        testCode!, buyer, f.CalculatedAction!, f.EffectiveNewRate, live?.UnitPrice,
+                        live?.TestCode ?? testCode!, live?.Buyer ?? buyer);
                 })
                 .ToList();
 
@@ -530,7 +538,7 @@ namespace Apha.FPS.Application.Services
                     }
                     else
                     {
-                        var unchanged = row.FecNewRate == live.UnitPriceVla && row.FecNewRate == live.DefraUnitPrice;
+                        var unchanged = row.FecNewRate == live.DefraUnitPrice;
                         findings.Add(Classification("FEC", row.TestCode, row.SourceRow,
                             unchanged ? ValidationCalculatedAction.NoChange : ValidationCalculatedAction.Update,
                             row.FecNewRate));

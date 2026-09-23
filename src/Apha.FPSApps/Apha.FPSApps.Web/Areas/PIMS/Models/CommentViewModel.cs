@@ -5,8 +5,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 {
     public class CommentViewModel
     {
-        
+
         public string Parentproject { get; set; } = string.Empty;
+        public int ShowProjects { get; set; } = 1;
 
         public string? SelectedProject { get; set; }
 

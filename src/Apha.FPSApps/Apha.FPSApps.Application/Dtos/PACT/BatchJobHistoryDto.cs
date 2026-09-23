@@ -10,5 +10,6 @@ namespace Apha.FPSApps.Application.Dtos.PACT
         public DateTime StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }
+        public string? Remarks { get; set; }
     }
 }

@@ -86,7 +86,7 @@
                            type="text"
                            placeholder="PACTId will be auto-generated"
                            readonly
-                           tabindex="-1" />
+                           tabindex="0" />
                 }
                 <span asp-validation-for="PactId" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -364,6 +364,73 @@
         }
     }
 
+    // Keyboard support for the trigger, search box and result rows. Handled
+    // explicitly here (rather than relying solely on the shared
+    // global-dropdown-keyboard.js conventions, which key off id suffixes like
+    // "...DropdownPanel"/"...SearchBox"/"...DropdownBody" that this markup
+    // doesn't use) so Enter/Space/Arrow navigation works reliably for this
+    // specific dropdown regardless of naming.
+    function onWgStaffNameTriggerKeydown(e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            toggleWgStaffNameDropdown();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            var panel = document.getElementById('staff-name-panel');
+            var isHidden = !panel || panel.style.display === 'none' || panel.style.display === '';
+            if (isHidden) toggleWgStaffNameDropdown();
+            var search = document.getElementById('staff-name-search');
+            if (search) search.focus();
+        } else if (e.key === 'Escape') {
+            var panel = document.getElementById('staff-name-panel');
+            if (panel && panel.style.display === 'block') {
+                e.preventDefault();
+                closeWgStaffNameDropdown();
+            }
+        }
+    }
+
+    function onWgStaffNameSearchKeydown(e) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            var body = document.getElementById('staffNameTableBody');
+            var firstRow = body && body.querySelector('tr');
+            if (firstRow) firstRow.focus();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeWgStaffNameDropdown();
+            var input = document.getElementById('staff-name-input');
+            if (input) input.focus();
+        }
+    }
+
+    function onWgStaffNameRowKeydown(e) {
+        var row = this;
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            selectWgStaffName(row);
+            var input = document.getElementById('staff-name-input');
+            if (input) input.focus();
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            var rows = Array.prototype.slice.call(row.parentElement.querySelectorAll('tr'));
+            var idx = rows.indexOf(row);
+            var delta = e.key === 'ArrowDown' ? 1 : -1;
+            var nextIdx = idx + delta;
+            if (nextIdx >= 0 && nextIdx < rows.length) {
+                rows[nextIdx].focus();
+            } else if (nextIdx < 0) {
+                var search = document.getElementById('staff-name-search');
+                if (search) search.focus();
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeWgStaffNameDropdown();
+            var input = document.getElementById('staff-name-input');
+            if (input) input.focus();
+        }
+    }
+
     function selectWgStaffName(row) {
         var name = row.getAttribute('data-name') || '';
         var spNumber = row.getAttribute('data-spnumber') || '';
@@ -458,6 +525,7 @@
             row.setAttribute('tabindex', '-1');
             row.style.cursor = 'pointer';
             row.onclick = function () { selectWgStaffName(this); };
+            row.addEventListener('keydown', onWgStaffNameRowKeydown);
 
             var nameCell = document.createElement('td');
             nameCell.className = 'govuk-table__cell';
@@ -527,10 +595,43 @@
             }
         }
 
+        var triggerInput = document.getElementById('staff-name-input');
+        if (triggerInput) {
+            triggerInput.removeEventListener('keydown', onWgStaffNameTriggerKeydown);
+            triggerInput.addEventListener('keydown', onWgStaffNameTriggerKeydown);
+        }
+
+        var searchInput = document.getElementById('staff-name-search');
+        if (searchInput) {
+            searchInput.removeEventListener('keydown', onWgStaffNameSearchKeydown);
+            searchInput.addEventListener('keydown', onWgStaffNameSearchKeydown);
+        }
+
         ['HrsPaid', 'Leave', 'SickSpecial'].forEach(function (fieldId) {
             var input = document.getElementById(fieldId);
             if (input) {
                 input.addEventListener('input', recalculateHrsAvail);
+            }
+        });
+
+        // govuk-modal-dialog.js attaches a keydown listener directly to every
+        // input/textarea/select/button inside ".modal" that calls
+        // event.stopPropagation(), so keydown events on these checkboxes never
+        // bubble up to the document-level Enter-toggle handler in
+        // global-dropdown-keyboard.js. Space still works natively (the browser
+        // toggles checkboxes on Space before any bubbling occurs), but Enter
+        // needs its own handler wired directly on the checkbox.
+        ['MakeAvailable', 'TimeRecorder'].forEach(function (fieldId) {
+            var checkbox = document.getElementById(fieldId);
+            if (checkbox) {
+                checkbox.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('input', { bubbles: true }));
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
             }
         });
 

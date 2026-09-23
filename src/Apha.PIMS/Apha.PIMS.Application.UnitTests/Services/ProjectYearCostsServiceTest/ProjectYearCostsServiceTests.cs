@@ -1087,9 +1087,21 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 2, 8);
             AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 3, 8);
 
-            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 3);
-            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 5);
-            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 3, 5);
+            workbook.Worksheet("TestPlan").Cell(1, 1).GetString().Should().Be("Test Code");
+            workbook.Worksheet("TestPlan").Cell(1, 2).GetString().Should().Be("Unit Price");
+            workbook.Worksheet("TestPlan").Cell(1, 3).GetString().Should().Be("No. Required");
+            workbook.Worksheet("TestPlan").Cell(1, 4).GetString().Should().Be("Cost");
+            workbook.Worksheet("TestPlan").Cell(1, 5).GetString().Should().BeEmpty();
+            workbook.Worksheet("TestPlan").Row(1).Cells(1, 4).Select(c => c.GetString()).Should().NotContain("Buyer");
+            workbook.Worksheet("TestPlan").Cell(2, 1).GetString().Should().Be("TC001");
+            workbook.Worksheet("TestPlan").Cell(2, 2).GetValue<double>().Should().Be(100d);
+            workbook.Worksheet("TestPlan").Cell(2, 3).GetValue<double>().Should().Be(2d);
+            workbook.Worksheet("TestPlan").Cell(2, 4).GetValue<double>().Should().Be(200d);
+            workbook.Worksheet("TestPlan").Cell(3, 3).GetString().Should().Be("Total");
+            workbook.Worksheet("TestPlan").Cell(3, 4).GetValue<double>().Should().Be(200d);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 2);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 3, 4);
 
             AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 6);
             AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 7);

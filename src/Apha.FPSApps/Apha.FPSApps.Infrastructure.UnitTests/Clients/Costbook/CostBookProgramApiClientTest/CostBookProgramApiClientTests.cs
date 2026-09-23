@@ -139,31 +139,22 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
         }
 
         [Fact]
-        public async Task GetAllProgramsAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetAllProgramsAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var exceptionMessage = "Network connection failed";
             _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs")
                 .ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act
-            var result = await _client.GetAllProgramsAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _client.GetAllProgramsAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve programs", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal(exceptionMessage, result.Errors[0].Details);
-            Assert.NotNull(result.Meta);
+            Assert.Equal(exceptionMessage, exception.Message);
             await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
         }
 
         [Fact]
-        public async Task GetAllProgramsAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetAllProgramsAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var programResList = new List<ProgramRes>
@@ -180,17 +171,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Costbook.CostBookProgramApiClien
             _http.GetAsync<List<ProgramRes>>("api/v1/projects/programs").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProgramDto>>>(apiResponse).Throws(mappingException);
 
-            // Act
-            var result = await _client.GetAllProgramsAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllProgramsAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve programs", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            Assert.Equal("Mapping failed", exception.Message);
             await _http.Received(1).GetAsync<List<ProgramRes>>("api/v1/projects/programs");
         }
 
