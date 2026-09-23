@@ -18,4 +18,16 @@ public sealed class BatchAlertingSettings
 
     /// <summary>Email recipient for operational execution notifications.</summary>
     public string? AdminNotificationEmail { get; set; }
+
+    /// <summary>Subject template for a success notification. Supports the <c>{JobDisplayName}</c> placeholder.</summary>
+    public string CompletionSubject { get; set; } = "FPS Batch Job Completed Successfully – {JobDisplayName}";
+
+    /// <summary>Body template for a success notification. Supports the <c>{JobDisplayName}</c> placeholder.</summary>
+    public string CompletionBody { get; set; } = "The {JobDisplayName} process has completed successfully.\n\nThank you for your support.";
+
+    /// <summary>Subject template for a failure notification. Supports the <c>{JobDisplayName}</c> placeholder.</summary>
+    public string FailureSubject { get; set; } = "FPS Batch Job Failed – {JobDisplayName}";
+
+    /// <summary>Body template for a failure notification. Supports the <c>{JobDisplayName}</c> placeholder.</summary>
+    public string FailureBody { get; set; } = "The {JobDisplayName} process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.";
 }

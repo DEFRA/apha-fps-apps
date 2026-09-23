@@ -8,8 +8,9 @@ namespace Apha.BatchJobs.UnitTests;
 
 /// <summary>
 /// Mocked, no live DB — proves <see cref="MaterializeYearEndConfigurationStep"/>'s branching logic in
-/// isolation. Materializes using <c>context.TargetFpsYear</c>; <c>job_queue.target_fpsyear</c> is not
-/// read for this purpose (the FPS API does not currently persist it at Initiate time).
+/// isolation. Materializes using <c>context.TargetFpsYear</c>, cross-checked against the persisted
+/// <c>job_queue.target_fpsyear</c> when one is present — which today it normally isn't, since the FPS
+/// API does not currently persist it at Initiate time; a null persisted value is not itself an error.
 /// Column-mapping correctness (staging → real table) is proven separately, against a live DB, by
 /// <c>YearEndDataSetupRepositoryMaterializationIntegrationTests</c>.
 /// </summary>
@@ -171,7 +172,7 @@ public sealed class MaterializeYearEndConfigurationStepTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPersistedTargetFpsYearIsNullOrDiffers_StillMaterializesUsingContext()
+    public async Task ExecuteAsync_WhenPersistedTargetFpsYearIsNull_StillMaterializesUsingContext()
     {
         var jobQueueId = Guid.NewGuid();
         var repository = Substitute.For<IYearEndDataSetupRepository>();
@@ -191,6 +192,28 @@ public sealed class MaterializeYearEndConfigurationStepTests
 
         await repository.Received(1).MaterializeStagedSettingsAsync(TargetFpsYear, Arg.Any<CancellationToken>());
         await repository.Received(1).MaterializeStagedMonthHoursAsync(TargetFpsYear, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPersistedTargetFpsYearDiffersFromContext_ThrowsBeforeAnyWrite()
+    {
+        var jobQueueId = Guid.NewGuid();
+        const int persistedTargetFpsYear = 2027; // deliberately different from TargetFpsYear (2026).
+        var repository = Substitute.For<IYearEndDataSetupRepository>();
+        repository.ResolveJobQueueByExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(((Guid JobQueueId, int? TargetFpsYear)?)(jobQueueId, persistedTargetFpsYear));
+
+        var step = CreateStep(repository);
+        var context = CreateContext();
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
+
+        Assert.Contains("Target year mismatch", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"target_fpsyear={persistedTargetFpsYear}", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"TargetFpsYear={TargetFpsYear}", ex.Message, StringComparison.Ordinal);
+        await repository.DidNotReceive().CountRowsByYearAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedSettingsAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await repository.DidNotReceive().MaterializeStagedMonthHoursAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     private static YearEndExecutionContext CreateContext() =>

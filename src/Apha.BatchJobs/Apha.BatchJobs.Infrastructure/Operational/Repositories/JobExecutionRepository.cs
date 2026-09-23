@@ -581,6 +581,72 @@ public class JobExecutionRepository : IJobExecutionRepository
             reader.IsDBNull(6) ? null : reader.GetDateTime(6));
     }
 
+    /// <inheritdoc />
+    public async Task<bool> MarkFailedIfNonTerminalAsync(Guid jobQueueId, string errorMessage, string diagnosticSummary, CancellationToken cancellationToken = default)
+    {
+        if (jobQueueId == Guid.Empty)
+            throw new ArgumentException("Job queue ID cannot be empty.", nameof(jobQueueId));
+
+        var queueRow = await _context.TblJobQueue
+            .AsNoTracking()
+            .FirstOrDefaultAsync(q => q.JobQueueId == jobQueueId, cancellationToken);
+
+        if (queueRow == null)
+            return false;
+
+        var nonTerminalStatusIds = await _context.TblJobStatus
+            .Where(s => s.JobId == queueRow.JobId
+                && (s.Status == nameof(JobStatus.Initiated) || s.Status == nameof(JobStatus.Approved) || s.Status == nameof(JobStatus.Running)))
+            .Select(s => s.StatusId)
+            .ToListAsync(cancellationToken);
+
+        var failedStatusId = await EnsureStatusAsync(queueRow.JobId, nameof(JobStatus.Failed), cancellationToken);
+        var now = DateTime.UtcNow;
+
+        var executionStrategy = _context.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                // Live re-check of the current status, in the same statement as the write — the
+                // same pattern BatchLockRepository.DeleteIfStillExpiredAsync uses to close the
+                // analogous race on job_lock: a losing caller (the real worker having since
+                // reached a terminal status on its own) simply updates 0 rows and gets false back.
+                var updatedRows = await _context.TblJobQueue
+                    .Where(q => q.JobQueueId == jobQueueId && nonTerminalStatusIds.Contains(q.StatusId))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(q => q.StatusId, failedStatusId)
+                        .SetProperty(q => q.ErrorMessage, errorMessage)
+                        .SetProperty(q => q.EndDateTime, now)
+                        .SetProperty(q => q.UpdatedAt, now),
+                        cancellationToken);
+
+                if (updatedRows > 0)
+                {
+                    _context.TblJobQueueLog.Add(new TblJobQueueLog
+                    {
+                        JobQueueId = jobQueueId,
+                        StatusId = failedStatusId,
+                        PerformedBy = queueRow.RequestedBy,
+                        LogTime = now,
+                        Note = diagnosticSummary,
+                        FpsYear = FpsYearResolver.ResolveFpsYear(queueRow.FpsYear, now)
+                    });
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                return updatedRows > 0;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                throw;
+            }
+        });
+    }
+
     private static void AddParameter(DbCommand command, string name, object value)
     {
         var parameter = command.CreateParameter();

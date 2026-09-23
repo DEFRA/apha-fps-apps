@@ -45,74 +45,85 @@ public sealed class BatchLockReconciliationServiceUnitTests
         await _service.ReconcileAsync(notExpiredLock);
 
         await _execRepo.DidNotReceive().GetExecutionByJobQueueIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-        await _execRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await _execRepo.DidNotReceive().MarkFailedIfNonTerminalAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _lockRepo.DidNotReceive().DeleteIfStillExpiredAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task ReconcileAsync_NoMatchingExecution_DoesNotCallUpdate_ButStillAttemptsConditionalDelete()
+    public async Task ReconcileAsync_ClaimFails_NeverTouchesExecutionRepository()
+    {
+        // The critical regression case for the lease-renewal race: if the lock claim fails
+        // (renewed or already reconciled by someone else), the execution row must never be read
+        // or written — the old buggy order touched execution.Status before this check.
+        var expiredLock = BuildLock("SomeLock", out var jobQueueId);
+        _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        var exception = await Record.ExceptionAsync(() => _service.ReconcileAsync(expiredLock));
+
+        Assert.Null(exception);
+        await _execRepo.DidNotReceive().GetExecutionByJobQueueIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _execRepo.DidNotReceive().MarkFailedIfNonTerminalAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        // The only delete path used is the conditional one — never ReleaseLockAsync or any other
+        // unconditional removal.
+        await _lockRepo.DidNotReceive().ReleaseLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReconcileAsync_ClaimSucceedsButNoMatchingExecution_ReadsForExplanationOnly()
     {
         var expiredLock = BuildLock("SomeLock", out var jobQueueId);
+        _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>())
+            .Returns(true);
+        // MarkFailedIfNonTerminalAsync itself returns false when no row exists to update.
+        _execRepo.MarkFailedIfNonTerminalAsync(jobQueueId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(false);
         _execRepo.GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>())
             .Returns((JobExecutionRecord?)null);
+
+        await _service.ReconcileAsync(expiredLock);
+
+        await _lockRepo.Received(1).DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>());
+        await _execRepo.Received(1).MarkFailedIfNonTerminalAsync(jobQueueId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        // The read only happens because the atomic update found nothing — it's for the log
+        // message, not for deciding whether to write.
+        await _execRepo.Received(1).GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReconcileAsync_AtomicMarkSucceeds_LogsReconciledAndNeverReadsForExplanation()
+    {
+        var expiredLock = BuildLock("SomeLock", out var jobQueueId);
         _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>())
+            .Returns(true);
+        _execRepo.MarkFailedIfNonTerminalAsync(
+                jobQueueId,
+                BatchLockReconciliationService.ReconciledErrorMessage,
+                BatchLockReconciliationService.ReconciledDiagnosticSummary,
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         await _service.ReconcileAsync(expiredLock);
 
-        await _execRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
-        await _lockRepo.Received(1).DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>());
-    }
-
-    [Theory]
-    [InlineData(JobStatus.Initiated)]
-    [InlineData(JobStatus.Approved)]
-    [InlineData(JobStatus.Running)]
-    public async Task ReconcileAsync_NonTerminalExecution_MarksFailedWithConfirmedMessagesAndPreservesRequestedBy(JobStatus nonTerminalStatus)
-    {
-        // Initiated/Approved are included, not just Running — a lock can exist for a row not yet
-        // transitioned to Running (JobOrchestrator acquires the lock before writing that
-        // transition), so a crash in that narrow window must be reconcilable too.
-        const string originalRequestedBy = "original-requester-must-survive";
-        var expiredLock = BuildLock("SomeLock", out var jobQueueId);
-        var execution = new JobExecutionRecord
-        {
-            ExecutionId = 0,
-            JobName = "SomeLock",
-            JobExecutionId = Guid.NewGuid(),
-            JobQueueId = jobQueueId,
-            UserId = originalRequestedBy,
-            JobType = JobType.Unknown,
-            RunMode = RunMode.Manual,
-            Status = nonTerminalStatus,
-            StartedAt = DateTime.UtcNow.AddMinutes(-20)
-        };
-        _execRepo.GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>()).Returns(execution);
-        _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>()).Returns(true);
-
-        JobExecutionRecord? updatedWith = null;
-        _execRepo.UpdateExecutionRecordAsync(
-                Arg.Do<JobExecutionRecord>(r => updatedWith = r),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
-
-        await _service.ReconcileAsync(expiredLock);
-
-        await _execRepo.Received(1).UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
-        Assert.NotNull(updatedWith);
-        Assert.Equal(JobStatus.Failed, updatedWith!.Status);
-        Assert.Equal(BatchLockReconciliationService.ReconciledErrorMessage, updatedWith.ErrorMessage);
-        Assert.Equal(BatchLockReconciliationService.ReconciledDiagnosticSummary, updatedWith.DiagnosticSummary);
-        Assert.Equal(originalRequestedBy, updatedWith.UserId);
-        await _lockRepo.Received(1).DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>());
+        await _execRepo.Received(1).MarkFailedIfNonTerminalAsync(
+            jobQueueId,
+            BatchLockReconciliationService.ReconciledErrorMessage,
+            BatchLockReconciliationService.ReconciledDiagnosticSummary,
+            Arg.Any<CancellationToken>());
+        // No stale read participates in — or follows — a successful atomic reconciliation.
+        await _execRepo.DidNotReceive().GetExecutionByJobQueueIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Theory]
     [InlineData(JobStatus.Completed)]
     [InlineData(JobStatus.Failed)]
     [InlineData(JobStatus.Rejected)]
-    public async Task ReconcileAsync_TerminalExecution_DoesNotCallUpdate_ButStillAttemptsConditionalDelete(JobStatus terminalStatus)
+    public async Task ReconcileAsync_AtomicMarkReturnsFalse_AndExecutionIsTerminal_CompletesWithoutThrowing(JobStatus terminalStatus)
     {
+        // From the service's perspective this covers both a row that was already terminal when
+        // observed and one that became terminal independently between the lock claim and the
+        // atomic write — MarkFailedIfNonTerminalAsync returning false is the only signal either
+        // way, by design: no stale status participates in the decision.
         var expiredLock = BuildLock("SomeLock", out var jobQueueId);
         var execution = new JobExecutionRecord
         {
@@ -126,60 +137,34 @@ public sealed class BatchLockReconciliationServiceUnitTests
             Status = terminalStatus,
             StartedAt = DateTime.UtcNow.AddMinutes(-20)
         };
-        _execRepo.GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>()).Returns(execution);
         _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>()).Returns(true);
+        _execRepo.MarkFailedIfNonTerminalAsync(jobQueueId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+        _execRepo.GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>()).Returns(execution);
+
+        var exception = await Record.ExceptionAsync(() => _service.ReconcileAsync(expiredLock));
+
+        Assert.Null(exception);
+        await _execRepo.Received(1).GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ReconcileAsync_CalledTwiceForSameLock_SecondCallIsHarmless()
+    {
+        // First call claims the lock and reconciles; second call (a re-run against the same
+        // stale expiredLock snapshot, or a second concurrent reconciler) finds the lock already
+        // gone and must be a pure no-op — it must not re-touch the execution row at all.
+        var expiredLock = BuildLock("SomeLock", out var jobQueueId);
+        _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>())
+            .Returns(true, false);
+        _execRepo.MarkFailedIfNonTerminalAsync(jobQueueId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(true);
 
         await _service.ReconcileAsync(expiredLock);
-
-        await _execRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
-        await _lockRepo.Received(1).DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task ReconcileAsync_DeleteReturnsFalse_CompletesWithoutThrowing_NeverForceDeletes()
-    {
-        var expiredLock = BuildLock("SomeLock", out var jobQueueId);
-        _execRepo.GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>())
-            .Returns((JobExecutionRecord?)null);
-        // Simulates the lock having been renewed/replaced before ReconcileAsync's own delete ran.
-        _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>())
-            .Returns(false);
-
         var exception = await Record.ExceptionAsync(() => _service.ReconcileAsync(expiredLock));
 
         Assert.Null(exception);
-        // The only delete path used is the conditional one — never ReleaseLockAsync or any other
-        // unconditional removal.
-        await _lockRepo.DidNotReceive().ReleaseLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task ReconcileAsync_CalledTwiceForSameLock_SecondCallFindsAlreadyReconciledStateAndIsHarmless()
-    {
-        // Models what a second reconciler (or a re-run against the same stale expiredLock
-        // snapshot) actually observes after the first call already reconciled this row: the
-        // execution is now Failed (terminal) and the lock is already gone.
-        var expiredLock = BuildLock("SomeLock", out var jobQueueId);
-        var alreadyReconciledExecution = new JobExecutionRecord
-        {
-            ExecutionId = 0,
-            JobName = "SomeLock",
-            JobExecutionId = Guid.NewGuid(),
-            JobQueueId = jobQueueId,
-            UserId = "original-requester",
-            JobType = JobType.Unknown,
-            RunMode = RunMode.Manual,
-            Status = JobStatus.Failed,
-            StartedAt = DateTime.UtcNow.AddMinutes(-20),
-            ErrorMessage = BatchLockReconciliationService.ReconciledErrorMessage
-        };
-        _execRepo.GetExecutionByJobQueueIdAsync(jobQueueId, Arg.Any<CancellationToken>()).Returns(alreadyReconciledExecution);
-        _lockRepo.DeleteIfStillExpiredAsync("SomeLock", jobQueueId, Arg.Any<CancellationToken>()).Returns(false);
-
-        var exception = await Record.ExceptionAsync(() => _service.ReconcileAsync(expiredLock));
-
-        Assert.Null(exception);
-        await _execRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await _execRepo.Received(1).MarkFailedIfNonTerminalAsync(jobQueueId, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     private static BatchLock BuildLock(string lockName, out Guid jobQueueId, DateTime? expiresAt = null)

@@ -46,10 +46,12 @@ public sealed class EmailNotificationService : IEmailNotificationService
         {
             var isSuccess = notification.FinalStatus == JobStatus.Completed;
             var displayName = BatchJobDisplayNames.GetDisplayName(notification.JobName);
-            var subject = isSuccess
-                ? $"FPS Batch Job Completed Successfully – {displayName}"
-                : $"FPS Batch Job Failed – {displayName}";
-            var body = BuildExecutionNotificationBody(displayName, isSuccess);
+
+            var subjectTemplate = isSuccess ? _settings.CompletionSubject : _settings.FailureSubject;
+            var bodyTemplate = isSuccess ? _settings.CompletionBody : _settings.FailureBody;
+
+            var subject = ReplacePlaceholders(subjectTemplate, displayName);
+            var body = ReplacePlaceholders(bodyTemplate, displayName);
 
             _logger.LogInformation(
                 "Sending execution notification | JobExecutionId={JobExecutionId} | Job={JobName} | FinalStatus={FinalStatus} | To={Email}",
@@ -77,8 +79,6 @@ public sealed class EmailNotificationService : IEmailNotificationService
         }
     }
 
-    private static string BuildExecutionNotificationBody(string displayName, bool isSuccess) =>
-        isSuccess
-            ? $"The {displayName} process has completed successfully.\n\nThank you for your support."
-            : $"The {displayName} process did not complete successfully.\n\nPlease review the details and take necessary action.\n\nThank you for your support.";
+    private static string ReplacePlaceholders(string template, string displayName) =>
+        template.Replace("{JobDisplayName}", displayName, StringComparison.Ordinal);
 }

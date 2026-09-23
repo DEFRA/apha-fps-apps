@@ -78,4 +78,18 @@ public interface IJobExecutionRepository
     /// </summary>
     /// <param name="jobExecutionId">External job execution identifier.</param>
     Task<JobQueueApprovalMetadata?> GetApprovalMetadataAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Atomically marks the execution Failed only if its status is still non-terminal
+    /// (Initiated/Approved/Running) at the moment of the write — the current status is
+    /// re-checked live in the same conditional UPDATE, not trusted from an earlier read, so a
+    /// worker that independently reaches Completed/Failed/Rejected between the caller's read and
+    /// this call can never be overwritten. Used by orphan lock reconciliation, which must not
+    /// stomp a real worker's own terminal write with a synthetic "lease expired" Failed.
+    /// </summary>
+    /// <param name="jobQueueId">The job queue UUID.</param>
+    /// <param name="errorMessage">Business-facing error message to persist on the job_queue row.</param>
+    /// <param name="diagnosticSummary">Diagnostic-only note persisted to the job_queue_log entry for this transition.</param>
+    /// <returns>True if the row was still non-terminal and was flipped to Failed; false if it did not exist or was already terminal.</returns>
+    Task<bool> MarkFailedIfNonTerminalAsync(Guid jobQueueId, string errorMessage, string diagnosticSummary, CancellationToken cancellationToken = default);
 }

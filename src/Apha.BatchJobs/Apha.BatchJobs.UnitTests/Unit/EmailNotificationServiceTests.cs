@@ -130,6 +130,33 @@ public sealed class EmailNotificationServiceTests
     }
 
     [Fact]
+    public async Task SendExecutionNotificationAsync_WhenCustomTemplatesConfigured_SendsConfiguredSubjectAndBody()
+    {
+        // Proves the subject/body are genuinely configuration-driven (PR #564 review comment):
+        // a wording change is now an appsettings edit, not a code change + redeploy.
+        var settings = Options.Create(new BatchAlertingSettings
+        {
+            AdminNotificationEmail = "alerts@example.com",
+            CompletionSubject = "Custom subject - {JobDisplayName}",
+            CompletionBody = "Custom body for {JobDisplayName}"
+        });
+        var emailService = Substitute.For<IEmailService>();
+        emailService.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>()).Returns(EmailSendResult.Sent());
+        var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
+
+        await service.SendExecutionNotificationAsync(
+            CreateNotification(JobStatus.Completed, jobName: BatchJobNames.MabArchive),
+            CancellationToken.None);
+
+        await emailService.Received(1).SendAsync(
+            Arg.Is<EmailMessage>(m =>
+                m.To.Single() == "alerts@example.com" &&
+                m.Subject == "Custom subject - MABArchive" &&
+                m.HtmlBody == "Custom body for MABArchive"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task SendExecutionNotificationAsync_ShouldNotLeakTechnicalDiagnosticsIntoSubjectOrBody()
     {
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });

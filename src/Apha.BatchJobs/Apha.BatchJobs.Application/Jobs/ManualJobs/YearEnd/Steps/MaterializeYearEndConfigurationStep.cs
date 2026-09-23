@@ -49,8 +49,18 @@ public sealed class MaterializeYearEndConfigurationStep : IYearEndDataSetupStep
             throw new InvalidOperationException($"No fps.job_queue row found for JobExecutionId {jobExecutionId}.");
         }
 
-        var (jobQueueId, _) = jobQueueEntry.Value;
+        var (jobQueueId, persistedTargetFpsYear) = jobQueueEntry.Value;
         var targetFpsYear = context.TargetFpsYear.Value;
+
+        // The FPS API does not currently persist target_fpsyear at Initiate time, so a null
+        // persisted value is normal and not itself an error. When it is present, it must agree
+        // with the trigger's own year — otherwise a stale/mismatched re-trigger against an old
+        // queue row could materialize the staging singleton into the wrong year.
+        if (persistedTargetFpsYear.HasValue && persistedTargetFpsYear.Value != targetFpsYear)
+        {
+            throw new InvalidOperationException(
+                $"Target year mismatch: persisted target_fpsyear={persistedTargetFpsYear.Value} but trigger TargetFpsYear={targetFpsYear} for JobExecutionId {jobExecutionId}.");
+        }
 
         var existingSettings = await _repository.CountRowsByYearAsync(SettingsSchema, SettingsTable, "fpsyear", targetFpsYear, cancellationToken);
         if (existingSettings > 0)
