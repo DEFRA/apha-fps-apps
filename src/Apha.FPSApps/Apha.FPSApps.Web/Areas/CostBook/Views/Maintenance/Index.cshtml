@@ -801,9 +801,11 @@
         if (form) {
         form.addEventListener('submit', function (e) {
         e.preventDefault();
+        showLoader();
         clearValidationErrors($form);
 
         if (!isFormValid($form)) {
+        hideLoader();
         displayClientValidationErrors($form, $form);
         return;
         }
@@ -892,9 +894,11 @@
         if (form) {
         form.addEventListener('submit', function (e) {
         e.preventDefault();
+        showLoader();
         clearValidationErrors($form);
 
         if (!isFormValid($form)) {
+        hideLoader();
         displayClientValidationErrors($form, $form);
         return;
         }
