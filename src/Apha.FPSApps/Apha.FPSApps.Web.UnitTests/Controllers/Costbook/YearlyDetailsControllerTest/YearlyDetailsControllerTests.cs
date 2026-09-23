@@ -161,6 +161,15 @@ public class YearlyDetailsControllerTests
         _service.GetProjectYearsAsync("2024/001")
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
 
+        var settings = new MaintenanceSettingsDto
+        {
+            ProfitStaff = 2.1m,
+            ProfitTests = 2.2m,
+            ProfitAnimals = 2.3m,
+            ProfitExceptionalCosts = 2.4m
+        };
+        _service.GetSettingsAsync().Returns(ApiResponseDto<MaintenanceSettingsDto>.SuccessResponse(settings));
+
         // Act
         var result = await _controller.AddProjectYearGet("2024/001", 3);
 
@@ -169,6 +178,11 @@ public class YearlyDetailsControllerTests
         Assert.Equal("_AddProjectYear", partialResult.ViewName);
         var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
         Assert.Equal(3, model.YearValue);
+        Assert.Equal(2.1, model.ProfitTime);
+        Assert.Equal(2.2, model.ProfitTests);
+        Assert.Equal(2.3, model.ProfitAnimals);
+        Assert.Equal(2.4, model.ProfitAdditional);
+        await _service.Received(1).GetSettingsAsync();
     }
 
     [Fact]
@@ -1152,11 +1166,25 @@ public class YearlyDetailsControllerTests
         _service.GetProjectYearsAsync("2024/001")
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
 
+        var settings = new MaintenanceSettingsDto
+        {
+            ProfitStaff = 2.1m,
+            ProfitTests = 2.2m,
+            ProfitAnimals = 2.3m,
+            ProfitExceptionalCosts = 2.4m
+        };
+        _service.GetSettingsAsync().Returns(ApiResponseDto<MaintenanceSettingsDto>.SuccessResponse(settings));
+
         var result = await _controller.AddProjectYearGet("2024/001", 2, "DEFRA-PROG");
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
         Assert.Equal("DEFRA-PROG", model.Programme);
+        Assert.Equal(2.1, model.ProfitTime);
+        Assert.Equal(2.2, model.ProfitTests);
+        Assert.Equal(2.3, model.ProfitAnimals);
+        Assert.Equal(2.4, model.ProfitAdditional);
+        await _service.Received(1).GetSettingsAsync();
     }
 
     [Fact]
@@ -1165,11 +1193,25 @@ public class YearlyDetailsControllerTests
         _service.GetProjectYearsAsync("2024/001")
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
 
+        var settings = new MaintenanceSettingsDto
+        {
+            ProfitStaff = 2.1m,
+            ProfitTests = 2.2m,
+            ProfitAnimals = 2.3m,
+            ProfitExceptionalCosts = 2.4m
+        };
+        _service.GetSettingsAsync().Returns(ApiResponseDto<MaintenanceSettingsDto>.SuccessResponse(settings));
+
         var result = await _controller.AddProjectYearGet("2024/001", 2);
 
         var partialResult = Assert.IsType<PartialViewResult>(result);
         var model = Assert.IsType<ProjectYearRateItem>(partialResult.Model);
         Assert.Null(model.Programme);
+        Assert.Equal(2.1, model.ProfitTime);
+        Assert.Equal(2.2, model.ProfitTests);
+        Assert.Equal(2.3, model.ProfitAnimals);
+        Assert.Equal(2.4, model.ProfitAdditional);
+        await _service.Received(1).GetSettingsAsync();
     }
 
     #endregion
