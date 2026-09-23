@@ -1,4 +1,4 @@
-// ── Global keyboard-navigation support for custom "flyout" dropdowns ─────────
+﻿// ── Global keyboard-navigation support for custom "flyout" dropdowns ─────────
 (function () {
     'use strict';
 
@@ -135,23 +135,34 @@
     }, true);
 
     // Make the app footer reachable and announced by keyboard/screen readers.
-    // The shared AppFooter renders as a plain <div class="govuk-footer">, which
-    // has no landmark semantics, so NVDA skips it entirely and the copyright
-    // text is never read. Promoting it to a "contentinfo" landmark and adding
-    // tabindex="0" places it at the natural end of the Tab order, where its
-    // visible text is read once. Applied globally via this shared script.
-    // No aria-label is set: the footer already contains visible text, and an
-    // accessible name would make NVDA announce the copyright twice (once as
-    // the name, once as the contained text).
+    // The shared AppFooter renders as <div class="govuk-footer"> with an inner
+    // wrapper div carrying role="contentinfo". Landmark navigation can find
+    // that role, but nothing inside the footer is a tab stop, so users tabbing
+    // through the page never land on it. Also, a focused landmark with no
+    // accessible name is only announced as "content information" - its
+    // descendant text is not read - so we set aria-label to the visible
+    // copyright text as well.
     // Additive: markup in Views/Shared/Components/AppFooter stays unchanged.
     function makeFooterReadable() {
         var footer = document.querySelector('.govuk-footer');
         if (!footer || !isVisible(footer)) return;
-        if (!footer.hasAttribute('role') && footer.tagName !== 'FOOTER') {
+
+        var landmark = footer.tagName === 'FOOTER' || footer.getAttribute('role') === 'contentinfo'
+            ? footer
+            : footer.querySelector('[role="contentinfo"]');
+
+        if (!landmark) {
             footer.setAttribute('role', 'contentinfo');
+            landmark = footer;
         }
-        if (!footer.hasAttribute('tabindex')) {
-            footer.setAttribute('tabindex', '0');
+
+        if (!landmark.hasAttribute('tabindex')) {
+            landmark.setAttribute('tabindex', '0');
+        }
+
+        if (!landmark.hasAttribute('aria-label') && !landmark.hasAttribute('aria-labelledby')) {
+            var text = (landmark.textContent || '').replace(/\s+/g, ' ').trim();
+            if (text) landmark.setAttribute('aria-label', text);
         }
     }
 
@@ -169,46 +180,50 @@
     // Implemented here as a new, additive function so the common dialog file
     // is left untouched. Matching on the ARIA role means every dialog of this
     // shape is covered across all areas.
-    // Timestamp used to detect dialogs that open immediately on page load, so
-    // their announcement can be delayed until the screen reader has finished
-    // reading the newly loaded document.
-    var PAGE_LOAD_TIME = Date.now();
+    // The heading is focused on open so the modal title is read out as soon as
+    // the dialog appears, while the message text is made focusable (but never
+    // auto-focused) so it is announced only when focus is actually on it.
 
     function announceDialogContent(dialog) {
         if (!dialog || dialog.getAttribute('data-sr-announced') === 'true') return;
         if (!isVisible(dialog)) return;
         dialog.setAttribute('data-sr-announced', 'true');
 
+        var titleId = dialog.getAttribute('aria-labelledby');
+        var titleEl = titleId
+            ? document.getElementById(titleId)
+            : dialog.querySelector('h1, h2, h3, h4, h5, h6');
+
         var descId = dialog.getAttribute('aria-describedby');
         var descEl = descId ? document.getElementById(descId) : dialog.querySelector('p');
-        if (!descEl || !(descEl.textContent || '').trim()) return;
 
-        // Move focus onto the message text itself rather than using a live
-        // region. A live region produces a SECOND, separate announcement on
-        // top of NVDA's own focus announcement for the dialog, which is why
-        // the dialog name and heading were being read twice. Focusing the
-        // message makes the screen reader announce the dialog context and the
-        // message exactly once, in a single pass.
-        if (!descEl.hasAttribute('tabindex')) {
-            descEl.setAttribute('tabindex', '-1');
+        // Make the message text itself focusable and place it in the dialog's
+        // Tab order, but never move focus to it programmatically. The message
+        // is announced only when focus is actually on the message - i.e. when
+        // the user tabs onto it. Auto-focusing it instead would announce the
+        // message unprompted and stack a second announcement on top of the
+        // screen reader's own dialog-open announcement, which is what caused
+        // the title/message to be read repeatedly.
+        if (descEl && (descEl.textContent || '').trim() && !descEl.hasAttribute('tabindex')) {
+            descEl.setAttribute('tabindex', '0');
+        }
+
+        // Read the modal title on open by moving focus to the heading. It is
+        // kept out of the Tab sequence (tabindex="-1") so the very next Tab
+        // continues on to the message/buttons rather than returning here.
+        if (!titleEl || !(titleEl.textContent || '').trim()) return;
+
+        if (!titleEl.hasAttribute('tabindex')) {
+            titleEl.setAttribute('tabindex', '-1');
         }
 
         // Deferred so the dialog is fully in the accessibility tree and the
         // dialog builder's own focus() call has already run, otherwise it
         // would immediately move focus away again.
-        //
-        // When a dialog is opened straight away on page load (e.g. a success
-        // message rendered from TempData after a redirect), the screen reader
-        // is still busy announcing the newly loaded document and would talk
-        // over / discard the message. In that case wait longer so the message
-        // is announced after the page-load chatter has finished.
-        var openedDuringPageLoad = (Date.now() - PAGE_LOAD_TIME) < 1500;
-        var delay = openedDuringPageLoad ? 900 : 100;
-
         window.setTimeout(function () {
             if (!isVisible(dialog)) return;
-            descEl.focus();
-        }, delay);
+            titleEl.focus();
+        }, 100);
     }
 
     function watchForDialogs() {
@@ -308,18 +323,18 @@
                 if (name) target.setAttribute('aria-label', name);
             }
 
-            makeTableRowsFocusable(table);
+            makeTableCellsFocusable(table);
         });
     }
 
-    // Make every data row focusable and give it an accessible name built from
-    // each column header paired with that row's cell value, so tabbing through
-    // the table announces the full row, e.g.
-    // "Year 2023, Program Surveillance, Customer APHA, Manager J Smith".
-    // Row-level focus is used (rather than per-cell) so a screen reader user
-    // hears the complete record in one stop without needing table-navigation
-    // commands.
-    function makeTableRowsFocusable(table) {
+    // Make every data cell individually focusable and give it an accessible
+    // name built from its column header paired with the cell's own value
+    // (e.g. "Program: Surveillance"), so tabbing through the table announces
+    // one column value at a time rather than the whole row at once. Per-cell
+    // focus is used (rather than row-level) so a screen reader user hears
+    // each field separately, matching the pattern already used by the
+    // Invoice totals row (data-total-label).
+    function makeTableCellsFocusable(table) {
         var headers = Array.prototype.map.call(
             table.querySelectorAll('thead th'),
             function (th) { return (th.textContent || '').trim(); }
@@ -330,11 +345,9 @@
             if (row.getAttribute('data-a11y-row') === 'true') return;
             row.setAttribute('data-a11y-row', 'true');
 
-            // Skip rows that already opt into per-cell accessibility (e.g. the
-            // Invoice totals row, where each value cell is individually
-            // focusable and carries its own "label: value" aria-label via
-            // data-total-label). Adding whole-row tabindex/aria-label on top
-            // of that would create a duplicate, mislabeled tab stop.
+            // Skip rows that already opt into per-cell accessibility on their
+            // own (e.g. the Invoice totals row, where each value cell already
+            // carries its own "label: value" aria-label via data-total-label).
             if (row.querySelector('[data-total-label]')) return;
 
             var cells = row.querySelectorAll('th, td');
@@ -342,23 +355,24 @@
 
             // A single full-width cell is a placeholder such as
             // "No records found." - announce it as-is.
-            var parts = [];
             if (cells.length === 1) {
-                parts.push((cells[0].textContent || '').trim());
-            } else {
-                Array.prototype.forEach.call(cells, function (cell, index) {
-                    var value = (cell.textContent || '').trim();
-                    if (!value) return;
-                    var header = headers[index] || '';
-                    parts.push(header ? header + ' ' + value : value);
-                });
+                var onlyCell = cells[0];
+                var onlyValue = (onlyCell.textContent || '').trim();
+                if (!onlyValue) return;
+                if (!onlyCell.hasAttribute('tabindex')) onlyCell.setAttribute('tabindex', '0');
+                if (!onlyCell.hasAttribute('aria-label')) onlyCell.setAttribute('aria-label', onlyValue);
+                return;
             }
 
-            var label = parts.join(', ');
-            if (!label) return;
+            Array.prototype.forEach.call(cells, function (cell, index) {
+                var value = (cell.textContent || '').trim();
+                if (!value) return;
+                var header = headers[index] || '';
+                var label = header ? header + ': ' + value : value;
 
-            if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '0');
-            if (!row.hasAttribute('aria-label')) row.setAttribute('aria-label', label);
+                if (!cell.hasAttribute('tabindex')) cell.setAttribute('tabindex', '0');
+                if (!cell.hasAttribute('aria-label')) cell.setAttribute('aria-label', label);
+            });
         });
     }
 
@@ -2075,21 +2089,6 @@
     }
 
     var MIRROR_ID_PREFIX = 'kbd-textarea-full-value-';
-    var mirrorIdCounter = 0;
-
-    function ensureMirror(textarea) {
-        var mirror = textarea.nextElementSibling;
-        if (mirror && mirror.hasAttribute && mirror.hasAttribute('data-kbd-textarea-mirror')) {
-            return mirror;
-        }
-        mirror = document.createElement('span');
-        mirror.setAttribute('data-kbd-textarea-mirror', 'true');
-        mirror.className = 'govuk-visually-hidden';
-        if (!textarea.id) textarea.id = 'kbd-textarea-' + (++mirrorIdCounter);
-        mirror.id = MIRROR_ID_PREFIX + textarea.id;
-        textarea.insertAdjacentElement('afterend', mirror);
-        return mirror;
-    }
 
     function removeMirror(textarea) {
         var mirror = textarea.nextElementSibling;
@@ -2109,41 +2108,88 @@
         }
     }
 
-    // Editable multi-line textareas (e.g. "Title"/"Comments" fields) must
+    // Editable multi-line textareas (e.g. "Report Help"/"Comments" fields) must
     // keep their native textbox semantics - typing, caret position, and
     // in-place value announcement all need to work as usual - so they
-    // cannot use the read-only role="img" + aria-label swap above. But when
-    // the content overflows the visible rows and the field scrolls, NVDA
-    // (and other screen readers) only announce the portion currently
-    // scrolled into view rather than the complete value. Fix: mirror the
-    // full value into a visually-hidden element referenced via
-    // aria-describedby, so the complete text is announced alongside the
-    // (still fully native/editable) textarea, without altering its role,
-    // value, or interactivity.
+    // cannot use the read-only role="img" + aria-label swap above.
+    // Editable textareas keep their native textbox semantics. The complete
+    // value is now spoken once through the live region in announceFullValue()
+    // below, so the older aria-describedby mirror is no longer attached - it
+    // caused the text to be announced twice (partial value + description).
+    // This function now only strips any mirror left over from a previous run
+    // or from cached markup.
     function syncEditableMirror(textarea) {
-        if (textarea.readOnly || textarea.disabled) {
-            removeMirror(textarea);
-            return;
-        }
+        removeMirror(textarea);
+    }
 
-        // Only needed once the content actually overflows the box - avoids
-        // adding no-op DOM/attributes to every ordinary textarea on the page.
+    // Some screen readers ignore (or are configured not to speak) description
+    // text, and a multi-line textbox value is announced one line at a time, so
+    // the aria-describedby mirror alone is not always enough. On focus we also
+    // push the complete value into a polite live region so it is spoken in
+    // full exactly once. The region is injected INSIDE the nearest
+    // aria-modal="true" dialog when the field sits in a modal, because
+    // assistive technology ignores everything outside such a dialog.
+    var LIVE_REGION_ATTR = 'data-kbd-textarea-live';
+
+    function liveRegionFor(textarea) {
+        var host = textarea.closest('[role="dialog"], [role="alertdialog"]') || document.body;
+        var region = host.querySelector(':scope > [' + LIVE_REGION_ATTR + ']');
+        if (!region) {
+            region = document.createElement('div');
+            region.setAttribute(LIVE_REGION_ATTR, 'true');
+            region.setAttribute('aria-live', 'polite');
+            region.setAttribute('aria-atomic', 'true');
+            region.className = 'govuk-visually-hidden';
+            host.appendChild(region);
+        }
+        return region;
+    }
+
+    function announceFullValue(textarea) {
+        if (textarea.readOnly || textarea.disabled) return;
+        var raw = textarea.value || '';
+        if (!raw.trim()) return;
+
+        var value = raw.replace(/\s+/g, ' ').trim();
+        // Only worth announcing when the native announcement would be partial:
+        // the value wraps/overflows the visible rows or contains line breaks.
         var overflowing = textarea.scrollHeight > textarea.clientHeight + 1;
-        if (!overflowing || !textarea.value) {
-            removeMirror(textarea);
-            return;
-        }
+        if (!overflowing && !/\r|\n/.test(raw)) return;
 
-        var mirror = ensureMirror(textarea);
-        var value = textarea.value.replace(/\s+/g, ' ').trim();
-        if (mirror.textContent !== value) mirror.textContent = value;
+        // Never repeat the same text for the same field while focus stays put.
+        if (textarea.getAttribute('data-kbd-announced-value') === value) return;
+        textarea.setAttribute('data-kbd-announced-value', value);
 
-        var describedBy = textarea.getAttribute('aria-describedby') || '';
-        var ids = describedBy.split(/\s+/).filter(Boolean);
-        if (ids.indexOf(mirror.id) === -1) {
-            ids.push(mirror.id);
-            textarea.setAttribute('aria-describedby', ids.join(' '));
-        }
+        var region = liveRegionFor(textarea);
+        var labelText = findLabelText(textarea) ||
+            textarea.getAttribute('aria-label') || '';
+        var message = labelText ? labelText.replace(/[:*\s]+$/, '') + ': ' + value : value;
+
+        region.textContent = '';
+        window.setTimeout(function () {
+            region.textContent = message;
+        }, 120);
+    }
+
+    // Browsers place the caret at position 0 when a textarea is focused
+    // (programmatically, e.g. modal open, or via Tab), with no selection.
+    // With a multi-line value taller than the visible rows, NVDA/JAWS only
+    // read the single line the caret sits on/scrolled into view - so only
+    // the first line was ever announced, matching the reported bug.
+    //
+    // Selecting the ENTIRE value on focus (rather than just moving the
+    // caret) is what makes the difference: when a field's whole content is
+    // selected, the screen reader announces the complete selected text as
+    // one block ("selected <full value>"), regardless of how many lines or
+    // rows are visible. This mirrors the native browser behaviour already
+    // seen on the "Description" field in this same modal (its text shows
+    // fully highlighted on focus and is read out completely) - textareas do
+    // not get that treatment natively, so we apply it explicitly here.
+    function moveCaretToEnd(textarea) {
+        try {
+            textarea.select();
+        } catch (ignored) { /* some input types don't support selection */ }
+        textarea.scrollTop = textarea.scrollHeight;
     }
 
     function processAllTextareas(root) {
@@ -2200,6 +2246,40 @@
             if (e.target && e.target.tagName === 'TEXTAREA') {
                 syncAriaLabel(e.target);
                 syncEditableMirror(e.target);
+            }
+        }, true);
+
+        // Textareas inside modals/partials are frequently hidden (or not yet
+        // laid out) when first processed, so re-sync as focus arrives on the
+        // field - this is the point at which the announcement is composed -
+        // and speak the complete value once via the live region.
+        //
+        // NVDA (and other screen readers) read a multi-line textbox starting
+        // from wherever the caret sits, not the whole value. Browsers place
+        // the caret at position 0 by default when a textarea receives focus,
+        // so only the first line was ever announced natively even before any
+        // scripted handling here. Moving the caret to the END of the value on
+        // focus means the native "read current line/reading cursor" behaviour
+        // starts from the last line - combined with the live-region
+        // announcement above (which always speaks the full value up front),
+        // this ensures every line is heard.
+        document.addEventListener('focusin', function (e) {
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                syncAriaLabel(e.target);
+                syncEditableMirror(e.target);
+                announceFullValue(e.target);
+                moveCaretToEnd(e.target);
+            }
+        }, true);
+
+        // Allow the value to be announced again the next time the user
+        // returns to the field (or after they edit it).
+        document.addEventListener('focusout', function (e) {
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                e.target.removeAttribute('data-kbd-announced-value');
+                var region = e.target.closest('[role="dialog"], [role="alertdialog"]') || document.body;
+                var live = region.querySelector(':scope > [' + LIVE_REGION_ATTR + ']');
+                if (live) live.textContent = '';
             }
         }, true);
 
@@ -2602,6 +2682,14 @@
     function announceModal(modal) {
         if (!modal || !isShown(modal)) return;
 
+        // The shared GOV.UK message/confirm dialog (govuk-modal-dialog.js)
+        // manages its own role/aria-labelledby/aria-describedby/focus and is
+        // handled separately below - do not let the generic modal-header
+        // logic re-point its accessible name or steal focus from it.
+        if (modal.hasAttribute('data-govuk-modal') || modal.closest('[data-govuk-modal="backdrop"]')) {
+            return;
+        }
+
         var heading = findHeading(modal);
         if (!heading) return;
 
@@ -2724,6 +2812,253 @@
 
     // Allow page scripts to re-assert the title after replacing modal content.
     window.announceModalHeader = scanForOpenModals;
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+})();
+
+// ── Ensure alert (success / error / information) dialogs open AFTER the shared
+//    add/edit modal has been closed ───────────────────────────────────────────
+// Across the apps, add/edit forms are shown in the shared "#modalPopup" flyout,
+// and on save the page scripts call showAlertMessage(...).then(closeModal). That
+// sequence displays the success/error/info dialog while the add/edit modal is
+// still open, stacking one modal on top of another. To keep a single modal on
+// screen at a time (and correct focus/announcement behaviour), we transparently
+// wrap the global showAlertMessage so the add/edit modal is dismissed first.
+// This is additive and requires no changes to any existing call sites.
+(function () {
+    'use strict';
+
+    var ADD_EDIT_MODAL_ID = 'modalPopup';
+
+    function closeAddEditModalIfOpen() {
+        var modal = document.getElementById(ADD_EDIT_MODAL_ID);
+        if (!modal || !modal.classList.contains('show')) {
+            return;
+        }
+        // Removing the "show" class is what the page scripts' own closeModal()
+        // does; layouts watch this flip to hide the flyout and restore scroll.
+        modal.classList.remove('show');
+        // Defensive fallback for layouts without the class observer.
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function wrapAlert(original) {
+        if (typeof original !== 'function' || original.__aphaAddEditAware) {
+            return original;
+        }
+        var wrapped = function () {
+            closeAddEditModalIfOpen();
+            return original.apply(this, arguments);
+        };
+        wrapped.__aphaAddEditAware = true;
+        return wrapped;
+    }
+
+    // showAlertMessage is defined by govuk-modal-dialog.js, which loads after
+    // this script. Intercept the assignment so the wrapper is installed
+    // regardless of script order.
+    try {
+        var _showAlertMessage = wrapAlert(window.showAlertMessage);
+        Object.defineProperty(window, 'showAlertMessage', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return _showAlertMessage; },
+            set: function (fn) { _showAlertMessage = wrapAlert(fn); }
+        });
+    } catch (ignored) {
+        // If the property can't be redefined, fall back to wrapping in place
+        // once the DOM is ready.
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.showAlertMessage && !window.showAlertMessage.__aphaAddEditAware) {
+                window.showAlertMessage = wrapAlert(window.showAlertMessage);
+            }
+        });
+    }
+})();
+
+// ── Ensure Enter/Space reliably toggle checkboxes (and their labels) ─────────
+// GOV.UK Frontend checkboxes visually hide the native <input> and render the
+// clickable box via the associated <label>. Some pages wire up their own
+// keydown handlers on forms/modals which can end up calling
+// preventDefault()/stopPropagation() on keydown before the browser's native
+// "Space toggles a focused checkbox" behaviour applies, effectively locking
+// the checkbox. This delegated, capture-phase handler guarantees Space/Enter
+// always toggle a focused checkbox input (native or govuk-styled), and also
+// lets Enter/Space activate a focused checkbox <label> whose "for" points at
+// a checkbox, regardless of what other handlers do.
+(function () {
+    'use strict';
+
+    function isCheckboxInput(el) {
+        return !!el && el.tagName === 'INPUT' && el.type === 'checkbox' && !el.disabled;
+    }
+
+    function toggleCheckbox(checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('input', { bubbles: true }));
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function findLabelledCheckbox(label) {
+        if (!label || label.tagName !== 'LABEL') return null;
+        var forId = label.getAttribute('for');
+        if (forId) {
+            var target = document.getElementById(forId);
+            if (isCheckboxInput(target)) return target;
+            return null;
+        }
+        var nested = label.querySelector('input[type="checkbox"]');
+        return isCheckboxInput(nested) ? nested : null;
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== ' ' && e.key !== 'Spacebar' && e.key !== 'Enter') return;
+
+        var target = e.target;
+        var checkbox = null;
+
+        if (isCheckboxInput(target)) {
+            checkbox = target;
+        } else if (target && target.tagName === 'LABEL') {
+            checkbox = findLabelledCheckbox(target);
+        }
+
+        if (!checkbox) return;
+
+        // Prevent the browser's default (which may be blocked/inconsistent
+        // once other handlers run) and drive the toggle ourselves, so the
+        // outcome is consistent regardless of other keydown listeners.
+        e.preventDefault();
+        toggleCheckbox(checkbox);
+    }, true);
+})();
+
+// ── Keyboard-accessible "List Description" items (PIMS Maintenance > Other tab) ─
+// Rows are rendered by page script as plain <td class="other-list-item"> cells
+// with only a click handler wired up (see maintenance.js), so they carry no
+// tabindex and are skipped entirely when tabbing through the page - Tab jumps
+// straight from the panel heading to whatever is focusable after the whole
+// list. Make the list operable via the keyboard using the standard WAI-ARIA
+// listbox "roving tabindex" pattern: the list itself is a single Tab stop
+// (only one item at a time has tabindex="0", the rest are tabindex="-1"), and
+// Up/Down/Home/End move focus *within* the list without adding extra Tab
+// stops. Tab/Shift+Tab simply move into/out of the list as one stop, and
+// Enter/Space activates the focused item (reusing each page's own click
+// handler unchanged).
+(function () {
+    'use strict';
+
+    var ITEM_SELECTOR = '.other-list-item';
+    var LIST_SELECTOR = 'table.other-list-table';
+
+    function getListItems(container) {
+        return Array.prototype.slice.call(container.querySelectorAll(ITEM_SELECTOR));
+    }
+
+    function updateAriaSelected(item) {
+        item.setAttribute('aria-selected', item.classList.contains('selected') ? 'true' : 'false');
+    }
+
+    function ensureListIsAccessible(list) {
+        if (!list.hasAttribute('data-kbd-enabled')) {
+            list.setAttribute('data-kbd-enabled', 'true');
+            if (!list.hasAttribute('role')) list.setAttribute('role', 'listbox');
+        }
+    }
+
+    // Exactly one item in the list is a Tab stop at any time: the selected
+    // item if there is one, otherwise the first item. Every other item is
+    // tabindex="-1" so Tab/Shift+Tab treat the whole list as a single stop.
+    function syncRovingTabindex(list, focusedItem) {
+        var items = getListItems(list);
+        if (!items.length) return;
+
+        var active = focusedItem ||
+            items.filter(function (i) { return i.classList.contains('selected'); })[0] ||
+            items[0];
+
+        items.forEach(function (i) {
+            i.setAttribute('tabindex', i === active ? '0' : '-1');
+        });
+    }
+
+    function ensureListItemAccessible(item) {
+        if (item.hasAttribute('data-kbd-enabled')) return;
+        item.setAttribute('data-kbd-enabled', 'true');
+        if (!item.hasAttribute('role')) item.setAttribute('role', 'option');
+        updateAriaSelected(item);
+
+        var list = item.closest(LIST_SELECTOR) || item.parentElement;
+        if (list) {
+            ensureListIsAccessible(list);
+            syncRovingTabindex(list);
+        }
+
+        item.addEventListener('keydown', function (e) {
+            var items;
+            var currentList = item.closest(LIST_SELECTOR) || item.parentElement;
+
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                item.click();
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                items = getListItems(currentList);
+                var idx = items.indexOf(item);
+                var nextIdx = idx + (e.key === 'ArrowDown' ? 1 : -1);
+                if (nextIdx >= 0 && nextIdx < items.length) {
+                    syncRovingTabindex(currentList, items[nextIdx]);
+                    items[nextIdx].focus();
+                }
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                items = getListItems(currentList);
+                if (items.length) {
+                    syncRovingTabindex(currentList, items[0]);
+                    items[0].focus();
+                }
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                items = getListItems(currentList);
+                if (items.length) {
+                    syncRovingTabindex(currentList, items[items.length - 1]);
+                    items[items.length - 1].focus();
+                }
+            }
+        });
+
+        // The page's own click handler toggles the "selected" class; reflect
+        // that in aria-selected/roving tabindex for every item once that
+        // class change lands.
+        item.addEventListener('click', function () {
+            window.setTimeout(function () {
+                var currentList = item.closest(LIST_SELECTOR) || item.parentElement;
+                Array.prototype.forEach.call(getListItems(currentList), updateAriaSelected);
+                syncRovingTabindex(currentList, item);
+            }, 0);
+        });
+    }
+
+    function scanForListItems() {
+        Array.prototype.forEach.call(document.querySelectorAll(ITEM_SELECTOR), ensureListItemAccessible);
+    }
+
+    function init() {
+        var observer = new MutationObserver(function (mutations) {
+            var recheck = false;
+            mutations.forEach(function (m) {
+                if (m.addedNodes && m.addedNodes.length) recheck = true;
+            });
+            if (recheck) scanForListItems();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        scanForListItems();
+    }
 
     if (document.body) {
         init();
