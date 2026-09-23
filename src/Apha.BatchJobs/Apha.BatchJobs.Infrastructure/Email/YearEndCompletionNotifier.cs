@@ -56,14 +56,29 @@ public sealed class YearEndCompletionNotifier : IPostCompletionNotifier
 
         try
         {
-            await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
+            var sendResult = await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
 
-            _logger.LogInformation(
-                "Year End {Status} notification sent | JobName={JobName} | JobQueueId={JobQueueId} | FpsYear={FpsYear}",
-                context.Status,
-                context.JobName,
-                context.JobQueueId,
-                context.FpsYear);
+            if (sendResult.Succeeded)
+            {
+                _logger.LogInformation(
+                    "Year End {Status} notification sent | JobName={JobName} | JobQueueId={JobQueueId} | FpsYear={FpsYear}",
+                    context.Status,
+                    context.JobName,
+                    context.JobQueueId,
+                    context.FpsYear);
+            }
+            else
+            {
+                _logger.LogError(
+                    "Failed to send Year End {Status} notification | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | FpsYear={FpsYear} | RequestedBy={RequestedBy} | Reason={FailureReason}",
+                    context.Status,
+                    context.JobName,
+                    context.JobQueueId,
+                    context.JobExecutionId,
+                    context.FpsYear,
+                    context.RequestedBy,
+                    sendResult.FailureMessage);
+            }
         }
         catch (Exception ex)
         {

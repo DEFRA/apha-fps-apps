@@ -210,4 +210,19 @@ public sealed class MabArchiveCompletionNotifierTests
 
         await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task NotifyAsync_WhenEmailSendResultIndicatesFailure_DoesNotThrow()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(EmailSendResult.Failed("Graph rejected the message"));
+
+        // Must complete without throwing — the notifier must inspect the result rather than
+        // assume success just because SendAsync didn't throw.
+        await CreateNotifier(email)
+            .NotifyAsync(MakeContext(BatchJobNames.MabArchive, JobStatus.Completed), CancellationToken.None);
+
+        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+    }
 }

@@ -52,12 +52,25 @@ public sealed class MabArchiveCompletionNotifier : IPostCompletionNotifier
 
         try
         {
-            await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
+            var sendResult = await _emailService.SendAsync(new EmailMessage(recipients, subject, body, IsBodyHtml: false), cancellationToken);
 
-            _logger.LogInformation(
-                "MABArchive {Status} notification sent | JobQueueId={JobQueueId}",
-                context.Status,
-                context.JobQueueId);
+            if (sendResult.Succeeded)
+            {
+                _logger.LogInformation(
+                    "MABArchive {Status} notification sent | JobQueueId={JobQueueId}",
+                    context.Status,
+                    context.JobQueueId);
+            }
+            else
+            {
+                _logger.LogError(
+                    "Failed to send MABArchive {Status} notification | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy} | Reason={FailureReason}",
+                    context.Status,
+                    context.JobQueueId,
+                    context.JobExecutionId,
+                    context.RequestedBy,
+                    sendResult.FailureMessage);
+            }
         }
         catch (Exception ex)
         {

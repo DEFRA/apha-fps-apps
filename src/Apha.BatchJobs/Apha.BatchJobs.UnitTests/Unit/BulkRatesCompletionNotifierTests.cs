@@ -253,6 +253,23 @@ public sealed class BulkRatesCompletionNotifierTests
         await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
+    // ── Failed EmailSendResult (Graph failure that did not throw) is handled ──
+
+    [Fact]
+    public async Task NotifyAsync_WhenEmailSendResultIndicatesFailure_DoesNotThrow()
+    {
+        var email = Substitute.For<IEmailService>();
+        email.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
+             .Returns(EmailSendResult.Failed("Graph rejected the message"));
+
+        // Must complete without throwing — the notifier must inspect the result rather than
+        // assume success just because SendAsync didn't throw.
+        await CreateNotifier(email)
+            .NotifyAsync(MakeContext(BatchJobNames.BulkTestRatesUpdate), CancellationToken.None);
+
+        await email.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+    }
+
     // ── Failed jobs notify the same recipients, using the failure templates ───
 
     [Theory]
