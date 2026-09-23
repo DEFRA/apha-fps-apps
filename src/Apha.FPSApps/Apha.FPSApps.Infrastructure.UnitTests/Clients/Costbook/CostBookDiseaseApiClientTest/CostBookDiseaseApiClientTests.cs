@@ -113,48 +113,32 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookDisease
         }
 
         [Fact]
-        public async Task GetAllDiseasesAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetAllDiseasesAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var exceptionMessage = "Network connection failed";
             _http.GetAsync<List<DiseaseRes>>("api/v1/projects/diseases")
                 .ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act
-            var result = await _client.GetAllDiseasesAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _client.GetAllDiseasesAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve diseases", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal(exceptionMessage, result.Errors[0].Details);
-            Assert.NotNull(result.Meta);
+            Assert.Equal(exceptionMessage, exception.Message);
             await _http.Received(1).GetAsync<List<DiseaseRes>>("api/v1/projects/diseases");
         }
 
         [Fact]
-        public async Task GetAllDiseasesAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetAllDiseasesAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<DiseaseRes>> { Success = true, Data = new List<DiseaseRes> { new DiseaseRes() } };
             _http.GetAsync<List<DiseaseRes>>("api/v1/projects/diseases").Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<DiseaseDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetAllDiseasesAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllDiseasesAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve diseases", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            Assert.Equal("Mapping failed", exception.Message);
             await _http.Received(1).GetAsync<List<DiseaseRes>>("api/v1/projects/diseases");
         }
 

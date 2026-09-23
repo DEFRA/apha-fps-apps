@@ -53,6 +53,9 @@ namespace Apha.Costbook.Application.Services
 
             
             var refreshed = await _repository.GetByAccShortNameAsync(accShortName);
+            if (refreshed is null)
+                throw new InvalidOperationException($"Failed to reload account category '{accShortName}' after update.");
+
             return _mapper.Map<AccountCategoryMaintenanceDto>(refreshed);
         }
     }
