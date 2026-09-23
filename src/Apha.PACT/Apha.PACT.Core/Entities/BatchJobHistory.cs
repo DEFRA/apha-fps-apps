@@ -10,6 +10,11 @@ namespace Apha.PACT.Core.Entities
         public DateTime StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
         public string? ErrorMessage { get; set; }
-   
+
+        /// <summary>
+        /// Original request context, sourced from the Initiated <c>job_queue_log</c> row for this
+        /// request — never any other status's note. <c>null</c> when no Initiated log row exists.
+        /// </summary>
+        public string? Remarks { get; set; }
     }
 }
