@@ -116,7 +116,6 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
             Password = config.Password,
             Timeout = 30,
             SslMode = config.Ssl ? SslMode.Require : SslMode.Disable,
-            TrustServerCertificate = config.Ssl,
         };
 
         return builder.ConnectionString;

@@ -123,8 +123,8 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         var row = await ReadRunSummaryAsync(runSummaryId);
         Assert.NotNull(row);
         Assert.Equal("Pending", row!["capssummarystatus"]);
-        Assert.Equal(0, (int)row["candidatecount"]);
-        Assert.True((bool)row["diagnosticavailable"]);
+        Assert.Equal(0, (int)row["candidatecount"]!);
+        Assert.True((bool)row["diagnosticavailable"]!);
     }
 
     [SkippableFact]
@@ -147,7 +147,7 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
 
         var row = await ReadRunSummaryAsync(firstId);
         Assert.NotNull(row);
-        Assert.Equal(7, (int)row!["monthnumber"]);
+        Assert.Equal(7, (int)row!["monthnumber"]!);
     }
 
     [SkippableFact]
@@ -200,13 +200,13 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         await repo.UpdateRunSummaryCountersAsync(runSummaryId, counters, CancellationToken.None);
 
         var row = await ReadRunSummaryAsync(runSummaryId);
-        Assert.Equal(10, (int)row!["candidatecount"]);
-        Assert.Equal(20, (int)row!["candidateprojectcount"]);
-        Assert.Equal(5,  (int)row!["identifiedrecipientcount"]);
-        Assert.Equal(2,  (int)row!["manageremailsentcount"]);
-        Assert.Equal(1,  (int)row!["manageremailfailedcount"]);
-        Assert.Equal(3,  (int)row!["unresolvedrecipientcount"]);
-        Assert.Equal(6,  (int)row!["unresolvedprojectcount"]);
+        Assert.Equal(10, (int)row!["candidatecount"]!);
+        Assert.Equal(20, (int)row!["candidateprojectcount"]!);
+        Assert.Equal(5,  (int)row!["identifiedrecipientcount"]!);
+        Assert.Equal(2,  (int)row!["manageremailsentcount"]!);
+        Assert.Equal(1,  (int)row!["manageremailfailedcount"]!);
+        Assert.Equal(3,  (int)row!["unresolvedrecipientcount"]!);
+        Assert.Equal(6,  (int)row!["unresolvedprojectcount"]!);
     }
 
     [SkippableFact]
@@ -269,9 +269,9 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         Assert.Equal("Pending", parent!["deliverystatus"]);
         Assert.Equal("mgr@example.com", parent["recipientemail"]);
         Assert.Equal(2, childRows.Count);
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Pending");
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Skipped"
-                                     && (string)r["outcomereason"] == "NoValidProjectLinks");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Pending");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Skipped"
+                                     && (string)r["outcomereason"]! == "NoValidProjectLinks");
     }
 
     [SkippableFact]
@@ -314,8 +314,8 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         Assert.NotNull(parent["sentatutc"]);
 
         // Pending child promoted to Sent; Skipped child preserved.
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Sent");
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Skipped");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Sent");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Skipped");
     }
 
     [SkippableFact]
@@ -331,7 +331,7 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         var (parent, childRows) = await ReadDeliveryAsync(deliveryId);
         Assert.Equal("Failed", parent!["deliverystatus"]);
         Assert.Equal("Graph error", parent!["failuremessage"]);
-        Assert.All(childRows, r => Assert.Equal("Failed", (string)r["deliverystatus"]));
+        Assert.All(childRows, r => Assert.Equal("Failed", (string)r["deliverystatus"]!));
     }
 
     [SkippableFact]
@@ -414,11 +414,11 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
 
         var (parent, childRows) = await ReadDeliveryAsync(deliveryId);
         Assert.Equal("OutcomeUnknown", parent!["deliverystatus"]);
-        Assert.Contains("crashed", ((string)parent["failuremessage"]).ToLowerInvariant());
+        Assert.Contains("crashed", ((string)parent!["failuremessage"]!).ToLowerInvariant());
 
         // Only the Pending child is transitioned; Skipped is preserved.
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "OutcomeUnknown");
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Skipped");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "OutcomeUnknown");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Skipped");
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

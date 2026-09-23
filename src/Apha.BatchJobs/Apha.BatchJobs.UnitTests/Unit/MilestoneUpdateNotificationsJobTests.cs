@@ -886,7 +886,7 @@ public sealed class MilestoneUpdateNotificationsJobTests
         deliveryRepo.InsertPendingDeliveryAsync(default, default!, default, default!, default, default, default!, default!, default)
             .ReturnsForAnyArgs(Guid.NewGuid());
         deliveryRepo.UpdateDeliveryOutcomeAsync(default, default!, default, default, default)
-            .ThrowsForAnyArgs(new InvalidOperationException("Expected exactly one row, but 0 were affected."));
+            .ThrowsAsyncForAnyArgs(new InvalidOperationException("Expected exactly one row, but 0 were affected."));
 
         var candidate = new MilestoneNotificationCandidate(2026, "PROJ-A", "Jane Smith", "M001", "jane@example.com", false, "<a href=\"https://example.com/a\">A</a>");
         readRepo.GetNotificationCandidatesAsync(default).ReturnsForAnyArgs(

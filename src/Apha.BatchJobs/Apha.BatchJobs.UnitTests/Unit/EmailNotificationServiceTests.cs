@@ -247,10 +247,12 @@ public sealed class EmailNotificationServiceTests
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
         var emailService = Substitute.For<IEmailService>();
         emailService.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-            .Throws(new InvalidOperationException("Notification transport down"));
+            .ThrowsAsync(new InvalidOperationException("Notification transport down"));
         var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
 
         await service.SendExecutionNotificationAsync(CreateNotification(JobStatus.Completed), CancellationToken.None);
+
+        await emailService.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -259,7 +261,7 @@ public sealed class EmailNotificationServiceTests
         var settings = Options.Create(new BatchAlertingSettings { AdminNotificationEmail = "alerts@example.com" });
         var emailService = Substitute.For<IEmailService>();
         emailService.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-            .Throws(new OperationCanceledException());
+            .ThrowsAsync(new OperationCanceledException());
         var service = new EmailNotificationService(NullLogger<EmailNotificationService>.Instance, settings, () => emailService);
 
         await Assert.ThrowsAsync<OperationCanceledException>(

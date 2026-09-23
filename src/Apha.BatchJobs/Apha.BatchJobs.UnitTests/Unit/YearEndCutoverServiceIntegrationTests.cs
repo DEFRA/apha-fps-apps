@@ -318,7 +318,10 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         await using var lockingContext = CreateDbContext();
         await lockingContext.Database.OpenConnectionAsync();
         await using var lockingTransaction = await lockingContext.Database.BeginTransactionAsync();
+        // Table identifier can't be a SQL parameter; StagingTables is a hardcoded literal array, not external input.
+#pragma warning disable EF1002
         await lockingContext.Database.ExecuteSqlRawAsync($"LOCK TABLE {StagingTables[0]} IN ACCESS EXCLUSIVE MODE;");
+#pragma warning restore EF1002
 
         try
         {
@@ -496,9 +499,12 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     private async Task<long> CountRowsAsync(string qualifiedTableName)
     {
         await using var context = CreateDbContext();
+        // Table identifier can't be a SQL parameter; callers only pass names from the hardcoded StagingTables array.
+#pragma warning disable EF1002
         return await context.Database
             .SqlQueryRaw<long>($@"SELECT COUNT(*)::bigint AS ""Value"" FROM {qualifiedTableName}")
             .SingleAsync();
+#pragma warning restore EF1002
     }
 
     /// <summary>
