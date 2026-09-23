@@ -142,6 +142,24 @@ public class BulkTestRatesServiceTests
         result.RowCounts.FecUnchanged.Should().Be(1);
     }
 
+    // Regression for the VLA/Defra-price-diverged defect: FEC New is pre-filled from
+    // DefraUnitPrice on download (BulkRatesRepository.GetFecRowsForExportAsync), not from
+    // UnitPriceVla, so an untouched row must be judged unchanged against DefraUnitPrice alone.
+    // Requiring equality with UnitPriceVla too (the pre-fix behaviour) misclassified an untouched
+    // row as Update whenever the two live prices differed, and the worker's commit then
+    // overwrote UnitPriceVla to match the "new" rate on approval.
+    [Fact]
+    public async Task ExistingFecRow_UnitPriceVlaDiffersFromDefra_UnchangedFecNewMatchingDefra_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith(liveFec: [LiveFec("PT0000", 22.55m, 19.15m)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(ParseResult(fec: [Fec("PT0000", 19.15m)]), FpsYear, 1, null);
+
+        result.RowCounts.FecUnchanged.Should().Be(1);
+        result.RowCounts.FecUpdate.Should().Be(0);
+    }
+
     [Fact]
     public async Task ExistingFecRow_DifferentRate_ClassifiesAsUpdate()
     {

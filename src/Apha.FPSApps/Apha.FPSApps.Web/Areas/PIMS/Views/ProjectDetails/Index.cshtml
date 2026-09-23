@@ -155,12 +155,14 @@
                                               asp-controller="ProjectDetails"
                                               asp-area="PIMS"
                                               asp-route-parentproject="@parentproject"
+                                              asp-route-showprojects="@Model.ShowProjects"
                                               method="post"
                                               class="govuk-form-group"
                                               id="formProposedDetail">
                                             @Html.AntiForgeryToken()
                                             <div asp-validation-summary="ModelOnly" class="govuk-error-summary"></div>
                                             <fieldset class="govuk-fieldset">
+                                                <input type="hidden" asp-for="ShowProjects" />
                                                 <input type="hidden" asp-for="ProposedProjectDetails.Id" />
                                                 <div class="govuk-grid-row">
                                                     <div class="govuk-grid-column-one-half">
@@ -336,6 +338,7 @@
                           asp-controller="ProjectDetails"
                           asp-area="PIMS"
                           asp-route-parentproject="@parentproject"
+                          asp-route-showprojects="@Model.ShowProjects"
                           method="post"
                           class="govuk-form-group selectedProjectForm "
                           id="formPimsDetailRight">

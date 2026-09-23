@@ -204,21 +204,22 @@ function bindAddYearForm(pid, year) {
 
         var $form = $('#addNewProjectYearForm');
         var $modal = $('#project1ModalContent');
+        showLoader();
         clearValidationErrors($modal);
-        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+        if (!isFormValid($form)) { hideLoader(); displayClientValidationErrors($form, $modal); return; }
 
         fetch(yearlyDetailsUrls.addProjectYear, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
             body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year + '&programme=' + encodeURIComponent(programme)
         })
-            .then(function (r) { return r.json(); })
+            .then(function (r) { hideLoader(); return r.json(); })
             .then(function (data) {
                 if (data.success) { closeModal(); selectYear(pid, data.year); }
                 else if (data.errors) { _showModalErrors(data.errors, $modal); }
                 else { showAlertMessage(data.message || 'Failed to add project year.', AlertType.ERROR); }
             })
-            .catch(function (err) { console.error('Add project year error:', err); showAlertMessage('Failed to add project year.', AlertType.ERROR); });
+            .catch(function (err) { hideLoader(); console.error('Add project year error:', err); showAlertMessage('Failed to add project year.', AlertType.ERROR); });
     });
 }
 function openCopyYearDataModal() {
