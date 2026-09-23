@@ -60,16 +60,16 @@ public sealed class BatchFailureClassifierTests
     }
 
     [Fact]
-    public void Classify_BatchLockLeaseLostException_MapsToLockFailure()
+    public void Classify_BatchLockLeaseLostException_MapsToLockFailureWithDistinctCategory()
     {
-        // Phase 4: inherits JobLockException specifically so this classification applies
-        // automatically via C#'s subclass-matching switch patterns — no separate case was added
-        // to BatchFailureClassifier. This test proves that inheritance actually delivers the
-        // identical exit code/category/marker as a direct JobLockException, not just in theory.
+        // BatchLockLeaseLostException inherits JobLockException, but has its own explicit case
+        // ahead of the general JobLockException one — a lease lost mid-execution is a different
+        // failure from never acquiring the lock at all, so it gets its own category/message even
+        // though the exit code and CloudWatch marker stay the same (still "a lock problem").
         var result = CreateClassifier().Classify(new BatchLockLeaseLostException("lease lost mid-execution"));
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
-        Assert.Equal(BatchFailureCategory.Concurrency, result.Category);
+        Assert.Equal(BatchFailureCategory.LockLeaseLost, result.Category);
         Assert.Equal("FPSBatchJobs.CONCURRENCY_EXCEPTION", result.ErrorType);
     }
 

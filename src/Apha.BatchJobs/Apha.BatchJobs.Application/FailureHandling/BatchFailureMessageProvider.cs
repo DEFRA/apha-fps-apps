@@ -18,6 +18,8 @@ public static class BatchFailureMessageProvider
             "Job failed due to a configuration or validation error.",
         BatchFailureCategory.Concurrency =>
             "Job failed because the distributed lock could not be acquired.",
+        BatchFailureCategory.LockLeaseLost =>
+            "Job failed because it lost its distributed lock lease mid-execution.",
         BatchFailureCategory.Email =>
             "Job failed due to a business notification email error.",
         BatchFailureCategory.Timeout =>

@@ -15,6 +15,7 @@ public sealed class BatchFailureMessageProviderTests
     [InlineData(BatchFailureCategory.DependencyOutage, "Job failed due to a dependency outage (database unavailable, network timeout, etc.).")]
     [InlineData(BatchFailureCategory.Configuration, "Job failed due to a configuration or validation error.")]
     [InlineData(BatchFailureCategory.Concurrency, "Job failed because the distributed lock could not be acquired.")]
+    [InlineData(BatchFailureCategory.LockLeaseLost, "Job failed because it lost its distributed lock lease mid-execution.")]
     [InlineData(BatchFailureCategory.Email, "Job failed due to a business notification email error.")]
     [InlineData(BatchFailureCategory.Timeout, "Job failed because execution exceeded the configured runtime timeout.")]
     [InlineData(BatchFailureCategory.Authorization, "Job failed due to an authorization error.")]
