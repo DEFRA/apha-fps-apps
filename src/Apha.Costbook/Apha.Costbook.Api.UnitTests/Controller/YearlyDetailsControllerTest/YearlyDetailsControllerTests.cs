@@ -24,6 +24,27 @@ public class YearlyDetailsControllerTests
         _controller = new YearlyDetailsController(_service, _mapper);
     }
 
+    #region GetSettings
+
+    [Fact]
+    public async Task GetSettings_ReturnsOk_WithMappedData()
+    {
+        var dto = new MaintenanceSettingsDto { InflationAnimals = 2.5m, CurrentFinancialYear = 2024 };
+        var res = new MaintenanceSettingsRes { InflationAnimals = 2.5m, CurrentFinancialYear = 2024 };
+
+        _service.GetSettingsAsync().Returns(dto);
+        _mapper.Map<MaintenanceSettingsRes>(dto).Returns(res);
+
+        var result = await _controller.GetSettings();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<MaintenanceSettingsRes>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Same(res, apiResponse.Data);
+    }
+
+    #endregion
+
     #region GetProjectHeader
 
     [Fact]
