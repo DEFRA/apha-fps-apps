@@ -63,7 +63,7 @@ public sealed class BatchExecutionRequestResolver
             .Select(jobName => new BatchExecutionRequest(
                 jobName,
                 runMode,
-                ResolveJobExecutionId(jobName, runMode, publishExecutionId: false),
+                ResolveJobExecutionId(jobName, runMode, respectExternalExecutionId: false),
                 requestedBy,
                 requestedAt?.UtcDateTime,
                 parameters))
@@ -100,29 +100,33 @@ public sealed class BatchExecutionRequestResolver
         return runMode;
     }
 
-    private Guid ResolveJobExecutionId(string jobName, RunMode runMode, bool publishExecutionId = true)
+    private Guid ResolveJobExecutionId(string jobName, RunMode runMode, bool respectExternalExecutionId = true)
     {
-        var raw =
-            Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
-            ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID");
-
-        if (!string.IsNullOrWhiteSpace(raw))
+        if (respectExternalExecutionId)
         {
-            if (!Guid.TryParse(raw, out var parsed))
-                throw new JobValidationException($"BATCH_JOB_EXECUTION_ID '{raw}' is not a valid GUID.");
-            return parsed;
+            var raw =
+                Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
+                ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID");
+
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                if (!Guid.TryParse(raw, out var parsed))
+                    throw new JobValidationException($"BATCH_JOB_EXECUTION_ID '{raw}' is not a valid GUID.");
+                return parsed;
+            }
         }
 
         if (runMode == RunMode.Scheduled && IsWorkerManagedJob(jobName))
         {
             var id = Guid.NewGuid();
-            if (publishExecutionId)
+            if (respectExternalExecutionId)
             {
                 // Publish back so any subsequent read within this process observes the same value.
-                // Skipped for category fan-out (see MonthlyScheduledNotificationJobs) — each job
-                // there needs its own independently generated ID, not a shared published one.
                 Environment.SetEnvironmentVariable("BATCH_JOB_EXECUTION_ID", id.ToString("D"));
             }
+            // Category fan-out (see MonthlyScheduledNotificationJobs) never reads or publishes this
+            // env var at all — job_queue.jobexecutionid is unique, so every fanned-out job needs its
+            // own independently generated ID regardless of what the container's environment carries.
             return id;
         }
 

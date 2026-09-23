@@ -137,6 +137,27 @@ public sealed class BatchExecutionRequestResolverTests
     }
 
     [Fact]
+    public void Resolve_WhenCategoryTriggerAndExecutionIdAlreadyInEnvironment_StillGeneratesDistinctIdsPerJob()
+    {
+        // Simulates a container whose environment already carries an execution ID (e.g. left over
+        // from infra config never intended for the shared category trigger). Fan-out must not let
+        // that collide every child job onto the same ID — see #7, job_queue.jobexecutionid is unique.
+        using var scope = new EnvScopeSet(
+            jobName: "MonthlyBusinessNotifications",
+            runMode: "Scheduled",
+            jobExecutionId: Guid.NewGuid().ToString("D"),
+            requestedBy: "EventBridgeScheduler",
+            requestedAtUtc: null);
+
+        var requests = new BatchExecutionRequestResolver(["TestJobA", "TestJobB"]).Resolve();
+
+        Assert.Equal(2, requests.Count);
+        Assert.NotEqual(Guid.Empty, requests[0].JobExecutionId);
+        Assert.NotEqual(Guid.Empty, requests[1].JobExecutionId);
+        Assert.NotEqual(requests[0].JobExecutionId, requests[1].JobExecutionId);
+    }
+
+    [Fact]
     public void Resolve_WhenCategoryNameLowercase_StillRecognizedAsCategoryTrigger()
     {
         using var scope = new EnvScopeSet(
