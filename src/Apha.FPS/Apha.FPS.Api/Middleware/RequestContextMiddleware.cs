@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Apha.FPS.Core.Interfaces;
 
 namespace Apha.FPS.Api.Middleware
@@ -39,9 +40,21 @@ namespace Apha.FPS.Api.Middleware
             SetCorrelationId(context, CorrelationIdHeader);
 
             requestContext.FpsYear = fpsYear;
-            requestContext.UserEmailId = (context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
-            
+            requestContext.UserEmailId = GetUserEmail(context.User).ToLowerInvariant();
+
             await _next(context);
+        }
+
+        private static string GetUserEmail(ClaimsPrincipal? user)
+        {
+            if (user == null)
+                return string.Empty;
+
+            return user.Identity?.Name
+                ?? user.FindFirst("preferred_username")?.Value
+                ?? user.FindFirst(ClaimTypes.Email)?.Value
+                ?? user.FindFirst(ClaimTypes.Upn)?.Value
+                ?? string.Empty;
         }
 
         private static void SetCorrelationId(HttpContext context, string CorrelationIdHeader)
