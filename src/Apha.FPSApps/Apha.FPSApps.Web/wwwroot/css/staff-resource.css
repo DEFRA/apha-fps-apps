@@ -13,6 +13,35 @@
   justify-content: space-between;
 }
 
+/* Header controls (Resource Centre selector).
+   .isBudgetBidsQuery pins this column to 20% of the row, which is too narrow
+   for the label + select pair and pushes the select past the page margin.
+   Let the column size to its content and keep the select inside the margin. */
+.ruv-header-controls {
+  width: auto !important;
+  max-width: 50%;
+  padding-right: 15px;
+}
+
+.ruv-header-controls .govuk-table {
+  width: 100%;
+  margin-left: auto;
+}
+
+/* Label cell shrinks to its text so the select gets the remaining space. */
+.ruv-header-controls .govuk-table__header {
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.ruv-header-controls .govuk-select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
 /* Main two-panel layout wrapper */
 .ruv-filter-panel {
   background-color: var(--govuk-surface-background-colour, #f4f8fb);
@@ -73,6 +102,27 @@
 .ruv-totals-row td:first-child {
   text-align: left;
   color: #1d70b8;
+}
+
+/* Standalone totals table rendered below the pagination footer. It is a
+   separate table whose column widths are synced with the grid, so it must not
+   introduce extra vertical space or its own scrollbar. */
+.ruv-totals-table-wrapper {
+  overflow-x: hidden;
+}
+
+.ruv-totals-table {
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+}
+
+.ruv-totals-table td {
+  padding: 4px 10px;
+}
+
+.ruv-totals-label {
+  white-space: nowrap;
 }
 .ruv-group-header-row th {
   background-color: #1d70b8 !important;

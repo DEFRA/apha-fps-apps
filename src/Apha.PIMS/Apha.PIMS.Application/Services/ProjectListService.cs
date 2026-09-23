@@ -26,9 +26,9 @@ namespace Apha.PIMS.Application.Services
             return _mapper.Map<PaginatedResult<ProjectListViewDto>>(result);
         }
 
-        public async Task<List<ProjectListViewDto>> GetAllProjectsForDropDownAsync()
+        public async Task<List<ProjectListViewDto>> GetAllProjectsForDropDownAsync(int showWhichProjects = 2)
         {
-            List<ProjectListView> entities = await _repository.GetAllProjectsForDropDownAsync();
+            List<ProjectListView> entities = await _repository.GetAllProjectsForDropDownAsync(showWhichProjects);
             return _mapper.Map<List<ProjectListViewDto>>(entities);
         }
 

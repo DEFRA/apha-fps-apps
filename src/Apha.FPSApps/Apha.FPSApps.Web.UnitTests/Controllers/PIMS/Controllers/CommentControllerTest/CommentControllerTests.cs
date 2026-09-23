@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
             List<CommentTopicDto>? topics = null,
             List<YearDto>? years = null)
         {
-            _projectListService.GetAllProjectsAsync(Arg.Any<QueryParameters<string>>(), 1)
+            _projectListService.GetAllProjectsListAsync(Arg.Any<int>())
                 .Returns(ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(projects ?? []));
             _commentService.GetCommentTopicsAsync()
                 .Returns(ApiResponseDto<List<CommentTopicDto>>.SuccessResponse(topics ?? []));
@@ -91,10 +91,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.CommentControllerTest
                 years: [new YearDto { Value = 2024 }]);
 
             // Act
-            var result = await _controller.Index(parentproject: null);
+            var result = await _controller.Index(parentproject: null, showprojects: 0);
 
             // Assert
             Assert.IsType<ViewResult>(result);
+            await _projectListService.Received(1).GetAllProjectsListAsync(0);
         }
 
         [Fact]

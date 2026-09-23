@@ -26,13 +26,24 @@ public class YearlyDetailsController : ControllerBase
         _mapper = mapper;
     }
 
+    // ── Settings ─────────────────────────────────────────────────────────────
+
+    [HttpGet("settings")]
+    public async Task<IActionResult> GetSettings()
+    {
+        var dto = await _service.GetSettingsAsync();
+        return Ok(BuildOk(_mapper.Map<MaintenanceSettingsRes>(dto)));
+    }
+
     // ── Project header ────────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/header")]
     public async Task<IActionResult> GetProjectHeader(string projectId)
     {
         var dto = await _service.GetProjectHeaderAsync(projectId);
-        if (dto is null) return NotFound();
+        if (dto is null)
+            return Ok(BuildOk<ProjectHeaderRes>(default!));
+
         return Ok(BuildOk(_mapper.Map<ProjectHeaderRes>(dto)));
     }
 

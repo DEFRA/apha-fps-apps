@@ -24,16 +24,41 @@ public class YearlyDetailsControllerTests
         _controller = new YearlyDetailsController(_service, _mapper);
     }
 
+    #region GetSettings
+
+    [Fact]
+    public async Task GetSettings_ReturnsOk_WithMappedData()
+    {
+        var dto = new MaintenanceSettingsDto { InflationAnimals = 2.5m, CurrentFinancialYear = 2024 };
+        var res = new MaintenanceSettingsRes { InflationAnimals = 2.5m, CurrentFinancialYear = 2024 };
+
+        _service.GetSettingsAsync().Returns(dto);
+        _mapper.Map<MaintenanceSettingsRes>(dto).Returns(res);
+
+        var result = await _controller.GetSettings();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<MaintenanceSettingsRes>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Same(res, apiResponse.Data);
+    }
+
+    #endregion
+
     #region GetProjectHeader
 
     [Fact]
-    public async Task GetProjectHeader_ReturnsNotFound_WhenProjectNotFound()
+    public async Task GetProjectHeader_ReturnsOkWithNullSuccessResponse_WhenProjectNotFound()
     {
-        _service.GetProjectHeaderAsync("NOTFOUND").Returns((ProjectHeaderDto?)null);
+        _service.GetProjectHeaderAsync("NOTFOUND").Returns(Task.FromResult<ProjectHeaderDto?>(null));
 
         var result = await _controller.GetProjectHeader("NOTFOUND");
 
-        Assert.IsType<NotFoundResult>(result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<ProjectHeaderRes>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Null(apiResponse.Data);
+        Assert.NotNull(apiResponse.Meta);
         await _service.Received(1).GetProjectHeaderAsync("NOTFOUND");
     }
 

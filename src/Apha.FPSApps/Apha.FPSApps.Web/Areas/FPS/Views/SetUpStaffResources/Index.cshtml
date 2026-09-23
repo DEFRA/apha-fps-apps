@@ -88,9 +88,11 @@
                                                             var gradeCode = Model.GradeCodeMap.TryGetValue(grade, out var gc) ? gc : string.Empty;
                                                             <li class="ssr-grade-item @(grade == Model.SelectedGrade ? "ssr-grade-item--active" : "")"
                                                                 role="option"
+                                                                tabindex="@(grade == Model.SelectedGrade ? "0" : "-1")"
                                                                 data-grade-code="@gradeCode"
                                                                 aria-selected="@(grade == Model.SelectedGrade ? "true" : "false")"
-                                                                onclick="ssrSelectWorkGroup('@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(grade))')">
+                                                                onclick="ssrSelectWorkGroup('@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(grade))')"
+                                                                onkeydown="ssrGradeListKeyDown(event)">
                                                                 @grade
                                                             </li>
                                                         }
@@ -207,7 +209,7 @@
             } else {
                 attachDropdownListeners();
             }
-        })();
+        })();     
     </script>
     <script src="~/js/fps_js/SetUpStaffResources.js"></script>
 }

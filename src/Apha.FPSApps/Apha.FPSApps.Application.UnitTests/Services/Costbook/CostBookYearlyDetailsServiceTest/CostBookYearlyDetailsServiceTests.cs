@@ -22,6 +22,24 @@ public class CostBookYearlyDetailsServiceTests
         _sut = new CostBookYearlyDetailsService(_mockApiClient);
     }
 
+    #region GetSettingsAsync
+
+    [Fact]
+    public async Task GetSettingsAsync_DelegatesToClient()
+    {
+        var dto = new MaintenanceSettingsDto { InflationAnimals = 2.5m };
+        var expected = ApiResponseDto<MaintenanceSettingsDto>.SuccessResponse(dto);
+        _yearlyDetailsClient.GetSettingsAsync().Returns(expected);
+
+        var result = await _sut.GetSettingsAsync();
+
+        Assert.True(result.Success);
+        Assert.Equal(2.5m, result.Data!.InflationAnimals);
+        await _yearlyDetailsClient.Received(1).GetSettingsAsync();
+    }
+
+    #endregion
+
     #region GetProjectHeaderAsync
 
     [Fact]

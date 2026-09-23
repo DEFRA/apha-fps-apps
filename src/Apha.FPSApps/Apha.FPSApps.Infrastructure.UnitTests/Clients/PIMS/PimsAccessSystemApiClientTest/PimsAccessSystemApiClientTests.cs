@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
@@ -17,7 +18,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessSystemApi
         private readonly IMapper _mapper;
         private readonly PimsAccessSystemApiClient _client;
 
-        private const string BaseUrl = "api/v1/accesssystem";
+        private const string BaseUrl = PimsApiEndpoints.GetAllAccessSystems;
 
         public PimsAccessSystemApiClientTests()
         {
@@ -101,7 +102,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsAccessSystemApi
         public async Task GetByIdAsync_HttpReturnsSuccess_ReturnsMappedResponse()
         {
             const int systemid = 2;
-            var expectedUrl = $"{BaseUrl}/{systemid}";
+            var expectedUrl = string.Format(PimsApiEndpoints.GetAccessSystemById, systemid);
             var apiResp = SuccessApiResponse(MakeRes(systemid, "FPS"));
             var dto = SuccessDto(MakeDto(systemid, "FPS"));
             _http.GetAsync<AccessSystemRes>(expectedUrl).Returns(apiResp);

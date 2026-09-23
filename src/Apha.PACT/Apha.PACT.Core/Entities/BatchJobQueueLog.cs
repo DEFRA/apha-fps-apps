@@ -8,5 +8,6 @@ namespace Apha.PACT.Core.Entities
         public string PerformedBy { get; set; } = null!;
         public DateTime LogTime { get; set; }
         public string? Note { get; set; }
+        public int FpsYear { get; set; }
     }
 }
