@@ -524,6 +524,59 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
         }
 
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenDaysIsNull_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = 5, CvlHours = 3 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenVidHoursIsNull_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = null, CvlHours = 3 };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenCvlHoursIsNull_ThrowsBusinessValidationError()
+        {
+            // Arrange
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = 20, VidHours = 5, CvlHours = null };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
+        [Fact]
+        public async Task SaveYearEndMonthHourAsync_WhenAllValuesAreNull_ThrowsBusinessValidationError()
+        {
+            // Arrange — this is the "last 3 months left blank" defect: a month confirmed/saved
+            // with no working-hours data must be rejected, not silently accepted.
+            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.SaveYearEndMonthHourAsync(dto));
+            ex.Errors.Should().ContainSingle(e => e.Code == "Missing_Config");
+
+            await _mockRepository.DidNotReceive().SaveYearEndMonthHourAsync(Arg.Any<MonthHour>());
+        }
+
         #endregion
 
         // -----------------------------------------------------------------------
@@ -567,27 +620,6 @@ namespace Apha.FPS.Application.UnitTests.Services.MonthHourServiceTest
             var entity = new MonthHour { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
             var savedEntity = new MonthHour { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
             var expectedDto = new MonthHourDto { Year = 2024, Month = 1, Days = 0, VidHours = 0, CvlHours = 0 };
-
-            _mockMapper.Map<MonthHour>(dto).Returns(entity);
-            _mockRepository.SaveYearEndMonthHourAsync(entity).Returns(savedEntity);
-            _mockMapper.Map<MonthHourDto>(savedEntity).Returns(expectedDto);
-
-            // Act
-            var result = await _sut.SaveYearEndMonthHourAsync(dto);
-
-            // Assert
-            result.Should().NotBeNull();
-            await _mockRepository.Received(1).SaveYearEndMonthHourAsync(entity);
-        }
-
-        [Fact]
-        public async Task SaveYearEndMonthHourAsync_WhenValuesAreNull_PassesValidationAndCallsRepository()
-        {
-            // Arrange — nullable decimal properties being null are not negative, so validation passes
-            var dto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-            var entity = new MonthHour { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-            var savedEntity = new MonthHour { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
-            var expectedDto = new MonthHourDto { Year = 2024, Month = 1, Days = null, VidHours = null, CvlHours = null };
 
             _mockMapper.Map<MonthHour>(dto).Returns(entity);
             _mockRepository.SaveYearEndMonthHourAsync(entity).Returns(savedEntity);

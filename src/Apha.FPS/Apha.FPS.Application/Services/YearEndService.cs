@@ -362,9 +362,15 @@ namespace Apha.FPS.Application.Services
             if (hasUnplannedMonthConfigs)
                 errors.Add(new BusinessValidationError($"Month(s) Working days, VID hours and CVL hours are missing for the planned year. Please verify and provide value for each missing month.", "Missing_Config"));
 
-            bool hasmissingMissingVal = monthConfigs.Any(x => x.Days < 0 || x.VidHours < 0 || x.CvlHours < 0);
+            bool hasInvalidValues = monthConfigs.Any(x =>
+                x.Days is null ||
+                x.VidHours is null ||
+                x.CvlHours is null ||
+                x.Days < 0 ||
+                x.VidHours < 0 ||
+                x.CvlHours < 0);
 
-            if (hasmissingMissingVal)
+            if (hasInvalidValues)
                 errors.Add(new BusinessValidationError($"Provided Month( Working days, VID hours and CVL hours values are not valid for the planned year. Values should be non-negative and greater than zero.  Please verify and provide valid value for each month.", "Missing_Config"));
         }
 
