@@ -160,7 +160,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 var filterValue = costCentreNo.ToString();
                 if (!string.IsNullOrWhiteSpace(filterValue) && double.TryParse(filterValue, out var parsed))
-                    query = query.Where(c => Math.Abs(c.CostCentreNo - parsed) < CostCentreNoTolerance);
+                    query = query.Where(c => (c.CostCentreNo >= parsed ));
             }
 
             if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)

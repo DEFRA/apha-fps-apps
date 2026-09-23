@@ -253,7 +253,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Text = d,
                     Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
                 })
-                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Directorate) })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = "Select Directorate", Selected = string.IsNullOrEmpty(model.Directorate) })
                 .ToList();
 
             // Manager dropdown — blank first item

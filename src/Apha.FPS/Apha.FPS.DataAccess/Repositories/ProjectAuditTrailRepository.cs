@@ -466,9 +466,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 "staffid"       => e => e.StaffId,
                 "jobcode"       => e => e.JobCode,
                 "plannedhours"  => e => e.PlannedHours,
-                "date_time"     => e => e.DateTime,
-                "insert_delete" => e => e.InsertDelete,
-                "user_id"       => e => e.UserId,
+                "datetime"     => e => e.DateTime,
+                "insertdelete" => e => e.InsertDelete,
+                "userid"       => e => e.UserId,
                 _               => e => e.DateTime,
             };
             return ApplySorting(q, descending, keySelector);

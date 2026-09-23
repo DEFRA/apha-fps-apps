@@ -98,6 +98,10 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
             existing.PersonStatus = entity.PersonStatus;
             existing.PersonClass = entity.PersonClass;
+            if (entity.MakeAvailable == 1)
+            {
+                entity.MakeAvailable = -1;
+            }
             existing.MakeAvailable = entity.MakeAvailable;
 
             await _dbContext.SaveChangesAsync(default);
@@ -120,7 +124,15 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.HrsAvail = entity.HrsAvail;
             existing.PersonStatus = entity.PersonStatus;
             existing.PersonClass = entity.PersonClass;
+            if (entity.MakeAvailable == 1)
+            {
+                entity.MakeAvailable = -1;
+            }
             existing.MakeAvailable = entity.MakeAvailable;
+            if (entity.TimeRecorder == 1)
+            {
+                entity.TimeRecorder = -1;
+            }
             existing.TimeRecorder = entity.TimeRecorder;
             existing.StartDate = entity.StartDate;
             existing.EndDate = entity.EndDate;
@@ -285,6 +297,14 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrWhiteSpace(entity.PactId))
             {
                 entity.PactId = await GetNextPactIdAsync();
+            }
+            if (entity.MakeAvailable==1)
+            {
+                entity.MakeAvailable = -1;
+            }
+            if (entity.TimeRecorder==1)
+            {
+                entity.TimeRecorder = -1;
             }
             await _dbContext.WorkGroupEmployees.AddAsync(entity);
             await _dbContext.SaveChangesAsync(default);
