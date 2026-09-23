@@ -1484,6 +1484,241 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             Assert.Equal("a.smith@example.com", result.Data.Single().UserId);
         }
 
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithUserIdColumnFilter_IsCaseInsensitive()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "J.Bloggs@Example.com", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "Desc2",
+                        ItemCost = 200m, UserId = "a.smith@example.com", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"UserId\":\"j.BLOGGS\"}"
+            };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal("J.Bloggs@Example.com", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithWhitespaceUserIdColumnFilterValue_ReturnsAllRows()
+        {
+            // Arrange – an all-whitespace filter value must be ignored, not treated as a match
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "a@example.com", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "Desc2",
+                        ItemCost = 200m, UserId = "b@example.com", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"UserId\":\"   \"}"
+            };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithUnrelatedColumnFilterKey_ReturnsAllRows()
+        {
+            // Arrange – a filter payload that contains no in-memory key must leave the list untouched
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "a@example.com", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "Desc2",
+                        ItemCost = 200m, UserId = "b@example.com", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Unmapped\":\"anything\"}"
+            };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_UserIdHasSurroundingWhitespace_ResolvesToEmail()
+        {
+            // Arrange – legacy rows can carry padded user_id values; the lookup key is trimmed
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "  jbloggs  ", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = "j.bloggs@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal("j.bloggs@example.com", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_UserIdDiffersInCaseFromUsername_ResolvesToEmail()
+        {
+            // Arrange – the username lookup is case-insensitive
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "JBloggs", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "JBloggs", UserEmail = "j.bloggs@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal("j.bloggs@example.com", result.Data.Single().UserId);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetAdditionalCostLogsAsync_UserIdIsNullOrWhitespace_LeavesValueUnchanged(string? userId)
+        {
+            // Arrange – blank user_id values are skipped by the email resolution step
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = userId, FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = "j.bloggs@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal(userId, result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_MatchingUserHasNoEmail_LeavesLegacyValueUnchanged()
+        {
+            // Arrange – a tblusers row without an email cannot be used for display
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "jbloggs", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = null }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal("jbloggs", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_DuplicateUsernames_ResolvesUsingFirstMatch()
+        {
+            // Arrange – guards the GroupBy/First() de-duplication in the username lookup
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "jbloggs", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = "first@example.com" },
+                new() { UserId = 2, Username = "jbloggs", UserEmail = "second@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal("first@example.com", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithWhitespaceNameColumnFilterValue_ReturnsAllRows()
+        {
+            // Arrange – mirrors the in-memory filter guard used by the Name column
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, StaffId = "S1", JobCode = TestJobCode, FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, StaffId = "S2", JobCode = TestJobCode, FpsYear = DefaultFpsYear }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S1", Name = "Alice" },
+                new() { StaffId = "S2", Name = "Bob" }
+            };
+            var repo  = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes, staffGeneralViews: staff);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Name\":\"  \"}"
+            };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestJobCode, null, null);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+        }
+
         #endregion
     }
 }
