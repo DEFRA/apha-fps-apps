@@ -122,7 +122,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             var expectedDto = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(
                 [new ProjectListViewDto { Parentproject = "PP001", OnFps = "Yes" }]);
 
-            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(httpResponse);
+            _http.GetAsync<List<ProjectListRes>>(Arg.Any<string>()).Returns(httpResponse);
             _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(httpResponse).Returns(expectedDto);
 
             // Act
@@ -132,7 +132,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(Arg.Is<string>(u => u.Contains(PimsApiEndpoints.GetAllProjectsList) && u.Contains("showWhichProjects=2")));
         }
 
         [Fact]
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             var failDto = ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(
                 [new ApiErrorDto { Message = "Error", Code = "ERR" }], new ApiMetaDto());
 
-            _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList).Returns(httpResponse);
+            _http.GetAsync<List<ProjectListRes>>(Arg.Any<string>()).Returns(httpResponse);
             _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(httpResponse).Returns(failDto);
 
             // Act
@@ -152,7 +152,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             // Assert
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(Arg.Is<string>(u => u.Contains(PimsApiEndpoints.GetAllProjectsList) && u.Contains("showWhichProjects=2")));
         }
 
         [Fact]
@@ -169,7 +169,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             await _client.GetAllProjectsListAsync();
 
             // Assert
-            await _http.Received(1).GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+            await _http.Received(1).GetAsync<List<ProjectListRes>>(Arg.Is<string>(u => u.Contains(PimsApiEndpoints.GetAllProjectsList) && u.Contains("showWhichProjects=2")));
         }
 
         #endregion
@@ -188,7 +188,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             var expectedDto = ApiResponseDto<List<ProjectListMilestoneDto>>.SuccessResponse(
                 [new ProjectListMilestoneDto { Parentproject = "PP001", Program = "PROG1", Customer = "CUST1", ProjectGroup = "GRP1" }]);
 
-            _http.GetAsync<List<ProjectListMilestoneRes>>(PimsApiEndpoints.GetAllProjectsMilestone).Returns(httpResponse);
+            _http.GetAsync<List<ProjectListMilestoneRes>>(Arg.Any<string>()).Returns(httpResponse);
             _mapper.Map<ApiResponseDto<List<ProjectListMilestoneDto>>>(httpResponse).Returns(expectedDto);
 
             // Act
@@ -210,7 +210,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
             var failDto = ApiResponseDto<List<ProjectListMilestoneDto>>.FailureResponse(
                 [new ApiErrorDto { Message = "Error", Code = "ERR" }], new ApiMetaDto());
 
-            _http.GetAsync<List<ProjectListMilestoneRes>>(PimsApiEndpoints.GetAllProjectsMilestone).Returns(httpResponse);
+            _http.GetAsync<List<ProjectListMilestoneRes>>(Arg.Any<string>()).Returns(httpResponse);
             _mapper.Map<ApiResponseDto<List<ProjectListMilestoneDto>>>(httpResponse).Returns(failDto);
 
             // Act

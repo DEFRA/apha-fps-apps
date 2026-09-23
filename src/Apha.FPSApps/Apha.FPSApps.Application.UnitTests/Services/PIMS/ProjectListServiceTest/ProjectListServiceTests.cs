@@ -366,7 +366,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
             };
             var expectedResponse = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(projects);
 
-            _pimsProjectListApiClient.GetAllProjectsListAsync().Returns(expectedResponse);
+            _pimsProjectListApiClient.GetAllProjectsListAsync(2).Returns(expectedResponse);
 
             // Act
             var result = await _projectListService.GetAllProjectsListAsync();
@@ -375,7 +375,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync();
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync(2);
         }
 
         [Fact]
@@ -384,7 +384,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
             // Arrange
             var expectedResponse = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>());
 
-            _pimsProjectListApiClient.GetAllProjectsListAsync().Returns(expectedResponse);
+            _pimsProjectListApiClient.GetAllProjectsListAsync(2).Returns(expectedResponse);
 
             // Act
             var result = await _projectListService.GetAllProjectsListAsync();
@@ -393,7 +393,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Empty(result.Data!);
-            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync();
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync(2);
         }
 
         [Fact]
@@ -406,7 +406,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
             };
             var expectedResponse = ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _pimsProjectListApiClient.GetAllProjectsListAsync().Returns(expectedResponse);
+            _pimsProjectListApiClient.GetAllProjectsListAsync(2).Returns(expectedResponse);
 
             // Act
             var result = await _projectListService.GetAllProjectsListAsync();
@@ -416,7 +416,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
-            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync();
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync(2);
         }
 
         #endregion
