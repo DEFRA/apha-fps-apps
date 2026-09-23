@@ -933,7 +933,8 @@ tbody#tableBody>tr>td>.btnBlue {
 }
  
 /* Disabled */
-.form-control:disabled {
+.form-control:disabled,
+.form-control[aria-disabled="true"] {
   background: #e9ecef;
   cursor: not-allowed;
 }
@@ -1002,11 +1003,23 @@ textarea.form-control {
 }
  
 /* Disabled */
-.form-select:disabled {
+.form-select:disabled,
+.form-select[aria-disabled="true"] {
   background-color: #e9ecef;
   cursor: not-allowed;
 }
- 
+
+/* Fields converted from native disabled to aria-disabled (see
+   global-dropdown-keyboard.js) lose the browser's built-in disabled
+   opacity/greying, so re-apply the same visual "blurred"/inert look for
+   GOV.UK form controls here. */
+input[aria-disabled="true"],
+select[aria-disabled="true"],
+textarea[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .form-select-sm {
   padding: 6px 30px 6px 10px;
   font-size: 13px;

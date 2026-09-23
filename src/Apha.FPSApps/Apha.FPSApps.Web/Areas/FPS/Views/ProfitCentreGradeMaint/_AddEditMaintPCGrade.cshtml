@@ -78,7 +78,8 @@
                         <label class="govuk-label" for="ProfitCentre">RC <span class="sup_color_red">*</span></label>
                         <select id="ProfitCentre" name="ProfitCentre" required
                                 class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                                aria-label="Select profit centre">
+
+                                aria-label="Select resource center">
                             <option value="">-- Select --</option>
                         </select>
                         <span data-valmsg-for="ProfitCentre" class="govuk-error-message field-validation-valid" style="display:none;"></span>
@@ -92,7 +93,7 @@
                         <label class="govuk-label" for="ChargeRate">Charge Rate</label>
                         <div class="govuk-input__wrapper">
                             <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                            <input type="number" step="0.01" id="ChargeRate" name="ChargeRate" asp-for="ChargeRate" class="govuk-input govuk-input--disabled" min="0" readonly tabindex="-1">
+                            <input type="number" step="0.01" id="ChargeRate" name="ChargeRate" asp-for="ChargeRate" class="govuk-input govuk-input--disabled" min="0" readonly >
                         </div>
                         <span data-valmsg-for="ChargeRate" class="govuk-error-message field-validation-valid" style="display:none;"></span>
                     </div>

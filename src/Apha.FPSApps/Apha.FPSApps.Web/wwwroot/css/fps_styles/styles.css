@@ -5543,6 +5543,39 @@ input.govuk-input.ssr-total-input[readonly] {
 .isSetUpStaffResources {
     width: 63%;
 }
+
+/* Stage 2 header: three label + select pairs share one table row. Without these
+   rules the selects keep their intrinsic width (driven by the longest option),
+   so the last one overflows the container, and the label cells absorb the
+   leftover space leaving the labels flush against their controls. */
+.isSetUpStaffResources {
+    .govuk-table {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .govuk-table__header {
+        white-space: nowrap;
+        width: 1%;
+    }
+
+    /* Space between a label and its control, and between each pair. */
+    .govuk-table__cell {
+        padding-left: 8px;
+        padding-right: 16px;
+    }
+
+    .govuk-table__cell:last-child {
+        padding-right: 0;
+    }
+
+    .govuk-select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        vertical-align: middle;
+    }
+}
 .isBudgetBidsQuery{
     width: 20%;
 }
@@ -5555,6 +5588,35 @@ input.govuk-input.ssr-total-input[readonly] {
 .isMiscReport,
 .isStaffPlanDetails {
     width: 20%;
+}
+
+/* Staff Plan Pivot header controls.
+   .isStaffPlanDetails pins this column to 20% of the row, which is too narrow
+   for the label + select pair and pushes the select past the page border.
+   Size the column to its content and keep the select inside the margin. */
+.spd-header-controls {
+    width: auto !important;
+    max-width: 50%;
+    padding-right: 15px;
+}
+
+.spd-header-controls .govuk-table {
+    width: 100%;
+    margin-left: auto;
+}
+
+/* Label cell shrinks to its text so the select gets the remaining space. */
+.spd-header-controls .govuk-table__header {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.spd-header-controls .govuk-select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    vertical-align: middle;
 }
 .isTestPriceCheck {
     width: 16%;
@@ -5621,9 +5683,15 @@ input.govuk-input.ssr-total-input[readonly] {
 }
 
 .content-wrapper:has(.isTestSupplierPage),
-.content-wrapper:has(.isMiscReportPage),
-.content-wrapper:has(.isResourceUtilizationViewPage) {
+.content-wrapper:has(.isMiscReportPage) {
     flex: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Resource Utilisation View: keep the default flex-grow so the page body fills
+   the viewport and the footer sits directly beneath the content, matching the
+   other FPS pages (no white gap above the copyright strip). */
+.content-wrapper:has(.isResourceUtilizationViewPage) {
     margin-bottom: 0 !important;
 }
 

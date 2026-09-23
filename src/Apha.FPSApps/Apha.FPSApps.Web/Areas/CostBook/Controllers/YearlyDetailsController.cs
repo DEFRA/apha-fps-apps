@@ -209,6 +209,19 @@ public class YearlyDetailsController : Controller
             model.ProfitAdditional = latestYear.ProfitAdditional;
         }
 
+        if (model.ProfitTime is null || model.ProfitTests is null || model.ProfitAnimals is null || model.ProfitAdditional is null)
+        {
+            var settingsResponse = await _service.GetSettingsAsync();
+            if (settingsResponse.Success && settingsResponse.Data != null)
+            {
+                var settings = settingsResponse.Data;
+                model.ProfitTime ??= (double?)settings.ProfitStaff;
+                model.ProfitTests ??= (double?)settings.ProfitTests;
+                model.ProfitAnimals ??= (double?)settings.ProfitAnimals;
+                model.ProfitAdditional ??= (double?)settings.ProfitExceptionalCosts;
+            }
+        }
+
         return PartialView("_AddProjectYear", model);
     }
 

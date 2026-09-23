@@ -24,6 +24,7 @@ namespace Apha.Common.Constants
         public const string UpdateProjectYear = "api/v1/yearlydetails/{0}/years/{1}";
         public const string DeleteProjectYear = "api/v1/yearlydetails/{0}/years/{1}";
         public const string CopyYearData = "api/v1/yearlydetails/{0}/years/copy";
+        public const string GetYearlyDetailsSettings = "api/v1/yearlydetails/settings";
 
         // Yearly Details – Staff
         public const string GetStaffRequirements = "api/v1/yearlydetails/{0}/years/{1}/staff";
