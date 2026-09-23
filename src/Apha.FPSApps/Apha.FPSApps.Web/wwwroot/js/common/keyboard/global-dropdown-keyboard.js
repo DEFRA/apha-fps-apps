@@ -1,5 +1,4 @@
 // ── Global keyboard-navigation support for custom "flyout" dropdowns ─────────
-
 (function () {
     'use strict';
 
@@ -109,7 +108,11 @@
     // shared script, which is loaded on every area layout.
     // Additive: does not modify the existing restoreFocusAfterRefresh logic.
     function makePageHeadingFocusable() {
-        var heading = document.querySelector('main h1, .content-wrapper h1, h1');
+        // Some areas (e.g. PIMS) use a lower-level heading (h5) as the visual
+        // page title instead of h1. Look for the first heading of any level
+        // within the main content region so those pages are covered too,
+        // falling back to any h1 on the page.
+        var heading = document.querySelector('main h1, main h2, main h3, main h4, main h5, main h6, .content-wrapper h1, .content-wrapper h2, .content-wrapper h3, .content-wrapper h4, .content-wrapper h5, .content-wrapper h6, h1');
         if (!heading || !isVisible(heading)) return;
         if (!heading.hasAttribute('tabindex')) {
             heading.setAttribute('tabindex', '0');
@@ -152,14 +155,241 @@
         }
     }
 
+    // ── Announce message/confirm dialog content on open ───────────────────
+    // The shared dialog builder (govuk-modal-dialog.js) moves focus straight
+    // to the OK button when a message popup opens (e.g. after a successful
+    // save/delete/edit), so screen readers announce only "OK, button" and the
+    // actual message is never read out.
+    //
+    // Critically, the dialog carries aria-modal="true", which makes assistive
+    // technology ignore ALL content outside the dialog - including any global
+    // live region appended to document.body. The announcement must therefore
+    // be injected INSIDE the dialog element itself to be spoken.
+    //
+    // Implemented here as a new, additive function so the common dialog file
+    // is left untouched. Matching on the ARIA role means every dialog of this
+    // shape is covered across all areas.
+    // Timestamp used to detect dialogs that open immediately on page load, so
+    // their announcement can be delayed until the screen reader has finished
+    // reading the newly loaded document.
+    var PAGE_LOAD_TIME = Date.now();
+
+    function announceDialogContent(dialog) {
+        if (!dialog || dialog.getAttribute('data-sr-announced') === 'true') return;
+        if (!isVisible(dialog)) return;
+        dialog.setAttribute('data-sr-announced', 'true');
+
+        var descId = dialog.getAttribute('aria-describedby');
+        var descEl = descId ? document.getElementById(descId) : dialog.querySelector('p');
+        if (!descEl || !(descEl.textContent || '').trim()) return;
+
+        // Move focus onto the message text itself rather than using a live
+        // region. A live region produces a SECOND, separate announcement on
+        // top of NVDA's own focus announcement for the dialog, which is why
+        // the dialog name and heading were being read twice. Focusing the
+        // message makes the screen reader announce the dialog context and the
+        // message exactly once, in a single pass.
+        if (!descEl.hasAttribute('tabindex')) {
+            descEl.setAttribute('tabindex', '-1');
+        }
+
+        // Deferred so the dialog is fully in the accessibility tree and the
+        // dialog builder's own focus() call has already run, otherwise it
+        // would immediately move focus away again.
+        //
+        // When a dialog is opened straight away on page load (e.g. a success
+        // message rendered from TempData after a redirect), the screen reader
+        // is still busy announcing the newly loaded document and would talk
+        // over / discard the message. In that case wait longer so the message
+        // is announced after the page-load chatter has finished.
+        var openedDuringPageLoad = (Date.now() - PAGE_LOAD_TIME) < 1500;
+        var delay = openedDuringPageLoad ? 900 : 100;
+
+        window.setTimeout(function () {
+            if (!isVisible(dialog)) return;
+            descEl.focus();
+        }, delay);
+    }
+
+    function watchForDialogs() {
+        // Catch any dialog already present when this script initialises.
+        Array.prototype.forEach.call(
+            document.querySelectorAll('[role="dialog"], [role="alertdialog"]'),
+            announceDialogContent
+        );
+
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    if (node.matches && node.matches('[role="dialog"], [role="alertdialog"]')) {
+                        announceDialogContent(node);
+                    }
+                    if (node.querySelectorAll) {
+                        Array.prototype.forEach.call(
+                            node.querySelectorAll('[role="dialog"], [role="alertdialog"]'),
+                            announceDialogContent
+                        );
+                    }
+                });
+            });
+        });
+
+        // Observe from the document element so this works even when the
+        // script runs in <head> before <body> exists. Observation starts
+        // immediately (not on DOMContentLoaded) because pages can open a
+        // dialog inside jQuery's ready handler, which fires on that same
+        // event and could otherwise be missed.
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    watchForDialogs();
+
+    // ── Make static data tables keyboard reachable and announced ──────────
+    // Plain <table> markup is not in the tab order, so keyboard/screen-reader
+    // users tab straight past read-only tables (e.g. the FPS Yearly Details
+    // tab) and never hear their contents. Scrollable wrappers around such
+    // tables are also unreachable by keyboard, which additionally fails
+    // WCAG 2.1.1.
+    //
+    // This adds the required semantics at runtime (focusable scroll region,
+    // accessible name, and column/row header scopes) so no existing view
+    // markup has to change. Only tables that are not already handled - i.e.
+    // those outside the shared editable DataGrid, which manages its own
+    // keyboard behaviour - are processed.
+    function makeStaticTablesAccessible(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+
+        Array.prototype.forEach.call(scope.querySelectorAll('table'), function (table) {
+            if (table.getAttribute('data-a11y-table') === 'true') return;
+            // Skip grids handled by the shared DataGrid component.
+            if (table.closest('.editable-grid-container')) return;
+            table.setAttribute('data-a11y-table', 'true');
+
+            // Give every header cell an explicit scope so screen readers can
+            // associate data cells with their column heading.
+            Array.prototype.forEach.call(table.querySelectorAll('thead th'), function (th) {
+                if (!th.hasAttribute('scope')) th.setAttribute('scope', 'col');
+            });
+
+            // Derive an accessible name for the table from the nearest
+            // preceding heading, or the tab that labels its panel.
+            var name = '';
+            var caption = table.querySelector('caption');
+            if (caption) {
+                name = (caption.textContent || '').trim();
+            }
+            if (!name) {
+                var panel = table.closest('[role="tabpanel"]');
+                var labelledBy = panel && panel.getAttribute('aria-labelledby');
+                var labelEl = labelledBy ? document.getElementById(labelledBy) : null;
+                if (labelEl) name = (labelEl.textContent || '').trim();
+            }
+            if (name && !table.hasAttribute('aria-label')) {
+                table.setAttribute('aria-label', name);
+            }
+
+            // Make the scrollable wrapper (or the table itself) focusable so
+            // the content can be reached and scrolled using the keyboard.
+            var target = table.parentElement;
+            var scrollable = false;
+            if (target) {
+                var style = window.getComputedStyle(target);
+                scrollable = style.overflowY === 'auto' || style.overflowY === 'scroll' ||
+                    style.overflowX === 'auto' || style.overflowX === 'scroll';
+            }
+            if (!scrollable) target = table;
+
+            if (!target.hasAttribute('tabindex')) {
+                target.setAttribute('tabindex', '0');
+            }
+            if (scrollable && !target.hasAttribute('role')) {
+                target.setAttribute('role', 'region');
+                if (name) target.setAttribute('aria-label', name);
+            }
+
+            makeTableRowsFocusable(table);
+        });
+    }
+
+    // Make every data row focusable and give it an accessible name built from
+    // each column header paired with that row's cell value, so tabbing through
+    // the table announces the full row, e.g.
+    // "Year 2023, Program Surveillance, Customer APHA, Manager J Smith".
+    // Row-level focus is used (rather than per-cell) so a screen reader user
+    // hears the complete record in one stop without needing table-navigation
+    // commands.
+    function makeTableRowsFocusable(table) {
+        var headers = Array.prototype.map.call(
+            table.querySelectorAll('thead th'),
+            function (th) { return (th.textContent || '').trim(); }
+        );
+
+        var bodyRows = table.querySelectorAll('tbody tr');
+        Array.prototype.forEach.call(bodyRows, function (row) {
+            if (row.getAttribute('data-a11y-row') === 'true') return;
+            row.setAttribute('data-a11y-row', 'true');
+
+            // Skip rows that already opt into per-cell accessibility (e.g. the
+            // Invoice totals row, where each value cell is individually
+            // focusable and carries its own "label: value" aria-label via
+            // data-total-label). Adding whole-row tabindex/aria-label on top
+            // of that would create a duplicate, mislabeled tab stop.
+            if (row.querySelector('[data-total-label]')) return;
+
+            var cells = row.querySelectorAll('th, td');
+            if (!cells.length) return;
+
+            // A single full-width cell is a placeholder such as
+            // "No records found." - announce it as-is.
+            var parts = [];
+            if (cells.length === 1) {
+                parts.push((cells[0].textContent || '').trim());
+            } else {
+                Array.prototype.forEach.call(cells, function (cell, index) {
+                    var value = (cell.textContent || '').trim();
+                    if (!value) return;
+                    var header = headers[index] || '';
+                    parts.push(header ? header + ' ' + value : value);
+                });
+            }
+
+            var label = parts.join(', ');
+            if (!label) return;
+
+            if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '0');
+            if (!row.hasAttribute('aria-label')) row.setAttribute('aria-label', label);
+        });
+    }
+
+    // Re-apply to tables rendered later (AJAX grid refreshes, tab switches).
+    function watchForStaticTables() {
+        makeStaticTablesAccessible(document);
+
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                    if (!node || node.nodeType !== 1) return;
+                    if (node.tagName === 'TABLE' || (node.querySelector && node.querySelector('table'))) {
+                        makeStaticTablesAccessible(node.parentElement || document);
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restoreFocusAfterRefresh);
         document.addEventListener('DOMContentLoaded', makePageHeadingFocusable);
         document.addEventListener('DOMContentLoaded', makeFooterReadable);
+        document.addEventListener('DOMContentLoaded', watchForStaticTables);
     } else {
         restoreFocusAfterRefresh();
         makePageHeadingFocusable();
         makeFooterReadable();
+        watchForStaticTables();
     }
 
     // Resolve the flyout panel + row-container ("body") associated with a trigger input.
@@ -487,9 +717,57 @@
         return isModalVisible(modal);
     }
 
+    var emptyDescriptionCounter = 0;
+
+    // ── Stop the whole modal body being read out on open ──────────────────
+    // These dialogs are marked up as role="dialog"/<dialog> with
+    // aria-modal="true" and an aria-labelledby title. When such a dialog
+    // becomes visible and focus moves into it, screen readers announce the
+    // dialog's name AND read out its entire static contents - which is why
+    // opening an Add/Edit modal reads every field label and value in one
+    // burst, and then reads each field again as it is tabbed onto.
+    //
+    // Setting aria-describedby to an empty node is not enough on its own:
+    // reading the contents on entry is the dialog's built-in behaviour, not a
+    // description fallback. The reliable way to stop it - without changing any
+    // markup or UI - is to take the modal BODY out of the accessibility tree
+    // for the brief moment the dialog is being announced, then put it straight
+    // back. The screen reader therefore finds only the title to announce on
+    // open, and every field is still fully exposed (and announced normally)
+    // by the time the user tabs to it.
+    function prepareModalAnnouncement(modal) {
+        if (!modal.hasAttribute('aria-describedby')) {
+            var descId = 'js-modal-empty-desc-' + (++emptyDescriptionCounter);
+            var desc = document.createElement('span');
+            desc.id = descId;
+            desc.className = 'govuk-visually-hidden';
+            modal.appendChild(desc);
+            modal.setAttribute('aria-describedby', descId);
+        }
+    }
+
+    // Hides the modal's content region from assistive technology while the
+    // open announcement happens, restoring it as soon as focus has settled on
+    // the title. aria-hidden has no visual effect, so the UI is untouched.
+    function muteModalBodyDuringOpen(modal) {
+        var body = modal.querySelector('.govuk-edit-modal__body, .modal-body');
+        if (!body || body.getAttribute('aria-hidden') === 'true') return;
+
+        body.setAttribute('aria-hidden', 'true');
+
+        // Restore after the announcement has been queued. Focus never lands
+        // inside the body during this window (it goes to the title), so no
+        // focused element is ever left inside an aria-hidden subtree.
+        window.setTimeout(function () {
+            body.removeAttribute('aria-hidden');
+        }, 600);
+    }
+
     function attachModal(modal, openClass, focusScopeSelector, toggleDisplay) {
         if (!modal || trackedModals.has(modal)) return;
         trackedModals.add(modal);
+
+        prepareModalAnnouncement(modal);
 
         var focusScope = focusScopeSelector ? modal.querySelector(focusScopeSelector) : null;
         var previouslyFocused = null;
@@ -504,14 +782,36 @@
             });
         }
 
-        // When a modal opens, focus should land on its close ("X") button
-        // rather than the first form field, so keyboard/screen-reader users
-        // land on a predictable, always-available control (form fields can be
-        // disabled/hidden depending on modal state, the close button is not).
-        // The close button often lives in the modal header, outside the
-        // narrower focusScope used for Tab-trapping, so it is looked up
-        // against the whole modal rather than the getFocusableElements() list.
+        // When a modal opens, focus should land on its TITLE heading so the
+        // screen reader announces only the dialog name (e.g. "Edit Yearly
+        // Record, heading"). Focus used to go straight to the close ("X")
+        // button; a bare button carries no text content of its own, so the
+        // screen reader read the dialog's whole subtree as surrounding
+        // context - i.e. every field label and value. Landing on the heading
+        // (the WAI-ARIA dialog pattern's recommended target) gives a short,
+        // predictable announcement instead.
+        //
+        // The heading is given tabindex="-1" so it is focusable
+        // programmatically only and never joins the Tab sequence: the very
+        // first Tab still moves to the close button exactly as before, so the
+        // keyboard order and the UI are unchanged.
+        function getModalTitle() {
+            return modal.querySelector(
+                '.govuk-edit-modal__title, .modal-title, ' +
+                '.govuk-edit-modal__header h1, .govuk-edit-modal__header h2, .govuk-edit-modal__header h3, ' +
+                '.modal-header h1, .modal-header h2, .modal-header h3'
+            );
+        }
+
         function getInitialFocusTarget(focusable) {
+            var title = getModalTitle();
+            if (title && title.offsetParent !== null) {
+                if (!title.hasAttribute('tabindex')) {
+                    title.setAttribute('tabindex', '-1');
+                }
+                return title;
+            }
+
             var closeButton = modal.querySelector(
                 '.btn-close, [data-bs-dismiss="modal"], [aria-label="Close"], [aria-label="close"]'
             );
@@ -582,6 +882,7 @@
 
                 isOpen = true;
                 previouslyFocused = document.activeElement;
+                muteModalBodyDuringOpen(modal);
 
                 setTimeout(function () {
                     var focusable = getFocusableElements();
@@ -619,6 +920,7 @@
         // background"). Detect that up front and move focus in immediately.
         if (isOpen) {
             previouslyFocused = document.activeElement;
+            muteModalBodyDuringOpen(modal);
 
             setTimeout(function () {
                 var focusable = getFocusableElements();
@@ -858,6 +1160,82 @@
     }, true);
 })();
 
+// ── Global GOV.UK tabs: hand off focus to next tab after panel content ──────
+// When a user Tabs through the focusable elements inside the currently
+// active tab panel, focus would naturally leave the whole tabs component
+// once it reaches the last focusable element in that panel. Instead, we
+// want focus to move to the *next* tab header so keyboard users continue
+// to move through the tabs component (unless the active tab is the last
+// one, in which case default browser behaviour — moving focus out of the
+// component — is preserved).
+(function () {
+    'use strict';
+
+    function isFocusable(el) {
+        if (!el || el.disabled || el.hidden) {
+            return false;
+        }
+        if (el.tabIndex < 0) {
+            return false;
+        }
+        var style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+            return false;
+        }
+        return true;
+    }
+
+    function getFocusableElements(container) {
+        var selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        return Array.prototype.slice
+            .call(container.querySelectorAll(selector))
+            .filter(isFocusable);
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Tab' || e.shiftKey) {
+            return;
+        }
+
+        var target = e.target;
+        var panel = target && target.closest ? target.closest('.govuk-tabs__panel') : null;
+        if (!panel) {
+            return;
+        }
+
+        // Ignore panels that are hidden/inactive.
+        if (panel.classList.contains('govuk-tabs__panel--hidden') || panel.style.display === 'none') {
+            return;
+        }
+
+        var tabsWrapper = panel.closest('.govuk-tabs');
+        if (!tabsWrapper) {
+            return;
+        }
+
+        var focusable = getFocusableElements(panel);
+        if (!focusable.length || target !== focusable[focusable.length - 1]) {
+            return;
+        }
+
+        var tabs = Array.prototype.slice.call(tabsWrapper.querySelectorAll('.govuk-tabs__tab'));
+        var selectedTab = tabsWrapper.querySelector('.govuk-tabs__list-item--selected .govuk-tabs__tab');
+        var currentIndex = tabs.indexOf(selectedTab);
+        if (currentIndex === -1) {
+            return;
+        }
+
+        var nextIndex = currentIndex + 1;
+        if (nextIndex >= tabs.length) {
+            // Last tab's content finished — allow focus to leave the component naturally.
+            return;
+        }
+
+        e.preventDefault();
+        tabs[nextIndex].focus();
+    }, true);
+})();
+
 // ── Global data-grid arrow-key navigation (NVDA / screen-reader friendly) ───
 // Makes every ".editable-grid-table" behave like a proper ARIA grid:
 //   * The whole grid is a SINGLE tab stop (roving tabindex). Tab moves into
@@ -883,26 +1261,51 @@
     }
 
     // Column headings for a grid, indexed to match the cell position in a row.
+    // When the grid has a group header row above the column header row (e.g.
+    // "Total Planned Time" spanning "PlanHrs, FEC, % Planned"), each column
+    // name is prefixed with its group label so NVDA announces both levels,
+    // e.g. "Total Planned Time PlanHrs, 1200.00" instead of just "PlanHrs,
+    // 1200.00" with no indication of which group the column belongs to.
     function getColumnNames(table) {
         var headerRow = null;
+        var groupRow = null;
         var headRows = table.querySelectorAll('thead tr');
         // Use the last header row that isn't the filter row - that's the one
-        // holding the real column labels.
+        // holding the real column labels. The group row (if present) is the
+        // one immediately above it, carrying wider "section" headings.
         for (var i = 0; i < headRows.length; i++) {
-            if (!headRows[i].classList.contains('filter-row') &&
-                !headRows[i].classList.contains('grid-column-group-row')) {
+            if (headRows[i].classList.contains('grid-column-group-row')) {
+                groupRow = headRows[i];
+            } else if (!headRows[i].classList.contains('filter-row')) {
                 headerRow = headRows[i];
             }
         }
         if (!headerRow) return [];
 
-        return Array.prototype.map.call(headerRow.children, function (th) {
+        var columnNames = Array.prototype.map.call(headerRow.children, function (th) {
             // Strip the sort-indicator glyph so it isn't announced.
             var clone = th.cloneNode(true);
             Array.prototype.forEach.call(clone.querySelectorAll('.sort-icon, .column-resizer'), function (n) {
                 n.parentNode.removeChild(n);
             });
             return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+        });
+
+        if (!groupRow) return columnNames;
+
+        // Expand the group row (which uses colspan) into one group label per
+        // column index, then prefix each column name with its group label.
+        var groupNames = [];
+        Array.prototype.forEach.call(groupRow.children, function (th) {
+            var span = th.colSpan || 1;
+            var label = (th.textContent || '').replace(/\s+/g, ' ').trim();
+            for (var s = 0; s < span; s++) groupNames.push(label);
+        });
+
+        return columnNames.map(function (name, idx) {
+            var group = groupNames[idx];
+            if (!group) return name;
+            return name ? group + ' ' + name : group;
         });
     }
 
@@ -1417,6 +1820,204 @@
     });
 })();
 
+// ── Global "announce disabled fields" support (NVDA / screen-reader friendly) ──
+// Native disabled="disabled"/disabled inputs, selects and textareas are
+// removed from the accessibility tree entirely - the browser strips them out
+// regardless of any aria-* attributes placed on them, so NVDA (and every
+// other screen reader) skips over them in both Tab order and browse-mode
+// review. Sighted users still see the greyed-out field and its value, but
+// screen reader users get no indication the field - or its value - exists
+// at all.
+//
+// Fix: for every native disabled control, swap the semantics for
+// aria-disabled="true" (announces "unavailable"/"dimmed" instead of hiding
+// it) plus a mechanism that keeps the field inert:
+//   * input/textarea: add readonly (keeps the value focusable/readable,
+//     blocks typing) and drop the disabled attribute.
+//   * select: cannot be made readonly, so the disabled attribute is kept
+//     off the element itself; instead a tabindex="-1" avoids it being a
+//     natural Tab stop while pointer-events/focus handling below re-block
+//     interaction and keep it announced as "unavailable".
+// The visual look is unaffected: existing CSS rules already style
+// [readonly]/[disabled] the same way (see e.g. .fps-dg-summary-value,
+// .govuk-input[readonly]), so removing the disabled attribute causes no
+// visible change. Applied globally via this shared script - no per-page
+// markup changes needed.
+// Purely additive/behavioural, safe to re-run on every mutation.
+(function () {
+    'use strict';
+
+    function isVisible(el) {
+        if (!el) return false;
+        var style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    // Keys that must always be allowed through even on an inert field, so
+    // Tab/Shift+Tab moves focus to the next/previous control and Arrow/
+    // Home/End/PageUp/PageDown/Escape keep working for keyboard and screen
+    // reader navigation (browse-mode review, virtual cursor, etc.).
+    var NAVIGATION_KEYS = [
+        'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+        'Home', 'End', 'PageUp', 'PageDown', 'Escape'
+    ];
+
+    function textOf(el) {
+        return el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function findLabelText(field) {
+        var label = null;
+        if (field.id) label = document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
+        if (!label) label = field.closest('label');
+        if (label) return textOf(label);
+
+        var ariaLabel = field.getAttribute('data-kbd-original-aria-label') || field.getAttribute('aria-label');
+        if (ariaLabel) return ariaLabel;
+        var labelledBy = field.getAttribute('aria-labelledby');
+        if (labelledBy) {
+            var byId = document.getElementById(labelledBy);
+            if (byId) return textOf(byId);
+        }
+        return '';
+    }
+
+    function valueOf(field) {
+        if (field.tagName === 'SELECT') {
+            var selected = field.options[field.selectedIndex];
+            return selected ? textOf(selected) : '';
+        }
+        return (field.value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    // Build (or refresh) the accessible name announced for the disabled
+    // field as "<label>: <value>". Screen readers announce a control's
+    // aria-label instead of walking its label/value separately, so this is
+    // the most reliable way to have NVDA read both together for a field
+    // that remains reachable (readonly input/textarea, or a tabindex="-1"
+    // select reached via browse-mode/virtual cursor review).
+    function announceDisabledField(field) {
+        // Preserve whatever aria-label was originally authored (if any) so
+        // it can still contribute to the label text above, then overwrite
+        // it with the combined "label: value" accessible name.
+        if (!field.hasAttribute('data-kbd-original-aria-label') && field.hasAttribute('aria-label')) {
+            field.setAttribute('data-kbd-original-aria-label', field.getAttribute('aria-label'));
+        }
+
+        var labelText = findLabelText(field);
+        var valueText = valueOf(field);
+        var name = labelText && valueText ? labelText + ': ' + valueText
+                                          : (labelText || valueText);
+        if (!name) return;
+
+        field.setAttribute('aria-label', name);
+    }
+
+    // Re-block interaction natively blocked by the (removed) disabled
+    // attribute: typing/editing is suppressed so the field still behaves as
+    // inert, while remaining in the accessibility tree and Tab order for
+    // screen reader users. Navigation keys are explicitly excluded so focus
+    // can still move off the field via Tab/Shift+Tab/Arrow keys.
+    function blockInteraction(el) {
+        if (el.hasAttribute('data-kbd-disabled-guarded')) return;
+        el.setAttribute('data-kbd-disabled-guarded', 'true');
+
+        el.addEventListener('keydown', function (e) {
+            if (el.getAttribute('aria-disabled') !== 'true') return;
+            if (NAVIGATION_KEYS.indexOf(e.key) !== -1) return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return; // allow shortcuts (copy, browser nav, etc.)
+            e.preventDefault();
+        });
+        ['keypress', 'paste', 'cut', 'drop'].forEach(function (evt) {
+            el.addEventListener(evt, function (e) {
+                if (el.getAttribute('aria-disabled') === 'true') e.preventDefault();
+            });
+        });
+    }
+
+    function convertDisabledField(el) {
+        if (!el.disabled) return;
+
+        el.removeAttribute('disabled');
+        el.setAttribute('aria-disabled', 'true');
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.setAttribute('readonly', 'readonly');
+        } else if (el.tagName === 'SELECT') {
+            // A native <select> has no readonly equivalent; keep it out of the
+            // natural Tab order but still reachable via arrow-key/virtual
+            // cursor review so its current value is announced.
+            if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+            blockInteraction(el);
+            el.addEventListener('mousedown', function (e) {
+                if (el.getAttribute('aria-disabled') === 'true') e.preventDefault();
+            });
+        }
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            blockInteraction(el);
+        }
+
+        announceDisabledField(el);
+    }
+
+    function processAllDisabledFields(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(
+            scope.querySelectorAll('input:disabled, select:disabled, textarea:disabled'),
+            function (el) {
+                if (!isVisible(el)) return;
+                convertDisabledField(el);
+            }
+        );
+    }
+
+    function init() {
+        processAllDisabledFields(document);
+
+        // Disabled state is frequently toggled at runtime (form validation,
+        // conditional fields, grid row edit mode), so keep re-checking for
+        // newly disabled controls.
+        var observer = new MutationObserver(function (mutations) {
+            var needsCheck = false;
+            mutations.forEach(function (m) {
+                if (m.type === 'attributes' && m.attributeName === 'disabled') {
+                    needsCheck = true;
+                } else if (m.type === 'childList' && m.addedNodes.length) {
+                    needsCheck = true;
+                }
+            });
+            if (needsCheck) processAllDisabledFields(document);
+        });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['disabled']
+        });
+
+        // A field's value can change programmatically after it has already
+        // been converted (e.g. AJAX refresh sets el.value = ...), so keep
+        // the announced "label: value" text in sync.
+        document.addEventListener('input', function (e) {
+            if (e.target && e.target.getAttribute && e.target.getAttribute('aria-disabled') === 'true') {
+                announceDisabledField(e.target);
+            }
+        }, true);
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.getAttribute && e.target.getAttribute('aria-disabled') === 'true') {
+                announceDisabledField(e.target);
+            }
+        }, true);
+    }
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+})();
+
 // ── Global "read full textarea value" support (NVDA / screen-reader friendly) ──
 // A <textarea rows="1"> (or any textarea shorter than its content) clips the
 // value visually to one line, and only reveals the rest via internal
@@ -1473,11 +2074,84 @@
         textarea.setAttribute('aria-readonly', 'true');
     }
 
+    var MIRROR_ID_PREFIX = 'kbd-textarea-full-value-';
+    var mirrorIdCounter = 0;
+
+    function ensureMirror(textarea) {
+        var mirror = textarea.nextElementSibling;
+        if (mirror && mirror.hasAttribute && mirror.hasAttribute('data-kbd-textarea-mirror')) {
+            return mirror;
+        }
+        mirror = document.createElement('span');
+        mirror.setAttribute('data-kbd-textarea-mirror', 'true');
+        mirror.className = 'govuk-visually-hidden';
+        if (!textarea.id) textarea.id = 'kbd-textarea-' + (++mirrorIdCounter);
+        mirror.id = MIRROR_ID_PREFIX + textarea.id;
+        textarea.insertAdjacentElement('afterend', mirror);
+        return mirror;
+    }
+
+    function removeMirror(textarea) {
+        var mirror = textarea.nextElementSibling;
+        if (mirror && mirror.hasAttribute && mirror.hasAttribute('data-kbd-textarea-mirror')) {
+            mirror.parentNode.removeChild(mirror);
+        }
+        var describedBy = textarea.getAttribute('aria-describedby');
+        if (describedBy && describedBy.indexOf(MIRROR_ID_PREFIX) !== -1) {
+            var remaining = describedBy.split(/\s+/).filter(function (id) {
+                return id.indexOf(MIRROR_ID_PREFIX) !== 0;
+            }).join(' ');
+            if (remaining) {
+                textarea.setAttribute('aria-describedby', remaining);
+            } else {
+                textarea.removeAttribute('aria-describedby');
+            }
+        }
+    }
+
+    // Editable multi-line textareas (e.g. "Title"/"Comments" fields) must
+    // keep their native textbox semantics - typing, caret position, and
+    // in-place value announcement all need to work as usual - so they
+    // cannot use the read-only role="img" + aria-label swap above. But when
+    // the content overflows the visible rows and the field scrolls, NVDA
+    // (and other screen readers) only announce the portion currently
+    // scrolled into view rather than the complete value. Fix: mirror the
+    // full value into a visually-hidden element referenced via
+    // aria-describedby, so the complete text is announced alongside the
+    // (still fully native/editable) textarea, without altering its role,
+    // value, or interactivity.
+    function syncEditableMirror(textarea) {
+        if (textarea.readOnly || textarea.disabled) {
+            removeMirror(textarea);
+            return;
+        }
+
+        // Only needed once the content actually overflows the box - avoids
+        // adding no-op DOM/attributes to every ordinary textarea on the page.
+        var overflowing = textarea.scrollHeight > textarea.clientHeight + 1;
+        if (!overflowing || !textarea.value) {
+            removeMirror(textarea);
+            return;
+        }
+
+        var mirror = ensureMirror(textarea);
+        var value = textarea.value.replace(/\s+/g, ' ').trim();
+        if (mirror.textContent !== value) mirror.textContent = value;
+
+        var describedBy = textarea.getAttribute('aria-describedby') || '';
+        var ids = describedBy.split(/\s+/).filter(Boolean);
+        if (ids.indexOf(mirror.id) === -1) {
+            ids.push(mirror.id);
+            textarea.setAttribute('aria-describedby', ids.join(' '));
+        }
+    }
+
     function processAllTextareas(root) {
         var scope = root && root.querySelectorAll ? root : document;
         Array.prototype.forEach.call(scope.querySelectorAll('textarea'), function (textarea) {
             if (!isVisible(textarea)) return;
             syncAriaLabel(textarea);
+            syncEditableMirror(textarea);
         });
     }
 
@@ -1493,6 +2167,7 @@
                 if (m.type === 'childList' && m.addedNodes.length) {
                     Array.prototype.forEach.call(m.addedNodes, function (node) {
                         if (node.nodeType !== 1) return;
+                        if (node.hasAttribute && node.hasAttribute('data-kbd-textarea-mirror')) return;
                         if (node.tagName === 'TEXTAREA' || (node.querySelector && node.querySelector('textarea'))) {
                             needsCheck = true;
                         }
@@ -1505,14 +2180,27 @@
         });
         observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
+        // Overflow detection depends on layout (scrollHeight/clientHeight),
+        // which can change on viewport resize (responsive column widths) even
+        // without any value change, so re-check then too.
+        window.addEventListener('resize', function () {
+            processAllTextareas(document);
+        });
+
         // Textarea values changed via script (e.g. el.value = '...') don't
         // fire childList/attribute mutations, so also catch the standard
         // input/change events.
         document.addEventListener('input', function (e) {
-            if (e.target && e.target.tagName === 'TEXTAREA') syncAriaLabel(e.target);
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                syncAriaLabel(e.target);
+                syncEditableMirror(e.target);
+            }
         }, true);
         document.addEventListener('change', function (e) {
-            if (e.target && e.target.tagName === 'TEXTAREA') syncAriaLabel(e.target);
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                syncAriaLabel(e.target);
+                syncEditableMirror(e.target);
+            }
         }, true);
 
         // Dropdown/multi-select pages update these summary fields with a plain
@@ -1530,7 +2218,10 @@
                 get: valueDescriptor.get,
                 set: function (newValue) {
                     valueDescriptor.set.call(this, newValue);
-                    try { syncAriaLabel(this); } catch (ignored) { /* never break assignment */ }
+                    try {
+                        syncAriaLabel(this);
+                        syncEditableMirror(this);
+                    } catch (ignored) { /* never break assignment */ }
                 }
             });
         }
@@ -1801,6 +2492,18 @@
         window.setTimeout(applyFocus, 150);
     }
 
+    // A side-nav item that only expands/collapses its own sub-list is NOT a
+    // navigation: the user stays on the same page, so focus must remain on the
+    // menu option they just operated (otherwise it jumps to the app logo and
+    // they lose their place). Detected via the ARIA disclosure contract
+    // (aria-expanded / aria-controls) or a nested sub-list.
+    function isSubmenuDisclosure(link) {
+        if (!link) return false;
+        if (link.hasAttribute('aria-expanded') || link.hasAttribute('aria-controls')) return true;
+        var parent = link.parentElement;
+        return !!(parent && parent.querySelector(':scope > ul, :scope > .sidenav-children, :scope > .dropdown-menu, :scope > .sub-dropdown-menu'));
+    }
+
     // Some screens (e.g. FPS Master Lookup) use side-nav links with href="#"
     // that swap the content pane over AJAX instead of navigating. No page load
     // fires, so focus would otherwise stay on the clicked link. Treat those the
@@ -1812,6 +2515,18 @@
             : null;
         if (!link) return;
         if (!link.closest('.sidenav, #shortnav, .side-nav, .project-side-nav, .main-nav')) return;
+        if (isSubmenuDisclosure(link)) {
+            // Expanding a sub-list keeps the user on the same page, so re-assert
+            // focus on the option itself in case a later pass tries to move it.
+            window.setTimeout(function () {
+                try {
+                    link.focus({ preventScroll: true });
+                } catch (err) {
+                    link.focus();
+                }
+            }, 0);
+            return;
+        }
 
         // Let the page's own handler run and render first.
         window.setTimeout(applyFocus, 0);
