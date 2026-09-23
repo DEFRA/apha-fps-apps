@@ -18,8 +18,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsAsync(QueryParameters<string> query, int filterOption = 2)
            => await _client.PimsProjectList.GetAllProjectsAsync(query, filterOption);
 
-        public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync()
-            => await _client.PimsProjectList.GetAllProjectsListAsync();
+        public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync(int filterOption = 2)
+            => await _client.PimsProjectList.GetAllProjectsListAsync(filterOption);
 
         public async Task<ApiResponseDto<ProjectDto>> GetFpsProjectByIdAsync(string parentproject)
             => await _client.PimsProjectList.GetFpsProjectByIdAsync(parentproject);

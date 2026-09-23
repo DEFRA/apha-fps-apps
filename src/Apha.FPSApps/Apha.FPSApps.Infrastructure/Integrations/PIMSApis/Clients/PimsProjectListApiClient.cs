@@ -36,17 +36,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
            
         }
 
-        public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync()
+        public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync(int filterOption = 2)
         {
-           
-                var response = await _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
+
+                string url = $"{PimsApiEndpoints.GetAllProjectsList}?showWhichProjects={filterOption}";
+                var response = await _http.GetAsync<List<ProjectListRes>>(url);
 
                 if (response.Success && response.Data != null)
                     return _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(response);
 
                 var dto = _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(response);
                 return ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(dto.Errors, dto.Meta);
-            
+
         }
 
         public async Task<ApiResponseDto<ProjectDto>> GetFpsProjectByIdAsync(string parentproject)

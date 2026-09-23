@@ -1131,9 +1131,9 @@ namespace Apha.Costbook.DataAccess.Repositories
                     ? ar.DailyRate.Value * ar.NumberOfDays.Value * ar.NumberOfAnimals.Value
                     : 0.0);
 
-            double additionalCostTotal = (double)await _context.AdditionalCosts
+            double additionalCostTotal = await _context.AdditionalCosts
                 .Where(ac => ac.Project == decodedId && ac.Year == year)
-                .SumAsync(ac => ac.ItemCost);            
+                .SumAsync(ac => ac.ItemCost ?? 0.0);
 
             double profitStaff       = await GetProfitFactorAsync("Profitstaff");
             double profitTests       = await GetProfitFactorAsync("Profittests");

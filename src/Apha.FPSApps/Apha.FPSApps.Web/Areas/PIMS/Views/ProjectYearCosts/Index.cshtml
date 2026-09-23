@@ -17,7 +17,8 @@
     <!-- ── Side Navigation ──────────────────────────────────── -->
     @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
     {
-        Parentproject = Model.Parentproject
+        Parentproject = Model.Parentproject,
+        ShowProjects = Model.ShowProjects
     })
 
     <!-- ── Main Content ─────────────────────────────────────── -->
@@ -33,7 +34,7 @@
                          style="margin: 8px; display: flex; align-items: flex-end;">
 
                         <div style="margin: 0 7px; flex: 1;">
-                            <label for="dpprojectSelectMulti_input" class="govuk-label tab-font-size govuk-!-font-weight-bold sup_font_weight_700">
+                            <label class="govuk-label tab-font-size govuk-!-font-weight-bold sup_font_weight_700">
                                 Select a Project
                             </label>
                             <div id="dpprojectSelectMultiDropdown" style="width: 100%;"></div>

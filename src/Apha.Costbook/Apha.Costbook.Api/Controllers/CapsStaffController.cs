@@ -7,6 +7,7 @@ using Asp.Versioning;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Apha.Costbook.Api.Controllers
 {
@@ -49,6 +50,8 @@ namespace Apha.Costbook.Api.Controllers
         [HttpGet("{mNumber}")]
         public async Task<IActionResult> GetCapsStaff(string mNumber)
         {
+            mNumber = WebUtility.UrlDecode(mNumber);
+
             var dto = await _service.GetByMNumberAsync(mNumber);
             if (dto == null)
                 return CreateNullSuccessResponse<StaffRes>();
@@ -69,6 +72,8 @@ namespace Apha.Costbook.Api.Controllers
 
         public async Task<IActionResult> UpdateCapsStaff(string mNumber, [FromBody] StaffReq req)
         {
+            mNumber = WebUtility.UrlDecode(mNumber);
+
             var dto = _mapper.Map<StaffDto>(req);
             var updated = await _service.UpdateStaffAsync(mNumber, dto);
             return Ok(_mapper.Map<StaffRes>(updated));
@@ -78,6 +83,8 @@ namespace Apha.Costbook.Api.Controllers
 
         public async Task<IActionResult> DeleteCapsStaff(string mNumber)
         {
+            mNumber = WebUtility.UrlDecode(mNumber);
+
             if (string.IsNullOrWhiteSpace(mNumber))
                 throw new ArgumentException("MNumber is required for deletion.");
 
