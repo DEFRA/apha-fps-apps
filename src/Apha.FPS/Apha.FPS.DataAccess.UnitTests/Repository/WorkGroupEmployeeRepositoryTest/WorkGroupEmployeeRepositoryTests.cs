@@ -832,7 +832,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             Assert.Equal("WG-UPDATED", result.WorkGroupGrade);
             Assert.Equal(40.0, result.HrsPaid);
             Assert.Equal(1200.0, result.HrsAvail);
-            Assert.Equal(1, result.TimeRecorder);
+            // TimeRecorder is normalised from 1 to -1 (legacy boolean convention)
+            Assert.Equal(-1, result.TimeRecorder);
             Assert.Equal(startDate, result.StartDate);
             Assert.Equal(endDate, result.EndDate);
             Assert.Equal(37.5, result.HoursPerWeek);
