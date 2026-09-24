@@ -5,6 +5,8 @@
 CREATE TABLE IF NOT EXISTS fps.tblmasterlookup ( mastertablename varchar(100) NOT NULL, 
 CONSTRAINT pk_tblmasterlookup PRIMARY KEY (mastertablename));
 
+delete FROM fps.tblmasterlookup;
+
 INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
     ('Disease');
 
