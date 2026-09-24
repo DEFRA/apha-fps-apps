@@ -1,4 +1,5 @@
 using System.Dynamic;
+using System.Globalization;
 using System.Linq.Expressions;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -340,9 +341,178 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("WorkGroupGrade", out var workGroupGrade) && workGroupGrade != null)
                 query = query.Where(x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{workGroupGrade}%"));
 
+            // PersonStatus is a fixed two-value code (A/I), so it is matched exactly rather
+            // than with %...% wildcards - a "contains" match would make "A" also match nothing
+            // meaningful and would blur the two codes if more statuses are added later.
+            if (dict.TryGetValue("PersonStatus", out var personStatus) && personStatus != null)
+                query = query.Where(x => x.PersonStatus != null && EF.Functions.ILike(x.PersonStatus, $"{personStatus}"));
+
+            if (dict.TryGetValue("PersonClass", out var personClass) && personClass != null)
+                query = query.Where(x => x.PersonClass != null && EF.Functions.ILike(x.PersonClass, $"%{personClass}%"));
+
+            // Numeric hours columns match on exact value, mirroring the Price filter in
+            // TestRequirementRCCostRepository. A non-numeric or partially typed entry fails
+            // to parse and is ignored rather than emptying the grid.
+            query = ApplyNumericFilter(dict, "HrsPaid", query, x => x.HrsPaid);
+            query = ApplyNumericFilter(dict, "Leave", query, x => x.Leave);
+            query = ApplyNumericFilter(dict, "SickSpecial", query, x => x.SickSpecial);
+            query = ApplyNumericFilter(dict, "HrsAvail", query, x => x.HrsAvail);
+            query = ApplyNumericFilter(dict, "HoursPerWeek", query, x => x.HoursPerWeek);
+
+            // The grid renders these as checkbox dropdowns posting "true"/"false", but the
+            // database stores the flags as -1 (true) and 0 (false), so the parsed bool is
+            // mapped to the stored code and compared exactly.
+            query = ApplyFlagFilter(dict, "MakeAvailable", query, x => x.MakeAvailable);
+            query = ApplyFlagFilter(dict, "TimeRecorder", query, x => x.TimeRecorder);
+
+            // Date columns are matched on the calendar day only, ignoring any time component
+            // stored against the row.
+            query = ApplyDateFilter(dict, "StartDate", query, x => x.StartDate);
+            query = ApplyDateFilter(dict, "EndDate", query, x => x.EndDate);
+
             return query;
         }
-       
+
+        // The grid's native date picker posts ISO yyyy-MM-dd, but the filter value can also
+        // arrive as UK dd/MM/yyyy (typed entry or a browser using the UK locale) and Newtonsoft
+        // may already have boxed it as a DateTime. Each of those shapes is accepted here so the
+        // filter is not silently ignored.
+        private static readonly string[] DateFilterFormats =
+        [
+            "yyyy-MM-dd",
+            "dd/MM/yyyy",
+            "d/M/yyyy",
+            "dd-MM-yyyy",
+            "d-M-yyyy",
+            "dd.MM.yyyy",
+            "dd/MM/yy",
+            "d/M/yy"
+        ];
+
+        /// <summary>
+        /// Parses a grid filter value into a calendar date without ever consulting the
+        /// ambient culture. The API host culture is not guaranteed to be en-GB, so
+        /// DateTime.TryParse would read "05/06/2025" as 6 May on an en-US host while the
+        /// grid means 5 June. TryParseExact against an explicit, ordered format list makes
+        /// the result deterministic: ISO values (produced by the date picker) are matched
+        /// first, then the UK day-first formats a user can type.
+        /// </summary>
+        private static bool TryParseFilterDateInvariant(object rawValue, out DateTime value)
+        {
+            value = default;
+
+            if (rawValue is DateTime dateTimeValue)
+            {
+                value = dateTimeValue;
+                return true;
+            }
+
+            if (rawValue is DateTimeOffset dateTimeOffsetValue)
+            {
+                value = dateTimeOffsetValue.DateTime;
+                return true;
+            }
+
+            var text = rawValue?.ToString()?.Trim();
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            string[] formats =
+            [
+                "yyyy-MM-dd",
+                "yyyy-MM-ddTHH:mm",
+                "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-ddTHH:mm:ss.FFFFFFFK",
+                "yyyy/MM/dd",
+                "dd/MM/yyyy",
+                "d/M/yyyy",
+                "dd-MM-yyyy",
+                "d-M-yyyy",
+                "dd.MM.yyyy",
+                "d.M.yyyy"
+            ];
+
+            return DateTime.TryParseExact(
+                text,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out value);
+        }
+
+        private static IQueryable<WorkGroupEmployeeView> ApplyDateFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<WorkGroupEmployeeView> query,
+            Expression<Func<WorkGroupEmployeeView, DateTime?>> selector)
+        {
+            if (!dict.TryGetValue(key, out var rawValue) || rawValue == null)
+                return query;
+
+            if (!TryParseFilterDateInvariant(rawValue, out var value))
+                return query;
+
+            // The columns are mapped to 'timestamp with time zone', so Npgsql only accepts
+            // DateTime values whose Kind is Utc. The filter text is a calendar day, so it is
+            // treated as a UTC day and matched with a half-open [day, day + 1) range. This
+            // keeps the comparison culture independent (both sides are UTC instants) and
+            // avoids translating DateTime.Date on a timestamptz column.
+            var dayStartUtc = DateTime.SpecifyKind(value.Date, DateTimeKind.Utc);
+            var dayEndUtc = dayStartUtc.AddDays(1);
+
+            var propertyValue = Expression.Property(selector.Body, nameof(Nullable<DateTime>.Value));
+            var hasValue = Expression.Property(selector.Body, nameof(Nullable<DateTime>.HasValue));
+
+            var inRange = Expression.AndAlso(
+                Expression.GreaterThanOrEqual(propertyValue, Expression.Constant(dayStartUtc, typeof(DateTime))),
+                Expression.LessThan(propertyValue, Expression.Constant(dayEndUtc, typeof(DateTime))));
+
+            var predicate = Expression.Lambda<Func<WorkGroupEmployeeView, bool>>(
+                Expression.AndAlso(hasValue, inRange),
+                selector.Parameters);
+
+            return query.Where(predicate);
+        }
+
+        private static IQueryable<WorkGroupEmployeeView> ApplyFlagFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<WorkGroupEmployeeView> query,
+            Expression<Func<WorkGroupEmployeeView, int?>> selector)
+        {
+            if (!dict.TryGetValue(key, out var rawValue) || rawValue == null)
+                return query;
+
+            if (!bool.TryParse(rawValue.ToString(), out var value))
+                return query;
+
+            var storedValue = value ? -1 : 0;
+
+            var predicate = Expression.Lambda<Func<WorkGroupEmployeeView, bool>>(
+                Expression.Equal(selector.Body, Expression.Constant(storedValue, typeof(int?))),
+                selector.Parameters);
+
+            return query.Where(predicate);
+        }
+
+        private static IQueryable<WorkGroupEmployeeView> ApplyNumericFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<WorkGroupEmployeeView> query,
+            Expression<Func<WorkGroupEmployeeView, double?>> selector)
+        {
+            if (!dict.TryGetValue(key, out var rawValue) || rawValue == null)
+                return query;
+
+            if (!double.TryParse(rawValue.ToString(), out var value))
+                return query;
+
+            var predicate = Expression.Lambda<Func<WorkGroupEmployeeView, bool>>(
+                Expression.Equal(selector.Body, Expression.Constant(value, typeof(double?))),
+                selector.Parameters);
+
+            return query.Where(predicate);
+        }
 
         public async Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeForStaffAsync(
             PaginationParameters<string> query,
