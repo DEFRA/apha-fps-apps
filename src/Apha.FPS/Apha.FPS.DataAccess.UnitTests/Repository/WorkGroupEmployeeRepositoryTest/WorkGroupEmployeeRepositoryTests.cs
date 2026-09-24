@@ -13,6 +13,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         private const string DefaultWgGrade = "WG01";
         private const string DefaultPactId  = "PACT001";
 
+        // PACT ids sort by length first, then value, so "10" precedes "2" when descending.
+        private static readonly string[] ExpectedPactIdDescendingOrder = ["10", "2", "1"];
+
         private static WorkGroupEmployeeRepository CreateRepository(
             IEnumerable<WorkGroupEmployee> employees,
             IEnumerable<Employee>? staffMembers = null,
@@ -1401,7 +1404,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
             var result = await repo.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
 
-            Assert.Equal(new[] { "10", "2", "1" }, result.Data.Select(x => x.PactId));
+            Assert.Equal(ExpectedPactIdDescendingOrder, result.Data.Select(x => x.PactId));
         }
 
         [Theory]

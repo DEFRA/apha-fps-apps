@@ -187,9 +187,14 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<WorkGroupEmployeeView>> GetAllActiveWorkGroupEmployeesAsync(
             PaginationParameters<string> query, string wgGrade)
         {
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToUpper() maps to SQL UPPER().
+#pragma warning disable CA1862
             var workGroupEmployeeQuery = _dbContext.WorkGroupEmployees
                 .AsNoTracking()
                 .Where(wg => wg.WorkGroupGrade == wgGrade && wg.PersonStatus.ToUpper() != "I")
+#pragma warning restore CA1862
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
@@ -343,11 +348,16 @@ namespace Apha.FPS.DataAccess.Repositories
             PaginationParameters<string> query,
             string wgGrade)
         {
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToLower() maps to SQL LOWER().
+#pragma warning disable CA1862
             var workGroupEmployeeQuery = _dbContext.WorkGroupEmployeeViews
                 .AsNoTracking()
                 .Where(wg => (string.IsNullOrWhiteSpace(wgGrade) || wg.WorkGroupGrade == wgGrade)
                           && wg.UserEmail != null
                           && wg.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower())
+#pragma warning restore CA1862
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
