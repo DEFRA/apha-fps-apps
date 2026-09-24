@@ -114,6 +114,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             Dictionary<string, string> filterDict =
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
 
+            year ??= DateTime.Now.Year;
+
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
             queryParameters.Search = request.Filter;
             queryParameters.Filter = null;
