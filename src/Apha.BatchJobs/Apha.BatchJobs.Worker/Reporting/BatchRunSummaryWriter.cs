@@ -52,20 +52,11 @@ public sealed class BatchRunSummaryWriter : IBatchRunSummaryWriter
             "Job failed because execution exceeded the configured overall timeout.",
         { Outcome: BatchRunOutcome.Cancelled } =>
             "Job execution was cancelled.",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.Sql } =>
-            "Job failed due to a SQL error.",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.DependencyOutage } =>
-            "Job failed due to a dependency outage (database unavailable, network timeout, etc.).",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.Configuration } =>
-            "Job failed due to a configuration or validation error.",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.Concurrency } =>
-            "Job failed because the distributed lock could not be acquired.",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.Email } =>
-            "Job failed due to a business notification email error.",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.Timeout } =>
-            "Job failed because execution exceeded the configured runtime timeout.",
-        { Outcome: BatchRunOutcome.Failure, FailureCategory: BatchFailureCategory.Authorization } =>
-            "Job failed due to an authorization error.",
+        // Category-to-message mapping lives in BatchFailureMessageProvider — shared with
+        // JobOrchestrator's job_queue.errormessage write, so the same failure produces the same
+        // friendly text in both the CloudWatch log line and the grid.
+        { Outcome: BatchRunOutcome.Failure, FailureCategory: { } category } =>
+            BatchFailureMessageProvider.GetHumanReadableMessage(category),
         _ => "Job failed with a business or runtime exception."
     };
 }

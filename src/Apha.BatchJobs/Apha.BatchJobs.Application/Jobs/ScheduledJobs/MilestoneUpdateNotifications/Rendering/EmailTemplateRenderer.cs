@@ -6,17 +6,19 @@ using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MilestoneUpdateNotifications.Rendering;
 
-/// <summary>Implementation of <see cref="IEmailTemplateRenderer"/>, following spec section 13's suggested template. EditLink is never spliced into the template as raw HTML — each project's href is extracted and validated first (plan section 9.2), and projects that fail that check are reported back via <see cref="EmailTemplateRenderResult.ExcludedProjects"/> rather than silently dropped.</summary>
+/// <summary>Implementation of <see cref="IEmailTemplateRenderer"/>, following spec section 13's suggested template. Links come from <see cref="IMilestoneEditLinkBuilder"/> (ApplicationBaseUrl + ParentProject), not the legacy EditLink HTML — projects with no usable ParentProject are reported back via <see cref="EmailTemplateRenderResult.ExcludedProjects"/> rather than silently dropped.</summary>
 public sealed class EmailTemplateRenderer : IEmailTemplateRenderer
 {
     /// <inheritdoc />
     public string Subject => "Milestone and Deliverable Update Request";
 
     private readonly MilestoneNotificationsSettings _settings;
+    private readonly IMilestoneEditLinkBuilder _linkBuilder;
 
-    public EmailTemplateRenderer(IOptions<MilestoneNotificationsSettings> settings)
+    public EmailTemplateRenderer(IOptions<MilestoneNotificationsSettings> settings, IMilestoneEditLinkBuilder linkBuilder)
     {
         _settings = settings?.Value ?? new MilestoneNotificationsSettings();
+        _linkBuilder = linkBuilder ?? throw new ArgumentNullException(nameof(linkBuilder));
     }
 
     /// <inheritdoc />
@@ -34,20 +36,19 @@ public sealed class EmailTemplateRenderer : IEmailTemplateRenderer
 
         foreach (var project in projects)
         {
-            if (EditLinkHrefExtractor.TryExtractHref(project.EditLink, out var href))
-            {
-                included.Add(project);
-                linksHtml
-                    .Append("<li><a href=\"")
-                    .Append(WebUtility.HtmlEncode(href))
-                    .Append("\">")
-                    .Append(WebUtility.HtmlEncode(project.ParentProject))
-                    .Append("</a></li>");
-            }
-            else
+            if (string.IsNullOrWhiteSpace(project.ParentProject))
             {
                 excluded.Add(project);
+                continue;
             }
+
+            included.Add(project);
+            linksHtml
+                .Append("<li><a href=\"")
+                .Append(WebUtility.HtmlEncode(_linkBuilder.Build(project.ParentProject)))
+                .Append("\">")
+                .Append(WebUtility.HtmlEncode(project.ParentProject))
+                .Append("</a></li>");
         }
 
         linksHtml.Append("</ul>");

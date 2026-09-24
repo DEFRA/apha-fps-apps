@@ -13,11 +13,31 @@ namespace Apha.FPS.DataAccess.Repositories
     {
         private readonly FpsDbContext _dbContext;
 
+        // Grid column filter keys (property names as sent by the audit-trail grids).
+        private const string UserIdColumn = "UserId";
+        private const string InsertDeleteColumn = "InsertDelete";
+
+        // Grid sort keys (lower-cased before matching).
+        private const string JobCodeSortKey = "jobcode";
+        private const string DateTimeSortKey = "date_time";
+        private const string InsertDeleteSortKey = "insert_delete";
+        private const string UserIdSortKey = "user_id";
+
         public ProjectAuditTrailRepository(FpsDbContext dbContext)
             : base(dbContext)
         {
             _dbContext = dbContext;
         }
+
+        // The table-specific parts of the audit pipeline, grouped so each grid passes a single
+        // descriptor rather than a long list of positional delegates.
+        private sealed record AuditLogQuerySpec<T>(
+            Expression<Func<T, DateTime?>> DateSelector,
+            Func<string, Expression<Func<T, bool>>> SearchPredicate,
+            Func<IQueryable<T>, string?, IQueryable<T>> ColumnFilter,
+            Func<IQueryable<T>, string?, bool, IQueryable<T>> Sorting,
+            Func<List<T>, Task>? EnrichAsync = null,
+            Func<List<T>, string?, List<T>>? PostFilter = null);
 
         // Every audit grid runs the same pipeline over a different log table:
         // date-range window -> free-text search -> per-column grid filter -> sorting ->
@@ -26,30 +46,25 @@ namespace Apha.FPS.DataAccess.Repositories
         private async Task<PagedData<T>> ExecuteAuditLogQueryAsync<T>(
             IQueryable<T> source,
             PaginationParameters<string> query,
-            Expression<Func<T, DateTime?>> dateSelector,
+            AuditLogQuerySpec<T> spec,
             DateTime? fromDate,
-            DateTime? toDate,
-            Func<string, Expression<Func<T, bool>>> searchPredicate,
-            Func<IQueryable<T>, string?, IQueryable<T>> columnFilter,
-            Func<IQueryable<T>, string?, bool, IQueryable<T>> sorting,
-            Func<List<T>, Task>? enrichAsync = null,
-            Func<List<T>, string?, List<T>>? postFilter = null)
+            DateTime? toDate)
         {
-            var q = ApplyDateRange(source, dateSelector, fromDate, toDate);
+            var q = ApplyDateRange(source, spec.DateSelector, fromDate, toDate);
 
             if (!string.IsNullOrWhiteSpace(query.Search))
-                q = q.Where(searchPredicate(query.Search.ToLower()));
+                q = q.Where(spec.SearchPredicate(query.Search.ToLower()));
 
-            q = columnFilter(q, query.Filter);
-            q = sorting(q, query.SortBy, query.Descending);
+            q = spec.ColumnFilter(q, query.Filter);
+            q = spec.Sorting(q, query.SortBy, query.Descending);
 
             var result = await q.ToListAsync();
 
-            if (enrichAsync != null)
-                await enrichAsync(result);
+            if (spec.EnrichAsync != null)
+                await spec.EnrichAsync(result);
 
-            if (postFilter != null)
-                result = postFilter(result, query.Filter);
+            if (spec.PostFilter != null)
+                result = spec.PostFilter(result, query.Filter);
 
             return ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -65,13 +80,21 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .Where(p => p.ParentProject == parentProject);
 
+            // CA1862 suppressed: these predicates are EF Core expression trees translated to
+            // SQL. The string.Contains(StringComparison) overload cannot be translated by
+            // Npgsql, whereas ToLower() maps to SQL LOWER(). The search term is pre-lowered.
+#pragma warning disable CA1862
             return ExecuteAuditLogQueryAsync(
-                source, query, p => p.DateTime, fromDate, toDate,
-                search => p =>
-                    (p.InsertDelete != null && p.InsertDelete.ToLower().Contains(search)) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
-                ApplyProjectLogFilter,
-                ApplyProjectLogSorting);
+                source, query,
+                new AuditLogQuerySpec<ProjectLog>(
+                    p => p.DateTime,
+                    search => p =>
+                        (p.InsertDelete != null && p.InsertDelete.ToLower().Contains(search)) ||
+                        (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                    ApplyProjectLogFilter,
+                    ApplyProjectLogSorting),
+                fromDate, toDate);
+#pragma warning restore CA1862
         }
 
         // join to fps.tlkpjob (JobCodes) on jobcode to resolve the parentproject association
@@ -85,15 +108,21 @@ namespace Apha.FPS.DataAccess.Repositories
                          where log.JobCode == parentProject
                          select log;
 
+            // CA1862 suppressed: EF Core expression tree translated to SQL - see GetProjectLogsAsync.
+#pragma warning disable CA1862
             return ExecuteAuditLogQueryAsync(
-                source, query, p => p.DateTime, fromDate, toDate,
-                search => p =>
-                    p.JobCode.ToLower().Contains(search) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
-                ApplyStaffJobLogFilter,
-                ApplyStaffJobLogSorting,
-                PopulateStaffNamesAsync,
-                ApplyStaffJobLogNameFilter);
+                source, query,
+                new AuditLogQuerySpec<StaffJobLog>(
+                    p => p.DateTime,
+                    search => p =>
+                        p.JobCode.ToLower().Contains(search) ||
+                        (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                    ApplyStaffJobLogFilter,
+                    ApplyStaffJobLogSorting,
+                    PopulateStaffNamesAsync,
+                    ApplyStaffJobLogNameFilter),
+                fromDate, toDate);
+#pragma warning restore CA1862
         }
 
         // fps.staffjob_log has no name column; resolve staff display names via a lookup
@@ -132,14 +161,20 @@ namespace Apha.FPS.DataAccess.Repositories
                          where log.JobCode == parentProject
                          select log;
 
+            // CA1862 suppressed: EF Core expression tree translated to SQL - see GetProjectLogsAsync.
+#pragma warning disable CA1862
             return ExecuteAuditLogQueryAsync(
-                source, query, p => p.DateTime, fromDate, toDate,
-                search => p =>
-                    (p.TestCode != null && p.TestCode.ToLower().Contains(search)) ||
-                    (p.Buyer != null && p.Buyer.ToLower().Contains(search)) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
-                ApplyTestRequirementLogFilter,
-                ApplyTestRequirementLogSorting);
+                source, query,
+                new AuditLogQuerySpec<TestRequirementLog>(
+                    p => p.DateTime,
+                    search => p =>
+                        (p.TestCode != null && p.TestCode.ToLower().Contains(search)) ||
+                        (p.Buyer != null && p.Buyer.ToLower().Contains(search)) ||
+                        (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                    ApplyTestRequirementLogFilter,
+                    ApplyTestRequirementLogSorting),
+                fromDate, toDate);
+#pragma warning restore CA1862
         }
 
         // join to JobCodes on jobcode to resolve the parentproject association
@@ -153,14 +188,20 @@ namespace Apha.FPS.DataAccess.Repositories
                          where log.JobCode == parentProject
                          select log;
 
+            // CA1862 suppressed: EF Core expression tree translated to SQL - see GetProjectLogsAsync.
+#pragma warning disable CA1862
             return ExecuteAuditLogQueryAsync(
-                source, query, p => p.DateTime, fromDate, toDate,
-                search => p =>
-                    p.JobCode.ToLower().Contains(search) ||
-                    p.AnimalType.ToLower().Contains(search) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
-                ApplyAnimalRequestLogFilter,
-                ApplyAnimalRequestLogSorting);
+                source, query,
+                new AuditLogQuerySpec<AnimalRequestLog>(
+                    p => p.DateTime,
+                    search => p =>
+                        p.JobCode.ToLower().Contains(search) ||
+                        p.AnimalType.ToLower().Contains(search) ||
+                        (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                    ApplyAnimalRequestLogFilter,
+                    ApplyAnimalRequestLogSorting),
+                fromDate, toDate);
+#pragma warning restore CA1862
         }
 
         // join to JobCodes on jobcode to resolve the parentproject association
@@ -174,17 +215,23 @@ namespace Apha.FPS.DataAccess.Repositories
                          where log.JobCode == parentProject
                          select log;
 
+            // CA1862 suppressed: EF Core expression tree translated to SQL - see GetProjectLogsAsync.
+#pragma warning disable CA1862
             return ExecuteAuditLogQueryAsync(
-                source, query, p => p.DateTime, fromDate, toDate,
-                search => p =>
-                    p.JobCode.ToLower().Contains(search) ||
-                    p.Account.ToLower().Contains(search) ||
-                    p.Description.ToLower().Contains(search) ||
-                    (p.UserId != null && p.UserId.ToLower().Contains(search)),
-                ApplyAdditionalCostLogFilter,
-                ApplyAdditionalCostLogSorting,
-                ResolveAdditionalCostLogUserEmailsAsync,
-                ApplyAdditionalCostLogUserIdFilter);
+                source, query,
+                new AuditLogQuerySpec<AdditionalCostLog>(
+                    p => p.DateTime,
+                    search => p =>
+                        p.JobCode.ToLower().Contains(search) ||
+                        p.Account.ToLower().Contains(search) ||
+                        p.Description.ToLower().Contains(search) ||
+                        (p.UserId != null && p.UserId.ToLower().Contains(search)),
+                    ApplyAdditionalCostLogFilter,
+                    ApplyAdditionalCostLogSorting,
+                    ResolveAdditionalCostLogUserEmailsAsync,
+                    ApplyAdditionalCostLogUserIdFilter),
+                fromDate, toDate);
+#pragma warning restore CA1862
         }
 
         // fps.additionalcosts_log.user_id was historically populated with a raw login/username
@@ -198,7 +245,7 @@ namespace Apha.FPS.DataAccess.Repositories
         private async Task ResolveAdditionalCostLogUserEmailsAsync(List<AdditionalCostLog> logs)
         {
             var rawUserIds = logs
-                .Where(l => !string.IsNullOrWhiteSpace(l.UserId) && !l.UserId!.Contains('@'))
+                .Where(l => !string.IsNullOrWhiteSpace(l.UserId) && !l.UserId.Contains('@'))
                 .Select(l => l.UserId!.Trim())
                 .Distinct()
                 .ToList();
@@ -342,16 +389,16 @@ namespace Apha.FPS.DataAccess.Repositories
             ("ProjectParent", x => x.ProjectParent),
             ("ShortTitle", x => x.ShortTitle),
             ("OwningRc", x => x.OwningRc),
-            ("UserId", x => x.UserId),
-            ("InsertDelete", x => x.InsertDelete)
+            (UserIdColumn, x => x.UserId),
+            (InsertDeleteColumn, x => x.InsertDelete)
         };
 
         private static readonly (string, Expression<Func<StaffJobLog, string?>>)[] StaffJobLogColumns =
         {
             ("StaffId", x => x.StaffId),
             ("JobCode", x => x.JobCode),
-            ("UserId", x => x.UserId),
-            ("InsertDelete", x => x.InsertDelete)
+            (UserIdColumn, x => x.UserId),
+            (InsertDeleteColumn, x => x.InsertDelete)
         };
 
         private static readonly (string, Expression<Func<TestRequirementLog, string?>>)[] TestRequirementLogColumns =
@@ -360,16 +407,16 @@ namespace Apha.FPS.DataAccess.Repositories
             ("Buyer", x => x.Buyer),
             ("ProjectBuyerCode", x => x.ProjectBuyerCode),
             ("TestBuyerCode", x => x.TestBuyerCode),
-            ("UserId", x => x.UserId),
-            ("InsertDelete", x => x.InsertDelete)
+            (UserIdColumn, x => x.UserId),
+            (InsertDeleteColumn, x => x.InsertDelete)
         };
 
         private static readonly (string, Expression<Func<AnimalRequestLog, string?>>)[] AnimalRequestLogColumns =
         {
             ("JobCode", x => x.JobCode),
             ("AnimalType", x => x.AnimalType),
-            ("UserId", x => x.UserId),
-            ("InsertDelete", x => x.InsertDelete)
+            (UserIdColumn, x => x.UserId),
+            (InsertDeleteColumn, x => x.InsertDelete)
         };
 
         private static readonly (string, Expression<Func<AdditionalCostLog, string?>>)[] AdditionalCostLogColumns =
@@ -379,7 +426,7 @@ namespace Apha.FPS.DataAccess.Repositories
             ("Description", x => x.Description),
             ("Freq", x => x.Freq),
             ("Supplier", x => x.Supplier),
-            ("InsertDelete", x => x.InsertDelete)
+            (InsertDeleteColumn, x => x.InsertDelete)
         };
 
         private static IQueryable<ProjectLog> ApplyProjectLogFilter(IQueryable<ProjectLog> query, string? filter)
@@ -428,7 +475,7 @@ namespace Apha.FPS.DataAccess.Repositories
         // against the resolved value the user actually sees in the grid.
         private static List<AdditionalCostLog> ApplyAdditionalCostLogUserIdFilter(List<AdditionalCostLog> logs, string? filter)
         {
-            return ApplyInMemoryFilter(logs, filter, "UserId", l => l.UserId);
+            return ApplyInMemoryFilter(logs, filter, UserIdColumn, l => l.UserId);
         }
 
         // ── Private sorting helpers ──────────────────────────────────────────────────────
@@ -449,10 +496,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 "parentproject" => e => e.ParentProject,
                 "projecttitle"  => e => e.ProjectTitle,
                 "program"       => e => e.Program,
-                "jobcode"       => e => e.JobCode,
-                "date_time"     => e => e.DateTime,
-                "insert_delete" => e => e.InsertDelete,
-                "user_id"       => e => e.UserId,
+                JobCodeSortKey       => e => e.JobCode,
+                DateTimeSortKey     => e => e.DateTime,
+                InsertDeleteSortKey => e => e.InsertDelete,
+                UserIdSortKey       => e => e.UserId,
                 _               => e => e.DateTime,
             };
             return ApplySorting(q, descending, keySelector);
@@ -464,11 +511,11 @@ namespace Apha.FPS.DataAccess.Repositories
             Expression<Func<StaffJobLog, object?>> keySelector = sortBy?.ToLower() switch
             {
                 "staffid"       => e => e.StaffId,
-                "jobcode"       => e => e.JobCode,
+                JobCodeSortKey       => e => e.JobCode,
                 "plannedhours"  => e => e.PlannedHours,
-                "date_time"     => e => e.DateTime,
-                "insert_delete" => e => e.InsertDelete,
-                "user_id"       => e => e.UserId,
+                "datetime"     => e => e.DateTime,
+                "insertdelete" => e => e.InsertDelete,
+                "userid"       => e => e.UserId,
                 _               => e => e.DateTime,
             };
             return ApplySorting(q, descending, keySelector);
@@ -486,9 +533,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 "projectbuyercode" => e => e.ProjectBuyerCode,
                 "testbuyercode"    => e => e.TestBuyerCode,
                 "active"           => e => e.Active,
-                "date_time"        => e => e.DateTime,
-                "insert_delete"    => e => e.InsertDelete,
-                "user_id"          => e => e.UserId,
+                DateTimeSortKey        => e => e.DateTime,
+                InsertDeleteSortKey    => e => e.InsertDelete,
+                UserIdSortKey          => e => e.UserId,
                 _                  => e => e.DateTime,
             };
             return ApplySorting(q, descending, keySelector);
@@ -499,13 +546,13 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             Expression<Func<AnimalRequestLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "jobcode"         => e => e.JobCode,
+                JobCodeSortKey         => e => e.JobCode,
                 "animaltype"      => e => e.AnimalType,
                 "numberofdays"    => e => e.NumberOfDays,
                 "numberofanimals" => e => e.NumberOfAnimals,
-                "date_time"       => e => e.DateTime,
-                "insert_delete"   => e => e.InsertDelete,
-                "user_id"         => e => e.UserId,
+                DateTimeSortKey       => e => e.DateTime,
+                InsertDeleteSortKey   => e => e.InsertDelete,
+                UserIdSortKey         => e => e.UserId,
                 _                 => e => e.DateTime,
             };
             return ApplySorting(q, descending, keySelector);
@@ -516,15 +563,15 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             Expression<Func<AdditionalCostLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "jobcode"       => e => e.JobCode,
+                JobCodeSortKey       => e => e.JobCode,
                 "account"       => e => e.Account,
                 "description"   => e => e.Description,
                 "itemcost"      => e => e.ItemCost,
                 "freq"          => e => e.Freq,
                 "supplier"      => e => e.Supplier,
-                "date_time"     => e => e.DateTime,
-                "insert_delete" => e => e.InsertDelete,
-                "user_id"       => e => e.UserId,
+                DateTimeSortKey     => e => e.DateTime,
+                InsertDeleteSortKey => e => e.InsertDelete,
+                UserIdSortKey       => e => e.UserId,
                 _               => e => e.DateTime,
             };
             return ApplySorting(q, descending, keySelector);

@@ -25,7 +25,7 @@ public static class BatchInfrastructureServiceExtensions
     {
         services.AddBatchPersistence(configuration);
         services.AddGraphEmailIntegration(configuration);
-        services.AddEmailService();
+        services.AddEmailService(configuration);
 
         // Shared execution-context services whose implementations are in Infrastructure.
         services.AddScoped<IExecutionYearContext, ExecutionYearContext>();
@@ -41,6 +41,15 @@ public static class BatchInfrastructureServiceExtensions
 
         services.Configure<BulkRatesEmailSettings>(configuration.GetSection(BulkRatesEmailSettings.SectionName));
         services.AddScoped<IPostCompletionNotifier, BulkRatesCompletionNotifier>();
+
+        services.Configure<MabArchiveEmailSettings>(configuration.GetSection(MabArchiveEmailSettings.SectionName));
+        services.AddScoped<IPostCompletionNotifier, MabArchiveCompletionNotifier>();
+
+        services.Configure<RecreateSummaryEmailSettings>(configuration.GetSection(RecreateSummaryEmailSettings.SectionName));
+        services.AddScoped<IPostCompletionNotifier, RecreateSummaryCompletionNotifier>();
+
+        services.Configure<YearEndEmailSettings>(configuration.GetSection(YearEndEmailSettings.SectionName));
+        services.AddScoped<IPostCompletionNotifier, YearEndCompletionNotifier>();
 
         return services;
     }

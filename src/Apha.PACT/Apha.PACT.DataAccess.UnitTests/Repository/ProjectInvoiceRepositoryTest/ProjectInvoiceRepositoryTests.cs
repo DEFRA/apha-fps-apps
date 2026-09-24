@@ -407,7 +407,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedProjectInvoicesAsync_FilterWithInvalidMonthString_IgnoresMonthFilter()
+        public async Task GetPagedProjectInvoicesAsync_FilterWithInvalidMonthString_ReturnsNoRecords()
         {
             var invoices = new List<ProjectInvoice>
             {
@@ -419,7 +419,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
             var result = await repo.GetPagedProjectInvoicesAsync(query, null);
 
-            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion

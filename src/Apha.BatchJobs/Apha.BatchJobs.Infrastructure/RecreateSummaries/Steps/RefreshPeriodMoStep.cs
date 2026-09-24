@@ -34,7 +34,7 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
 
         return await db.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO fps.period_monthlyoutput
-                (period, project, oracleprojectcode, subaccountcode, isdefraproject, opc, occ, month, spc, workgroup, scc, testcode, volume, testprice, totalcost)
+                (period, project, oracleprojectcode, subaccountcode, isdefraproject, opc, occ, month, spc, workgroup, scc, testcode, volume, testprice, totalcost, fpsyear)
             SELECT
                 {_period},
                 p.parentproject,
@@ -50,7 +50,8 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
                 mo.testcode,
                 mo.volume,
                 tr.unitprice,
-                tr.unitprice * mo.volume::numeric
+                tr.unitprice * mo.volume::numeric,
+                {fpsYear}
             FROM fps.monthlyoutput AS mo
             INNER JOIN fps.workgroup AS wg
                 ON mo.workgroup = wg.workgroup
