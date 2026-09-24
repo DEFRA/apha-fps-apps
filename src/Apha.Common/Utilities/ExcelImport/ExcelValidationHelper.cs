@@ -93,6 +93,12 @@ namespace Apha.Common.Utilities.ExcelImport
                 return;
             }
 
+            if (month.Value != Math.Floor(month.Value))
+            {
+                failures.Add("Month must be a whole number.");
+                return;
+            }
+
             if (month.Value < 1 || month.Value > 12)
                 failures.Add("Month must be between 1 and 12.");
         }
