@@ -4149,7 +4149,3 @@ table#tblMonthPeriod > tbody > tr:hover {
     overflow: visible !important;
     display: flow-root;
 }
-#gridContainer_releaseSummariesGrid input[aria-disabled="true"] {
-    opacity: 0;
-    cursor: not-allowed;
-}
