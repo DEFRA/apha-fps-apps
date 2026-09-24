@@ -413,6 +413,7 @@ internal sealed class RsPeriodProjSubContractTable
     public int Month { get; set; }
     public decimal? Amount { get; set; }
     public string? AcctCode { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsTblWgEmployeeTable
