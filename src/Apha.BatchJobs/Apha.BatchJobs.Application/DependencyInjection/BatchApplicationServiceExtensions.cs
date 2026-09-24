@@ -17,6 +17,7 @@ public static class BatchApplicationServiceExtensions
         services.Configure<BatchJobSettings>(configuration.GetSection("BatchJobs"));
 
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
+        services.AddScoped<IBatchLockReconciliationService, BatchLockReconciliationService>();
         services.AddScoped<IJobOrchestrator, JobOrchestrator>();
 
         return services;

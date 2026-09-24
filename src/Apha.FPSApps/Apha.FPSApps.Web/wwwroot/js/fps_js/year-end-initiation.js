@@ -195,6 +195,16 @@
         var row         = $(btn).closest('tr')[0];
         var fpsYearType = getCellValue(row, 'ExistsForPlannedYear');
         var monthName   = getCellValue(row, 'MonthName');
+        var daysVal     = getCellValue(row, 'Days');
+        var cvlHoursVal = getCellValue(row, 'CvlHours');
+        var vidHoursVal = getCellValue(row, 'VidHours');
+
+        // Confirm only accepts a complete carried-forward default; a row with no
+        // default values must be filled in via Edit instead.
+        if (daysVal === '' || cvlHoursVal === '' || vidHoursVal === '') {
+            showPageError(['There are no default working hours to confirm for ' + monthName + '. Please use Edit to enter values.']);
+            return;
+        }
 
         showGovukConfirm('Are you sure you want to confirm the working hours for ' + monthName + '?')
             .then(function (confirmed) {
@@ -202,9 +212,9 @@
                 var dto = {
                     year:     parseInt(getCellValue(row, 'Year'), 10),
                     month:    parseInt(getCellValue(row, 'Month'), 10),
-                    days:     parseFloat(getCellValue(row, 'Days'))    || null,
-                    cvlHours: parseFloat(getCellValue(row, 'CvlHours')) || null,
-                    vidHours: parseFloat(getCellValue(row, 'VidHours')) || null,
+                    days:     parseFloat(daysVal),
+                    cvlHours: parseFloat(cvlHoursVal),
+                    vidHours: parseFloat(vidHoursVal),
                     fmonth:   parseInt(getCellValue(row, 'Fmonth'), 10) || null,
                     fpsYear:  parseInt(getCellValue(row, 'FpsYear'), 10)
                 };
@@ -220,12 +230,21 @@
 
     // Called by the Save button inside _EditMonthHour.cshtml partial
     window.saveMonthHour = function () {
+        var daysVal     = $('#modaPopupBody #monthModalDays').val();
+        var cvlHoursVal = $('#modaPopupBody #monthModalCvlHours').val();
+        var vidHoursVal = $('#modaPopupBody #monthModalVidHours').val();
+
+        if (daysVal === '' || cvlHoursVal === '' || vidHoursVal === '') {
+            showModalError(['Days, CVL Hours and VID Hours are all required.']);
+            return;
+        }
+
         var dto = {
-            year:     parseInt($('#modaPopupBody #monthModalYear').val(),    10),
-            month:    parseInt($('#modaPopupBody #monthModalMonth').val(),   10),
-            days:     parseFloat($('#modaPopupBody #monthModalDays').val())     || null,
-            cvlHours: parseFloat($('#modaPopupBody #monthModalCvlHours').val()) || null,
-            vidHours: parseFloat($('#modaPopupBody #monthModalVidHours').val()) || null,
+            year:     parseInt($('#modaPopupBody #monthModalYear').val(),  10),
+            month:    parseInt($('#modaPopupBody #monthModalMonth').val(), 10),
+            days:     parseFloat(daysVal),
+            cvlHours: parseFloat(cvlHoursVal),
+            vidHours: parseFloat(vidHoursVal),
             fmonth:   parseInt($('#modaPopupBody #monthModalFmonth').val(),  10) || null,
             fpsYear:  parseInt($('#modaPopupBody #monthModalFpsYear').val(), 10)
         };
@@ -262,8 +281,14 @@
                 $(this).find('.delete-row-btn').prop('disabled', true);
             } else {
                 var Planned = (fpsYearType == 'yes');
-                $(this).find('.edit-row-btn').prop('disabled', !Planned);
-                $(this).find('.delete-row-btn').prop('disabled', Planned);
+                var hasDefaultValues = getCellValue(this, 'Days') !== '' &&
+                                        getCellValue(this, 'CvlHours') !== '' &&
+                                        getCellValue(this, 'VidHours') !== '';
+
+                // Confirm is only for accepting a complete carried-forward default.
+                // An unplanned row with no default must be filled in via Edit instead.
+                $(this).find('.edit-row-btn').prop('disabled', Planned ? false : hasDefaultValues);
+                $(this).find('.delete-row-btn').prop('disabled', Planned ? true : !hasDefaultValues);
             }
         });
     }

@@ -10,8 +10,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class ReloadFpsTotalsServiceTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
-
     [Fact]
     public void Constructor_WhenSettingsIsNull_ShouldUseDefaults()
     {
@@ -50,7 +48,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal("logger", ex.ParamName);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenNoSourceRowsAndStrictIsolationDisabled_ShouldReturnZero()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -66,7 +64,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal(0, rows);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenNoSourceRowsAndStrictIsolationEnabled_ShouldReturnZero()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -82,7 +80,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal(0, rows);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenExecutedWithinTransaction_ShouldComplete_AndRollback()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -118,7 +116,7 @@ public sealed class ReloadFpsTotalsServiceTests
     private static string GetConnectionString()
     {
         return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     private static BatchJobsDbContext CreateDbContext(string connectionString)
@@ -142,6 +140,6 @@ public sealed class ReloadFpsTotalsServiceTests
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
         var canConnect = await context.Database.CanConnectAsync();
-        Assert.True(canConnect, "Integration DB unavailable for ReloadFpsTotalsServiceTests.");
+        Skip.IfNot(canConnect, "Integration DB unavailable for ReloadFpsTotalsServiceTests.");
     }
 }

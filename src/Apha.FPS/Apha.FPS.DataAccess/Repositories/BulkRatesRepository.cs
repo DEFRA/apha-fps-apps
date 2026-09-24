@@ -1334,7 +1334,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     SET calculated_action    = @calculated_action,
                         effective_new_rate   = @effective_new_rate,
                         source_current_rate  = @source_current_rate,
-                        validation_version   = @validation_version
+                        validation_version   = @validation_version,
+                        testcode             = @resolved_testcode
                     WHERE jobqueueid = @jobqueueid AND testcode = @testcode;";
                 ApplyFecFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
@@ -1349,7 +1350,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     SET calculated_action    = @calculated_action,
                         effective_new_rate   = @effective_new_rate,
                         source_current_rate  = @source_current_rate,
-                        validation_version   = @validation_version
+                        validation_version   = @validation_version,
+                        testcode             = @resolved_testcode,
+                        buyer                = @resolved_buyer
                     WHERE jobqueueid = @jobqueueid AND testcode = @testcode AND buyer = @buyer;";
                 ApplyAgrupFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
@@ -1566,6 +1569,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
             cmd.Parameters.AddWithValue("testcode",            entry.TestCode);
+            cmd.Parameters.AddWithValue("resolved_testcode",   entry.ResolvedTestCode);
             cmd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
             cmd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate  ?? DBNull.Value);
             cmd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);
@@ -1578,6 +1582,8 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
             cmd.Parameters.AddWithValue("testcode",            entry.TestCode);
             cmd.Parameters.AddWithValue("buyer",               (object?)entry.Buyer           ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("resolved_testcode",   entry.ResolvedTestCode);
+            cmd.Parameters.AddWithValue("resolved_buyer",      (object?)entry.ResolvedBuyer   ?? DBNull.Value);
             cmd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
             cmd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate  ?? DBNull.Value);
             cmd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);

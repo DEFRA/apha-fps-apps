@@ -39,6 +39,9 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetSettings()
         {
             var dto = await _settingsService.GetSettingsAsync();
+            if (dto == null)
+                return CreateNullSuccessResponse<MaintenanceSettingsRes>();
+
             return Ok(_mapper.Map<MaintenanceSettingsRes>(dto));
         }
 
@@ -60,6 +63,9 @@ namespace Apha.Costbook.Api.Controllers
         public async Task<IActionResult> GetAccountCategories()
         {
             var dtos = await _accountCategoryService.GetAllForMaintenanceAsync();
+            if (dtos == null)
+                return CreateNullSuccessResponse<List<AccountCategoryMaintenanceRes>>();
+
             return Ok(_mapper.Map<List<AccountCategoryMaintenanceRes>>(dtos));
         }
 
@@ -68,11 +74,14 @@ namespace Apha.Costbook.Api.Controllers
         {
             var parameters = _mapper.Map<QueryParameters<string>>(query);
             var result = await _accountCategoryService.GetPaginatedAsync(parameters);
+            if (result == null)
+                return CreateNullSuccessResponse<PaginationRes<AccountCategoryMaintenanceRes>>();
+
             return Ok(_mapper.Map<PaginationRes<AccountCategoryMaintenanceRes>>(result));
         }
 
         [HttpPut("account-categories/{accShortName}")]
-        
+
         public async Task<IActionResult> UpdateAccountCategory(string accShortName, [FromBody] AccountCategoryMaintenanceReq req)
         {
             if (string.IsNullOrWhiteSpace(accShortName))
@@ -82,6 +91,20 @@ namespace Apha.Costbook.Api.Controllers
 
             var updated = await _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group);
             return Ok(_mapper.Map<AccountCategoryMaintenanceRes>(updated));
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

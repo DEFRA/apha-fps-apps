@@ -114,6 +114,26 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookMainten
         }
 
         [Fact]
+        public async Task GetPaginatedAccountCategoriesAsync_WhenFailureAndErrorsNull_ReturnsEmptyFailureErrors()
+        {
+            var apiResponse = new ApiResponse<List<AccountCategoryMaintenanceRes>>
+            {
+                Success = false,
+                Data = null,
+                Errors = null
+            };
+            var mappedErrors = new List<ApiErrorDto>();
+            _http.GetAsync<List<AccountCategoryMaintenanceRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<List<ApiErrorDto>>(Arg.Any<object>()).Returns(mappedErrors);
+
+            var result = await _client.GetPaginatedAccountCategoriesAsync(new QueryParameters<string>());
+
+            Assert.False(result.Success);
+            Assert.Same(mappedErrors, result.Errors);
+            await _http.Received(1).GetAsync<List<AccountCategoryMaintenanceRes>>(Arg.Any<string>());
+        }
+
+        [Fact]
         public async Task UpdateAccountCategoryAsync_WhenSuccess_MapsRequestAndReturnsMappedResponse()
         {
             var dto = new AccountCategoryMaintenanceDto { AccShortName = "ACC1", Csg7Group = "CSG1" };

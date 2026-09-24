@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Domain;
 using Apha.BatchJobs.Domain.Entities.BulkRates;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -1013,14 +1014,19 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
         await dbContext.Database.OpenConnectionAsync(cancellationToken);
         var conn = (NpgsqlConnection)dbContext.Database.GetDbConnection();
 
-        // Resolve current statusid (required by fps.job_queue_log FK)
+        // Resolve current statusid + fpsyear (required by fps.job_queue_log FK / partition key)
         int? statusId = null;
+        int? jobFpsYear = null;
         await using (var statusCmd = conn.CreateCommand())
         {
-            statusCmd.CommandText = "SELECT statusid FROM fps.job_queue WHERE jobqueueid = @jqid;";
+            statusCmd.CommandText = "SELECT statusid, fpsyear FROM fps.job_queue WHERE jobqueueid = @jqid;";
             statusCmd.Parameters.AddWithValue("jqid", jobQueueId);
-            var result = await statusCmd.ExecuteScalarAsync(cancellationToken);
-            statusId = result is null or DBNull ? null : (int?)Convert.ToInt32(result);
+            await using var reader = await statusCmd.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                statusId = reader.IsDBNull(0) ? null : reader.GetInt32(0);
+                jobFpsYear = reader.IsDBNull(1) ? null : reader.GetInt32(1);
+            }
         }
 
         if (statusId is null)
@@ -1030,14 +1036,18 @@ public sealed class BulkRatesRepository : IBulkRatesRepository
             return;
         }
 
+        var logTime = DateTime.UtcNow;
+
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            INSERT INTO fps.job_queue_log (jobqueueid, statusid, performedby, logtime, note)
-            VALUES (@jobqueueid, @statusid, @performedby, NOW(), @note);";
+            INSERT INTO fps.job_queue_log (jobqueueid, statusid, performedby, logtime, note, fpsyear)
+            VALUES (@jobqueueid, @statusid, @performedby, @logtime, @note, @fpsyear);";
         cmd.Parameters.AddWithValue("jobqueueid",  jobQueueId);
         cmd.Parameters.AddWithValue("statusid",    statusId.Value);
         cmd.Parameters.AddWithValue("performedby", (object?)actor ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("logtime",     logTime);
         cmd.Parameters.AddWithValue("note",        (object?)note ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("fpsyear",     FpsYearResolver.ResolveFpsYear(jobFpsYear, logTime));
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
