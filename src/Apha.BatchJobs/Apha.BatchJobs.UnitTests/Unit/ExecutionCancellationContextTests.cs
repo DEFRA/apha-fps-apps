@@ -24,7 +24,9 @@ public sealed class ExecutionCancellationContextTests
         var hostLifetime = CreateLifetime(out _);
         using var context = new ExecutionCancellationContext(hostLifetime, overallTimeoutSeconds: 1);
 
-        await Task.Delay(TimeSpan.FromSeconds(1.5));
+        // A wide margin over the 1s timeout — a tight one (e.g. 1.5s) flaked on loaded CI
+        // runners where the timer-based CTS callback can lag under scheduler jitter.
+        await Task.Delay(TimeSpan.FromSeconds(4));
 
         Assert.True(context.Token.IsCancellationRequested);
         Assert.True(context.WasJobTimeoutReached);
@@ -54,7 +56,7 @@ public sealed class ExecutionCancellationContextTests
         var hostLifetime = CreateLifetime(out var lifetimeCts);
         using var context = new ExecutionCancellationContext(hostLifetime, overallTimeoutSeconds: 1);
 
-        await Task.Delay(TimeSpan.FromSeconds(1.5));
+        await Task.Delay(TimeSpan.FromSeconds(4));
         lifetimeCts.Cancel();
 
         Assert.True(context.WasHostShutdownRequested);

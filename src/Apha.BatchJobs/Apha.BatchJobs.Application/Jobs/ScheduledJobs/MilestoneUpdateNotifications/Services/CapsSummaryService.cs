@@ -74,7 +74,8 @@ public sealed class CapsSummaryService : ICapsSummaryService
             var message = new EmailMessage(
                 To: [capsMailbox],
                 Subject: CapsEmailSubject,
-                HtmlBody: htmlBody);
+                HtmlBody: htmlBody,
+                IsBodyHtml: true);
 
             var result = await _emailService.SendAsync(message, cancellationToken);
 

@@ -93,6 +93,24 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramMaintenanceControlle
             await _programService.Received(1).GetAllProgramsAsync(Arg.Any<QueryParameters<string>>());
         }
 
+        [Fact]
+        public async Task Index_WithNullPagination_UsesDefaultPaginationAndDoesNotCallMapper()
+        {
+            // Arrange
+            var apiResponse = ApiResponseDto<List<ProgramDto>>.SuccessResponse(new List<ProgramDto>(), null);
+            _programService.GetAllProgramsAsync(Arg.Any<QueryParameters<string>>()).Returns(apiResponse);
+            _mapper.Map<List<ProgramViewModel>>(Arg.Any<List<ProgramDto>>()).Returns(new List<ProgramViewModel>());
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<ProgramViewModel>>(viewResult.Model);
+            Assert.NotNull(model.Pagination);
+            _mapper.DidNotReceive().Map<PaginationModel>(Arg.Any<PaginationDto>());
+        }
+
         #endregion
 
         #region LoadProgramGrid Tests

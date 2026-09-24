@@ -176,6 +176,14 @@ public sealed class EfCoreMappingTests
         Assert.Equal(DeleteBehavior.Restrict, fk!.DeleteBehavior);
     }
 
+    [Fact]
+    public void TblJobQueueLog_Has_CompositePrimaryKey_JobQueueLogId_FpsYear()
+    {
+        var log = GetEntityByTable(ctx, "job_queue_log");
+        var keyProps = log.FindPrimaryKey()!.Properties.Select(p => p.Name).ToArray();
+        Assert.Equal(["JobQueueLogId", "FpsYear"], keyProps);
+    }
+
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // scheduled_load_run
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

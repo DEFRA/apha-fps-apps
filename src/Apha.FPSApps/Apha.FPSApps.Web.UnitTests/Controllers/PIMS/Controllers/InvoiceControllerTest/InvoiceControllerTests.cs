@@ -397,7 +397,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.InvoiceControl
         }
 
         [Fact]
-        public async Task LoadInvoiceGrid_WithZeroYear_NormalizesToNull()
+        public async Task LoadInvoiceGrid_WithZeroYear_UsesCurrentYear()
         {
             SetupGridMocks();
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
@@ -408,7 +408,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.InvoiceControl
                 Arg.Any<QueryParameters<string>>(),
                 Arg.Any<string?>(),
                 Arg.Any<string?>(),
-                null,
+                DateTime.Now.Year,
                 Arg.Any<string?>());
         }
 

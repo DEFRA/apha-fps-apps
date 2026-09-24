@@ -43,6 +43,7 @@ namespace Apha.PIMS.Core.Interfaces
         Task<string> GetNextMilestoneNumberAsync(string project, int year);
 
         // Project Year Manager operations
-        Task<List<ProjectYearManager>> GetProjectYearManagersAsync(int year, string? loginEmail = null, bool viewSpecificProject = false);
+        Task<List<ProjectYearManager>> GetProjectYearManagersForAdminAsync(int year);
+        Task<List<ProjectYearManager>> GetProjectYearManagersByEmailAsync(int year, string email);
     }
 }
