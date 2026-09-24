@@ -215,6 +215,10 @@
         }
 
         function submitFormRequired() {
+            if (!ensureMilestoneProjectSelected()) {
+                return;
+            }
+
             var formRequired = document.getElementById('chkMilestoneDeliverable').checked;
             var token = $('input[name="__RequestVerificationToken"]').val();
             $.ajax({
