@@ -159,8 +159,8 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("CostCentreNo", out var costCentreNo) && costCentreNo != null)
             {
                 var filterValue = costCentreNo.ToString();
-                if (!string.IsNullOrWhiteSpace(filterValue) && double.TryParse(filterValue, out var parsed))
-                    query = query.Where(c => Math.Abs(c.CostCentreNo - parsed) < CostCentreNoTolerance);
+                if (!string.IsNullOrWhiteSpace(filterValue) && double.TryParse(filterValue, out _))
+                    query = query.Where(c => EF.Functions.ILike(c.CostCentreNo.ToString(), $"%{filterValue}%"));
             }
 
             if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)

@@ -28,7 +28,7 @@
                 <!-- ── Milestones toolbar ─────────────────────────────────── -->
                 <div class="milestones-toolbar govuk-!-margin-bottom-2">
                     <div class="sup_flex_align_center sup_flex_gap_10 govuk-!-margin-left-2">
-                        <label class="govuk-label font-size-16 sup_font_weight_700" for="projectSelectGridMulti_input">Project</label>
+                        <label class="govuk-label font-size-16 sup_font_weight_700" >Project</label>
                         <div id="projectSelectGridMultiDropdown" class="sup_select_option_width_100 govuk-!-margin-right-3"></div>
                     </div>
                     <div >
@@ -59,7 +59,7 @@
                 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_20 ">
                     <div>
                         <div class="govuk-grid-column-full checkbox-section sup_flex_align_center sup_gap_16 govuk-!-margin-bottom-2">
-                            <span class="govuk-label  govuk-!-font-size-16 sup_font_weight_700 sup_margin_0">
+                            <span class="govuk-label  govuk-!-font-size-16 sup_font_weight_700 sup_margin_0" tabindex="0">
                                 Show Milestone/Deliverable Update Received
                             </span>
                             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 sup_flex_align_center sup_whitespace_nowrap"
@@ -197,6 +197,15 @@
              if (gmFormDates) { gmFormDates.reloadGrid({ page: 1 }); }
          }
 
+         function ensureMilestoneProjectSelected() {
+             if (currentProject) {
+                 return true;
+             }
+
+             showAlertMessage('Please select a project first.', AlertType.ERROR);
+             return false;
+         }
+
         function getMilestoneExtraFilters() {
             return { parentproject: currentProject };
         }
@@ -228,8 +237,11 @@
 
         // ── Milestone CRUD ───────────────────────────────────────────────────
         function addMilestone() {
+            if (!ensureMilestoneProjectSelected()) {
+                return;
+            }
 
-             var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
+            var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
             $.get('@Url.Action("GetAddEditMilestonePartial", "Milestone", new { area = "PIMS" })',
                 { parentproject: currentProject, typeLookUp: typeLookUp },
                 function (html) {
@@ -321,6 +333,10 @@
 
         // ── Milestone Form Dates CRUD ─────────────────────────────────────────
         function addMilestoneFormDates() {
+            if (!ensureMilestoneProjectSelected()) {
+                return;
+            }
+
             $.get('@Url.Action("GetAddEditMilestoneFormDatesPartial", "Milestone", new { area = "PIMS" })',
                 { parentproject: currentProject },
                 function (html) {

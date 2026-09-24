@@ -1866,6 +1866,49 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             await _mockRepository.Received(1).GetNextMilestoneNumberAsync("PP001", 2025);
         }
 
+        [Fact]
+        public async Task GetProjectYearManagersAsync_WhenAdmin_DelegatesToAdminRepositoryMethod()
+        {
+            var entities = new List<ProjectYearManager> { new() { ParentProject = "PP001", Manager = "Manager1" } };
+            var dtos = new List<ProjectYearManagerDto> { new() { ParentProject = "PP001", Manager = "Manager1" } };
+            _mockRepository.GetProjectYearManagersForAdminAsync(2026).Returns(entities);
+            _mockMapper.Map<List<ProjectYearManagerDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetProjectYearManagersAsync(2026, "ignored@apha.gov.uk", true);
+
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetProjectYearManagersForAdminAsync(2026);
+            await _mockRepository.DidNotReceive().GetProjectYearManagersByEmailAsync(Arg.Any<int>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectYearManagersAsync_WhenEmailProvided_DelegatesToEmailRepositoryMethod()
+        {
+            var entities = new List<ProjectYearManager> { new() { ParentProject = "PP002", Manager = "Manager2" } };
+            var dtos = new List<ProjectYearManagerDto> { new() { ParentProject = "PP002", Manager = "Manager2" } };
+            _mockRepository.GetProjectYearManagersByEmailAsync(2026, "manager@apha.gov.uk").Returns(entities);
+            _mockMapper.Map<List<ProjectYearManagerDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetProjectYearManagersAsync(2026, "manager@apha.gov.uk", false);
+
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetProjectYearManagersByEmailAsync(2026, "manager@apha.gov.uk");
+            await _mockRepository.DidNotReceive().GetProjectYearManagersForAdminAsync(Arg.Any<int>());
+        }
+
+        [Fact]
+        public async Task GetProjectYearManagersAsync_WhenEmailMissingForNonAdmin_ReturnsEmptyList()
+        {
+            _mockMapper.Map<List<ProjectYearManagerDto>>(Arg.Is<List<ProjectYearManager>>(x => x.Count == 0))
+                .Returns(new List<ProjectYearManagerDto>());
+
+            var result = await _sut.GetProjectYearManagersAsync(2026, string.Empty, false);
+
+            result.Should().BeEmpty();
+            await _mockRepository.DidNotReceive().GetProjectYearManagersForAdminAsync(Arg.Any<int>());
+            await _mockRepository.DidNotReceive().GetProjectYearManagersByEmailAsync(Arg.Any<int>(), Arg.Any<string>());
+        }
+
         #endregion
     }
 }

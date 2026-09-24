@@ -35,7 +35,7 @@
 
                         @* Filter 1: Project *@
                         <div class="inv-toolbar__item">
-                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProjectMulti_input">Project</label>
+                            <label class="govuk-label govuk-!-font-size-16" >Project</label>
                             <div id="invFilterProjectMultiDropdown" class="sup_select_option_width_100"></div>
                         </div>
 
@@ -144,12 +144,12 @@
                                         <col />
                                     </colgroup>
                                     <tbody class="govuk-table__body">
-                                        <tr class="govuk-table__row">
+                                        <tr class="govuk-table__row" id="invTotalsRow">
                                             <td class="govuk-table__cell yfd-total-label" colspan="2">Totals</td>
-                                            <td class="govuk-table__cell sup_text_right_align" id="invTotalPlanned"></td>
-                                            <td class="govuk-table__cell sup_text_right_align" id="invTotalAmountDue"></td>
+                                            <td class="govuk-table__cell sup_text_right_align" id="invTotalPlanned" tabindex="0" data-total-label="Planned Amount"></td>
+                                            <td class="govuk-table__cell sup_text_right_align" id="invTotalAmountDue" tabindex="0" data-total-label="Amount Due"></td>
                                             <td class="govuk-table__cell yfd-total-hidden"></td>
-                                            <td class="govuk-table__cell sup_text_right_align" id="invTotalAmountInvoiced"></td>
+                                            <td class="govuk-table__cell sup_text_right_align" id="invTotalAmountInvoiced" tabindex="0" data-total-label="Amount Invoiced"></td>
                                             <td class="govuk-table__cell yfd-total-hidden"></td>
                                             <td class="govuk-table__cell yfd-total-hidden"></td>
                                             <td class="govuk-table__cell yfd-total-hidden"></td>
@@ -235,6 +235,15 @@
             applyInvoiceFilters();
         }
 
+        function ensureInvoiceProjectSelected() {
+            if (getSelectedInvoiceProjectValue()) {
+                return true;
+            }
+
+            showAlertMessage('Please select a project first.', AlertType.ERROR);
+            return false;
+        }
+
         // ── Apply filters — reload grid ───────────────────────────────────────────
 
         function applyInvoiceFilters() {
@@ -259,7 +268,24 @@
                     $invTotals.find('#invTotalPlanned').text(data.totalPlanned      ?? '');
                     $invTotals.find('#invTotalAmountDue').text(data.totalDue         ?? '');
                     $invTotals.find('#invTotalAmountInvoiced').text(data.totalInvoiced ?? '');
+                    updateInvTotalsCellAriaLabels();
                 });
+        }
+
+        // ── Announce each totals cell as "label: value" for screen readers ──────
+        // The totals cells carry no visible column headers of their own (the
+        // header row lives in the separate invoicesGrid above), so without this
+        // NVDA reads a focused cell's bare number with no context. Each cell is
+        // individually focusable (tabindex="0") and gets its own aria-label built
+        // from its data-total-label attribute plus its current value, so tabbing
+        // through the row announces each column name together with its value.
+        function updateInvTotalsCellAriaLabels() {
+            var cells = document.querySelectorAll('#invTotalsRow td[data-total-label]');
+            cells.forEach(function (cell) {
+                var label = cell.getAttribute('data-total-label');
+                var value = cell.textContent.trim();
+                cell.setAttribute('aria-label', value ? (label + ': ' + value) : label);
+            });
         }
 
         // ── Sync totals row column widths with the DataGrid columns ──────────────
@@ -332,6 +358,10 @@
         // ── Add Invoice ──────────────────────────────────────────────────────────
         
         function addInvoice() {
+            if (!ensureInvoiceProjectSelected()) {
+                return;
+            }
+
             var selectedProject  = getSelectedInvoiceProjectValue();
             var selectedContract = document.getElementById('invFilterSurvContract')?.value || '';
             $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
@@ -481,11 +511,6 @@
                 var programSelect = document.getElementById('invFilterProgram');
                 if (programSelect) {
                     programSelect.value = '';
-                }
-
-                var yearSelect = document.getElementById('invFilterYear');
-                if (yearSelect) {
-                    yearSelect.selectedIndex = -1;
                 }
             }
 

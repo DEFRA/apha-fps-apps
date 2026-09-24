@@ -12,7 +12,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
     {
         private readonly ICostBookHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public CostBookContractApiClient(ICostBookHttpExecutor http, IMapper mapper)
         {
@@ -22,22 +21,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients
 
         public async Task<ApiResponseDto<List<ContractDto>>> GetAllContractNumbersAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<ContractRes>>(CostBookApiEndpoints.GetAllContracts);
+            var response = await _http.GetAsync<List<ContractRes>>(CostBookApiEndpoints.GetAllContracts);
 
-                if (response.Success && response.Data != null)
-                    return _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
-                return ApiResponseDto<List<ContractDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception ex)
-            {
-                return ApiResponseDto<List<ContractDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve contracts", Code = InternalCodeError, Details = ex.Message }],
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<List<ContractDto>>>(response);
+            return ApiResponseDto<List<ContractDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

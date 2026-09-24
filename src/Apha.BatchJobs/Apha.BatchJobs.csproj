@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Apha.Common\Apha.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="docs\**\*.cs" />
     <Compile Remove="docs\legacy\**\*.cs" />
     <Compile Remove="Apha.BatchJobs.UnitTests\**\*.cs" />

@@ -98,6 +98,10 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
             existing.PersonStatus = entity.PersonStatus;
             existing.PersonClass = entity.PersonClass;
+            if (entity.MakeAvailable == 1)
+            {
+                entity.MakeAvailable = -1;
+            }
             existing.MakeAvailable = entity.MakeAvailable;
 
             await _dbContext.SaveChangesAsync(default);
@@ -120,7 +124,15 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.HrsAvail = entity.HrsAvail;
             existing.PersonStatus = entity.PersonStatus;
             existing.PersonClass = entity.PersonClass;
+            if (entity.MakeAvailable == 1)
+            {
+                entity.MakeAvailable = -1;
+            }
             existing.MakeAvailable = entity.MakeAvailable;
+            if (entity.TimeRecorder == 1)
+            {
+                entity.TimeRecorder = -1;
+            }
             existing.TimeRecorder = entity.TimeRecorder;
             existing.StartDate = entity.StartDate;
             existing.EndDate = entity.EndDate;
@@ -175,9 +187,14 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<WorkGroupEmployeeView>> GetAllActiveWorkGroupEmployeesAsync(
             PaginationParameters<string> query, string wgGrade)
         {
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToUpper() maps to SQL UPPER().
+#pragma warning disable CA1862
             var workGroupEmployeeQuery = _dbContext.WorkGroupEmployees
                 .AsNoTracking()
                 .Where(wg => wg.WorkGroupGrade == wgGrade && wg.PersonStatus.ToUpper() != "I")
+#pragma warning restore CA1862
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
@@ -286,6 +303,14 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 entity.PactId = await GetNextPactIdAsync();
             }
+            if (entity.MakeAvailable==1)
+            {
+                entity.MakeAvailable = -1;
+            }
+            if (entity.TimeRecorder==1)
+            {
+                entity.TimeRecorder = -1;
+            }
             await _dbContext.WorkGroupEmployees.AddAsync(entity);
             await _dbContext.SaveChangesAsync(default);
             return entity;
@@ -323,11 +348,16 @@ namespace Apha.FPS.DataAccess.Repositories
             PaginationParameters<string> query,
             string wgGrade)
         {
+            // CA1862 suppressed: this is an EF Core query translated to SQL. The
+            // string.Equals(StringComparison) overload cannot be translated by Npgsql,
+            // whereas ToLower() maps to SQL LOWER().
+#pragma warning disable CA1862
             var workGroupEmployeeQuery = _dbContext.WorkGroupEmployeeViews
                 .AsNoTracking()
                 .Where(wg => (string.IsNullOrWhiteSpace(wgGrade) || wg.WorkGroupGrade == wgGrade)
                           && wg.UserEmail != null
                           && wg.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower())
+#pragma warning restore CA1862
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
@@ -404,6 +434,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 "name" or "staffname" => ApplyOrder(query, x => x.Name, descending),
                 "workgroupgrade" or "wggrade" => ApplyOrder(query, x => x.WorkGroupGrade, descending),
                 "personstatus" => ApplyOrder(query, x => x.PersonStatus, descending),
+                "startdate" => ApplyOrder(query, x => x.StartDate, descending),
+                "enddate" => ApplyOrder(query, x => x.EndDate, descending),
+                "timerecorder" => ApplyOrder(query, x => x.TimeRecorder, descending),
                 _ => query.OrderBy(x => x.Name)
             };
         }
