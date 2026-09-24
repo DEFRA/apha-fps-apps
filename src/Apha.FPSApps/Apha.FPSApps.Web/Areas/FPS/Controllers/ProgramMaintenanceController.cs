@@ -214,7 +214,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 programItems = _mapper.Map<List<ProgramViewModel>>(response.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
+            PaginationModel paginationModel = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
 
             paginationModel.SortColumn = query?.SortBy;
             paginationModel.SortDirection = query?.Descending ?? false;
