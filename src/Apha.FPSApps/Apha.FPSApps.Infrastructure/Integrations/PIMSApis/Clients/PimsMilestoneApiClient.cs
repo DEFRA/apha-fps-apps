@@ -328,10 +328,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<ProjectYearManagerDto>>> GetProjectYearManagersAsync(int year)
+        public async Task<ApiResponseDto<List<ProjectYearManagerDto>>> GetProjectYearManagersAsync(int year, string email, bool isAdmin)
         {
-            var response = await _http.GetAsync<List<ProjectYearManagerRes>>(
-                string.Format(PimsApiEndpoints.GetProjectYearManagers, year));
+            string url = string.Format(PimsApiEndpoints.GetProjectYearManagers, year);
+            url += $"{(url.Contains('?') ? "&" : "?")}email={Uri.EscapeDataString(email)}";
+            url += $"{(url.Contains('?') ? "&" : "?")}isAdmin={isAdmin}";
+
+            var response = await _http.GetAsync<List<ProjectYearManagerRes>>(url);
 
             if (response.Success && (response.Data == null || response.Data.Count == 0))
                 return ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse([]);

@@ -7,7 +7,6 @@ using Asp.Versioning;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.Web;
 
 namespace Apha.PIMS.Api.Controllers
@@ -28,15 +27,12 @@ namespace Apha.PIMS.Api.Controllers
         }
 
         [HttpGet("projectyearmanagers/{year:int}")]
-        public async Task<IActionResult> GetProjectYearManagers(int year)
+        public async Task<IActionResult> GetProjectYearManagers(int year, [FromQuery] string email, [FromQuery] bool isAdmin)
         {
-            //test
-            bool viewSpecificProject = User.IsInRole("API-PIMSProjectManager") && !User.IsInRole("API-PMDAdmin");
-            string? loginEmail = viewSpecificProject
-                ? User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("preferred_username") ?? User.Identity?.Name
-                : null;
+            Console.WriteLine($"GetProjectYearManagers roles: API-PMDAdmin={User.IsInRole("API-PMDAdmin")}, API-PIMSProjectManager={User.IsInRole("API-PIMSProjectManager")}, isAdmin={isAdmin}");
+            Console.WriteLine($"GetProjectYearManagers email: {email}");
 
-            List<ProjectYearManagerDto> result = await _service.GetProjectYearManagersAsync(year, loginEmail, viewSpecificProject);
+            List<ProjectYearManagerDto> result = await _service.GetProjectYearManagersAsync(year, email, isAdmin);
             return Ok(_mapper.Map<List<ProjectYearManagerRes>>(result) ?? []);
         }
 

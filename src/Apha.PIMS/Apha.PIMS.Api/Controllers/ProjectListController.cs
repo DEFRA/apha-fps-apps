@@ -28,6 +28,8 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllProjectsAsync([FromQuery] PaginationReq<string> query, [FromQuery] int showWhichProjects = 2)
         {
+            Console.WriteLine($"GetAllProjectsAsync roles: API-PIMSUser={User.IsInRole("API-PIMSUser")}, API-PIMSAdmin={User.IsInRole("API-PIMSAdmin")}");
+
             QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
             PaginatedResult<ProjectListViewDto> result = await _service.GetAllProjectsAsync(filter, showWhichProjects);
             return Ok(_mapper.Map<PaginationRes<ProjectListRes>>(result));

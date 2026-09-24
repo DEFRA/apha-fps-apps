@@ -5,6 +5,7 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using MapsterMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -21,7 +22,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
         {
             _service = Substitute.For<IProjectListService>();
             _mapper = Substitute.For<IMapper>();
-            _controller = new ProjectListController(_service, _mapper);
+            _controller = new ProjectListController(_service, _mapper)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
+            };
         }
 
         #region GetAllProjectsAsync
