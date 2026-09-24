@@ -22,6 +22,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             IEnumerable<ProjectRadTrackData>? radtrackData = null,
             IEnumerable<StagingMilestone>? stagingMilestones = null,
             IEnumerable<ProjectManager>? projectManagers = null,
+            IEnumerable<Projects>? myTlkpProjects = null,
             IEnumerable<LogMilestone>? logMilestones = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
@@ -33,6 +34,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             var logMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(logMilestones ?? Enumerable.Empty<LogMilestone>());
             var stagingMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(stagingMilestones ?? Enumerable.Empty<StagingMilestone>());
             var projectManagersMockSet = RepositoryTestHelper.CreateMockDbSet(projectManagers ?? Enumerable.Empty<ProjectManager>());
+            var myTlkpProjectsMockSet = RepositoryTestHelper.CreateMockDbSet(myTlkpProjects ?? Enumerable.Empty<Projects>());
 
             RepositoryTestHelper.SetupDbSetOperations(milestonesMockSet);
             RepositoryTestHelper.SetupDbSetOperations(milestoneFormDatesMockSet);
@@ -47,6 +49,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             mockContext.Setup(x => x.LogMilestones).Returns(logMilestonesMockSet.Object);
             mockContext.Setup(x => x.StagingMilestones).Returns(stagingMilestonesMockSet.Object);
             mockContext.Setup(x => x.ProjectManagers).Returns(projectManagersMockSet.Object);
+            mockContext.Setup(x => x.MyTlkpProjects).Returns(myTlkpProjectsMockSet.Object);
 
             return new MilestoneRepository(mockContext.Object);
         }
@@ -69,6 +72,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
                 IEnumerable<ProjectRadTrackData>? radtrackData = null,
                 IEnumerable<StagingMilestone>? stagingMilestones = null,
                 IEnumerable<ProjectManager>? projectManagers = null,
+                IEnumerable<Projects>? myTlkpProjects = null,
                 IEnumerable<LogMilestone>? logMilestones = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
@@ -80,6 +84,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             var logMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(logMilestones ?? Enumerable.Empty<LogMilestone>());
             var stagingMilestonesMockSet = RepositoryTestHelper.CreateMockDbSet(stagingMilestones ?? Enumerable.Empty<StagingMilestone>());
             var projectManagersMockSet = RepositoryTestHelper.CreateMockDbSet(projectManagers ?? Enumerable.Empty<ProjectManager>());
+            var myTlkpProjectsMockSet = RepositoryTestHelper.CreateMockDbSet(myTlkpProjects ?? Enumerable.Empty<Projects>());
 
             RepositoryTestHelper.SetupDbSetOperations(milestonesMockSet);
             RepositoryTestHelper.SetupDbSetOperations(milestoneFormDatesMockSet);
@@ -94,6 +99,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             mockContext.Setup(x => x.LogMilestones).Returns(logMilestonesMockSet.Object);
             mockContext.Setup(x => x.StagingMilestones).Returns(stagingMilestonesMockSet.Object);
             mockContext.Setup(x => x.ProjectManagers).Returns(projectManagersMockSet.Object);
+            mockContext.Setup(x => x.MyTlkpProjects).Returns(myTlkpProjectsMockSet.Object);
 
             var repo = new MilestoneRepository(mockContext.Object);
             return (repo, milestonesMockSet, milestoneFormDatesMockSet, mockContext, logMilestonesMockSet, stagingMilestonesMockSet);
@@ -101,6 +107,65 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         private static PaginationParameters<string> DefaultParameters(int page = 1, int pageSize = 10)
             => new PaginationParameters<string> { Page = page, PageSize = pageSize };
+
+        #region GetProjectYearManagers
+
+        [Fact]
+        public async Task GetProjectYearManagersForAdminAsync_ReturnsProjectsForHardcodedTestYear()
+        {
+            var projects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Manager = "Manager1" },
+                new() { Year = 2025, Parentproject = "PP002", Manager = "Manager2" },
+                new() { Year = 2026, Parentproject = "PP003", Manager = "Manager3" }
+            };
+            var projectManagers = new List<ProjectManager>
+            {
+                new() { Projectmanager = "Manager1", Mnumber = "M001", LoginEmail = "manager1@apha.gov.uk" },
+                new() { Projectmanager = "Manager2", Mnumber = "M002", LoginEmail = "manager2@apha.gov.uk" }
+            };
+            var repo = CreateRepository(projectManagers: projectManagers, myTlkpProjects: projects);
+
+            var result = await repo.GetProjectYearManagersForAdminAsync(2026);
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, x => x.ParentProject == "PP001" && x.ManagerNumber == "M001");
+            Assert.Contains(result, x => x.ParentProject == "PP002" && x.ManagerNumber == "M002");
+        }
+
+        [Fact]
+        public async Task GetProjectYearManagersByEmailAsync_ReturnsMatchingProjectsForHardcodedTestYear()
+        {
+            var projects = new List<Projects>
+            {
+                new() { Year = 2025, Parentproject = "PP001", Manager = "Manager1" },
+                new() { Year = 2025, Parentproject = "PP002", Manager = "Manager2" }
+            };
+            var projectManagers = new List<ProjectManager>
+            {
+                new() { Projectmanager = "Manager1", Mnumber = "M001", LoginEmail = "manager1@apha.gov.uk" },
+                new() { Projectmanager = "Manager2", Mnumber = "M002", LoginEmail = "manager2@apha.gov.uk" }
+            };
+            var repo = CreateRepository(projectManagers: projectManagers, myTlkpProjects: projects);
+
+            var result = await repo.GetProjectYearManagersByEmailAsync(2026, "manager2@apha.gov.uk");
+
+            Assert.Single(result);
+            Assert.Equal("PP002", result[0].ParentProject);
+            Assert.Equal("M002", result[0].ManagerNumber);
+        }
+
+        [Fact]
+        public async Task GetProjectYearManagersByEmailAsync_ReturnsEmptyList_WhenEmailMissing()
+        {
+            var repo = CreateRepository();
+
+            var result = await repo.GetProjectYearManagersByEmailAsync(2026, string.Empty);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
 
         #region GetAllMilestonesAsync — filtering, ordering, paging
 

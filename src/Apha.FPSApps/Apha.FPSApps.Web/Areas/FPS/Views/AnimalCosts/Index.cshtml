@@ -16,26 +16,21 @@
             <!-- Animal Type multicolumn dropdown (mirrors pickAnimalType RowSource on frmAnimalCosts) -->
             <div class="govuk-form-group govuk-!-margin-bottom-0 govuk-!-margin-top-0  govuk-!-margin-right-3 isFloatRight isSelectDropdown"
                  id="animal-type-dropdown">                
-                <table class="govuk-table govuk-table govuk-!-margin-bottom-0">
-                    <tbody class="govuk-table__body">
-                        <tr class="govuk-table__row">
-                            <td class="govuk-table__cell govuk-!-text-align-right isNoBottomBorder govuk-!-padding-right-1">
-                                <label class="govuk-label govuk-!-font-weight-bold" for="animal-type-input">
-                                    Choose an Animal Type:
-                                </label>
-                            </td>
-                        
-                            <td class="govuk-table__cell isNoBottomBorder">
-                                <input type="text"
-                                       id="animal-type-input"
-                                       value=""
-                                       class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                                       readonly
-                                       aria-label="Choose an animal type">
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="govuk-grid-row govuk-!-margin-bottom-0 isAnimalTypeSelector">
+                    <div class="govuk-grid-column-one-half govuk-!-text-align-right govuk-!-padding-right-1">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="animal-type-input">
+                            Choose an Animal Type:
+                        </label>
+                    </div>
+                    <div class="govuk-grid-column-one-half govuk-!-padding-left-0">
+                        <input type="text"
+                               id="animal-type-input"
+                               value="Choose an animal type"
+                               class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                               readonly
+                               aria-label="Choose an animal type">
+                    </div>
+                </div>
 
                 <div class="multicolumn-dropdown-panel isAnimalTypePanel" id="animal-type-panel">
                     <div class="search-box-wrapper">
@@ -104,13 +99,12 @@
             <div class="pva-summary-card asu-side-card govuk-!-margin-top-0">
                 <div class="asu-side-actions">
                      <button type="button"
-                            id="asuExportBtn"
-                            class="govuk-button govuk-button--primary asu-side-button"
-                            data-module="govuk-button"
-                            role="button"
-                            onclick="exportAnimalCosts()">
-                        Download Animal data<br>For email attachement
-                    </button>
+                             id="asuExportBtn"
+                             class="govuk-button govuk-button--primary asu-side-button"
+                             data-module="govuk-button"
+                             onclick="exportAnimalCosts()">
+                         Download Animal data<br>For email attachment
+                     </button>
                 </div>
             </div>
        </div>

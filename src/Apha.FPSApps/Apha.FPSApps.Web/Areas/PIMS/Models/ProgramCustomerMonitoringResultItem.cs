@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     {
         [Display(Name = "Year")]
         [GridColumn(Order = 1, Width = 80, Type = GridColumnType.ReadOnly)]
-        public short? Year { get; set; }
+        public int? Year { get; set; }
 
         [Display(Name = "Project")]
         [GridColumn(Order = 2, Width = 120, Type = GridColumnType.ReadOnly)]

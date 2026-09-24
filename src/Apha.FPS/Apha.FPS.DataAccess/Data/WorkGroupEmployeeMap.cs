@@ -28,7 +28,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.HrsPaid).HasColumnName("hrspaid");
             entity.Property(e => e.Leave).HasColumnName("leave");
             entity.Property(e => e.MakeAvailable)
-                .HasDefaultValueSql("'-1'::integer")
                 .HasColumnName("makeavailable");
             entity.Property(e => e.PersonClass)
                 .HasMaxLength(10)
@@ -45,7 +44,6 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("startdate");
             entity.Property(e => e.TimeRecorder)
-                .HasDefaultValue(0)
                 .HasColumnName("timerecorder");
             entity.Property(e => e.WorkGroupGrade)
                 .HasMaxLength(50)
