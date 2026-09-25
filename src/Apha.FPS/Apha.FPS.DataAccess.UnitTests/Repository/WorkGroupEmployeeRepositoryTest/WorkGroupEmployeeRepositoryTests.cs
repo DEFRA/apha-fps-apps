@@ -38,6 +38,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 SpNumber       = e.SpNumber,
                 WorkGroupGrade = e.WorkGroupGrade,
                 PersonStatus   = e.PersonStatus,
+                PersonClass    = e.PersonClass,
                 HrsPaid        = e.HrsPaid,
                 Leave          = e.Leave,
                 SickSpecial    = e.SickSpecial,
@@ -75,6 +76,76 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
             return new WorkGroupEmployeeRepository(mockContext.Object, requestContext);
         }
+
+        #region PersonClass Sorting Tests
+
+        private static List<WorkGroupEmployee> CreatePersonClassSortEmployees() =>
+        [
+            new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", PersonClass = null },
+            new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", PersonClass = "   " },
+            new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", PersonClass = "B" },
+            new() { PactId = "P004", SpNumber = "SP004", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A", PersonClass = "A" }
+        ];
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_SortByPersonClassAscending_PlacesBlanksLast()
+        {
+            var repo  = CreateRepository(CreatePersonClassSortEmployees());
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "personclass",
+                Descending = false
+            };
+
+            var result = await repo.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
+
+            var classes = result.Data.Select(x => x.PersonClass).ToList();
+            Assert.Equal(["A", "B"], classes.Take(2));
+            Assert.All(classes.Skip(2), c => Assert.True(string.IsNullOrWhiteSpace(c)));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_SortByPersonClassDescending_StillPlacesBlanksLast()
+        {
+            var repo  = CreateRepository(CreatePersonClassSortEmployees());
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "personclass",
+                Descending = true
+            };
+
+            var result = await repo.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
+
+            // Blanks must sink to the bottom even when the populated values are reversed.
+            var classes = result.Data.Select(x => x.PersonClass).ToList();
+            Assert.Equal(["B", "A"], classes.Take(2));
+            Assert.All(classes.Skip(2), c => Assert.True(string.IsNullOrWhiteSpace(c)));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_SortByClassAlias_UsesPersonClassOrdering()
+        {
+            var repo  = CreateRepository(CreatePersonClassSortEmployees());
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "class",
+                Descending = false
+            };
+
+            var result = await repo.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
+
+            var classes = result.Data.Select(x => x.PersonClass).ToList();
+            Assert.Equal(["A", "B"], classes.Take(2));
+            Assert.All(classes.Skip(2), c => Assert.True(string.IsNullOrWhiteSpace(c)));
+        }
+
+        #endregion
 
         #region GetWorkGroupEmployeeAsync Tests
 
