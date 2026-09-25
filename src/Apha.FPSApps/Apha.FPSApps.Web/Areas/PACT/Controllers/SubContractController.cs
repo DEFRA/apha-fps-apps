@@ -241,6 +241,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     .ToList();
 
                 return projectList;
+
             }
             else
             {

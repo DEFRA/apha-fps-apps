@@ -236,6 +236,15 @@ function initializeSubContractProjectDropdown(config) {
     var isClearing = false;
 
      setTimeout(function () {
+        // Destroy any previous instance from a prior modal open so its
+        // document-level listeners and DOM are cleaned up before we rebuild.
+        // Without this, re-opening the Add/Edit modal accumulates outside-click
+        // listeners that each re-render the full project list, freezing the tab.
+        if (window.subContractProjectDropdown &&
+            typeof window.subContractProjectDropdown.destroy === 'function') {
+            window.subContractProjectDropdown.destroy();
+        }
+
         var projectDropdown = new MultiColumnDropdownComponent({
             dropdownId: 'projectDropdown',
             containerSelector: '#projectMultiDropdown',
@@ -281,5 +290,8 @@ function initializeSubContractProjectDropdown(config) {
         if (initialProject) {
             projectDropdown.setValue(initialProject);
         }
+
+        // Keep a reference so the next modal open can destroy it first.
+        window.subContractProjectDropdown = projectDropdown;
      }, 100);
 }

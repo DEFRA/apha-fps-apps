@@ -320,9 +320,15 @@
      */
     MultiColumnDropdownComponent.prototype.escapeHtml = function (text) {
         if (text === null || text === undefined) return '';
-        var div = document.createElement('div');
-        div.textContent = String(text);
-        return div.innerHTML;
+        return String(text).replace(/[&<>"']/g, function (ch) {
+            switch (ch) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                default: return '&#39;';
+            }
+        });
     };
 
     /**
@@ -372,9 +378,16 @@
 
         // Search functionality
         if (searchBox && this.config.enableSearch) {
+            var searchDebounceTimer = null;
             searchBox.addEventListener('input', function () {
-                self.filterData(this.value);
-                self.focusedRowIndex = -1; // Reset focus when filtering
+                var value = this.value;
+                if (searchDebounceTimer) {
+                    clearTimeout(searchDebounceTimer);
+                }
+                searchDebounceTimer = setTimeout(function () {
+                    self.filterData(value);
+                    self.focusedRowIndex = -1; // Reset focus when filtering
+                }, 150);
             });
 
             searchBox.addEventListener('click', function (e) {
@@ -493,12 +506,14 @@
         }
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', function (e) {
+        this._outsideClickHandler = function (e) {
+            if (!self.isOpen) return; // cheap no-op when closed; avoids needless work
             var container = document.querySelector('[data-dropdown-id="' + dropdownId + '"]');
             if (container && !container.contains(e.target)) {
                 self.closeDropdown();
             }
-        });
+        };
+        document.addEventListener('click', this._outsideClickHandler);
 
         // Prevent panel clicks from closing dropdown
         panel.addEventListener('click', function (e) {
@@ -572,8 +587,10 @@
                 container.style.zIndex = '';
             }
 
-            // Clear search
-            if (searchBox && this.config.enableSearch) {
+            // Clear search - only re-render when a search term was actually applied,
+            // otherwise this needlessly rebuilds the entire (potentially large) list
+            // on every close/outside-click.
+            if (searchBox && this.config.enableSearch && searchBox.value) {
                 searchBox.value = '';
                 this.filterData('');
             }
@@ -765,6 +782,14 @@
      * Destroy the dropdown and clean up
      */
     MultiColumnDropdownComponent.prototype.destroy = function () {
+        // Remove the document-level outside-click listener so repeated
+        // create/destroy cycles (e.g. re-opening a modal) don't accumulate
+        // handlers that each re-render the whole list on every click.
+        if (this._outsideClickHandler) {
+            document.removeEventListener('click', this._outsideClickHandler);
+            this._outsideClickHandler = null;
+        }
+
         var container = document.querySelector(this.config.containerSelector);
         if (container) {
             container.innerHTML = '';

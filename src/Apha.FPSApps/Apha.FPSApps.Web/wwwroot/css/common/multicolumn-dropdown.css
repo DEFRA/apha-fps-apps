@@ -21,8 +21,12 @@
     overflow-y: auto;
     display: none;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: max-content;
+    /* Use a deterministic width instead of max-content. max-content forces the
+       browser to measure the intrinsic width of every row (O(n)) each time the
+       panel is shown, which freezes the tab with thousands of rows. */
+    width: 100%;
     min-width: 100%;
+    max-width: 90vw;
 }
 
     /* Search box wrapper */
@@ -64,8 +68,17 @@
         width: 100%;
         border-collapse: collapse;
         border-spacing: 0;
-        table-layout: auto;
+        /* fixed layout computes column widths from the header/first row and the
+           explicit column widths only, avoiding a per-row intrinsic-width
+           measurement pass over the entire (potentially huge) dataset. */
+        table-layout: fixed;
     }
+
+        /* Ensure long cell content wraps instead of forcing the column wider. */
+        .dropdown-table-wrapper td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
     /* Sticky table header */
     .dropdown-table-wrapper thead {

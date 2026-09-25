@@ -177,13 +177,30 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 Diseases = diseases.Data?.Select(d => new SelectListItem(d.Disease, d.Disease)).ToList() ?? [],
                 Customers = customers.Data?.Select(c => new SelectListItem(c.Customer, c.Customer)).ToList() ?? [],
                 Contracts = contracts.Data?.Select(c => new SelectListItem(c.ContractNo, c.ContractNo)).ToList() ?? [],
-                Programs = programs.Data?.Select(p => new SelectListItem(p.ProgramName ?? p.ProgramNo, p.ProgramNo)).ToList() ?? [],
+                Programs = GetProgramOptions(),
                 WorkGroups = workGroups.Data?.Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName)).ToList() ?? [],
                 Managers = managers.Data?.Select(w => new SelectListItem(w.Name, w.Name)).ToList() ?? []
             };
 
             return View(viewModel);
         }
+
+        private static List<SelectListItem> GetProgramOptions()
+        {
+            var programs = new List<SelectListItem>();
+            for (int i = 1; i <= 2500; i++)
+            {
+                programs.Add(new SelectListItem
+                {
+                    Value = i.ToString(),
+                    Text = "ABCDFE TEST " + (i * 20).ToString()
+                });
+            }
+            return programs;
+        }
+
+
+
 
         [HttpPost]
         public async Task<IActionResult> LoadJobCodeGrid(PaginationFilter<string> request, string parentProject)
@@ -782,5 +799,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Update failed" });
         }
+
+        
     }
 }
