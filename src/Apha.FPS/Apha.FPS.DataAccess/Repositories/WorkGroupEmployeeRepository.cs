@@ -607,6 +607,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 "startdate" => ApplyOrder(query, x => x.StartDate, descending),
                 "enddate" => ApplyOrder(query, x => x.EndDate, descending),
                 "timerecorder" => ApplyOrder(query, x => x.TimeRecorder, descending),
+                // Blank/NULL Class values carry no meaning, so they are ranked after every
+                // populated value rather than sorted as an empty string (PostgreSQL places
+                // '' before 'A' ascending and NULLs first descending, which pushed the
+                // blanks to the top in both directions). The rank key is deliberately
+                // always ascending so blanks stay at the bottom either way.
+                "personclass" or "class" => descending
+                    ? query.OrderBy(x => x.PersonClass == null || x.PersonClass.Trim() == "" ? 1 : 0)
+                           .ThenByDescending(x => x.PersonClass)
+                    : query.OrderBy(x => x.PersonClass == null || x.PersonClass.Trim() == "" ? 1 : 0)
+                           .ThenBy(x => x.PersonClass),
                 _ => query.OrderBy(x => x.Name)
             };
         }
