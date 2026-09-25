@@ -746,13 +746,16 @@ namespace Apha.PIMS.DataAccess.Repository
 
         private IQueryable<ProjectYearManagerQueryRow> BuildProjectYearManagersQuery(int year)
         {
-            year = 2025; //temporary hardcode for testing, remove this line in production
+            int maxYear = _dbContext.Years
+                .AsNoTracking()
+                .Select(y => (int?)y.Value)
+                .Max() ?? year;
 
             return from project in _dbContext.MyTlkpProjects.AsNoTracking()
                    join manager in _dbContext.ProjectManagers.AsNoTracking()
                        on project.Manager equals manager.Projectmanager into managerGroup
                    from manager in managerGroup.DefaultIfEmpty()
-                   where project.Year == year
+                   where project.Year == maxYear
                    select new ProjectYearManagerQueryRow
                    {
                        Project = project,

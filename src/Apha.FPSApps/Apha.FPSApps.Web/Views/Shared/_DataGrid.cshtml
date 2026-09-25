@@ -44,8 +44,8 @@
                                     : (!string.IsNullOrWhiteSpace(Convert.ToString(Model.Title))
                                         ? Convert.ToString(Model.Title)
                                         : Convert.ToString(Model.GridId));
-                                <button type="button" class="grid-excel-export-btn sup_margin_0"
-                                        id="@($"{Model.GridId}_excelExportBtn")" data-excel-export-url="@excelExportUrl" data-excel-file-name="@excelExportFileName"
+                                <button type="button" class="grid-excel-export-btn sup_margin_0" 
+                                    id="@($"{Model.GridId}_excelExportBtn")" data-excel-export-url="@excelExportUrl" allow-edit="true" data-excel-file-name="@excelExportFileName"
                                         title="Excel Export" aria-label="Excel Export">
                                     <img class="excel-icon" src="~/images/excel-svgrepo-com.svg" alt="" aria-hidden="true" />
                                 </button>

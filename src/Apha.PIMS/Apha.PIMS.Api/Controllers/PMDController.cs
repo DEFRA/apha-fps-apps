@@ -7,6 +7,8 @@ using Asp.Versioning;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mail;
+using System.Security.Claims;
 using System.Web;
 
 namespace Apha.PIMS.Api.Controllers
@@ -103,7 +105,7 @@ namespace Apha.PIMS.Api.Controllers
             [FromBody] MilestoneReq request)
         {
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
-            string? changedBy = User.Identity?.Name;
+            string? changedBy = ResolveUserEmail(User);
             MilestoneDto result = await _service.UpdateMilestoneAsync_PMD(
                 project!,
                 HttpUtility.UrlDecode(number!),
@@ -115,6 +117,24 @@ namespace Apha.PIMS.Api.Controllers
 
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
+
+        private static string ResolveUserEmail(ClaimsPrincipal? user)
+        {
+            string identityName = user?.Identity?.Name ?? string.Empty;
+            if (IsEmailAddress(identityName))
+                return identityName;
+
+            string email = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(email))
+                return email;
+
+            return user?.Identity?.Name ?? string.Empty;
+        }
+
+        private static bool IsEmailAddress(string value)
+            => !string.IsNullOrWhiteSpace(value)
+                && MailAddress.TryCreate(value, out MailAddress? address)
+                && string.Equals(address.Address, value, StringComparison.OrdinalIgnoreCase);
 
     }
 }
