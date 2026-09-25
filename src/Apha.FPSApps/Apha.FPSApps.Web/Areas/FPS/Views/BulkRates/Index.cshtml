@@ -141,7 +141,7 @@
                         {
                             <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
                                 <div class="govuk-grid-column-full">
-                                    <div class="govuk-warning-text">
+                                    <div class="govuk-warning-text" tabindex="0">
                                         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
                                         <strong class="govuk-warning-text__text">
                                             <span class="govuk-visually-hidden">Warning</span>
@@ -160,7 +160,7 @@
                                "active request" banner below. *@
                             <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-top-2 govuk-!-margin-bottom-2">
                                 <div class="govuk-grid-column-full">
-                                    <div class="govuk-warning-text">
+                                    <div class="govuk-warning-text" tabindex="0">
                                         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
                                         <strong class="govuk-warning-text__text">
                                             <span class="govuk-visually-hidden">Warning</span>
@@ -176,10 +176,10 @@
                         {
                             <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-top-2 govuk-!-margin-bottom-2" id="activeRequestBanner">
                                 <div class="govuk-grid-column-full">
-                                    <div class="govuk-warning-text">
+                                    <div class="govuk-warning-text " tabindex="0">
                                         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
                                         <strong class="govuk-warning-text__text">
-                                            <span class="govuk-visually-hidden">Warning</span>
+                                            <span class="govuk-visually-hidden" >Warning</span>
                                             An active @FriendlyJobName(Model.JobNameFilter ?? string.Empty) request is already in progress.
                                             A new request cannot be created until it is completed, rejected, or cancelled — find it in the list below.
                                         </strong>
@@ -190,7 +190,7 @@
 
                         @* Action buttons row *@
                         <div class="govuk-grid-row sup_margin_left_right_10 govuk-!-margin-bottom-4">
-                            <div class="govuk-grid-column-one-half">
+                            <div class="govuk-grid-column-one-half" tabindex="0">
                                 <h2 class="sup_text_color govuk-heading-s sup_align_flexheading sup_p_0">
                                     @PageHeading(Model.JobNameFilter)
                                 </h2>
@@ -233,7 +233,7 @@
                                 </div>
                                 @if (!string.IsNullOrEmpty(Model.JobNameFilter))
                                 {
-                                    <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-1 govuk-!-text-align-right">
+                                    <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-1 govuk-!-text-align-right" tabindex="0">
                                         Note: Data will be downloaded for current year.
                                     </p>
                                 }
@@ -293,10 +293,10 @@
 
                                 <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
 
-                                    <div class="govuk-grid-column-full sup_p_0">
-                                        <section class="sup_border govuk-!-padding-3" aria-labelledby="process-rules-title">
-                                            <h2 class="govuk-heading-s govuk-!-margin-bottom-2" id="process-rules-title">Process Rules</h2>
-                                            <ul class="govuk-list govuk-list--bullet govuk-!-font-size-16 govuk-!-margin-bottom-0">
+                                    <div class="govuk-grid-column-full sup_p_0" tabindex="0">
+                                        <section class="sup_border govuk-!-padding-3" aria-labelledby="process-rules-title" >
+                                            <h2 class="govuk-heading-s govuk-!-margin-bottom-2" id="process-rules-title" >Process Rules</h2>
+                                            <ul class="govuk-list govuk-list--bullet govuk-!-font-size-16 govuk-!-margin-bottom-0" tabindex="0">
                                                 <li>Only FPS Admin can perform this process.</li>
                                                 <li>Only uploader can edit or release data.</li>
                                                 <li>Second Admin must approve changes.</li>

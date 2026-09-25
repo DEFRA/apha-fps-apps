@@ -120,7 +120,7 @@
                                 @* ── Request header ── *@
                                 <div class="govuk-grid-row govuk-!-margin-top-4 govuk-!-margin-bottom-4">
                                     <div class="govuk-grid-column-full">
-                                        <div class="govuk-!-margin-bottom-2" style="display:flex; justify-content:flex-start; align-items:center; gap:1rem;">
+                                        <div class="govuk-!-margin-bottom-2" style="display:flex; justify-content:flex-start; align-items:center; gap:1rem;" tabindex="0">
                                             <h2 class="govuk-heading-m govuk-!-margin-bottom-0">@FriendlyJobName(entry.JobName) — FPS Year @entry.FpsYear</h2>
                                             <strong class="@StatusBadgeClass(entry.Status)" style="white-space:nowrap; flex-shrink:0;">@FriendlyStatus(entry.Status)</strong>
                                         </div>
@@ -236,7 +236,7 @@
                                         .ToList();
 
                                     <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="validation-section-title">
-                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-2" id="validation-section-title">
+                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-2" id="validation-section-title" tabindex="0">
                                             Validation results
                                             @if (errors.Count == 0)
                                             {
@@ -248,7 +248,7 @@
                                             }
                                         </h3>
 
-                                        <p class="govuk-body-s govuk-!-margin-bottom-2">
+                                        <p class="govuk-body-s govuk-!-margin-bottom-2" tabindex="0">
                                             File: <strong>@uploadResult.Filename</strong> &mdash;
                                             Upload v@(uploadResult.UploadVersion) &mdash;
                                             Total rows: @rc.Total, Valid: @rc.Valid, Invalid: @rc.Invalid,
@@ -256,29 +256,29 @@
                                         </p>
                                         @if (entry.JobName == "BulkTestRatesUpdate")
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-2" tabindex="0">
                                                 FEC: @rc.FecTotal rows &mdash; Insert: @rc.FecInsert, Update: @rc.FecUpdate, Unchanged: @rc.FecUnchanged, Invalid: @rc.FecInvalid
                                             </p>
-                                            <p class="govuk-body-s govuk-!-margin-bottom-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-2" tabindex="0">
                                                 AGRUP: @rc.AgrupTotal rows &mdash; Insert: @rc.AgrupInsert, Update: @rc.AgrupUpdate, Unchanged: @rc.AgrupUnchanged, Invalid: @rc.AgrupInvalid
                                             </p>
                                         }
 
                                         @if (unmatchedErrors.Count < uploadResult.ValidationErrors.Count)
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-2" tabindex="0">
                                                 Row-level findings for staged rows are shown in the Validation column of the tables below.
                                             </p>
                                         }
 
                                         @if (!uploadResult.ValidationErrors.Any())
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0">All rows passed validation.</p>
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0" tabindex="0">All rows passed validation.</p>
                                         }
                                         else if (unmatchedErrors.Any())
                                         {
                                             <div class="govuk-!-margin-top-2">
-                                                <table class="govuk-table govuk-!-font-size-14 govuk-!-margin-bottom-0">
+                                                <table class="govuk-table govuk-!-font-size-14 govuk-!-margin-bottom-0" tabindex="0">
                                                     <thead class="govuk-table__head">
                                                         <tr class="govuk-table__row">
                                                             <th scope="col" class="govuk-table__header govuk-!-width-one-eighth">Row</th>
@@ -311,7 +311,7 @@
                                    request never requires scrolling past a potentially long grid to reach them. ── *@
                                 @if (Model.CanRelease || Model.CanApprove || Model.CanReject || Model.CanCancel)
                                 {
-                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="actions-section-title">
+                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="actions-section-title" tabindex="0">
                                     <h3 class="govuk-visually-hidden" id="actions-section-title">Actions</h3>
                                     <div class="govuk-button-group govuk-!-margin-bottom-0">
 
@@ -363,8 +363,8 @@
                                 {
                                     <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="fec-staging-section-title">
                                         <div class="govuk-grid-row govuk-!-margin-bottom-2">
-                                            <div class="govuk-grid-column-one-half">
-                                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0" id="fec-staging-section-title">FEC Data (Staging)</h3>
+                                            <div class="govuk-grid-column-one-half" tabindex="0">
+                                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0" id="fec-staging-section-title" >FEC Data (Staging)</h3>
                                             </div>
                                             <div class="govuk-grid-column-one-half govuk-!-text-align-right">
                                                 <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
@@ -376,7 +376,7 @@
 
                                         @if (entry.Status == "Completed")
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0" tabindex="0">
                                                 Staging data was cleared after this request completed. See the row counts in
                                                 Validation results above, and Status history below, for what was applied.
                                             </p>
@@ -387,18 +387,18 @@
                                                 @await Html.PartialAsync("_DataGrid", Model.FecStagingGrid)
                                             </div>
 
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2" tabindex="0">
                                                 Note: Status shows the calculated action for this row (No Change / Insert / Update / Zero-Rate Withdrawal), or Deleted for a live record this upload did not include at all.
                                             </p>
                                         }
                                     </section>
 
-                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="agrup-details-section-title">
-                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-2" id="agrup-details-section-title">Agrup Details</h3>
+                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="agrup-details-section-title" >
+                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-2" id="agrup-details-section-title" tabindex="0">Agrup Details</h3>
 
                                         @if (entry.Status == "Completed")
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0" tabindex="0">
                                                 Staging data was cleared after this request completed. See the row counts in
                                                 Validation results above, and Status history below, for what was applied.
                                             </p>
@@ -409,7 +409,7 @@
                                                 @await Html.PartialAsync("_DataGrid", Model.AgrupStagingGrid)
                                             </div>
 
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2" tabindex="0">
                                                 Note: Status shows the calculated action for this row (No Change / Insert / Update / Zero-Rate Withdrawal), or Deleted for a live record this upload did not include at all.
                                             </p>
                                         }
@@ -421,7 +421,7 @@
                                 {
                                     <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="staff-staging-section-title">
                                         <div class="govuk-grid-row govuk-!-margin-bottom-2">
-                                            <div class="govuk-grid-column-one-half">
+                                            <div class="govuk-grid-column-one-half" tabindex="0">
                                                 <h3 class="govuk-heading-s govuk-!-margin-bottom-0" id="staff-staging-section-title">Staff Data (Staging)</h3>
                                             </div>
                                             <div class="govuk-grid-column-one-half govuk-!-text-align-right">
@@ -434,7 +434,7 @@
 
                                         @if (entry.Status == "Completed")
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0" tabindex="0">
                                                 Staging data was cleared after this request completed. See the row counts in
                                                 Validation results above, and Status history below, for what was applied.
                                             </p>
@@ -445,7 +445,7 @@
                                                 @await Html.PartialAsync("_DataGrid", Model.StaffStagingGrid)
                                             </div>
 
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2" tabindex="0">
                                                 Note: Status shows No Change, Updated, or Not Found. "Not Found" means the
                                                 PcGrade doesn't exist for this FPS year — it will be skipped, not created.
                                             </p>
@@ -458,7 +458,7 @@
                                 {
                                     <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="animal-staging-section-title">
                                         <div class="govuk-grid-row govuk-!-margin-bottom-2">
-                                            <div class="govuk-grid-column-one-half">
+                                            <div class="govuk-grid-column-one-half" tabindex="0">
                                                 <h3 class="govuk-heading-s govuk-!-margin-bottom-0" id="animal-staging-section-title">Animal Data (Staging)</h3>
                                             </div>
                                             <div class="govuk-grid-column-one-half govuk-!-text-align-right">
@@ -471,7 +471,7 @@
 
                                         @if (entry.Status == "Completed")
                                         {
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0" tabindex="0">
                                                 Staging data was cleared after this request completed. See the row counts in
                                                 Validation results above, and Status history below, for what was applied.
                                             </p>
@@ -482,7 +482,7 @@
                                                 @await Html.PartialAsync("_DataGrid", Model.AnimalStagingGrid)
                                             </div>
 
-                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2">
+                                            <p class="govuk-body-s govuk-!-margin-bottom-0 govuk-!-margin-top-2" tabindex="0">
                                                 Note: Status shows No Change, Updated, or Not Found. "Not Found" means the
                                                 Animal Type doesn't exist for this FPS year — it will be skipped, not created.
                                             </p>
@@ -493,9 +493,9 @@
                                 @* ── Status history ── *@
                                 @if (Model.Request.Log.Any())
                                 {
-                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="history-section-title">
-                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-2" id="history-section-title">Status history</h3>
-                                        <table class="govuk-table govuk-!-font-size-14 govuk-!-margin-bottom-0">
+                                    <section class="sup_border govuk-!-padding-3 govuk-!-margin-bottom-4" aria-labelledby="history-section-title" tabindex="0">
+                                        <h3 class="govuk-heading-s govuk-!-margin-bottom-2" id="history-section-title" tabindex="0">Status history</h3>
+                                        <table class="govuk-table govuk-!-font-size-14 govuk-!-margin-bottom-0" tabindex="0">
                                             <thead class="govuk-table__head">
                                                 <tr class="govuk-table__row">
                                                     <th scope="col" class="govuk-table__header">Timestamp (UTC)</th>

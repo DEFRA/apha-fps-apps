@@ -341,7 +341,13 @@
         );
 
         var bodyRows = table.querySelectorAll('tbody tr');
+        var rowNumber = 0;
         Array.prototype.forEach.call(bodyRows, function (row) {
+            // Every row - including single-cell placeholder rows - counts
+            // towards the row number, so numbering stays in sync with the
+            // row's actual position in the table.
+            rowNumber++;
+
             if (row.getAttribute('data-a11y-row') === 'true') return;
             row.setAttribute('data-a11y-row', 'true');
 
@@ -354,13 +360,16 @@
             if (!cells.length) return;
 
             // A single full-width cell is a placeholder such as
-            // "No records found." - announce it as-is.
+            // "No records found." - announce it as-is, still prefixed with
+            // its row number.
             if (cells.length === 1) {
                 var onlyCell = cells[0];
                 var onlyValue = (onlyCell.textContent || '').trim();
                 if (!onlyValue) return;
                 if (!onlyCell.hasAttribute('tabindex')) onlyCell.setAttribute('tabindex', '0');
-                if (!onlyCell.hasAttribute('aria-label')) onlyCell.setAttribute('aria-label', onlyValue);
+                if (!onlyCell.hasAttribute('aria-label')) {
+                    onlyCell.setAttribute('aria-label', 'Row ' + rowNumber + ', ' + onlyValue);
+                }
                 return;
             }
 
@@ -369,6 +378,7 @@
                 if (!value) return;
                 var header = headers[index] || '';
                 var label = header ? header + ': ' + value : value;
+                label = 'Row ' + rowNumber + ', ' + label;
 
                 if (!cell.hasAttribute('tabindex')) cell.setAttribute('tabindex', '0');
                 if (!cell.hasAttribute('aria-label')) cell.setAttribute('aria-label', label);
