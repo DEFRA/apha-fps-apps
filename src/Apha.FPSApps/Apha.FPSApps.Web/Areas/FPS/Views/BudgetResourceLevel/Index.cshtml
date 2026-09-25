@@ -148,7 +148,7 @@
     var currentProfitCentre = '@Html.Raw(Model.SelectedProfitCentre ?? "")';
     var currentYear         = @FpsYearContext.Year;
 </script>
-<script src="~/js/fps_js/budget-resource-level.js"></script>
+<script src="~/js/fps_js/budget-resource-level.js" asp-append-version="true"></script>
 @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
 {
     <text>
