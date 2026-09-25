@@ -40,15 +40,32 @@
         return dropdown;
     }
 
+    // The modal partial is re-injected on every Add/Edit, so the components it
+    // created previously must be disposed of, otherwise their data and DOM are
+    // kept alive for the lifetime of the page.
+    var activeDropdowns = [];
+
+    function destroyActiveDropdowns() {
+        activeDropdowns.forEach(function (dropdown) {
+            if (dropdown && typeof dropdown.destroy === 'function') {
+                dropdown.destroy();
+            }
+        });
+
+        activeDropdowns = [];
+    }
+
     window.initializeTestCapabilityAddEditDropdowns = function (options) {
         if (typeof MultiColumnDropdownComponent === 'undefined') {
             return;
         }
 
+        destroyActiveDropdowns();
+
         options = options || {};
 
         if (!options.isEditMode) {
-            initSingleColumnDropdown({
+            activeDropdowns.push(initSingleColumnDropdown({
                 fieldId: 'TestCode',
                 dropdownId: 'testCapabilityTestCodeDropdown',
                 containerSelector: '#testCodeMultiDropdown',
@@ -56,9 +73,9 @@
                 searchPlaceholder: 'Search by Test Code',
                 headerText: 'Test Code',
                 data: options.testCodeData
-            });
+            }));
 
-            initSingleColumnDropdown({
+            activeDropdowns.push(initSingleColumnDropdown({
                 fieldId: 'WorkGroup',
                 dropdownId: 'testCapabilityWorkGroupDropdown',
                 containerSelector: '#workGroupMultiDropdown',
@@ -66,10 +83,10 @@
                 searchPlaceholder: 'Search by Work Group',
                 headerText: 'Work Group',
                 data: options.workGroupData
-            });
+            }));
         }
 
-        initSingleColumnDropdown({
+        activeDropdowns.push(initSingleColumnDropdown({
             fieldId: 'PlanPortfolio',
             dropdownId: 'testCapabilityPlanPortfolioDropdown',
             containerSelector: '#planPortfolioMultiDropdown',
@@ -77,6 +94,10 @@
             searchPlaceholder: 'Search by Plan Portfolio',
             headerText: 'Plan Portfolio',
             data: options.planPortfolioData
-        });
+        }));
+
+        activeDropdowns = activeDropdowns.filter(Boolean);
     };
+
+    window.destroyTestCapabilityAddEditDropdowns = destroyActiveDropdowns;
 }(window, jQuery));
