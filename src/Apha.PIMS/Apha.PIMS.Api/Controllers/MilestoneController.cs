@@ -7,6 +7,8 @@ using Asp.Versioning;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mail;
+using System.Security.Claims;
 using System.Web;
 
 namespace Apha.PIMS.Api.Controllers
@@ -55,7 +57,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
-            string? changedBy = User.Identity?.Name;
+            string? changedBy = ResolveUserEmail(User);
             MilestoneDto result = await _service.SaveMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
@@ -68,7 +70,7 @@ namespace Apha.PIMS.Api.Controllers
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
             dto.Number = decodedId;
-            string? changedBy = User.Identity?.Name;
+            string? changedBy = ResolveUserEmail(User);
             MilestoneDto result = await _service.UpdateMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
@@ -151,7 +153,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet("allstaging")]
         public async Task<IActionResult> GetAllStagingRows([FromQuery] QueryParameters<string> parameters)
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             PaginatedResult<StagingMilestoneDto> result = await _service.GetAllStagingRowsAsync(parameters, createdBy);
             return Ok(_mapper.Map<PaginationRes<StagingMilestoneRes>>(result));
         }
@@ -171,7 +173,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> AddStagingRow(int year, [FromBody] StagingMilestoneReq request)
         {
             StagingMilestoneDto dto = _mapper.Map<StagingMilestoneDto>(request);
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             StagingMilestoneDto result = await _service.AddStagingRowAsync(dto, year, createdBy);
             return Ok(_mapper.Map<StagingMilestoneRes>(result));
         }
@@ -182,7 +184,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             StagingMilestoneDto dto = _mapper.Map<StagingMilestoneDto>(request);
             dto.Id = id;
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             StagingMilestoneDto result = await _service.UpdateStagingRowAsync(dto, createdBy);
             return Ok(_mapper.Map<StagingMilestoneRes>(result));
         }
@@ -191,7 +193,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("staging/{id:int}")]
         public async Task<IActionResult> DeleteStagingRow(int id)
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             bool deleted = await _service.DeleteStagingRowAsync(id, createdBy);
             return Ok(new { success = deleted });
         }
@@ -200,7 +202,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("staging")]
         public async Task<IActionResult> ClearStaging()
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             int rows = await _service.ClearStagingAsync(createdBy);
             return Ok(new { deleted = rows });
         }
@@ -213,7 +215,7 @@ namespace Apha.PIMS.Api.Controllers
             [FromQuery] bool isDeliverableMode = false
             )
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             await _service.ValidateStagingAsync(project, typeId, isDeliverableMode, createdBy);
             return Ok(new { success = true });
         }
@@ -222,8 +224,9 @@ namespace Apha.PIMS.Api.Controllers
         [HttpPost("{project}/staging/import")]
         public async Task<IActionResult> ImportStaging(string project)
         {
-            string? changedBy = User.Identity?.Name;
-            string? createdBy = User.Identity?.Name;
+            string? userEmail = ResolveUserEmail(User);
+            string? changedBy = userEmail;
+            string? createdBy = userEmail;
             int imported = await _service.ImportStagingAsync(project, changedBy, createdBy);
             return Ok(new { imported });
         }
@@ -232,8 +235,9 @@ namespace Apha.PIMS.Api.Controllers
         [HttpPost("{project}/staging/import-overwrite")]
         public async Task<IActionResult> ImportWithOverwrite(string project)
         {
-            string? changedBy = User.Identity?.Name;
-            string? createdBy = User.Identity?.Name;
+            string? userEmail = ResolveUserEmail(User);
+            string? changedBy = userEmail;
+            string? createdBy = userEmail;
             int updated = await _service.ImportWithOverwriteAsync(project, changedBy, createdBy);
             return Ok(new { updated });
         }
@@ -259,5 +263,23 @@ namespace Apha.PIMS.Api.Controllers
                 }
             });
         }
+
+        private static string ResolveUserEmail(ClaimsPrincipal? user)
+        {
+            string identityName = user?.Identity?.Name ?? string.Empty;
+            if (IsEmailAddress(identityName))
+                return identityName;
+
+            string email = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(email))
+                return email;
+
+            return user?.Identity?.Name ?? string.Empty;
+        }
+
+        private static bool IsEmailAddress(string value)
+            => !string.IsNullOrWhiteSpace(value)
+                && MailAddress.TryCreate(value, out MailAddress? address)
+                && string.Equals(address.Address, value, StringComparison.OrdinalIgnoreCase);
     }
 }

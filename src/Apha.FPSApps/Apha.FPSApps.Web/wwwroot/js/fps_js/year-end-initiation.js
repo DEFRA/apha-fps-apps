@@ -285,12 +285,31 @@
                                         getCellValue(this, 'CvlHours') !== '' &&
                                         getCellValue(this, 'VidHours') !== '';
 
-                // Confirm is only for accepting a complete carried-forward default.
-                // An unplanned row with no default must be filled in via Edit instead.
-                $(this).find('.edit-row-btn').prop('disabled', Planned ? false : hasDefaultValues);
+                // Edit is always available so values can be entered or corrected;
+                // completeness is enforced at Initiate time instead (see hasIncompleteMonthHours).
+                // Confirm remains for accepting a complete carried-forward default in one click.
+                $(this).find('.edit-row-btn').prop('disabled', false);
                 $(this).find('.delete-row-btn').prop('disabled', Planned ? true : !hasDefaultValues);
             }
         });
+    }
+
+    // Returns true if any applicable month row (Fmonth != 0) is missing Days, CvlHours or VidHours.
+    function hasIncompleteMonthHours() {
+        var incomplete = false;
+        $('#tbl_yearEndMonthHoursGrid tbody tr').each(function () {
+            var fmonth = getCellValue(this, 'Fmonth').trim();
+            if (fmonth === '0' || fmonth === '') { return; }
+
+            var daysVal     = getCellValue(this, 'Days');
+            var cvlHoursVal = getCellValue(this, 'CvlHours');
+            var vidHoursVal = getCellValue(this, 'VidHours');
+
+            if (daysVal === '' || cvlHoursVal === '' || vidHoursVal === '') {
+                incomplete = true;
+            }
+        });
+        return incomplete;
     }
 
     // Applies button states immediately and re-applies whenever the grid container
@@ -321,6 +340,11 @@
                         'There is a problem',
                         SCOPE
                     );
+                    return;
+                }
+
+                if (hasIncompleteMonthHours()) {
+                    showPageError(['Please enter Days, CVL Hours and VID Hours for all months before initiating the DataSetup Request.']);
                     return;
                 }
 
