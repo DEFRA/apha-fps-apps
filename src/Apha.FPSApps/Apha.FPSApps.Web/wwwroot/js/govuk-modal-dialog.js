@@ -296,8 +296,6 @@
             return;
         }
 
-        var pendingScan = false;
-
         var observer = new MutationObserver(function (mutations) {
             var hasChanges = mutations.some(function (mutation) {
                 return mutation.type === "childList"
@@ -305,16 +303,11 @@
                     && !isIgnorableMutation(mutation);
             });
 
-            if (!hasChanges || pendingScan) {
-                return;
-            }
-
-            // Coalesce bursts of DOM changes into a single scan per frame.
-            pendingScan = true;
-            window.requestAnimationFrame(function () {
-                pendingScan = false;
+            // Scanning stays synchronous so a modal injected and shown in the
+            // same tick is configured before it is displayed.
+            if (hasChanges) {
                 initializeAllSafeModals();
-            });
+            }
         });
 
         observer.observe(document.body, {
