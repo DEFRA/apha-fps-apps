@@ -147,7 +147,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
         }
 
         [Fact]
-        public async Task Index_WhenIdentityNameAndEmailClaimAreUnavailable_UsesPreferredUsername()
+        public async Task Index_WhenIdentityNameIsNotEmailAndEmailClaimIsUnavailable_UsesIdentityNameFallback()
         {
             // Arrange
             const string displayName = "Nishtha Samvedi (Atos)";
@@ -182,7 +182,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             await _sut.Index();
 
             // Assert
-            await _mockMilestoneService.Received(1).GetProjectYearManagersAsync(Arg.Any<int>(), preferredUsername, false);
+            await _mockMilestoneService.Received(1).GetProjectYearManagersAsync(Arg.Any<int>(), displayName, false);
         }
 
         [Fact]

@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             if (!string.IsNullOrWhiteSpace(email))
                 return email;
 
-            return user?.FindFirstValue("preferred_username") ?? string.Empty;
+            return user?.Identity?.Name ?? string.Empty;
         }
 
         private static bool IsEmailAddress(string value)
