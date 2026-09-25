@@ -95,7 +95,8 @@
         // filtering does not re-stringify every cell on every keystroke.
         this.searchKeyCache = new WeakMap();
 
-        // Retained so the document-level handler can be detached on destroy.
+        // Superseded by the shared document-level handler; retained so existing
+        // callers that inspect it keep working.
         this.documentClickHandler = null;
 
         dropdownInstances.push(this);
@@ -281,6 +282,19 @@
     };
 
     /**
+     * Remove every rendered row and mark the body for a rebuild on next open.
+     */
+    MultiColumnDropdownComponent.prototype.clearRenderedRows = function () {
+        var tbody = document.getElementById(this.config.dropdownId + '_tbody');
+        if (tbody) {
+            tbody.innerHTML = '';
+        }
+
+        this.renderedRowCount = 0;
+        this.bodyDirty = true;
+    };
+
+    /**
      * Ensure the table body reflects the current filtered data.
      */
     MultiColumnDropdownComponent.prototype.ensureBodyRendered = function () {
@@ -403,6 +417,39 @@
         div.textContent = String(text);
         return div.innerHTML;
     };
+
+    /**
+     * A single document-level click handler serves every live dropdown. One
+     * listener per instance used to accumulate whenever a host partial was
+     * re-injected (the modal case), so every click ended up running a handler
+     * for each dropdown ever created.
+     */
+    var sharedDocumentClickHandler = null;
+
+    function ensureSharedDocumentClickHandler() {
+        if (sharedDocumentClickHandler) return;
+
+        sharedDocumentClickHandler = function (e) {
+            dropdownInstances.forEach(function (instance) {
+                // Closed dropdowns have nothing to close, so they cost nothing.
+                if (!instance.isOpen) return;
+
+                var container = document.querySelector('[data-dropdown-id="' + instance.config.dropdownId + '"]');
+                if (container && !container.contains(e.target)) {
+                    instance.closeDropdown();
+                }
+            });
+        };
+
+        document.addEventListener('click', sharedDocumentClickHandler);
+    }
+
+    function releaseSharedDocumentClickHandler() {
+        if (!sharedDocumentClickHandler || dropdownInstances.length > 0) return;
+
+        document.removeEventListener('click', sharedDocumentClickHandler);
+        sharedDocumentClickHandler = null;
+    }
 
     /**
      * Attach event handlers
@@ -582,13 +629,7 @@
         }
 
         // Close dropdown when clicking outside
-        this.documentClickHandler = function (e) {
-            var container = document.querySelector('[data-dropdown-id="' + dropdownId + '"]');
-            if (container && !container.contains(e.target)) {
-                self.closeDropdown();
-            }
-        };
-        document.addEventListener('click', this.documentClickHandler);
+        ensureSharedDocumentClickHandler();
 
         // Append the next batch of rows as the user scrolls the panel
         var tableWrapper = panel.querySelector('.dropdown-table-wrapper');
@@ -695,6 +736,12 @@
             this.isOpen = false;
             input.classList.remove('dropdown-open');
             this.focusedRowIndex = -1; // Reset focus
+
+            // Drop the rows materialised by lazy loading. Without this the DOM
+            // keeps every row the user scrolled into view - for several
+            // dropdowns at once - which slows down every later query, hit test
+            // and style recalculation on the page.
+            this.clearRenderedRows();
 
             // Reset z-index
             if (container) {
@@ -919,11 +966,7 @@
         var self = this;
 
         this.cancelPendingSearch();
-
-        if (this.documentClickHandler) {
-            document.removeEventListener('click', this.documentClickHandler);
-            this.documentClickHandler = null;
-        }
+        this.clearRenderedRows();
 
         var container = document.querySelector(this.config.containerSelector);
         if (container) {
@@ -933,6 +976,8 @@
         dropdownInstances = dropdownInstances.filter(function (dropdownInstance) {
             return dropdownInstance !== self;
         });
+
+        releaseSharedDocumentClickHandler();
 
         // Clear references
         this.originalData = [];
