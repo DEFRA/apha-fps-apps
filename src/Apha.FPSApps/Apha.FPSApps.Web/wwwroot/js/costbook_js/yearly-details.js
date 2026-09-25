@@ -705,21 +705,22 @@ function bindMarkupAndProfitForm(pid, yearVal) {
 
         var $form = $('#addNewProjectYearForm');
         var $modal = $('#project1ModalContent');
+        showLoader();
         clearValidationErrors($modal);
-        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+        if (!isFormValid($form)) { hideLoader(); displayClientValidationErrors($form, $modal); return; }
 
         fetch(yearlyDetailsUrls.updateProjectYearRate + '?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
             body: new URLSearchParams(new FormData(form)).toString()
         })
-            .then(function (r) { return r.json(); })
+            .then(function (r) { hideLoader(); return r.json(); })
             .then(function (d) {
                 if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
                 else if (d.errors) { _showModalErrors(d.errors, $modal); }
                 else { showAlertMessage(d.message || 'Failed to save markup and profit rates.', AlertType.ERROR); }
             })
-            .catch(function (err) { console.error('Update markup and profit error:', err); showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); });
+            .catch(function (err) { hideLoader(); console.error('Update markup and profit error:', err); showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); });
     });
 }
 
