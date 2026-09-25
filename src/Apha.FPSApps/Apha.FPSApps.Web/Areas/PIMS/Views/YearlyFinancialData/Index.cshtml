@@ -115,17 +115,17 @@
                         <tbody class="govuk-table__body">
                             <tr class="govuk-table__row" id="yfdTotalsRow">
                                 <td class="govuk-table__cell yfd-total-label"  colspan="2">Totals</td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalCustomerIncome"></td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalCustomerIncome">@Model.Totals.TotalCustomerIncome.ToString("£#,##0;-£#,##0")</td>
                                 <td class="govuk-table__cell yfd-total-hidden"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalActualExp"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalSeedcorn"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalManHours"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalPayCosts"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalNonPay"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalTestCosts"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalProjectSpecific"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalAnimal"></td>
-                                <td class="govuk-table__cell sup_text_right_align" id="totalAdjustment"></td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalActualExp">@Model.Totals.TotalActualExpenditure.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalSeedcorn">@Model.Totals.TotalSeedcorn.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalManHours">@Model.Totals.TotalManHours.ToString("#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalPayCosts">@Model.Totals.TotalPayCosts.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalNonPay">@Model.Totals.TotalNonPay.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalTestCosts">@Model.Totals.TotalTestCosts.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalProjectSpecific">@Model.Totals.TotalProjectSpecific.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalAnimal">@Model.Totals.TotalAnimal.ToString("£#,##0;-£#,##0")</td>
+                                <td class="govuk-table__cell sup_text_right_align" id="totalAdjustment">@Model.Totals.TotalAdjustment.ToString("£#,##0;-£#,##0")</td>
                                 <td class="govuk-table__cell yfd-total-hidden"></td>
                                 <td class="govuk-table__cell yfd-total-hidden"></td>
                             </tr>
@@ -151,6 +151,7 @@
     <script>
         const yfdProjectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectList));
         const yfdPreselectedProject = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.SelectedProject ?? string.Empty));
+        const yfdInitialTotals = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Totals));
         var yfdProjectSelectDropdown = null;
         var selectedYfdProjectValue = yfdPreselectedProject || '';
 
@@ -237,6 +238,7 @@
             if (!selectedYfdProjectValue) {
                 document.getElementById('yfdStartDate').value = '';
                 document.getElementById('yfdEndDate').value = '';
+                applyYfdTotals(null);
                 reloadYearlyFinancialDataGrid();
                 return;
             }
@@ -976,44 +978,87 @@
             closeYFDModal();
         }
 
-        // ── Totals row recalculation ─────────────────────────────────────────────────────
-        
-        function recalcTotals() {
-            var sums = {
-                totalCustomerIncome: 0, totalActualExp: 0,
-                totalSeedcorn: 0,      totalManHours: 0,   totalPayCosts: 0,
-                totalNonPay: 0,        totalTestCosts: 0,  totalProjectSpecific: 0,
-                totalAnimal: 0,        totalAdjustment: 0
+        // ── Totals row refresh ──────────────────────────────────────────────────────────
+
+        function getEmptyYfdTotals() {
+            return {
+                TotalCustomerIncome: 0,
+                TotalActualExpenditure: 0,
+                TotalSeedcorn: 0,
+                TotalManHours: 0,
+                TotalPayCosts: 0,
+                TotalNonPay: 0,
+                TotalTestCosts: 0,
+                TotalProjectSpecific: 0,
+                TotalAnimal: 0,
+                TotalAdjustment: 0
             };
-            // Sum data rows from the DataGrid table
-            $('#gridContainer_costCenterListGrid table tbody tr[data-row-index]').each(function () {
-                var cells = $(this).find('td');
-                // Column order (no checkbox): 0=Year, 1=BfBudget(PP/Acc), 2=PyBudget(CustomerIncome),
-                //   3=VlaBudget, 4=ActualExp, 5=Seedcorn, 6=ManHours, 7=PayCosts,
-                //   8=NonPayOhCosts, 9=TestCosts, 10=NonAnimalCosts, 11=AnimalCosts,
-                //   12=Adjustment, 13=AdjComment, 14=actions
-                sums.totalCustomerIncome += parseGbpCell(cells.eq(2));
-                sums.totalActualExp      += parseGbpCell(cells.eq(4));
-                sums.totalSeedcorn       += parseGbpCell(cells.eq(5));
-                sums.totalManHours        += parseNumCell(cells.eq(6));
-                sums.totalPayCosts        += parseGbpCell(cells.eq(7));
-                sums.totalNonPay          += parseGbpCell(cells.eq(8));
-                sums.totalTestCosts       += parseGbpCell(cells.eq(9));
-                sums.totalProjectSpecific += parseGbpCell(cells.eq(10));
-                sums.totalAnimal          += parseGbpCell(cells.eq(11));
-                sums.totalAdjustment      += parseGbpCell(cells.eq(12));
-            });
-            for (var id in sums) {
-                var el = document.getElementById(id);
-                if (el) {
-                    if (id === 'totalManHours') {
-                        el.textContent = sums[id].toFixed(2);
-                    } else {
-                    el.textContent = '£' + sums[id].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+        function getYfdTotalValue(totals, camelName, pascalName) {
+            if (!totals) return 0;
+            var value = totals[camelName];
+            if (value == null) {
+                value = totals[pascalName];
+            }
+            return value == null ? 0 : value;
+        }
+        function formatYfdRoundedGbp(val) {
+            var n = toNormalizedNumber(val);
+            if (isNaN(n)) n = 0;
+            return new Intl.NumberFormat('en-GB', {
+                style: 'currency',
+                currency: 'GBP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(n);
+        }
+        function formatYfdRoundedNumber(val) {
+            var n = toNormalizedNumber(val);
+            if (isNaN(n)) n = 0;
+            return new Intl.NumberFormat('en-GB', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(n);
+        }
+        function applyYfdTotals(totals) {
+            var resolvedTotals = totals || getEmptyYfdTotals();
+            var moneyFields = {
+                totalCustomerIncome: getYfdTotalValue(resolvedTotals, 'totalCustomerIncome', 'TotalCustomerIncome'),
+                totalActualExp: getYfdTotalValue(resolvedTotals, 'totalActualExpenditure', 'TotalActualExpenditure'),
+                totalSeedcorn: getYfdTotalValue(resolvedTotals, 'totalSeedcorn', 'TotalSeedcorn'),
+                totalPayCosts: getYfdTotalValue(resolvedTotals, 'totalPayCosts', 'TotalPayCosts'),
+                totalNonPay: getYfdTotalValue(resolvedTotals, 'totalNonPay', 'TotalNonPay'),
+                totalTestCosts: getYfdTotalValue(resolvedTotals, 'totalTestCosts', 'TotalTestCosts'),
+                totalProjectSpecific: getYfdTotalValue(resolvedTotals, 'totalProjectSpecific', 'TotalProjectSpecific'),
+                totalAnimal: getYfdTotalValue(resolvedTotals, 'totalAnimal', 'TotalAnimal'),
+                totalAdjustment: getYfdTotalValue(resolvedTotals, 'totalAdjustment', 'TotalAdjustment')
+            };
+
+            for (var moneyFieldId in moneyFields) {
+                var moneyField = document.getElementById(moneyFieldId);
+                if (moneyField) {
+                    moneyField.textContent = formatYfdRoundedGbp(moneyFields[moneyFieldId]);
                 }
             }
-        }
+
+            var manHoursField = document.getElementById('totalManHours');
+            if (manHoursField) {
+                manHoursField.textContent = formatYfdRoundedNumber(
+                    getYfdTotalValue(resolvedTotals, 'totalManHours', 'TotalManHours'));
+            }
+
             updateTotalsRowAriaLabel();
+        }
+        function recalcTotals() {
+            var selectedProject = getSelectedYfdProjectValue();
+            if (!selectedProject) {
+                applyYfdTotals(null);
+                return;
+            }
+
+            $.get('/PIMS/YearlyFinancialData/GetTotals', { project: selectedProject }, function (response) {
+                applyYfdTotals(response && response.data ? response.data : null);
+            });
         }
 
         // Build an accessible name for the totals row from each column header
@@ -1140,17 +1185,13 @@
             var el = document.getElementById(id);
             if (el) el.value = val;
         }
-        function parseGbpCell(cell) {
-            return toNormalizedNumber(cell.text()) || 0;
-        }
-        function parseNumCell(cell) {
-            return toNormalizedNumber(cell.text()) || 0;
-        }
 
         // ── On page load: trigger totals and update on each grid reload ───────────────────
         document.addEventListener('DOMContentLoaded', function () {
             // initial pass
-            setTimeout(recalcTotals, 0);
+            setTimeout(function () {
+                applyYfdTotals(yfdInitialTotals);
+            }, 0);
 
             // DataGrid dispatches 'gridReloaded' after ajax replacement
             document.addEventListener('gridReloaded', function (e) {

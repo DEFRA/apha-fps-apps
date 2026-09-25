@@ -17,16 +17,18 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         public string EndDate { get; set; } = string.Empty;
 
-      
+
         public double HoursInDay { get; set; }
 
-        
+
         public double DaysInYear { get; set; }        
 
-       
+
         public List<SelectListItem> ProjectList { get; set; } = [];
 
-       
+        public YearlyFinancialDataTotalsItem Totals { get; set; } = new();
+
+
         public DataGridConfig<YearlyFinancialDataItem> CostCenterListGrid { get; set; } = new();
     }
 }
