@@ -198,7 +198,66 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
 
             Assert.Equal("PP001", model.SelectedProject);
             Assert.Single(model.CostCenterListGrid.Data);
-            await _service.Received(1).GetAllAsync("PP001", Arg.Any<QueryParameters<string>>());
+            await _service.Received(2).GetAllAsync("PP001", Arg.Any<QueryParameters<string>>());
+        }
+
+        [Fact]
+        public async Task Index_WithSelectedProject_PopulatesRoundedTotalsFromDatabaseValues()
+        {
+            SetupDefaultIndexMocks();
+            var dtos = new List<YearlyFinancialDataDto>
+            {
+                new()
+                {
+                    Year = 2006,
+                    Project = "PP001",
+                    PyBudget = 1.3m,
+                    ActualExpenditure = 1.2m,
+                    Seedcorn = 1.2m,
+                    ManHours = 1.2d,
+                    PayCosts = 1.2m,
+                    NonPayOhCosts = 1.2m,
+                    TestCosts = 1.2m,
+                    NonAnimalCosts = 1.2m,
+                    AnimalCosts = 1.2m,
+                    Adjustment = 1.2m
+                },
+                new()
+                {
+                    Year = 2007,
+                    Project = "PP001",
+                    PyBudget = 1.3m,
+                    ActualExpenditure = 1.3m,
+                    Seedcorn = 1.3m,
+                    ManHours = 1.3d,
+                    PayCosts = 1.3m,
+                    NonPayOhCosts = 1.3m,
+                    TestCosts = 1.3m,
+                    NonAnimalCosts = 1.3m,
+                    AnimalCosts = 1.3m,
+                    Adjustment = 1.3m
+                }
+            };
+            var items = new List<YearlyFinancialDataItem> { SampleItem(year: 2006), SampleItem(year: 2007) };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _service.GetAllAsync("PP001", Arg.Any<QueryParameters<string>>())
+                .Returns(new ApiResponseDto<List<YearlyFinancialDataDto>>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Pagination = new PaginationDto { TotalRecords = 2, TotalPages = 1, PageNumber = 1, PageSize = 10 }
+                });
+            _mapper.Map<List<YearlyFinancialDataItem>>(Arg.Any<List<YearlyFinancialDataDto>>()).Returns(items);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel { TotalRecords = 2 });
+
+            var result = await _controller.Index("PP001");
+            var model = Assert.IsType<YearlyFinancialDataViewModel>(Assert.IsType<ViewResult>(result).Model);
+
+            Assert.Equal(3m, model.Totals.TotalCustomerIncome);
+            Assert.Equal(2m, model.Totals.TotalActualExpenditure);
+            Assert.Equal(2d, model.Totals.TotalManHours);
         }
 
         [Fact]
@@ -262,6 +321,46 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             _projectListService.GetAllProjectsForMilestoneAsync()
                 .ThrowsAsync(new Exception("Service unavailable"));
             await Assert.ThrowsAsync<Exception>(() => _controller.Index(null));
+        }
+
+        [Fact]
+        public async Task GetTotals_WithProject_ReturnsRoundedTotalsFromDatabaseValues()
+        {
+            var dtos = new List<YearlyFinancialDataDto>
+            {
+                new()
+                {
+                    Project = "PP001",
+                    PyBudget = 1.3m,
+                    ActualExpenditure = 1.2m,
+                    ManHours = 1.2d
+                },
+                new()
+                {
+                    Project = "PP001",
+                    PyBudget = 1.3m,
+                    ActualExpenditure = 1.3m,
+                    ManHours = 1.3d
+                }
+            };
+
+            _service.GetAllAsync("PP001", Arg.Any<QueryParameters<string>>())
+                .Returns(new ApiResponseDto<List<YearlyFinancialDataDto>>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Pagination = new PaginationDto { TotalRecords = 2, TotalPages = 1, PageNumber = 1, PageSize = 1000 }
+                });
+
+            var result = Assert.IsType<JsonResult>(await _controller.GetTotals("PP001"));
+
+            string serialized = JsonSerializer.Serialize(result.Value);
+            using JsonDocument doc = JsonDocument.Parse(serialized);
+
+            Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+            Assert.Equal(3m, doc.RootElement.GetProperty("data").GetProperty("TotalCustomerIncome").GetDecimal());
+            Assert.Equal(2m, doc.RootElement.GetProperty("data").GetProperty("TotalActualExpenditure").GetDecimal());
+            Assert.Equal(2d, doc.RootElement.GetProperty("data").GetProperty("TotalManHours").GetDouble());
         }
 
         #endregion

@@ -90,6 +90,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                             ? detail.EndDate.Value.ToString("MM/dd/yyyy")
                             : string.Empty);
                 }
+
+                viewModel.Totals = await BuildYearlyFinancialTotalsAsync(viewModel.SelectedProject);
             }
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
@@ -110,6 +112,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     DeleteFunction     = "deleteYearlyFinancialData",
                     AllowView          = false,
                     ViewFunction       = "viewYearlyFinancialData",
+                    AllowExport        = false,
+                    AllowExcelExport   = false,
                     ExtraFilterMethod  = "getYearlyFinancialDataExtraFilters",
                     BindGridUrl        = "/PIMS/YearlyFinancialData/LoadYearlyFinancialDataGrid",
                     Data               = [],
@@ -187,6 +191,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return Json(new { success = true, startDate, endDate });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetTotals(string project)
+        {
+            YearlyFinancialDataTotalsItem totals = await BuildYearlyFinancialTotalsAsync(project);
+            return Json(new { success = true, data = totals });
+        }
+
         // -- DataGrid AJAX Reload ------------------------------------------
 
         
@@ -217,7 +228,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
 
-            
+
             string resolvedProject = project
                 ?? (filterDict.TryGetValue("project", out string? fp) ? fp : null)
                 ?? string.Empty;
@@ -252,6 +263,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 DeleteFunction     = "deleteYearlyFinancialData",
                 AllowView          = false,
                 ViewFunction       = "viewYearlyFinancialData",
+                AllowExport        = false,
+                AllowExcelExport   = false,
                 ExtraFilterMethod  = "getYearlyFinancialDataExtraFilters",
                 BindGridUrl        = "/PIMS/YearlyFinancialData/LoadYearlyFinancialDataGrid",
                 Data               = items,
@@ -260,6 +273,71 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 CurrentFilters     = filterDict
             };
         }
+
+        private async Task<YearlyFinancialDataTotalsItem> BuildYearlyFinancialTotalsAsync(string? project)
+        {
+            if (string.IsNullOrWhiteSpace(project))
+            {
+                return new YearlyFinancialDataTotalsItem();
+            }
+
+            List<YearlyFinancialDataDto> allItems = await GetAllYearlyFinancialDataAsync(project);
+
+            return new YearlyFinancialDataTotalsItem
+            {
+                TotalCustomerIncome = RoundTotalAmount(allItems.Sum(item => item.PyBudget ?? 0m)),
+                TotalActualExpenditure = RoundTotalAmount(allItems.Sum(item => item.ActualExpenditure ?? 0m)),
+                TotalSeedcorn = RoundTotalAmount(allItems.Sum(item => item.Seedcorn ?? 0m)),
+                TotalManHours = RoundTotalNumber(allItems.Sum(item => item.ManHours ?? 0d)),
+                TotalPayCosts = RoundTotalAmount(allItems.Sum(item => item.PayCosts ?? 0m)),
+                TotalNonPay = RoundTotalAmount(allItems.Sum(item => item.NonPayOhCosts ?? 0m)),
+                TotalTestCosts = RoundTotalAmount(allItems.Sum(item => item.TestCosts ?? 0m)),
+                TotalProjectSpecific = RoundTotalAmount(allItems.Sum(item => item.NonAnimalCosts ?? 0m)),
+                TotalAnimal = RoundTotalAmount(allItems.Sum(item => item.AnimalCosts ?? 0m)),
+                TotalAdjustment = RoundTotalAmount(allItems.Sum(item => item.Adjustment ?? 0m))
+            };
+        }
+
+        private async Task<List<YearlyFinancialDataDto>> GetAllYearlyFinancialDataAsync(string project)
+        {
+            const int totalsPageSize = 1000;
+            List<YearlyFinancialDataDto> allItems = [];
+            int currentPage = 1;
+            int totalPages = 1;
+
+            do
+            {
+                ApiResponseDto<List<YearlyFinancialDataDto>> response = await _service.GetAllAsync(project, new QueryParameters<string>
+                {
+                    Page = currentPage,
+                    PageSize = totalsPageSize
+                });
+
+                if (!response.Success || response.Data is null || response.Data.Count == 0)
+                {
+                    break;
+                }
+
+                allItems.AddRange(response.Data);
+                totalPages = response.Pagination?.TotalPages ?? 1;
+
+                if (totalPages <= 0 && response.Pagination?.TotalRecords > 0)
+                {
+                    totalPages = (int)Math.Ceiling((double)response.Pagination.TotalRecords / totalsPageSize);
+                }
+
+                currentPage++;
+            }
+            while (currentPage <= totalPages);
+
+            return allItems;
+        }
+
+        private static decimal RoundTotalAmount(decimal value)
+            => Math.Round(value, 0, MidpointRounding.ToEven);
+
+        private static double RoundTotalNumber(double value)
+            => Math.Round(value, 0, MidpointRounding.ToEven);
 
         // -- CRUD Endpoints ------------------------------------------------
 

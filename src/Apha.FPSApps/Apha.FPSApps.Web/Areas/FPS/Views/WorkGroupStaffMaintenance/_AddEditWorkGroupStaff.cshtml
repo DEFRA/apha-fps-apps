@@ -635,6 +635,39 @@
             }
         });
 
+        // "Available?" and "Time recorder?" are mutually exclusive - a staff member can
+        // be one or the other (or neither), never both. Checking one clears the other.
+        // Handlers are attached directly to each checkbox because the modal script calls
+        // event.stopPropagation() on events inside ".modal".
+        (function wireMutuallyExclusiveFlags() {
+            var makeAvailable = document.getElementById('MakeAvailable');
+            var timeRecorder = document.getElementById('TimeRecorder');
+            if (!makeAvailable || !timeRecorder) {
+                return;
+            }
+
+            function clearOther(source, other) {
+                if (!source.checked || !other.checked) {
+                    return;
+                }
+                other.checked = false;
+                other.dispatchEvent(new Event('input', { bubbles: true }));
+                other.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            makeAvailable.addEventListener('change', function () {
+                clearOther(makeAvailable, timeRecorder);
+            });
+            timeRecorder.addEventListener('change', function () {
+                clearOther(timeRecorder, makeAvailable);
+            });
+
+            // Guard against legacy rows that were saved with both flags set.
+            if (makeAvailable.checked && timeRecorder.checked) {
+                timeRecorder.checked = false;
+            }
+        })();
+
         // The partial is re-injected each time the modal opens and each injection
         // creates a brand new function object, so the previously registered
         // handler must be tracked on window to be removable.

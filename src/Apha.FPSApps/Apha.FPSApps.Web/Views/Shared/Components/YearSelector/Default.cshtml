@@ -20,17 +20,17 @@
     {
         @if (Model.SelectedYearStatus.Equals("Closed", StringComparison.OrdinalIgnoreCase))
         {
-            <div class="year-end-message">The selected financial year has been closed and is no longer available for modification.</div>
+            <div class="year-end-message" tabindex="0">The selected financial year has been closed and is no longer available for modification.</div>
         }
         else if (Model.SelectedYearStatus.Equals("Planned", StringComparison.OrdinalIgnoreCase))
         {
             @if (string.Equals(area, "FPS", StringComparison.OrdinalIgnoreCase))
             {
-                <div class="year-end-message">The selected financial year is in planning stage, you can only modify planning data.</div>
+                <div class="year-end-message" tabindex="0">The selected financial year is in planning stage, you can only modify planning data.</div>
             }
             else
             {
-                <div class="year-end-message">The selected financial year is in planing stage and is no longer available for modification.</div>
+                <div class="year-end-message" tabindex="0">The selected financial year is in planing stage and is no longer available for modification.</div>
             }
         }
     }

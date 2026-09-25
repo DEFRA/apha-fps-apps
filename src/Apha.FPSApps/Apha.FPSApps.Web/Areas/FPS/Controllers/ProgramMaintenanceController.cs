@@ -214,7 +214,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 programItems = _mapper.Map<List<ProgramViewModel>>(response.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
+            PaginationModel paginationModel = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
 
             paginationModel.SortColumn = query?.SortBy;
             paginationModel.SortDirection = query?.Descending ?? false;
@@ -253,7 +255,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Text = d,
                     Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
                 })
-                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Directorate) })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = "Select Directorate", Selected = string.IsNullOrEmpty(model.Directorate) })
                 .ToList();
 
             // Manager dropdown — blank first item

@@ -197,6 +197,15 @@
              if (gmFormDates) { gmFormDates.reloadGrid({ page: 1 }); }
          }
 
+         function ensureMilestoneProjectSelected() {
+             if (currentProject) {
+                 return true;
+             }
+
+             showAlertMessage('Please select a project first.', AlertType.ERROR);
+             return false;
+         }
+
         function getMilestoneExtraFilters() {
             return { parentproject: currentProject };
         }
@@ -206,6 +215,10 @@
         }
 
         function submitFormRequired() {
+            if (!ensureMilestoneProjectSelected()) {
+                return;
+            }
+
             var formRequired = document.getElementById('chkMilestoneDeliverable').checked;
             var token = $('input[name="__RequestVerificationToken"]').val();
             $.ajax({
@@ -228,8 +241,11 @@
 
         // ── Milestone CRUD ───────────────────────────────────────────────────
         function addMilestone() {
+            if (!ensureMilestoneProjectSelected()) {
+                return;
+            }
 
-             var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
+            var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
             $.get('@Url.Action("GetAddEditMilestonePartial", "Milestone", new { area = "PIMS" })',
                 { parentproject: currentProject, typeLookUp: typeLookUp },
                 function (html) {
@@ -321,6 +337,10 @@
 
         // ── Milestone Form Dates CRUD ─────────────────────────────────────────
         function addMilestoneFormDates() {
+            if (!ensureMilestoneProjectSelected()) {
+                return;
+            }
+
             $.get('@Url.Action("GetAddEditMilestoneFormDatesPartial", "Milestone", new { area = "PIMS" })',
                 { parentproject: currentProject },
                 function (html) {

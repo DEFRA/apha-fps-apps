@@ -924,7 +924,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             };
             var paginationRes = new PaginationRes<StagingMilestoneRes>(resList, new Pagination { TotalRecords = 2 });
 
-            _service.GetAllStagingRowsAsync(parameters).Returns(paginatedResult);
+            _service.GetAllStagingRowsAsync(parameters, Arg.Any<string?>()).Returns(paginatedResult);
             _mapper.Map<PaginationRes<StagingMilestoneRes>>(paginatedResult).Returns(paginationRes);
 
             // Act
@@ -933,7 +933,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(paginationRes, okResult.Value);
-            await _service.Received(1).GetAllStagingRowsAsync(parameters);
+            await _service.Received(1).GetAllStagingRowsAsync(parameters, Arg.Any<string?>());
             _mapper.Received(1).Map<PaginationRes<StagingMilestoneRes>>(paginatedResult);
         }
 
@@ -942,11 +942,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         {
             // Arrange
             var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _service.GetAllStagingRowsAsync(parameters).Throws(new Exception("Database error"));
+            _service.GetAllStagingRowsAsync(parameters, Arg.Any<string?>()).Throws(new Exception("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetAllStagingRows(parameters));
-            await _service.Received(1).GetAllStagingRowsAsync(parameters);
+            await _service.Received(1).GetAllStagingRowsAsync(parameters, Arg.Any<string?>());
             _mapper.DidNotReceive().Map<PaginationRes<StagingMilestoneRes>>(Arg.Any<PaginatedResult<StagingMilestoneDto>>());
         }
 
@@ -1002,7 +1002,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var savedRes = new StagingMilestoneRes { Id = 10, Project = "PP001", Number = "M1", Description = "Test" };
 
             _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
-            _service.AddStagingRowAsync(dto, year).Returns(savedDto);
+            _service.AddStagingRowAsync(dto, year, Arg.Any<string?>()).Returns(savedDto);
             _mapper.Map<StagingMilestoneRes>(savedDto).Returns(savedRes);
 
             // Act
@@ -1011,7 +1011,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(savedRes, okResult.Value);
-            await _service.Received(1).AddStagingRowAsync(dto, year);
+            await _service.Received(1).AddStagingRowAsync(dto, year, Arg.Any<string?>());
             _mapper.Received(1).Map<StagingMilestoneRes>(savedDto);
         }
 
@@ -1023,11 +1023,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
 
             _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
-            _service.AddStagingRowAsync(dto, 2025).Throws(new Exception("Validation error"));
+            _service.AddStagingRowAsync(dto, 2025, Arg.Any<string?>()).Throws(new Exception("Validation error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.AddStagingRow(2025, request));
-            await _service.Received(1).AddStagingRowAsync(dto, 2025);
+            await _service.Received(1).AddStagingRowAsync(dto, 2025, Arg.Any<string?>());
             _mapper.DidNotReceive().Map<StagingMilestoneRes>(Arg.Any<StagingMilestoneDto>());
         }
 
@@ -1046,7 +1046,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var updatedRes = new StagingMilestoneRes { Id = id, Project = "PP001", Number = "M1", Description = "Updated" };
 
             _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
-            _service.UpdateStagingRowAsync(dto).Returns(updatedDto);
+            _service.UpdateStagingRowAsync(dto, Arg.Any<string?>()).Returns(updatedDto);
             _mapper.Map<StagingMilestoneRes>(updatedDto).Returns(updatedRes);
 
             // Act
@@ -1056,7 +1056,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(updatedRes, okResult.Value);
             Assert.Equal(id, dto.Id);
-            await _service.Received(1).UpdateStagingRowAsync(dto);
+            await _service.Received(1).UpdateStagingRowAsync(dto, Arg.Any<string?>());
         }
 
         [Fact]
@@ -1068,12 +1068,12 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
 
             _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
-            _service.UpdateStagingRowAsync(dto).Throws(new Exception("Not found"));
+            _service.UpdateStagingRowAsync(dto, Arg.Any<string?>()).Throws(new Exception("Not found"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.UpdateStagingRow(id, request));
             Assert.Equal(id, dto.Id);
-            await _service.Received(1).UpdateStagingRowAsync(dto);
+            await _service.Received(1).UpdateStagingRowAsync(dto, Arg.Any<string?>());
         }
 
         #endregion
@@ -1085,14 +1085,14 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         {
             // Arrange
             const int id = 10;
-            _service.DeleteStagingRowAsync(id).Returns(true);
+            _service.DeleteStagingRowAsync(id, Arg.Any<string?>()).Returns(true);
 
             // Act
             var result = await _controller.DeleteStagingRow(id);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _service.Received(1).DeleteStagingRowAsync(id);
+            await _service.Received(1).DeleteStagingRowAsync(id, Arg.Any<string?>());
         }
 
         [Fact]
@@ -1100,11 +1100,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         {
             // Arrange
             const int id = 10;
-            _service.DeleteStagingRowAsync(id).Throws(new Exception("Database error"));
+            _service.DeleteStagingRowAsync(id, Arg.Any<string?>()).Throws(new Exception("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.DeleteStagingRow(id));
-            await _service.Received(1).DeleteStagingRowAsync(id);
+            await _service.Received(1).DeleteStagingRowAsync(id, Arg.Any<string?>());
         }
 
         #endregion
@@ -1115,25 +1115,25 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         public async Task ClearStaging_ReturnsOkResult_WithDeletedCount()
         {
             // Arrange
-            _service.ClearStagingAsync().Returns(3);
+            _service.ClearStagingAsync(Arg.Any<string?>()).Returns(3);
 
             // Act
             var result = await _controller.ClearStaging();
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _service.Received(1).ClearStagingAsync();
+            await _service.Received(1).ClearStagingAsync(Arg.Any<string?>());
         }
 
         [Fact]
         public async Task ClearStaging_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            _service.ClearStagingAsync().Throws(new Exception("Database error"));
+            _service.ClearStagingAsync(Arg.Any<string?>()).Throws(new Exception("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.ClearStaging());
-            await _service.Received(1).ClearStagingAsync();
+            await _service.Received(1).ClearStagingAsync(Arg.Any<string?>());
         }
 
         #endregion
@@ -1164,11 +1164,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         {
             // Arrange
             const string project = "PP001";
-            _service.ValidateStagingAsync(project, null, false, Arg.Any<string?>()).Throws(new Exception("Validation failed"));
+            _service.ValidateStagingAsync(project, Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<string?>()).Throws(new Exception("Validation failed"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.ValidateStaging(project));
-            await _service.Received(1).ValidateStagingAsync(project, null, false, Arg.Any<string?>());
+            await _service.Received(1).ValidateStagingAsync(project, Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<string?>());
         }
 
         #endregion
@@ -1194,18 +1194,18 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         }
 
         [Fact]
-        public async Task ImportStaging_WhenNoIdentity_PassesNullValues()
+        public async Task ImportStaging_WhenNoIdentity_PassesEmptyStringValues()
         {
             // Arrange
             const string project = "PP001";
             _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
-            _service.ImportStagingAsync(project, null, null).Returns(1);
+            _service.ImportStagingAsync(project, string.Empty, string.Empty).Returns(1);
 
             // Act
             await _controller.ImportStaging(project);
 
             // Assert
-            await _service.Received(1).ImportStagingAsync(project, null, null);
+            await _service.Received(1).ImportStagingAsync(project, string.Empty, string.Empty);
         }
 
         [Fact]
