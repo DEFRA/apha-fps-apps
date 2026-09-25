@@ -329,26 +329,23 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
-                query = query.Where(x => x.PactId != null && EF.Functions.ILike(x.PactId, $"%{pactId}%"));
-
-            if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
-                query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
-
-            if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => x.Name != null && EF.Functions.ILike(x.Name, $"%{name}%"));
-
-            if (dict.TryGetValue("WorkGroupGrade", out var workGroupGrade) && workGroupGrade != null)
-                query = query.Where(x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{workGroupGrade}%"));
+            query = ApplyTextFilter(dict, "PactId", query,
+                value => x => x.PactId != null && EF.Functions.ILike(x.PactId, $"%{value}%"));
+            query = ApplyTextFilter(dict, "SpNumber", query,
+                value => x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{value}%"));
+            query = ApplyTextFilter(dict, "Name", query,
+                value => x => x.Name != null && EF.Functions.ILike(x.Name, $"%{value}%"));
+            query = ApplyTextFilter(dict, "WorkGroupGrade", query,
+                value => x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{value}%"));
 
             // PersonStatus is a fixed two-value code (A/I), so it is matched exactly rather
             // than with %...% wildcards - a "contains" match would make "A" also match nothing
             // meaningful and would blur the two codes if more statuses are added later.
-            if (dict.TryGetValue("PersonStatus", out var personStatus) && personStatus != null)
-                query = query.Where(x => x.PersonStatus != null && EF.Functions.ILike(x.PersonStatus, $"{personStatus}"));
+            query = ApplyTextFilter(dict, "PersonStatus", query,
+                value => x => x.PersonStatus != null && EF.Functions.ILike(x.PersonStatus, value));
 
-            if (dict.TryGetValue("PersonClass", out var personClass) && personClass != null)
-                query = query.Where(x => x.PersonClass != null && EF.Functions.ILike(x.PersonClass, $"%{personClass}%"));
+            query = ApplyTextFilter(dict, "PersonClass", query,
+                value => x => x.PersonClass != null && EF.Functions.ILike(x.PersonClass, $"%{value}%"));
 
             // Numeric hours columns match on exact value, mirroring the Price filter in
             // TestRequirementRCCostRepository. A non-numeric or partially typed entry fails
@@ -372,22 +369,6 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return query;
         }
-
-        // The grid's native date picker posts ISO yyyy-MM-dd, but the filter value can also
-        // arrive as UK dd/MM/yyyy (typed entry or a browser using the UK locale) and Newtonsoft
-        // may already have boxed it as a DateTime. Each of those shapes is accepted here so the
-        // filter is not silently ignored.
-        private static readonly string[] DateFilterFormats =
-        [
-            "yyyy-MM-dd",
-            "dd/MM/yyyy",
-            "d/M/yyyy",
-            "dd-MM-yyyy",
-            "d-M-yyyy",
-            "dd.MM.yyyy",
-            "dd/MM/yy",
-            "d/M/yy"
-        ];
 
         /// <summary>
         /// Parses a grid filter value into a calendar date without ever consulting the
@@ -438,6 +419,25 @@ namespace Apha.FPS.DataAccess.Repositories
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.None,
                 out value);
+        }
+
+        /// <summary>
+        /// Applies an ILike predicate for <paramref name="key"/> when the filter payload
+        /// carries a usable value. Centralising the "is the key present and non-empty"
+        /// guard keeps ApplyFilter free of one branch per filterable column.
+        /// </summary>
+        private static IQueryable<WorkGroupEmployeeView> ApplyTextFilter(
+            IDictionary<string, object> dict,
+            string key,
+            IQueryable<WorkGroupEmployeeView> query,
+            Func<string, Expression<Func<WorkGroupEmployeeView, bool>>> predicateFactory)
+        {
+            if (!dict.TryGetValue(key, out var rawValue) || rawValue == null)
+                return query;
+
+            var value = rawValue.ToString();
+
+            return string.IsNullOrEmpty(value) ? query : query.Where(predicateFactory(value));
         }
 
         private static IQueryable<WorkGroupEmployeeView> ApplyDateFilter(
@@ -588,13 +588,33 @@ namespace Apha.FPS.DataAccess.Repositories
 
            
 
-        private static IQueryable<WorkGroupEmployeeView> ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
+        /// <summary>
+        /// Orders by a primary key then a secondary key. <paramref name="descendingFirstKey"/>
+        /// lets a caller keep the primary key ascending while the secondary key follows the
+        /// user's chosen direction - used for rank keys such as "is this value blank".
+        /// </summary>
+        private static IQueryable<WorkGroupEmployeeView> ApplyOrderThenBy<TFirst, TSecond>(
+            IQueryable<WorkGroupEmployeeView> query,
+            Expression<Func<WorkGroupEmployeeView, TFirst>> firstKey,
+            Expression<Func<WorkGroupEmployeeView, TSecond>> secondKey,
+            bool descending,
+            bool descendingFirstKey = true)
+        {
+            if (!descending)
+                return query.OrderBy(firstKey).ThenBy(secondKey);
+
+            return descendingFirstKey
+                ? query.OrderByDescending(firstKey).ThenByDescending(secondKey)
+                : query.OrderBy(firstKey).ThenByDescending(secondKey);
+        }
+
+        private static IQueryable<WorkGroupEmployeeView> ApplySorting(
         {
             return sortBy?.ToLower() switch
             {
-                "pactid" => descending
-                    ? query.OrderByDescending(x => x.PactId!.Length).ThenByDescending(x => x.PactId)
-                    : query.OrderBy(x => x.PactId!.Length).ThenBy(x => x.PactId),
+                // PACT ids are variable length, so they are ordered by length first and
+                // then by value, otherwise "10" would sort before "2".
+                "pactid" => ApplyOrderThenBy(query, x => x.PactId!.Length, x => x.PactId, descending),
                 "sickspecial" => ApplyOrder(query, x => x.SickSpecial, descending),
                 "hrspaid" => ApplyOrder(query, x => x.HrsPaid, descending),
                 "leave" => ApplyOrder(query, x => x.Leave, descending),
@@ -610,13 +630,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 // Blank/NULL Class values carry no meaning, so they are ranked after every
                 // populated value rather than sorted as an empty string (PostgreSQL places
                 // '' before 'A' ascending and NULLs first descending, which pushed the
-                // blanks to the top in both directions). The rank key is deliberately
-                // always ascending so blanks stay at the bottom either way.
-                "personclass" or "class" => descending
-                    ? query.OrderBy(x => x.PersonClass == null || x.PersonClass.Trim() == "" ? 1 : 0)
-                           .ThenByDescending(x => x.PersonClass)
-                    : query.OrderBy(x => x.PersonClass == null || x.PersonClass.Trim() == "" ? 1 : 0)
-                           .ThenBy(x => x.PersonClass),
+                // blanks to the top in both directions). The rank key stays ascending -
+                // false (populated) before true (blank) - so blanks stay at the bottom
+                // whichever direction the user picks.
+                "personclass" or "class" => ApplyOrderThenBy(
+                    query,
+                    x => x.PersonClass == null || x.PersonClass.Trim() == "",
+                    x => x.PersonClass,
+                    descending,
+                    descendingFirstKey: false),
                 _ => query.OrderBy(x => x.Name)
             };
         }
