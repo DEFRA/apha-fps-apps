@@ -608,7 +608,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 : query.OrderBy(firstKey).ThenByDescending(secondKey);
         }
 
-        private static IQueryable<WorkGroupEmployeeView> ApplySorting(
+        private static IQueryable<WorkGroupEmployeeView> ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
         {
             return sortBy?.ToLower() switch
             {
