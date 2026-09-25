@@ -175,6 +175,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new TestsRequiredByRcViewMap());
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+            modelBuilder.Entity<ProfitCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
             modelBuilder.Entity<ProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());

@@ -36,6 +36,8 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.PactCoordinatorEmailName)
                 .HasMaxLength(50)
                 .HasColumnName("pactcoordinatoremailname");
+            entity.Property(e => e.FpsYear)
+                .HasColumnName("fpsyear");
             entity.Property(e => e.ProfitCentreHead)
                 .HasMaxLength(50)
                 .HasColumnName("profitcentrehead");

@@ -83,6 +83,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
+                    profitCentre.FpsYear = _requestContext.FpsYear;
                     _dbContext.ProfitCentres.Add(profitCentre);
                     await _dbContext.SaveChangesAsync();
 
@@ -153,6 +154,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     existingProfitCentre.ProfitCentreName = profitCentre.ProfitCentreName;
                     existingProfitCentre.Division = profitCentre.Division;
                     existingProfitCentre.ContTarget = profitCentre.ContTarget;
+                    existingProfitCentre.FpsYear = _requestContext.FpsYear;
                     existingProfitCentre.ProfitCentreHead = profitCentre.ProfitCentreHead;
                     existingProfitCentre.DivisionId = profitCentre.DivisionId;
                     existingProfitCentre.EmailRecipient = profitCentre.EmailRecipient;

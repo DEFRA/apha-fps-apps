@@ -25,6 +25,8 @@ namespace Apha.FPS.Core.Entities
         public string? PactCoordinatorEmailName { get; set; }
 
         public byte[]? HighLevelSummary { get; set; }
+
+        public int FpsYear { get; set; }
     }
 }
 
