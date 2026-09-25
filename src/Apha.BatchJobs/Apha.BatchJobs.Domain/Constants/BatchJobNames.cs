@@ -8,8 +8,8 @@ public static class BatchJobNames
     public const string HealthCheck = "HealthCheck";
     public const string MabArchive = "MABArchive";
     public const string RecreateSummary = "RecreateSummary";
-    public const string YearEndDataSetup = "YearEndDataSetup";
-    public const string YearEndCutover = "YearEndCutover";
+    public const string YearEndDataSetup = "YearEnd-DataSetup";
+    public const string YearEndCutover = "YearEnd-CutOver";
 
     public const string BulkTestRatesUpdate = "BulkTestRatesUpdate";
     public const string BulkStaffRatesUpdate = "BulkStaffRatesUpdate";

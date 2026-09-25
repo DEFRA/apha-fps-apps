@@ -1019,7 +1019,10 @@ textarea[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
+.govuk-checkboxes input[aria-disabled="true"] {
+    opacity: 0;
+    cursor: not-allowed;
+}
 .form-select-sm {
   padding: 6px 30px 6px 10px;
   font-size: 13px;

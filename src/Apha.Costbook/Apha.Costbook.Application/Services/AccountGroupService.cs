@@ -51,12 +51,13 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<AccountGroupDto> AddAccountGroupAsync(AccountGroupDto dto)
         {
+            if (dto is null)
+                throw new BusinessValidationErrorException(
+                    [new BusinessValidationError("AccountGroupDto must not be null.", "AccountGroupDto must not be null.")]);
+
             var errors = new List<BusinessValidationError>();
 
-            if (dto is null)
-                errors.Add(new BusinessValidationError("AccountGroupDto must not be null.", "AccountGroupDto must not be null."));
-
-            if (dto is not null && string.IsNullOrWhiteSpace(dto.Csg7group))
+            if (string.IsNullOrWhiteSpace(dto.Csg7group))
                 errors.Add(new BusinessValidationError("Csg7Group must not be null or empty.", "Csg7Group must not be null or empty."));
 
             if (errors.Count > 0)
@@ -77,13 +78,9 @@ namespace Apha.Costbook.Application.Services
 
         public async Task<AccountGroupDto> UpdateAccountGroupAsync(string csg7Group, AccountGroupDto dto)
         {
-            var errors = new List<BusinessValidationError>();
-
             if (dto is null)
-                errors.Add(new BusinessValidationError("AccountGroupDto must not be null.", "AccountGroupDto must not be null."));
-
-            if (errors.Count > 0)
-                throw new BusinessValidationErrorException(errors);
+                throw new BusinessValidationErrorException(
+                    [new BusinessValidationError("AccountGroupDto must not be null.", "AccountGroupDto must not be null.")]);
 
             dto.Csg7group = csg7Group;
             var entity = _mapper.Map<AccountGroup>(dto);

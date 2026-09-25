@@ -707,38 +707,68 @@ namespace Apha.PIMS.DataAccess.Repository
         // -- Project Year Manager -------------------------------------------------
 
         /// <summary>
-        /// Gets project year manager details by filtering projects by year and joining with manager information
+        /// Gets all project year manager details for the given year.
         /// </summary>
-        /// <param name="year">The year to filter projects</param>
-        /// <param name="loginEmail">Optional login email used to restrict results for project managers</param>
-        /// <returns>List of project year manager details</returns>
-        public async Task<List<ProjectYearManager>> GetProjectYearManagersAsync(int year, string? loginEmail = null, bool viewSpecificProject = false)
+        public async Task<List<ProjectYearManager>> GetProjectYearManagersForAdminAsync(int year)
+            => await BuildProjectYearManagersQuery(year)
+                .Select(x => new ProjectYearManager
+                {
+                    ProjectYear = x.Project.Year,
+                    ParentProject = x.Project.Parentproject,
+                    Manager = x.Project.Manager,
+                    ManagerNumber = x.Manager != null ? x.Manager.Mnumber : null
+                })
+                .ToListAsync();
+
+        /// <summary>
+        /// Gets project year manager details for the given year filtered by manager login email.
+        /// </summary>
+        public async Task<List<ProjectYearManager>> GetProjectYearManagersByEmailAsync(int year, string email)
         {
-            year = 2025; //temporary hardcode for testing, remove this line in production
-            loginEmail = string.IsNullOrWhiteSpace(loginEmail) ? null : loginEmail.Trim();
+            if (string.IsNullOrWhiteSpace(email))
+                return [];
 
-            var query = from project in _dbContext.MyTlkpProjects.AsNoTracking()
-                        join manager in _dbContext.ProjectManagers.AsNoTracking()
-                            on project.Manager equals manager.Projectmanager into managerGroup
-                        from manager in managerGroup.DefaultIfEmpty()
-                        where project.Year == year
-                        select new { project, manager };
+            string trimmedEmail = email.Trim();
 
-            if (viewSpecificProject && loginEmail != null)
-            {
-                query = query.Where(x => x.manager != null
-                    && x.manager.LoginEmail != null
-                    && EF.Functions.ILike(x.manager.LoginEmail, loginEmail));
-            }
-
-            return await query.Select(x => new ProjectYearManager
-            {
-                ProjectYear = x.project.Year,
-                ParentProject = x.project.Parentproject,
-                Manager = x.project.Manager,
-                ManagerNumber = x.manager != null ? x.manager.Mnumber : null
-            }).ToListAsync();
+            return await BuildProjectYearManagersQuery(year)
+                .Where(x => x.Manager != null
+                    && x.Manager.LoginEmail != null
+                    && EF.Functions.ILike(x.Manager.LoginEmail, trimmedEmail))
+                .Select(x => new ProjectYearManager
+                {
+                    ProjectYear = x.Project.Year,
+                    ParentProject = x.Project.Parentproject,
+                    Manager = x.Project.Manager,
+                    ManagerNumber = x.Manager != null ? x.Manager.Mnumber : null
+                })
+                .ToListAsync();
         }
+
+        private IQueryable<ProjectYearManagerQueryRow> BuildProjectYearManagersQuery(int year)
+        {
+            int maxYear = _dbContext.Years
+                .AsNoTracking()
+                .Select(y => (int?)y.Value)
+                .Max() ?? year;
+
+            return from project in _dbContext.MyTlkpProjects.AsNoTracking()
+                   join manager in _dbContext.ProjectManagers.AsNoTracking()
+                       on project.Manager equals manager.Projectmanager into managerGroup
+                   from manager in managerGroup.DefaultIfEmpty()
+                   where project.Year == maxYear
+                   select new ProjectYearManagerQueryRow
+                   {
+                       Project = project,
+                       Manager = manager
+                   };
+        }
+
+        private sealed class ProjectYearManagerQueryRow
+        {
+            public required Projects Project { get; init; }
+            public ProjectManager? Manager { get; init; }
+        }
+
         public async Task<PagedData<Milestone>> GetPMDMilestonesAsync(PaginationParameters<string> parameters, string project)
         {
             DateTime fyStart = GetFYStart();

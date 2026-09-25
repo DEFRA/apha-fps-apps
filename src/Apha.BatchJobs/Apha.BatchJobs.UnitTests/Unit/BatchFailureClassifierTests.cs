@@ -60,6 +60,20 @@ public sealed class BatchFailureClassifierTests
     }
 
     [Fact]
+    public void Classify_BatchLockLeaseLostException_MapsToLockFailureWithDistinctCategory()
+    {
+        // BatchLockLeaseLostException inherits JobLockException, but has its own explicit case
+        // ahead of the general JobLockException one — a lease lost mid-execution is a different
+        // failure from never acquiring the lock at all, so it gets its own category/message even
+        // though the exit code and CloudWatch marker stay the same (still "a lock problem").
+        var result = CreateClassifier().Classify(new BatchLockLeaseLostException("lease lost mid-execution"));
+
+        Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
+        Assert.Equal(BatchFailureCategory.LockLeaseLost, result.Category);
+        Assert.Equal("FPSBatchJobs.CONCURRENCY_EXCEPTION", result.ErrorType);
+    }
+
+    [Fact]
     public void Classify_BusinessEmailException_MapsToEmailFailureButGeneralMarker()
     {
         var result = CreateClassifier().Classify(new BusinessEmailException("smtp failure"));

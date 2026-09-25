@@ -7,6 +7,7 @@ using Asp.Versioning;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Web;
 
@@ -28,15 +29,12 @@ namespace Apha.PIMS.Api.Controllers
         }
 
         [HttpGet("projectyearmanagers/{year:int}")]
-        public async Task<IActionResult> GetProjectYearManagers(int year)
+        public async Task<IActionResult> GetProjectYearManagers(int year, [FromQuery] string email, [FromQuery] bool isAdmin)
         {
-            //test
-            bool viewSpecificProject = User.IsInRole("API-PIMSProjectManager") && !User.IsInRole("API-PMDAdmin");
-            string? loginEmail = viewSpecificProject
-                ? User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("preferred_username") ?? User.Identity?.Name
-                : null;
+            Console.WriteLine($"GetProjectYearManagers roles: API-PMDAdmin={User.IsInRole("API-PMDAdmin")}, API-PIMSProjectManager={User.IsInRole("API-PIMSProjectManager")}, isAdmin={isAdmin}");
+            Console.WriteLine($"GetProjectYearManagers email: {email}");
 
-            List<ProjectYearManagerDto> result = await _service.GetProjectYearManagersAsync(year, loginEmail, viewSpecificProject);
+            List<ProjectYearManagerDto> result = await _service.GetProjectYearManagersAsync(year, email, isAdmin);
             return Ok(_mapper.Map<List<ProjectYearManagerRes>>(result) ?? []);
         }
 
@@ -107,7 +105,7 @@ namespace Apha.PIMS.Api.Controllers
             [FromBody] MilestoneReq request)
         {
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
-            string? changedBy = User.Identity?.Name;
+            string? changedBy = ResolveUserEmail(User);
             MilestoneDto result = await _service.UpdateMilestoneAsync_PMD(
                 project!,
                 HttpUtility.UrlDecode(number!),
@@ -119,6 +117,24 @@ namespace Apha.PIMS.Api.Controllers
 
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
+
+        private static string ResolveUserEmail(ClaimsPrincipal? user)
+        {
+            string identityName = user?.Identity?.Name ?? string.Empty;
+            if (IsEmailAddress(identityName))
+                return identityName;
+
+            string email = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(email))
+                return email;
+
+            return user?.Identity?.Name ?? string.Empty;
+        }
+
+        private static bool IsEmailAddress(string value)
+            => !string.IsNullOrWhiteSpace(value)
+                && MailAddress.TryCreate(value, out MailAddress? address)
+                && string.Equals(address.Address, value, StringComparison.OrdinalIgnoreCase);
 
     }
 }

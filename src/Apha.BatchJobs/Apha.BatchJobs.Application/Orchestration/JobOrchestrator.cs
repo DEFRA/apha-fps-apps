@@ -3,6 +3,7 @@ using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Configuration;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Exceptions;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -24,6 +25,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly IBatchJobFactory _factory;
     private readonly IBatchLockRepository _lockRepository;
     private readonly IJobExecutionRepository _executionRepository;
+    private readonly IBatchLockReconciliationService _reconciliationService;
+    private readonly IHeartbeatRepositoryScopeFactory _heartbeatRepositoryScopeFactory;
     private readonly ICorrelationContextAccessor _correlationService;
     private readonly ICurrentJobExecutionContext _currentExecutionContext;
     private readonly IEmailNotificationService _notificationService;
@@ -45,13 +48,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// <summary>Default maximum retry duration in seconds.</summary>
     private const int DefaultMaxRetryDurationSeconds = 0;
 
-    /// <summary>
-    /// Initializes a new instance of <see cref="JobOrchestrator"/>.
-    /// </summary>
     public JobOrchestrator(
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
         IJobExecutionRepository executionRepository,
+        IBatchLockReconciliationService reconciliationService,
+        IHeartbeatRepositoryScopeFactory heartbeatRepositoryScopeFactory,
         ICorrelationContextAccessor correlationService,
         ICurrentJobExecutionContext currentExecutionContext,
         IEmailNotificationService notificationService,
@@ -64,6 +66,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
+        _reconciliationService = reconciliationService ?? throw new ArgumentNullException(nameof(reconciliationService));
+        _heartbeatRepositoryScopeFactory = heartbeatRepositoryScopeFactory ?? throw new ArgumentNullException(nameof(heartbeatRepositoryScopeFactory));
         _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _currentExecutionContext = currentExecutionContext ?? throw new ArgumentNullException(nameof(currentExecutionContext));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -117,6 +121,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
 
+        // Must run before the worker-managed-scheduled fast path below, which otherwise assumes
+        // no pre-created row exists and skips this check. Incident precedent: a "MABArchive"
+        // request was once allowed to adopt and corrupt a pre-created "YearEnd-DataSetup" row
+        // because this validation lived only inside ValidatePreCreatedExecutionRecordAsync,
+        // which the fast path bypasses.
+        if (existingExecution is not null)
+        {
+            ValidateExecutionBelongsToRequestedJob(jobName, jobExecutionId, existingExecution);
+        }
+
         var shouldAutoCreateInitiated = IsWorkerManagedScheduledRun(jobName, runMode);
         // Worker-managed MABArchive Scheduled runs may self-create their initiated record below.
         if (!shouldAutoCreateInitiated)
@@ -141,6 +155,19 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _logger.LogInformation(
             "[Worker → DB] ✓ Fetched pre-created execution record | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | CurrentStatus={CurrentStatus}",
             jobName, jobExecutionId, jobQueueId, existingExecution.Status);
+
+        // Layer 2 — scoped, defensive reconciliation immediately before acquisition. Only the
+        // resolved lock name this execution actually needs is inspected — never a system-wide
+        // scan (design doc §4/§9). The reconciliation service itself decides whether this row is
+        // actually expired (it refuses as a no-op otherwise), so nothing here needs to duplicate
+        // that check. Deliberately not wrapped in try/catch: an unexpected failure here must
+        // propagate and prevent acquisition rather than be logged-and-ignored — lock state that
+        // can't be trusted must not be treated as safe to acquire against.
+        var existingLock = await _lockRepository.GetLockAsync(lockName, cancellationToken);
+        if (existingLock is not null)
+        {
+            await _reconciliationService.ReconcileAsync(existingLock, cancellationToken);
+        }
 
         _logger.LogInformation(
             "Acquiring execution lock for '{LockName}' (requested job '{JobName}') | JobExecutionId={JobExecutionId}...",
@@ -188,7 +215,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
             Status = JobStatus.Running,
             StartedAt = startedAt,
             RequestedAtUtc = requestedAtUtc,
-            FpsYear = fpsYear
+            FpsYear = fpsYear,
+            TargetFpsYear = fpsYear
         };
 
         int executionId = 0;
@@ -217,16 +245,20 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         // Step 3 — Execute the job
         Exception? jobException = null;
+        // Computed once, inside the finally block below, only for a genuine (non-cancellation)
+        // failure — reused by ThrowWithStructuredLog afterward so the same exception is never
+        // classified twice at two different points in this method.
+        BatchFailureClassification? failureClassification = null;
 
         try
         {
             var job = _factory.Create(jobName);
 
-            // Populate the scoped execution context so the job can read its resolved identity
-            // and parameters instead of re-parsing environment variables or querying its own
-            // jobQueueId — everyone in this DI scope (this orchestrator and the job it just
-            // resolved) shares the same instance for the lifetime of this one execution.
-            _currentExecutionContext.Initialize(jobExecutionId, jobQueueId, jobName, runMode, userId, parametersJson);
+            // Populates the scoped execution context so the job can read its identity and
+            // parameters instead of re-parsing env vars — shared by this orchestrator and the
+            // job for the lifetime of this one execution.
+            _currentExecutionContext.Initialize(
+                jobExecutionId, jobQueueId, jobName, runMode, userId, parametersJson, existingExecution.RequestedAtUtc);
 
             var runtimeTimeoutSeconds = ResolveRuntimeTimeoutSeconds(job);
 
@@ -235,12 +267,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 jobName,
                 runtimeTimeoutSeconds?.ToString() ?? "none");
 
-            jobException = await RunJobWithRetryAsync(job, jobName, jobQueueId, runtimeTimeoutSeconds, cancellationToken);
+            // startedAt (captured at the very top of RunAsync, strictly before the
+            // TryAcquireLockAsync call and everything leading up to it) is guaranteed no later
+            // than the timestamp TryAcquireLockAsync itself used to compute the real expires_at —
+            // passed through so the heartbeat's initial local lease-boundary estimate can never
+            // be later than the actual database deadline. See RunHeartbeatLoopAsync.
+            jobException = await RunJobWithRetryAsync(job, jobName, jobQueueId, startedAt, runtimeTimeoutSeconds, cancellationToken);
         }
         catch (Exception ex)
         {
-            // Capture failures raised before/around ExecuteAsync (for example factory resolution)
-            // so execution state is persisted correctly as Failed.
+            // Captures failures raised before/around ExecuteAsync (e.g. factory resolution) as Failed.
             jobException = ex;
         }
         finally
@@ -260,15 +296,35 @@ public sealed class JobOrchestrator : IJobOrchestrator
             record.Status = finalStatus;
             record.CompletedAt = completedAt;
             record.DurationSeconds = (int)duration.TotalSeconds;
-            record.ErrorMessage = jobException?.Message;
             record.StackTrace = jobException?.StackTrace;
+
+            // job_queue.errormessage is user-facing and must never carry raw exception text — see
+            // the Recreate Summaries grid-history design. DiagnosticSummary (bounded, best-effort)
+            // is the only place the exception's own text goes; it flows into the Failed-transition
+            // job_queue_log row via JobExecutionRepository, never job_queue itself.
+            switch (jobException)
+            {
+                case null:
+                    record.ErrorMessage = null;
+                    break;
+
+                case OperationCanceledException:
+                    // BatchFailureClassifier.Classify explicitly must not receive a cancellation.
+                    record.ErrorMessage = "Job execution was cancelled.";
+                    record.DiagnosticSummary = DiagnosticSummaryBuilder.Build(jobException);
+                    break;
+
+                default:
+                    failureClassification = _failureClassifier.Classify(jobException);
+                    record.ErrorMessage = BatchFailureMessageProvider.GetHumanReadableMessage(failureClassification.Category);
+                    record.DiagnosticSummary = DiagnosticSummaryBuilder.Build(jobException);
+                    break;
+            }
 
             await MarkFailedSafelyAsync(record, finalStatus, jobException, jobQueueId);
 
-            // Step 5 — Release lock (always), immediately after the final lifecycle state is
-            // persisted. This releases the lock before failure notification (below, outside this
-            // finally) runs — notification is best-effort operational reporting, not part of the
-            // protected batch execution, so it must not hold the lock open while it sends.
+            // Step 5 — Release lock (always), before failure notification runs. Notification is
+            // best-effort and must not hold the lock open while it sends.
             try
             {
                 await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
@@ -304,8 +360,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is null)
         {
-            var completionContext = new BatchJobCompletionContext(jobQueueId, jobExecutionId, jobName, fpsYear, userId);
+            var completionContext = new BatchJobCompletionContext(
+                jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, ErrorMessage: null);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
+            await TryNotifyExecutionOutcomeAsync(record);
         }
 
         if (jobException is OperationCanceledException cancelEx)
@@ -315,8 +373,18 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             // Runs after the lock has already been released above — best-effort operational
             // reporting is not part of the protected batch execution and must not delay it.
-            await TryNotifyFailureAsync(jobName, jobExecutionId, jobException);
-            ThrowWithStructuredLog(jobException, jobName, jobQueueId, jobExecutionId);
+            // Post-completion notifiers (e.g. the Bulk Rates approver email) fire here too, since
+            // their recipients need failure visibility just as much as success — a cancelled run
+            // (handled above) is deliberately excluded, not a genuine failure worth alerting on.
+            var completionContext = new BatchJobCompletionContext(
+                jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, jobException.Message);
+            await TryNotifyCompletionAsync(completionContext, cancellationToken);
+            await TryNotifyExecutionOutcomeAsync(record);
+
+            // failureClassification is always set here: this branch only runs for jobException !=
+            // null, and the OperationCanceledException case already returned above — so every path
+            // reaching this line went through the finally block's "default" classification arm.
+            ThrowWithStructuredLog(jobException, failureClassification!, jobName, jobQueueId, jobExecutionId);
         }
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
@@ -325,7 +393,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private static bool IsWorkerManagedScheduledRun(string jobName, RunMode runMode) =>
         runMode == RunMode.Scheduled &&
         (string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase) ||
-         string.Equals(jobName, BatchJobNames.MilestoneUpdateNotifications, StringComparison.OrdinalIgnoreCase));
+         MonthlyScheduledNotificationJobs.Contains(jobName));
 
     private async Task<JobExecutionRecord> AutoCreateInitiatedRecordAsync(
         string jobName, Guid jobExecutionId, string userId,
@@ -370,7 +438,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     private async Task<Exception?> RunJobWithRetryAsync(
-        IBatchJob job, string jobName, Guid jobQueueId,
+        IBatchJob job, string jobName, Guid jobQueueId, DateTime startedAtUtc,
         int? runtimeTimeoutSeconds, CancellationToken cancellationToken)
     {
         var retryStartedAt = DateTime.UtcNow;
@@ -384,11 +452,17 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
             var attemptToken = attemptCts.Token;
 
-            // Heartbeat is now handled at job/step entry points (step-based strategy)
-            // instead of background loop, providing better observability and step correlation.
-            _logger.LogInformation(
-                "Heartbeat strategy: step-based checks (not background loop) | JobName={JobName} | JobQueueId={JobQueueId}",
-                jobName, jobQueueId);
+            // Assigned inside the try block below; default here only so the finally block has a
+            // definitely-assigned task to await if cancellationToken.ThrowIfCancellationRequested
+            // fires before either task is actually started.
+            Task jobTask = Task.CompletedTask;
+            Task heartbeatTask = Task.CompletedTask;
+            // Set only by the heartbeat-fault branch below, which already reads heartbeatTask's
+            // exception directly. Without this flag, the finally block's own await of an
+            // already-faulted heartbeatTask would re-throw the same exception and log it a
+            // second time as a generic "shutdown" warning, obscuring the specific message already
+            // logged above.
+            var heartbeatFaultAlreadyReported = false;
 
             try
             {
@@ -396,7 +470,78 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 _logger.LogInformation(
                     "Executing job '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
                     jobName, attempt, totalAttempts);
-                await job.ExecuteAsync(attemptToken);
+
+                // The heartbeat listens on the same attemptToken the job uses — no separate
+                // CancellationTokenSource needed. Runtime timeout / host shutdown already cancel
+                // attemptToken today, which stops both; this finally block's existing
+                // attemptCts.Cancel() (below) now also doubles as the heartbeat's stop signal once
+                // the job finishes first. See the Phase 4 concurrency design note.
+                //
+                // Heartbeat started before the job, deliberately: an async method runs
+                // synchronously up to its first genuinely-incomplete await, so if job.ExecuteAsync
+                // were called first and a badly-behaved job blocked in synchronous code (or an
+                // await-free loop) before yielding, the line starting the heartbeat would never
+                // even run. Starting the heartbeat first doesn't make a cancellation-ignoring job
+                // safe, but it does guarantee the lease-maintenance mechanism has begun (its own
+                // first await, Task.Delay, yields immediately) before handing control to job code.
+                heartbeatTask = RunHeartbeatLoopAsync(jobName, jobQueueId, startedAtUtc, attemptToken);
+                jobTask = job.ExecuteAsync(attemptToken);
+
+                // Capturing which task WhenAny actually woke up for, not just checking
+                // heartbeatTask.IsFaulted afterward, is required for correctness: Task state is
+                // immutable once set, but WhenAny only guarantees at least one task had completed
+                // at the moment it resolved — the *other* task's state can still change between
+                // that resolution and this line running (scheduling isn't instantaneous). Without
+                // capturing the winner, a heartbeat that happens to fault a moment after the job
+                // already finished on its own would be misreported as the cause, discarding the
+                // job's real (successful or failed) outcome.
+                var completedTask = await Task.WhenAny(jobTask, heartbeatTask);
+
+                if (completedTask == heartbeatTask && heartbeatTask.IsFaulted)
+                {
+                    // The heartbeat can no longer be trusted to keep the lease renewed — the job
+                    // must not continue either way, whether this is a definitive lease loss or an
+                    // unrelated heartbeat infrastructure failure. Cancel and let the job unwind;
+                    // its own outcome (if any) is not what gets reported here — the heartbeat's
+                    // failure is the real story.
+                    heartbeatFaultAlreadyReported = true;
+                    attemptCts.Cancel();
+                    try
+                    {
+                        await jobTask;
+                    }
+                    catch (Exception jobUnwindEx)
+                    {
+                        _logger.LogWarning(jobUnwindEx,
+                            "Job '{JobName}' threw while unwinding after a heartbeat failure — the heartbeat's own failure is reported instead | Attempt={Attempt}/{TotalAttempts}",
+                            jobName, attempt, totalAttempts);
+                    }
+
+                    var heartbeatException = heartbeatTask.Exception!.GetBaseException();
+
+                    if (heartbeatException is BatchLockLeaseLostException)
+                    {
+                        _logger.LogError(heartbeatException,
+                            "Job '{JobName}' lock lease was lost mid-execution — cancelled | Attempt={Attempt}/{TotalAttempts} | JobQueueId={JobQueueId}",
+                            jobName, attempt, totalAttempts, jobQueueId);
+                    }
+                    else
+                    {
+                        _logger.LogError(heartbeatException,
+                            "Heartbeat for job '{JobName}' failed unexpectedly — job cancelled as a precaution, since the lease can no longer be trusted to be renewed | Attempt={Attempt}/{TotalAttempts} | JobQueueId={JobQueueId}",
+                            jobName, attempt, totalAttempts, jobQueueId);
+                    }
+
+                    // Never retried, regardless of the underlying exception's usual retryability —
+                    // see IsRetryable and RunHeartbeatLoopAsync's own reasoning.
+                    return heartbeatException;
+                }
+
+                // Heartbeat did not fault — either the job finished first, or attemptToken was
+                // cancelled externally (runtime timeout / host shutdown), which also stops the
+                // heartbeat cleanly (its own catch further down observes this as a normal, not
+                // faulted, completion). Either way, observe the job's own outcome as before.
+                await jobTask;
                 _logger.LogInformation(
                     "Job '{JobName}' completed successfully | Attempt={Attempt}/{TotalAttempts}",
                     jobName, attempt, totalAttempts);
@@ -427,8 +572,29 @@ public sealed class JobOrchestrator : IJobOrchestrator
             }
             finally
             {
-                // No background heartbeat task to cancel (step-based strategy in place)
                 attemptCts.Cancel();
+
+                // finally always runs, even after the heartbeat-fault branch's `return` above —
+                // without this guard, awaiting an already-faulted heartbeatTask here would
+                // re-throw and log the *same* exception a second time as a generic "shutdown"
+                // warning, obscuring the specific lease-loss/unexpected-failure message already
+                // logged there. Skip only in that one case; every other path (job finished first,
+                // runtime timeout, host cancellation, a retryable exception) still needs this
+                // await to actually wait for heartbeat shutdown and to catch the rare race where
+                // the heartbeat faults independently while being stopped.
+                if (!heartbeatFaultAlreadyReported)
+                {
+                    try
+                    {
+                        await heartbeatTask;
+                    }
+                    catch (Exception heartbeatShutdownEx)
+                    {
+                        _logger.LogWarning(heartbeatShutdownEx,
+                            "Heartbeat task for job '{JobName}' ended with an exception during shutdown | Attempt={Attempt}/{TotalAttempts}",
+                            jobName, attempt, totalAttempts);
+                    }
+                }
             }
         }
 
@@ -496,10 +662,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Persists the final execution record status. If the update itself fails (e.g. DB is down),
-    /// logs both the persistence failure and the original exception type at Critical level so
-    /// CloudWatch metric filters can still fire, then swallows the persistence error so the
-    /// container exits with the correct non-zero code.
+    /// Persists the final execution status. If that write itself fails, logs at Critical (so
+    /// CloudWatch alarms still fire) and swallows the error so the container still exits with
+    /// the original job's exit code.
     /// </summary>
     private async Task MarkFailedSafelyAsync(
         JobExecutionRecord record,
@@ -528,18 +693,18 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// Logs a structured error with the correct <c>[{ErrorType}]</c> token for the given exception type,
     /// then re-throws the exception preserving the original stack trace.
     /// </summary>
-    private void ThrowWithStructuredLog(Exception exception, string jobName, Guid jobQueueId, Guid jobExecutionId)
+    /// <param name="classification">
+    /// Already computed by the caller (in <see cref="RunAsync"/>'s <c>finally</c> block) — reused
+    /// here rather than re-classifying the same exception a second time.
+    /// </param>
+    private void ThrowWithStructuredLog(Exception exception, BatchFailureClassification classification, string jobName, Guid jobQueueId, Guid jobExecutionId)
     {
-        // Only Sql and General have a CloudWatch alarm wired up for the initial implementation.
-        // Configuration and email failures (BusinessEmailException) intentionally roll up into
-        // General rather than getting their own unwatched alarm channel; email may be split out
-        // later if the monthly notification job needs a dedicated alert once live sending ships.
-        var errorType = _failureClassifier.Classify(exception).ErrorType;
-
+        // Only Sql and General have CloudWatch alarms wired up; Configuration and email
+        // failures roll up into General rather than an unwatched alarm channel.
         _logger.LogError(
             exception,
             "[{ErrorType}] Batch job failed | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId}",
-            errorType,
+            classification.ErrorType,
             jobName,
             jobQueueId,
             jobExecutionId);
@@ -548,17 +713,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Sends a best-effort failure notification once retries are exhausted and the job is about
-    /// to be reported as failed. Never lets a notification failure mask the original job exception.
-    /// Gated on <see cref="BatchAlertingSettings.EnableEmailNotifications"/> AND job-name
-    /// membership in <see cref="BatchAlertingSettings.EmailEnabledJobs"/> — this hook is generic
-    /// across all jobs, so eligibility must be opted into per job rather than applying to every
-    /// job's failure by default.
-    /// </summary>
-    /// <summary>
-    /// Invokes all registered post-completion notifiers in sequence after a job is durably
-    /// Completed and its lock released. Failures in any notifier are logged at Error level and
-    /// swallowed — a notification problem must not alter the durable Completed state.
+    /// Invokes all registered post-completion notifiers after a job durably reaches Completed or
+    /// Failed and its lock is released. Notifier failures are logged and swallowed — a
+    /// notification problem must not alter the durable job outcome.
     /// </summary>
     private async Task TryNotifyCompletionAsync(BatchJobCompletionContext context, CancellationToken cancellationToken)
     {
@@ -581,30 +738,57 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
     }
 
-    private async Task TryNotifyFailureAsync(string jobName, Guid jobExecutionId, Exception exception)
+    /// <summary>
+    /// Sends a best-effort execution-outcome notification (Completed or Failed) once the final
+    /// status is durably persisted and the lock released. Never lets a notification failure
+    /// change or mask the persisted outcome. Applies to every job automatically — gated only on
+    /// <see cref="BatchAlertingSettings.EnableEmailNotifications"/> and the matching
+    /// <see cref="BatchAlertingSettings.NotifyOnSuccess"/>/<see cref="BatchAlertingSettings.NotifyOnFailure"/>
+    /// flag, with no per-job allow-list. <see cref="CancellationToken.None"/> is used deliberately —
+    /// this runs after the protected execution has already finished, so it must not be tangled up
+    /// in that execution's own cancellation.
+    /// </summary>
+    private async Task TryNotifyExecutionOutcomeAsync(JobExecutionRecord record)
     {
-        if (!_alertingSettings.EnableEmailNotifications ||
-            !_alertingSettings.EmailEnabledJobs.Contains(jobName, StringComparer.OrdinalIgnoreCase))
+        var shouldNotify = record.Status switch
+        {
+            JobStatus.Completed => _alertingSettings.NotifyOnSuccess,
+            JobStatus.Failed => _alertingSettings.NotifyOnFailure,
+            _ => false
+        };
+
+        if (!_alertingSettings.EnableEmailNotifications || !shouldNotify)
         {
             return;
         }
 
         try
         {
-            await _notificationService.SendFailureNotificationAsync(
-                jobExecutionId.ToString("D"),
-                jobName,
-                exception.Message,
-                DateTime.UtcNow,
-                CancellationToken.None);
+            var notification = new BatchExecutionNotification(
+                record.JobName,
+                record.JobExecutionId,
+                record.JobQueueId,
+                record.RunMode,
+                record.UserId,
+                record.RequestedAtUtc,
+                record.Status,
+                record.CompletedAt ?? DateTime.UtcNow,
+                record.DurationSeconds.HasValue ? TimeSpan.FromSeconds(record.DurationSeconds.Value) : null,
+                // This is an operational alert, not the public grid — it wants the diagnostic
+                // detail (falls back to the friendly ErrorMessage only if none was built), not the
+                // now-friendly ErrorMessage a business user sees.
+                record.Status == JobStatus.Failed ? record.DiagnosticSummary ?? record.ErrorMessage : null);
+
+            await _notificationService.SendExecutionNotificationAsync(notification, CancellationToken.None);
         }
         catch (Exception notifyEx)
         {
             _logger.LogWarning(
                 notifyEx,
-                "Failed to send failure notification | JobName={JobName} | JobExecutionId={JobExecutionId}",
-                jobName,
-                jobExecutionId);
+                "Failed to send execution notification | JobName={JobName} | JobExecutionId={JobExecutionId} | Status={Status}",
+                record.JobName,
+                record.JobExecutionId,
+                record.Status);
         }
     }
 
@@ -619,31 +803,36 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Returns false for exceptions that must never be retried:
-    /// configuration errors, validation failures, and business-rule violations.
-    /// Only explicit transient infrastructure failures (timeouts, connectivity) are retryable.
-    /// Default is now false to avoid overly broad retry surface.
+    /// True only for explicit transient infrastructure failures (timeouts, connectivity).
+    /// Configuration, validation, and business-rule errors are never retried.
     /// </summary>
     public static bool IsRetryable(Exception ex) => ex switch
     {
-        // Never retry on cancellation or operational errors
-        OperationCanceledException => false,           // cancellation: never retry
-        
-        // Never retry on programming/configuration errors
-        ArgumentException => false,                    // programming / validation error
-        InvalidOperationException => false,            // configuration / business-rule error
-        NotSupportedException => false,                // permanent capability error
-        NotImplementedException => false,              // permanent / incomplete feature
-        
-        // Retry on transient infrastructure failures (explicit list)
-        TimeoutException => true,                      // transient network/DB timeout
-        NpgsqlException => true,                       // PostgreSQL-specific error (retry safe)
-        DbUpdateException => true,                     // EF/database transient error
-        HttpRequestException => true,                  // Network/HTTP transient error
-        System.Net.Sockets.SocketException => true,   // Network socket failure
-        IOException => true,                           // Transient I/O error
-        
-        // Default: do NOT retry (fail-safe: assume permanent unless proven transient)
+        OperationCanceledException => false,
+
+        // A lost lease means the attempt loop no longer holds the lock at all — the loop never
+        // re-acquires between attempts, so retrying would re-execute business logic without
+        // exclusive access. Explicit rather than relying on the `_ => false` default, to document
+        // the reasoning (also covers JobLockException generally, since BatchLockLeaseLostException
+        // is a subclass, but the explicit case documents intent specifically for lease loss).
+        BatchLockLeaseLostException => false,
+
+        ArgumentException => false,
+        InvalidOperationException => false,
+        NotSupportedException => false,
+        NotImplementedException => false,
+
+        // undefined_table: a schema/SQL mismatch, not transient infrastructure — retrying re-runs
+        // the same broken query and can never succeed.
+        PostgresException pg when pg.SqlState == PostgresErrorCodes.UndefinedTable => false,
+
+        TimeoutException => true,
+        NpgsqlException => true,
+        DbUpdateException => true,
+        HttpRequestException => true,
+        System.Net.Sockets.SocketException => true,
+        IOException => true,
+
         _ => false
     };
 
@@ -662,50 +851,135 @@ public sealed class JobOrchestrator : IJobOrchestrator
         return _defaultJobTimeoutSeconds > 0 ? _defaultJobTimeoutSeconds : null;
     }
 
-    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Renews this execution's lock lease on a fixed interval for as long as
+    /// <paramref name="cancellationToken"/> stays uncancelled, throwing
+    /// <see cref="BatchLockLeaseLostException"/> the moment ownership is definitively lost. Uses
+    /// its own independent <see cref="IHeartbeatRepositoryScope"/> — an EF Core DbContext is not
+    /// thread-safe, and this loop runs concurrently with the job's own DB work on the ambient
+    /// scoped context (see the Phase 4 concurrency design note, §3).
+    /// <para>
+    /// No catch-all wraps the whole loop: only the individually-scoped renew/touch operations are
+    /// caught, per their own semantics below. Anything else (e.g. the DbContext factory failing
+    /// at startup) is deliberately left to propagate and fault this method's task — the caller
+    /// (<see cref="RunJobWithRetryAsync"/>) treats any fault here as "the lease can no longer be
+    /// trusted," not only a genuine <see cref="BatchLockLeaseLostException"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="lockAcquisitionUpperBoundUtc">
+    /// A timestamp guaranteed no later than the one <c>TryAcquireLockAsync</c> itself used to
+    /// compute the real <c>expires_at</c> — <c>RunAsync</c>'s own <c>startedAt</c>, captured
+    /// before that call and everything leading up to it. Used only to seed the locally-tracked
+    /// lease boundary conservatively; never read back from the database.
+    /// </param>
+    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, DateTime lockAcquisitionUpperBoundUtc, CancellationToken cancellationToken)
     {
-        while (!cancellationToken.IsCancellationRequested)
+        var lockName = ResolveLockName(jobName);
+
+        await using var heartbeatScope = _heartbeatRepositoryScopeFactory.Create();
+        var lockRepository = heartbeatScope.LockRepository;
+        var executionRepository = heartbeatScope.ExecutionRepository;
+
+        // Tracks this loop's own best estimate of when the current lease expires, purely to
+        // decide when a *thrown* renewal (as opposed to a clean `false`) has gone on long enough
+        // to treat as loss rather than a transient blip. Not re-read from the database — deliberately
+        // conservative instead: seeded from a timestamp guaranteed no later than the real
+        // acquisition time, so this local deadline can only be earlier than (or equal to) the
+        // actual database expires_at, never later. A too-early local deadline just means an
+        // occasional unnecessary lease-loss report; a too-late one would mean this worker could
+        // believe it still owns a lease that another worker has already legitimately reclaimed.
+        var leaseExpiresAtUtc = lockAcquisitionUpperBoundUtc.AddSeconds(_lockTimeoutSeconds);
+
+        while (true)
         {
+            // Cancellation here (runtime timeout, host shutdown, or the job finishing first and
+            // the caller cancelling attemptCts) propagates naturally — no explicit catch needed;
+            // .NET marks the resulting task Canceled, not Faulted, since the thrown token matches
+            // the one this method itself observes.
+            await Task.Delay(TimeSpan.FromSeconds(_heartbeatIntervalSeconds), cancellationToken);
+
+            // Captured before the call, not after: TryRenewLockAsync's own implementation
+            // computes the real expires_at from a `now` read at its own start, before its DB
+            // round-trip. Capturing our local estimate afterward (post-await) would make it
+            // systematically later than the real value by roughly that round-trip's latency —
+            // capturing it before guarantees the opposite, safe direction (see the field comment
+            // above and fix #2 from the Phase 4 review).
+            var renewalStartedAtUtc = DateTime.UtcNow;
+            bool renewed;
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(_heartbeatIntervalSeconds), cancellationToken);
+                renewed = await lockRepository.TryRenewLockAsync(lockName, jobQueueId, _lockTimeoutSeconds, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // A thrown renewal is NOT automatic ownership loss — the lease itself hasn't
+                // necessarily expired, only this attempt to renew it failed to execute (e.g. a
+                // transient DB/network blip). Retry on the next tick as long as the last known
+                // lease is still within its window; only once that boundary passes without a
+                // successful renewal does this become a loss.
+                _logger.LogWarning(ex,
+                    "Heartbeat renewal threw for job '{JobName}' — retrying while the last known lease is still valid | JobQueueId={JobQueueId} | LeaseExpiresAtUtc={LeaseExpiresAtUtc}",
+                    jobName, jobQueueId, leaseExpiresAtUtc);
 
-                var heartbeatWritten = await _executionRepository.TouchRunningExecutionAsync(jobQueueId, cancellationToken);
-                if (!heartbeatWritten)
+                if (DateTime.UtcNow >= leaseExpiresAtUtc)
                 {
-                    return;
+                    throw new BatchLockLeaseLostException(
+                        $"Lock renewal for job '{jobName}' (lock '{lockName}') kept failing until the lease boundary ({leaseExpiresAtUtc:O}) passed without a successful renewal.",
+                        ex);
                 }
 
-                var lockRenewed = await _lockRepository.TryRenewLockAsync(
-                    jobName,
-                    jobQueueId,
-                    _lockTimeoutSeconds,
-                    cancellationToken);
+                continue;
+            }
 
-                if (!lockRenewed)
+            if (!renewed)
+            {
+                // Definitive: Phase 1's `expires_at > now()` renewal guard means an expired lease
+                // can never be renewed by anyone, including its own owner, so a clean `false` can
+                // only mean ownership is already gone.
+                throw new BatchLockLeaseLostException(
+                    $"Lock renewal for job '{jobName}' (lock '{lockName}') returned false — ownership has already been lost.");
+            }
+
+            leaseExpiresAtUtc = renewalStartedAtUtc.AddSeconds(_lockTimeoutSeconds);
+
+            try
+            {
+                // Secondary — the lock renewal above is what proves ownership; updated_at is
+                // observability, not correctness. A failure here (thrown, or a clean `false`)
+                // never escalates.
+                var touched = await executionRepository.TouchRunningExecutionAsync(jobQueueId, cancellationToken);
+                if (!touched)
                 {
                     _logger.LogWarning(
-                        "Heartbeat wrote execution metadata but lock renewal failed | JobName={JobName} | JobQueueId={JobQueueId}",
-                        jobName,
-                        jobQueueId);
+                        "Heartbeat could not update job_queue.updated_at for job '{JobName}' (row no longer Running) — lock ownership unaffected | JobQueueId={JobQueueId}",
+                        jobName, jobQueueId);
                 }
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                return;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(
-                    ex,
-                    "Heartbeat loop iteration failed | JobName={JobName} | JobQueueId={JobQueueId}",
-                    jobName,
-                    jobQueueId);
+                _logger.LogWarning(ex,
+                    "Heartbeat's TouchRunningExecutionAsync failed for job '{JobName}' — lock renewal already succeeded, ownership unaffected | JobQueueId={JobQueueId}",
+                    jobName, jobQueueId);
             }
         }
     }
 
     // ─── Execution contract validation ──────────────────────────────────────────
+
+    /// <summary>
+    /// A row found by jobExecutionId alone is not proof it belongs to the requested job — a
+    /// reused execution ID for a different job must never be silently adopted. Called
+    /// unconditionally in <see cref="RunAsync"/> before any other branching, so nothing can
+    /// bypass it.
+    /// </summary>
+    private static void ValidateExecutionBelongsToRequestedJob(string jobName, Guid jobExecutionId, JobExecutionRecord existingExecution)
+    {
+        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
+        }
+    }
 
     private async Task ValidatePreCreatedExecutionRecordAsync(
         string jobName,
@@ -723,20 +997,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 $"API must insert and prepare {expectedPickupStatus} before worker start.");
         }
 
-        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
-        }
+        // Job identity is already validated in RunAsync before this method runs — not repeated here.
 
         _logger.LogInformation(
             "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
             jobExecutionId, existingExecution.JobQueueId, existingExecution.Status);
 
-        if (targetFpsYear.HasValue && existingExecution.FpsYear.HasValue && existingExecution.FpsYear.Value != targetFpsYear.Value)
+        if (targetFpsYear.HasValue && existingExecution.TargetFpsYear.HasValue && existingExecution.TargetFpsYear.Value != targetFpsYear.Value)
         {
             throw new InvalidOperationException(
-                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has fpsyear '{existingExecution.FpsYear.Value}' " +
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has target_fpsyear '{existingExecution.TargetFpsYear.Value}' " +
                 $"but trigger requested targetFpsYear '{targetFpsYear.Value}'.");
         }
 
@@ -796,7 +1066,27 @@ public sealed class JobOrchestrator : IJobOrchestrator
         string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
         || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Extracts the requested FPS year from job parameters. Reads <c>plannedYear</c> (what
+    /// production sends), falling back to the legacy <c>targetFpsYear</c> alias. Throws if both
+    /// are present and disagree, rather than silently picking one.
+    /// </summary>
     private static int? TryExtractFpsYearFromParameters(string? parametersJson)
+    {
+        var plannedYear = TryExtractIntField(parametersJson, "plannedYear");
+        var legacyTargetFpsYear = TryExtractIntField(parametersJson, "targetFpsYear");
+
+        if (plannedYear.HasValue && legacyTargetFpsYear.HasValue && plannedYear.Value != legacyTargetFpsYear.Value)
+        {
+            throw new InvalidOperationException(
+                $"Job parameters contain conflicting year values: plannedYear={plannedYear.Value}, " +
+                $"targetFpsYear={legacyTargetFpsYear.Value}. These must agree or only one should be supplied.");
+        }
+
+        return plannedYear ?? legacyTargetFpsYear;
+    }
+
+    private static int? TryExtractIntField(string? parametersJson, string propertyName)
     {
         if (string.IsNullOrWhiteSpace(parametersJson))
             return null;
@@ -807,7 +1097,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // EventBridge passes "null" when parametersJson is absent; treat non-object root as absent.
             if (doc.RootElement.ValueKind != JsonValueKind.Object)
                 return null;
-            if (!doc.RootElement.TryGetProperty("targetFpsYear", out var el))
+            if (!doc.RootElement.TryGetProperty(propertyName, out var el))
                 return null;
 
             if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var num))

@@ -371,9 +371,14 @@ namespace Apha.PIMS.Application.Services
         public async Task<string> GetNextMilestoneNumberAsync(string project, int year)
             => await _repository.GetNextMilestoneNumberAsync(project, year);
 
-        public async Task<List<ProjectYearManagerDto>> GetProjectYearManagersAsync(int year, string? loginEmail = null, bool viewSpecificProject = false)
+        public async Task<List<ProjectYearManagerDto>> GetProjectYearManagersAsync(int year, string email, bool isAdmin)
         {
-            List<ProjectYearManager> entities = await _repository.GetProjectYearManagersAsync(year, loginEmail, viewSpecificProject);
+            List<ProjectYearManager> entities = isAdmin
+                ? await _repository.GetProjectYearManagersForAdminAsync(year)
+                : string.IsNullOrWhiteSpace(email)
+                    ? []
+                    : await _repository.GetProjectYearManagersByEmailAsync(year, email);
+
             return _mapper.Map<List<ProjectYearManagerDto>>(entities);
         }
         public async Task<PaginatedResult<MilestoneDto>> GetPMDMilestonesAsync(QueryParameters<string> parameters, string project)

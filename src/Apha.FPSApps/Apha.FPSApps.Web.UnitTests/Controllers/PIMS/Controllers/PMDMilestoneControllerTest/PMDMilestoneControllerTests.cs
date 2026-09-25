@@ -6,11 +6,13 @@ using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using MapsterMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -47,7 +49,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             };
             var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(milestonesDto);
 
-            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>()).Returns(managersResponse);
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string> { Page = 1, PageSize = 50 });
             _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
@@ -69,6 +71,121 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
         }
 
         [Fact]
+        public async Task Index_WhenUserIsPmdAdmin_PassesEmailAndAdminFlagToMilestoneService()
+        {
+            // Arrange
+            const string email = "admin@apha.gov.uk";
+            var managersResponse = ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse(new List<ProjectYearManagerDto>());
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(new List<MilestoneDto>());
+
+            _sut.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [
+                        new Claim(ClaimTypes.Name, email),
+                        new Claim(ClaimTypes.Role, "PMDAdmin")
+                    ], "TestAuth"))
+                }
+            };
+
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
+            _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(milestonesResponse);
+            _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
+                .Returns(new List<PMDMilestoneItem>());
+            _mockMapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            // Act
+            await _sut.Index();
+
+            // Assert
+            await _mockMilestoneService.Received(1).GetProjectYearManagersAsync(Arg.Any<int>(), email, true);
+        }
+
+        [Fact]
+        public async Task Index_WhenIdentityNameIsNotEmail_UsesEmailClaim()
+        {
+            // Arrange
+            const string displayName = "Nishtha Samvedi (Atos)";
+            const string email = "Nishtha.Samvedi@defradev.onmicrosoft.com";
+            var managersResponse = ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse(new List<ProjectYearManagerDto>());
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(new List<MilestoneDto>());
+
+            _sut.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [
+                        new Claim(ClaimTypes.Name, displayName),
+                        new Claim(ClaimTypes.Email, email),
+                        new Claim(ClaimTypes.Role, "PIMSProjectManager")
+                    ], "TestAuth"))
+                }
+            };
+
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
+            _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(milestonesResponse);
+            _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
+                .Returns(new List<PMDMilestoneItem>());
+            _mockMapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            // Act
+            await _sut.Index();
+
+            // Assert
+            await _mockMilestoneService.Received(1).GetProjectYearManagersAsync(Arg.Any<int>(), email, false);
+        }
+
+        [Fact]
+        public async Task Index_WhenIdentityNameIsNotEmailAndEmailClaimIsUnavailable_UsesIdentityNameFallback()
+        {
+            // Arrange
+            const string displayName = "Nishtha Samvedi (Atos)";
+            const string preferredUsername = "Nishtha.Samvedi@defradev.onmicrosoft.com";
+            var managersResponse = ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse(new List<ProjectYearManagerDto>());
+            var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(new List<MilestoneDto>());
+
+            _sut.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [
+                        new Claim(ClaimTypes.Name, displayName),
+                        new Claim("preferred_username", preferredUsername),
+                        new Claim(ClaimTypes.Role, "PIMSProjectManager")
+                    ], "TestAuth"))
+                }
+            };
+
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
+            _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(milestonesResponse);
+            _mockMapper.Map<List<PMDMilestoneItem>>(Arg.Any<List<MilestoneDto>>())
+                .Returns(new List<PMDMilestoneItem>());
+            _mockMapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            // Act
+            await _sut.Index();
+
+            // Assert
+            await _mockMilestoneService.Received(1).GetProjectYearManagersAsync(Arg.Any<int>(), displayName, false);
+        }
+
+        [Fact]
         public async Task Index_WithParentProject_SelectsSpecifiedProject()
         {
             // Arrange
@@ -82,7 +199,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             var milestonesDto = new List<MilestoneDto>();
             var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(milestonesDto);
 
-            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>()).Returns(managersResponse);
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), selectedProject)
@@ -108,7 +225,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             var managersResponse = ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse(new List<ProjectYearManagerDto>());
             var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(new List<MilestoneDto>());
 
-            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>()).Returns(managersResponse);
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
@@ -139,7 +256,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             var milestonesResponse = ApiResponseDto<List<MilestoneDto>>.SuccessResponse(
                 new List<MilestoneDto> { new() { Project = "PP001", Number = "M1" } });
 
-            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>()).Returns(managersResponse);
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _mockMilestoneService.GetPMDMilestonesAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())

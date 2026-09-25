@@ -1,3 +1,4 @@
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Infrastructure.Resilience;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -31,8 +32,10 @@ public static class BatchPersistenceServiceExtensions
 
         services.AddScoped<IBatchLockRepository, BatchLockRepository>();
         services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
+        services.AddScoped<IHeartbeatRepositoryScopeFactory, HeartbeatRepositoryScopeFactory>();
         services.AddScoped<IYearEndCutoverRepository, YearEndCutoverRepository>();
         services.AddScoped<IYearEndDataSetupRepository, YearEndDataSetupRepository>();
+        services.AddScoped<IYearEndDataSetupTransactionManager, YearEndDataSetupTransactionManager>();
 
         return services;
     }

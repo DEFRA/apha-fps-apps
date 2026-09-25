@@ -24,6 +24,27 @@ public class CostBookYearlyDetailsApiClientTests
         _client = new CostBookYearlyDetailsApiClient(_http, _mapper);
     }
 
+    #region GetSettingsAsync
+
+    [Fact]
+    public async Task GetSettingsAsync_WithSuccessResponse_ReturnsMappedSettings()
+    {
+        var res = new MaintenanceSettingsRes { InflationAnimals = 2.5m };
+        var apiResponse = new ApiResponse<MaintenanceSettingsRes> { Success = true, Data = res };
+        var mappedDto = new MaintenanceSettingsDto { InflationAnimals = 2.5m };
+
+        _http.GetAsync<MaintenanceSettingsRes>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<MaintenanceSettingsDto>(res).Returns(mappedDto);
+
+        var result = await _client.GetSettingsAsync();
+
+        Assert.True(result.Success);
+        Assert.Equal(2.5m, result.Data!.InflationAnimals);
+        await _http.Received(1).GetAsync<MaintenanceSettingsRes>(Arg.Any<string>());
+    }
+
+    #endregion
+
     #region GetProjectHeaderAsync
 
     [Fact]

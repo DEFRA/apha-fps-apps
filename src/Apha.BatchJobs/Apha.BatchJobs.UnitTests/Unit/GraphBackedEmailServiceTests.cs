@@ -1,5 +1,7 @@
 using Apha.BatchJobs.Domain.Entities.Email;
 using Apha.BatchJobs.Infrastructure.Email;
+using Apha.Common.Contracts.Email;
+using Apha.Common.Utilities.Email;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -39,7 +41,7 @@ public sealed class GraphBackedEmailServiceTests
     {
         var graphEmailService = Substitute.For<IGraphEmailService>();
         var service = new GraphBackedEmailService(graphEmailService, NullLogger<GraphBackedEmailService>.Instance);
-        var message = new EmailMessage(["jane@example.com"], "Test subject", "<p>Body</p>");
+        var message = new EmailMessage(["jane@example.com"], "Test subject", "<p>Body</p>", IsBodyHtml: true);
 
         var result = await service.SendAsync(message, CancellationToken.None);
 
@@ -50,7 +52,23 @@ public sealed class GraphBackedEmailServiceTests
                 m.To.SequenceEqual(message.To) &&
                 m.Subject == message.Subject &&
                 m.Body == message.HtmlBody &&
-                m.IsBodyHtml),
+                m.IsBodyHtml == message.IsBodyHtml),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SendAsync_ShouldForwardIsBodyHtml_UnchangedToGraphMessage(bool isBodyHtml)
+    {
+        var graphEmailService = Substitute.For<IGraphEmailService>();
+        var service = new GraphBackedEmailService(graphEmailService, NullLogger<GraphBackedEmailService>.Instance);
+        var message = new EmailMessage(["jane@example.com"], "Test subject", "Body", isBodyHtml);
+
+        await service.SendAsync(message, CancellationToken.None);
+
+        await graphEmailService.Received(1).SendEmailAsync(
+            Arg.Is<EmailMessageModel>(m => m.IsBodyHtml == isBodyHtml),
             Arg.Any<CancellationToken>());
     }
 
@@ -62,7 +80,7 @@ public sealed class GraphBackedEmailServiceTests
             .SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new InvalidOperationException("Graph unavailable"));
         var service = new GraphBackedEmailService(graphEmailService, NullLogger<GraphBackedEmailService>.Instance);
-        var message = new EmailMessage(["jane@example.com"], "Test subject", "<p>Body</p>");
+        var message = new EmailMessage(["jane@example.com"], "Test subject", "<p>Body</p>", IsBodyHtml: true);
 
         var result = await service.SendAsync(message, CancellationToken.None);
 
@@ -78,7 +96,7 @@ public sealed class GraphBackedEmailServiceTests
             .SendEmailAsync(Arg.Any<EmailMessageModel>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new OperationCanceledException());
         var service = new GraphBackedEmailService(graphEmailService, NullLogger<GraphBackedEmailService>.Instance);
-        var message = new EmailMessage(["jane@example.com"], "Test subject", "<p>Body</p>");
+        var message = new EmailMessage(["jane@example.com"], "Test subject", "<p>Body</p>", IsBodyHtml: true);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => service.SendAsync(message, CancellationToken.None));
     }

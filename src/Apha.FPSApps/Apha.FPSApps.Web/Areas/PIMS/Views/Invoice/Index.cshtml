@@ -35,7 +35,7 @@
 
                         @* Filter 1: Project *@
                         <div class="inv-toolbar__item">
-                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProjectMulti_input">Project</label>
+                            <label class="govuk-label govuk-!-font-size-16" >Project</label>
                             <div id="invFilterProjectMultiDropdown" class="sup_select_option_width_100"></div>
                         </div>
 
@@ -235,6 +235,15 @@
             applyInvoiceFilters();
         }
 
+        function ensureInvoiceProjectSelected() {
+            if (getSelectedInvoiceProjectValue()) {
+                return true;
+            }
+
+            showAlertMessage('Please select a project first.', AlertType.ERROR);
+            return false;
+        }
+
         // ── Apply filters — reload grid ───────────────────────────────────────────
 
         function applyInvoiceFilters() {
@@ -349,6 +358,10 @@
         // ── Add Invoice ──────────────────────────────────────────────────────────
         
         function addInvoice() {
+            if (!ensureInvoiceProjectSelected()) {
+                return;
+            }
+
             var selectedProject  = getSelectedInvoiceProjectValue();
             var selectedContract = document.getElementById('invFilterSurvContract')?.value || '';
             $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
@@ -498,11 +511,6 @@
                 var programSelect = document.getElementById('invFilterProgram');
                 if (programSelect) {
                     programSelect.value = '';
-                }
-
-                var yearSelect = document.getElementById('invFilterYear');
-                if (yearSelect) {
-                    yearSelect.selectedIndex = -1;
                 }
             }
 

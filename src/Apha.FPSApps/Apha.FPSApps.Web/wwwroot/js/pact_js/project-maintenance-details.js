@@ -543,7 +543,11 @@ function copyBulkWorkGroup(selection) {
         showAlertMessage('Please select a job code first.', AlertType.INFO); 
         return; 
     }
-    if (!selection || !selection.ids || selection.ids.length === 0) {
+    // Ignore rows without a valid id (e.g. the "No records found." placeholder row when the grid is empty)
+    var validIds = (selection && selection.ids)
+        ? selection.ids.filter(function (id) { return id !== undefined && id !== null && id !== ''; })
+        : [];
+    if (validIds.length === 0) {
         showAlertMessage('Please select at least one work group to copy.', AlertType.INFO); 
         return;
     }
@@ -672,7 +676,11 @@ function deleteBulkTimeCode(selection) {
         showAlertMessage('Please select a job code first.', AlertType.INFO); 
         return; 
     }
-    if (!selection || !selection.ids || selection.ids.length === 0) {
+    // Ignore rows without a valid id (e.g. the "No records found." placeholder row when the grid is empty)
+    var validIds = (selection && selection.ids)
+        ? selection.ids.filter(function (id) { return id !== undefined && id !== null && id !== ''; })
+        : [];
+    if (validIds.length === 0) {
         showAlertMessage('Select the top checkbox to delete all time codes, or select individual rows to delete specific time codes.', AlertType.INFO); 
         return;
     }
