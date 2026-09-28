@@ -275,15 +275,13 @@ SAVEPOINT cr088_contract_test;
 
 DO $$
 DECLARE
-    v_table_name    text;
-    v_column_list   text;
-    v_value_list    text;
-    v_dummy_value   text;
-    v_sql           text;
-    v_test_id       integer;
-    v_fpsyear_value integer;
-    v_skip_table    boolean;
-    rec             record;
+    v_table_name  text;
+    v_column_list text;
+    v_value_list  text;
+    v_dummy_value text;
+    v_sql         text;
+    v_test_id     integer;
+    rec           record;
 BEGIN
 
     FOREACH v_table_name IN ARRAY ARRAY['period_monthlyoutput', 'period_timecostcalcs', 'recreatesummaries_log']
@@ -291,7 +289,6 @@ BEGIN
 
         v_column_list := '';
         v_value_list  := '';
-        v_skip_table  := false;
 
         -- Build a minimal valid row from live catalog metadata: every NOT
         -- NULL, no-default column except id gets a short, type-appropriate
@@ -311,55 +308,29 @@ BEGIN
             ORDER BY ordinal_position
         LOOP
 
-            -- fpsyear carries a real FK to fps.tblyearmaster on some of
-            -- these tables (recreatesummaries_log, confirmed live) but
-            -- not others (period_monthlyoutput/period_timecostcalcs,
-            -- per CR082/CR084) -- pull a real valid year rather than
-            -- assuming either shape. Fetched eagerly (not as an embedded
-            -- subquery) so an empty tblyearmaster is detected here instead
-            -- of surfacing as a generic NOT NULL/FK violation. A fresh
-            -- environment with no year data yet has nothing for Recreate
-            -- Summaries to write for this table either, so the contract
-            -- test is skipped for it rather than failing the whole
-            -- migration -- sections 1/2 already proved the sequence itself
-            -- is correct without needing to insert.
-            IF rec.column_name = 'fpsyear' THEN
+            v_dummy_value := CASE
+                -- fpsyear carries a real FK to fps.tblyearmaster on some of
+                -- these tables (recreatesummaries_log, confirmed live) but
+                -- not others (period_monthlyoutput/period_timecostcalcs,
+                -- per CR082/CR084) -- pull a real valid year rather than
+                -- assuming either shape.
+                WHEN rec.column_name = 'fpsyear' THEN '(SELECT fpsyear FROM fps.tblyearmaster LIMIT 1)'
+                WHEN rec.data_type IN ('character varying', 'text', 'character') THEN quote_literal('X')
+                WHEN rec.data_type IN ('smallint', 'integer', 'bigint', 'numeric', 'double precision', 'real', 'money') THEN '-1'
+                WHEN rec.data_type = 'boolean' THEN 'false'
+                WHEN rec.data_type = 'date' THEN quote_literal(current_date::text)
+                WHEN rec.data_type LIKE 'timestamp%' THEN quote_literal(now()::text)
+                ELSE NULL
+            END;
 
-                SELECT fpsyear INTO v_fpsyear_value FROM fps.tblyearmaster LIMIT 1;
-
-                IF v_fpsyear_value IS NULL THEN
-                    RAISE NOTICE 'CR088 contract test skipped for fps.%: fps.tblyearmaster has no rows yet, so no value is available for the NOT NULL column fps.%.fpsyear.', v_table_name, v_table_name;
-                    v_skip_table := true;
-                    EXIT;
-                END IF;
-
-                v_dummy_value := v_fpsyear_value::text;
-
-            ELSE
-
-                v_dummy_value := CASE
-                    WHEN rec.data_type IN ('character varying', 'text', 'character') THEN quote_literal('X')
-                    WHEN rec.data_type IN ('smallint', 'integer', 'bigint', 'numeric', 'double precision', 'real', 'money') THEN '-1'
-                    WHEN rec.data_type = 'boolean' THEN 'false'
-                    WHEN rec.data_type = 'date' THEN quote_literal(current_date::text)
-                    WHEN rec.data_type LIKE 'timestamp%' THEN quote_literal(now()::text)
-                    ELSE NULL
-                END;
-
-                IF v_dummy_value IS NULL THEN
-                    RAISE EXCEPTION 'CR088 contract test: no dummy-value rule for fps.%.% (data_type %). Extend the test before proceeding -- do not skip the column.', v_table_name, rec.column_name, rec.data_type;
-                END IF;
-
+            IF v_dummy_value IS NULL THEN
+                RAISE EXCEPTION 'CR088 contract test: no dummy-value rule for fps.%.% (data_type %). Extend the test before proceeding -- do not skip the column.', v_table_name, rec.column_name, rec.data_type;
             END IF;
 
             v_column_list := v_column_list || quote_ident(rec.column_name) || ', ';
             v_value_list  := v_value_list || v_dummy_value || ', ';
 
         END LOOP;
-
-        IF v_skip_table THEN
-            CONTINUE;
-        END IF;
 
         v_column_list := left(v_column_list, length(v_column_list) - 2);
         v_value_list  := left(v_value_list, length(v_value_list) - 2);
