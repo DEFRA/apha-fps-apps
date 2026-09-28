@@ -17,7 +17,7 @@ BEGIN;
 -- Design:
 --   - Add fpsyear (nullable first). A separate data-migration program
 --     populates one row per applicable (profitcentre, fpsyear) pair; this
---     changeset does not choose or copy the year-specific values.
+--     script does not choose or copy the year-specific values.
 --   - Enforce fpsyear NOT NULL and add an FK to fps.tblyearmaster.
 --   - Replace the single-column primary key (profitcentre) with a composite
 --     primary key (profitcentre, fpsyear).
@@ -29,7 +29,7 @@ BEGIN;
 --
 -- Out of scope:
 --   - Yearly partition conversion (PARTITION BY LIST (fpsyear)) for
---     fps.tblkpprofitcentre remains a separate later changeset, consistent
+--     fps.tblkpprofitcentre remains a separate later change, consistent
 --     with the shadow-table pattern used for other partitioned tables in
 --     this repository.
 --
