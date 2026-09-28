@@ -322,7 +322,7 @@ BEGIN
                 SELECT fpsyear INTO v_fpsyear_value FROM fps.tblyearmaster LIMIT 1;
 
                 IF v_fpsyear_value IS NULL THEN
-                    RAISE EXCEPTION 'CR088 contract test cannot run for fps.%: fps.tblyearmaster has no rows, so no value is available for the NOT NULL column %.%.fpsyear.', v_table_name, v_table_name;
+                    RAISE EXCEPTION 'CR088 contract test cannot run for fps.%: fps.tblyearmaster has no rows, so no value is available for the NOT NULL column fps.%.fpsyear.', v_table_name, v_table_name;
                 END IF;
 
                 v_dummy_value := v_fpsyear_value::text;
