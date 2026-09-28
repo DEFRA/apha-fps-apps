@@ -184,7 +184,7 @@
             $('#BudgetCVL').val('0.00');
             $('#Remainder').val('0.00');
 
-             $('#tbl_@Model.AdditionalCostGrid.GridId tbody').empty();
+             showGridNoRecords('@Model.AdditionalCostGrid.GridId');
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramAdditionalCostPlan", new { area = "FPS" })',
                     { programNo: currentProgramNo },

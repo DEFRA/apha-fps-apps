@@ -169,7 +169,7 @@
             $('#BudgetCVL').val('0.00');
             $('#Remainder').val('0.00');
 
-             $('#tbl_@Model.TestPlanGrid.GridId tbody').empty();
+             showGridNoRecords('@Model.TestPlanGrid.GridId');
 
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramTestPlan", new { area = "FPS" })',

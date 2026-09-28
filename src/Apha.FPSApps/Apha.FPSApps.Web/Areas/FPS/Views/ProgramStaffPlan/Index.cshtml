@@ -180,7 +180,7 @@
             // Reset the Staff Plan grid: no project is selected for the newly
             // chosen (or cleared) programme. Clear the rows on the client rather
             // than reloading with an empty job code, which the API rejects.
-            $('#tbl_@Model.StaffCostGrid.GridId tbody').empty();
+            showGridNoRecords('@Model.StaffCostGrid.GridId');
 
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramStaffPlan", new { area = "FPS" })',

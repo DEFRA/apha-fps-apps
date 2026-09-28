@@ -406,6 +406,28 @@
 </div>
 
 <script type="text/javascript">
+    // Renders the same empty state the server produces when a grid has no rows,
+    // so grids cleared on the client (e.g. when a parent combo changes) look and
+    // sit exactly like grids returned empty by a rebind. Defined once, shared by
+    // every grid on the page.
+    window.showGridNoRecords = window.showGridNoRecords || function (gridId) {
+        if (!gridId) {
+            return;
+        }
+
+        var tbody = $('#tbl_' + gridId + ' tbody');
+        if (!tbody.length) {
+            return;
+        }
+
+        tbody.html(
+            '<tr>' +
+                '<td colspan="100" class="govuk-table__cell" style="text-align:center; color:#505a5f; font-style:italic; padding:16px;">' +
+                    '<span role="status" aria-live="polite" aria-label="No records found." tabindex="0">No records found.</span>' +
+                '</td>' +
+            '</tr>');
+    };
+
     (function() {
         var gridId = '@Model.GridId';
         var gridContainerSelector = '#gridContainer_' + gridId;

@@ -180,7 +180,7 @@
             $('#BudgetCVL').val('0.00');
             $('#Remainder').val('0.00');
 
-            $('#tbl_@Model.AnimalCostGrid.GridId tbody').empty();
+            showGridNoRecords('@Model.AnimalCostGrid.GridId');
 
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramAnimalPlan", new { area = "FPS" })',
