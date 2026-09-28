@@ -148,7 +148,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
             _additionalCostService.GetAdditionalCostsAsync(queryParameters, jobCode).Returns(serviceResponse);
-            _mapper.Map<PaginationModel>(Arg.Is<object?>(_ => true)).Returns(new PaginationModel());
+            _mapper.Map<PaginationModel>(Arg.Is<object>(_ => true)).Returns(new PaginationModel());
 
             // Act
             var result = await _controller.LoadAdditionalCostGrid(request, jobCode);
