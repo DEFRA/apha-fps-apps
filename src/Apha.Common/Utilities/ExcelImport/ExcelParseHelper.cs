@@ -19,7 +19,12 @@ namespace Apha.Common.Utilities.ExcelImport
             if (string.IsNullOrWhiteSpace(value))
                 return null;
 
-            return decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed)
+            var styles = NumberStyles.Number |
+             NumberStyles.AllowCurrencySymbol |
+             NumberStyles.AllowParentheses |
+             NumberStyles.AllowExponent;
+
+            return decimal.TryParse(value, styles, CultureInfo.GetCultureInfo("en-GB"), out var parsed)
                 ? parsed
                 : null;
         }
