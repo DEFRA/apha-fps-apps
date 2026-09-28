@@ -5540,6 +5540,22 @@ input.govuk-input.ssr-total-input[readonly] {
 .isWorkgroupStaffPlan{
     width: 42%;
 }
+/* Header row containing the Set Up Staff Resources controls: center the left
+   heading and the right control block vertically so the space above and below
+   the controls is equal. */
+.govuk-grid-row:has(> .isSetUpStaffResources) {
+    display: flex;
+    align-items: center;
+    padding-top: 7px;
+    padding-bottom: 12px;
+}
+.govuk-grid-row:has(> .isSetUpStaffResources) > .isFloatLeft,
+.govuk-grid-row:has(> .isSetUpStaffResources) > .isFloatRight {
+    float: none;
+}
+.govuk-grid-row:has(> .isSetUpStaffResources) > .isFloatLeft .isCustomPageHeadings {
+    margin-top: 0 !important;
+}
 .isSetUpStaffResources {
     width: 63%;
 }
@@ -5549,20 +5565,38 @@ input.govuk-input.ssr-total-input[readonly] {
    so the last one overflows the container, and the label cells absorb the
    leftover space leaving the labels flush against their controls. */
 .isSetUpStaffResources {
+    /* Center the control row vertically between the top menu bar and the
+       horizontal divider line so the gap above and below the controls is
+       equal. */
+    display: flex;
+    align-items: center;
+    margin-bottom: 0 !important;
+
     .govuk-table {
         width: 100%;
         max-width: 100%;
+        margin-bottom: 0 !important;
+    }
+
+    /* Remove the default table cell top/bottom padding so the row height is
+       driven only by the controls, letting flex centering do the alignment. */
+    .govuk-table__header,
+    .govuk-table__cell {
+        padding-top: 0;
+        padding-bottom: 0;
     }
 
     .govuk-table__header {
         white-space: nowrap;
         width: 1%;
+        vertical-align: middle;
     }
 
     /* Space between a label and its control, and between each pair. */
     .govuk-table__cell {
         padding-left: 8px;
         padding-right: 16px;
+        vertical-align: middle;
     }
 
     .govuk-table__cell:last-child {
