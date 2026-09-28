@@ -5540,6 +5540,8 @@ input.govuk-input.ssr-total-input[readonly] {
 .isWorkgroupStaffPlan{
     width: 42%;
 }
+/* CI trigger: ensure head commit touches src/Apha.FPSApps/** so the
+   path-filtered workflow runs. */
 /* Header row containing the Set Up Staff Resources controls: center the left
    heading and the right control block vertically so the space above and below
    the controls is equal. */
