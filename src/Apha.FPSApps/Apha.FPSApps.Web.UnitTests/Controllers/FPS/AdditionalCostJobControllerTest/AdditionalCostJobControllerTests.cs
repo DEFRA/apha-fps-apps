@@ -119,26 +119,21 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AdditionalCostJobController
                 Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
-        [Fact]
-        public async Task LoadAdditionalCostGrid_WithNullJobCode_UsesEmptyString()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadAdditionalCostGrid_WithEmptyJobCode_ReturnsEmptyGridWithoutCallingService(string? jobCode)
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
-            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResponse = ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(
-                new List<AdditionalCostDto>(), new PaginationDto());
-
-            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _additionalCostService.GetAdditionalCostsAsync(queryParameters, string.Empty).Returns(serviceResponse);
-            _mapper.Map<List<AdditionalCostItemViewModel>>(Arg.Any<List<AdditionalCostDto>>()).Returns(new List<AdditionalCostItemViewModel>());
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
             // Act
-            var result = await _controller.LoadAdditionalCostGrid(request, null);
+            var result = await _controller.LoadAdditionalCostGrid(request, jobCode);
 
             // Assert
             Assert.IsType<PartialViewResult>(result);
-            await _additionalCostService.Received(1).GetAdditionalCostsAsync(queryParameters, string.Empty);
+            await _additionalCostService.DidNotReceive().GetAdditionalCostsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
         [Fact]

@@ -102,28 +102,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
                 .GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
-        [Fact]
-        public async Task LoadTestPlanGrid_WithNullJobCode_UsesEmptyString()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadTestPlanGrid_WithEmptyJobCode_ReturnsEmptyGridWithoutCallingService(string? jobCode)
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResponse = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(
-                new List<TestRequirementDto>(), new PaginationDto());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _testRequirementService.GetPagedTestReqmtbyProjectAsync(queryParameters, string.Empty)
-                .Returns(serviceResponse);
-            _mapper.Map<List<TestPlanItem>>(Arg.Any<List<TestRequirementDto>>()).Returns(new List<TestPlanItem>());
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
             // Act
-            var result = await _controller.LoadTestPlanGrid(request, null);
+            var result = await _controller.LoadTestPlanGrid(request, jobCode);
 
             // Assert
-            Assert.IsType<PartialViewResult>(result);
-            await _testRequirementService.Received(1)
-                .GetPagedTestReqmtbyProjectAsync(queryParameters, string.Empty);
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<TestPlanItem>>(partialView.Model);
+            Assert.Empty(gridConfig.Data);
+            await _testRequirementService.DidNotReceive()
+                .GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            _mapper.DidNotReceive().Map<List<TestPlanItem>>(Arg.Any<List<TestRequirementDto>>());
         }
 
         [Fact]

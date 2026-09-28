@@ -1,7 +1,10 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
+using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -360,6 +363,133 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffJobControllerTest
             Assert.False(value.GetProperty("success").GetBoolean());
             // Message is empty string (not null), so the ?? fallback does not trigger
             Assert.Equal(string.Empty, value.GetProperty("message").GetString());
+        }
+
+        #endregion
+
+        #region LoadStaffJobGrid Tests
+
+        [Fact]
+        public async Task LoadStaffJobGrid_WithValidJobCode_ReturnsPartialViewWithData()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var jobCode = "JOB001";
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var staffJobs = new List<StaffJobViewDto>
+            {
+                new() { StaffID = "STAFF001", JobCode = "JOB001" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var serviceResponse = ApiResponseDto<List<StaffJobViewDto>>.SuccessResponse(staffJobs, paginationDto);
+            var staffJobViewModels = new List<StaffJobItemViewModel>
+            {
+                new() { StaffID = "STAFF001", JobCode = "JOB001" }
+            };
+            var paginationModel = new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _staffJobService.GetAllStaffJobsAsync(queryParameters, jobCode).Returns(serviceResponse);
+            _mapper.Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>()).Returns(staffJobViewModels);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(paginationModel);
+
+            // Act
+            var result = await _controller.LoadStaffJobGrid(request, jobCode, "Staff Plan");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialView.Model);
+            Assert.Equal("staffBookedGrid", gridConfig.GridId);
+            Assert.Equal("Staff Plan", gridConfig.Title);
+            Assert.Equal("StaffID", gridConfig.KeyProperty);
+            Assert.Single(gridConfig.Data);
+            await _staffJobService.Received(1).GetAllStaffJobsAsync(queryParameters, jobCode);
+        }
+
+        [Fact]
+        public async Task LoadStaffJobGrid_WhenModelStateIsInvalid_ReturnsFailureJson()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Page", "Page is required");
+            var request = new PaginationFilter<string> { Filter = "{}" };
+
+            // Act
+            var result = await _controller.LoadStaffJobGrid(request, "JOB001", "Staff Plan");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultElement(jsonResult);
+            Assert.False(value.GetProperty("success").GetBoolean());
+            Assert.Equal("Invalid request data", value.GetProperty("message").GetString());
+            await _staffJobService.DidNotReceive().GetAllStaffJobsAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadStaffJobGrid_WithEmptyJobCode_ReturnsEmptyGridWithoutCallingService(string? jobCode)
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+
+            // Act
+            var result = await _controller.LoadStaffJobGrid(request, jobCode, "Staff Plan");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialView.Model);
+            Assert.Empty(gridConfig.Data);
+            await _staffJobService.DidNotReceive().GetAllStaffJobsAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            _mapper.DidNotReceive().Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>());
+        }
+
+        [Fact]
+        public async Task LoadStaffJobGrid_WithNullTitle_UsesDefaultTitle()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+
+            // Act
+            var result = await _controller.LoadStaffJobGrid(request, jobCode: null, title: null);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialView.Model);
+            Assert.Equal("Staff Booked", gridConfig.Title);
+        }
+
+        [Fact]
+        public async Task LoadStaffJobGrid_WhenServiceReturnsNullData_MapsEmptyStaffJobList()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var jobCode = "JOB001";
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var serviceResponse = ApiResponseDto<List<StaffJobViewDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _staffJobService.GetAllStaffJobsAsync(queryParameters, jobCode).Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.LoadStaffJobGrid(request, jobCode, "Staff Plan");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialView.Model);
+            Assert.Empty(gridConfig.Data);
+            _mapper.DidNotReceive().Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>());
         }
 
         #endregion
