@@ -5576,6 +5576,43 @@ input.govuk-input.ssr-total-input[readonly] {
         vertical-align: middle;
     }
 }
+
+/* Resource Allocation (Stage 2) "Set Up Staff Resources" header alignment.
+   Dedicated classes are used here (added alongside the existing markup classes)
+   so that no globally-shared class such as .isFloatLeft, .isFloatRight or
+   .isCustomPageHeadings is modified. These only affect this header. */
+.ra-setup-header-row {
+    display: flex;
+    align-items: center;
+    padding-top: 7px;
+    padding-bottom: 12px;
+}
+
+.ra-setup-header-row > .ra-setup-heading-col,
+.ra-setup-header-row > .ra-setup-controls-col {
+    float: none;
+}
+
+.ra-setup-header-row .ra-setup-heading {
+    margin-top: 0 !important;
+}
+
+.ra-setup-controls-col {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0 !important;
+}
+
+.ra-setup-controls-col .govuk-table {
+    margin-bottom: 0 !important;
+}
+
+.ra-setup-controls-col .govuk-table__header,
+.ra-setup-controls-col .govuk-table__cell {
+    padding-top: 0;
+    padding-bottom: 0;
+    vertical-align: middle;
+}
 .isBudgetBidsQuery{
     width: 34%;
 }
