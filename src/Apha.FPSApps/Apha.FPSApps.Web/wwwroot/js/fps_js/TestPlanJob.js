@@ -188,29 +188,34 @@ function getTestPlanExtraFilters() {
 }
 
 // ---- Test Code panel dropdown ----
+// Lazy/chunked rendering, debounced search and delegated row selection are all
+// provided by common/lazy-panel-dropdown.js.
+
+var testCodeDropdown = createLazyPanelDropdown({
+    panelId: 'TestCodeDropdownPanel',
+    bodyId: 'TestCodeDropdownBody',
+    searchBoxId: 'TestCodeSearchBox',
+    displayId: 'TestCodeDisplay',
+    getOptions: function () { return window.testCodePanelOptions; },
+    getSearchKey: function (o) { return o.c + '\u0000' + o.d; },
+    getRowAttributes: function (o) {
+        return { value: o.v, code: o.c, description: o.d, unitprice: o.p };
+    },
+    getCells: function (o) { return [o.c, o.d, '\u00A3' + o.p]; },
+    onSelect: function (row) {
+        selectTestCode(row.value, row.code, row.description, row.unitprice);
+    }
+});
 
 function toggleTestCodePanel() {
-    var panel = document.getElementById('TestCodeDropdownPanel');
-    if (!panel) return;
-    var isOpen = panel.style.display !== 'none';
-    panel.style.display = isOpen ? 'none' : 'block';
-    if (!isOpen) {
-        var searchBox = document.getElementById('TestCodeSearchBox');
-        if (searchBox) { searchBox.value = ''; filterTestCodePanel(''); searchBox.focus(); }
-    }
+    testCodeDropdown.toggle();
 }
 
 function filterTestCodePanel(query) {
-    var rows = document.querySelectorAll('#TestCodeDropdownBody tr');
-    var q = (query || '').toLowerCase();
-    rows.forEach(function (row) {
-        var code = (row.cells[0] ? row.cells[0].textContent : '').toLowerCase();
-        var desc = (row.cells[1] ? row.cells[1].textContent : '').toLowerCase();
-        row.style.display = (!q || code.indexOf(q) !== -1 || desc.indexOf(q) !== -1) ? '' : 'none';
-    });
+    testCodeDropdown.filter(query);
 }
 
-function selectTestCode(value, displayCode, description, unitPrice, rowEl) {
+function selectTestCode(value, displayCode, description, unitPrice) {
     // Update visible display input
     var display = document.getElementById('TestCodeDisplay');
     if (display) display.value = displayCode;
@@ -225,18 +230,8 @@ function selectTestCode(value, displayCode, description, unitPrice, rowEl) {
         $(select).trigger('change');
     }
 
-    // Close panel
-    var panel = document.getElementById('TestCodeDropdownPanel');
-    if (panel) panel.style.display = 'none';
+    testCodeDropdown.close();
 }
-
-// Close panel when clicking outside
-$(document).on('click', function (e) {
-    if (!$(e.target).closest('#TestCodeDropdownPanel, #TestCodeDisplay').length) {
-        var panel = document.getElementById('TestCodeDropdownPanel');
-        if (panel) panel.style.display = 'none';
-    }
-});
 
 // ---- Pricing and cost calculation ----
 
