@@ -199,7 +199,7 @@ function loadCurrentGrid(queryType) {
 
     var params = {
         page:      1,
-        pageSize:  20,
+        pageSize:  10,
         queryType: queryType,
         source:    'current',
         project:   getDeptIncomeProject(),
@@ -229,7 +229,7 @@ function loadSnapshotQueryGrid(queryType) {
 
     var params = {
         page:      1,
-        pageSize:  20,
+        pageSize:  10,
         queryType: queryType,
         source:    'snapshot',
         project:   getDeptIncomeProject(),
