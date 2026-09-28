@@ -196,6 +196,102 @@
                 onSelect: function (row) { selectProject(row.value, row.program); }
             });
 
+            // ── Project dropdown row focus / keyboard navigation / ARIA ──
+            // Kept local to this page (not in common/lazy-panel-dropdown.js) so
+            // no other consumer of createLazyPanelDropdown is affected.
+            (function setUpProjectRowAccessibility() {
+                var columnHeaders = null;
+
+                function deSemanticiseTable() {
+                    var table = projectBody.closest('table');
+                    if (!table || table.dataset.projectAriaBound) return;
+                    table.dataset.projectAriaBound = '1';
+                    table.setAttribute('role', 'presentation');
+
+                    var thead = table.querySelector('thead');
+                    if (thead) {
+                        thead.setAttribute('aria-hidden', 'true');
+                        columnHeaders = Array.prototype.map.call(thead.querySelectorAll('th'), function (th) {
+                            return th.textContent.trim();
+                        });
+                    }
+
+                    projectBody.setAttribute('role', 'listbox');
+                }
+
+                function buildRowAriaLabel(row) {
+                    var cells = Array.prototype.map.call(row.querySelectorAll('td'), function (td) {
+                        return td.textContent.trim();
+                    });
+                    var parts = cells.map(function (cell, i) {
+                        var header = columnHeaders && columnHeaders[i] ? columnHeaders[i] : ('Column ' + (i + 1));
+                        return header + ': ' + cell;
+                    });
+                    return parts.join(', ');
+                }
+
+                function enhanceRow(row) {
+                    if (row.dataset.projectRowEnhanced) return;
+                    row.dataset.projectRowEnhanced = '1';
+                    row.setAttribute('tabindex', '0');
+                    row.setAttribute('role', 'option');
+                    row.setAttribute('aria-label', buildRowAriaLabel(row));
+                }
+
+                function getRows() {
+                    return Array.prototype.slice.call(projectBody.querySelectorAll('tr[data-lazy-row]'));
+                }
+
+                function focusRowAt(index) {
+                    var rows = getRows();
+                    if (!rows.length) return;
+                    var clamped = Math.max(0, Math.min(rows.length - 1, index));
+                    rows[clamped].focus();
+                    rows[clamped].scrollIntoView({ block: 'nearest' });
+                }
+
+                deSemanticiseTable();
+
+                var rowObserver = new MutationObserver(function (mutations) {
+                    mutations.forEach(function (m) {
+                        Array.prototype.forEach.call(m.addedNodes, function (node) {
+                            if (node.nodeType === 1 && node.matches && node.matches('tr[data-lazy-row]')) {
+                                enhanceRow(node);
+                            }
+                        });
+                    });
+                });
+                rowObserver.observe(projectBody, { childList: true });
+
+                projectBody.addEventListener('keydown', function (e) {
+                    var row = e.target.closest('tr[data-lazy-row]');
+                    if (!row) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        row.click();
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        focusRowAt(getRows().indexOf(row) + 1);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        focusRowAt(getRows().indexOf(row) - 1);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        projectDropdown.close();
+                    }
+                });
+
+                projectSearch.addEventListener('keydown', function (e) {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        focusRowAt(0);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        projectDropdown.close();
+                    }
+                });
+            })();
+
             function selectProject(parentProject, program) {
                 projectDisplay.value = parentProject;
 

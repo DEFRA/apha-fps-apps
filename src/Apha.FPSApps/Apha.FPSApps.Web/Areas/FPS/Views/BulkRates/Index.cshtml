@@ -200,18 +200,18 @@
                                     <span id="newRequestButtonArea">
                                     @if (!Model.CanCreateForYear)
                                     {
-                                        <span class="govuk-button govuk-button--disabled sup_margin_0"
+                                        <button class="govuk-button govuk-button--disabled sup_margin_0"
                                               aria-disabled="true"
                                               title="@FriendlyJobName(Model.JobNameFilter!) requests can only be created for the @Model.RequiredYearStatus FPS year.">
                                             New Request
-                                        </span>
+                                        </button>
                                     }
                                     else if (!Model.CanInitiateRequest)
                                     {
-                                        <span class="govuk-button govuk-button--disabled sup_margin_0"
+                                        <button class="govuk-button govuk-button--disabled sup_margin_0"
                                               aria-disabled="true" title="An active request already exists for this job type.">
                                             New Request
-                                        </span>
+                                        </button>
                                     }
                                     else
                                     {

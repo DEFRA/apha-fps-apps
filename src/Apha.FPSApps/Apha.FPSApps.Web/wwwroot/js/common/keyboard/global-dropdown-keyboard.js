@@ -3122,3 +3122,50 @@
     // regardless of script order.
     window.addEventListener('keydown', handleGridArrowKey, true);
 })();
+
+// ── Ensure every ".btn-close" has an accessible name ─────────────────────────
+// Bootstrap's real .btn-close markup renders an empty button with a CSS
+// background-image icon and relies entirely on aria-label="Close" for its
+// accessible name. Several modal partials across the app instead put a
+// visible glyph ("×"/"x"/"X") inside the button and never set aria-label, so
+// screen readers compute the accessible name from that character - e.g. NVDA
+// announces "times, button" instead of "Close, button".
+//
+// This runs globally (rather than editing every partial) so any current or
+// future ".btn-close"/"[data-bs-dismiss='modal']" button is covered,
+// including ones injected later via AJAX-loaded modal content. It only adds
+// aria-label when one isn't already present, so buttons that already carry a
+// deliberate custom label are left untouched.
+(function () {
+    'use strict';
+
+    function labelCloseButtons(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(
+            scope.querySelectorAll('.btn-close, [data-bs-dismiss="modal"]'),
+            function (btn) {
+                if (!btn.hasAttribute('aria-label') && !btn.hasAttribute('aria-labelledby')) {
+                    btn.setAttribute('aria-label', 'Close');
+                }
+            }
+        );
+    }
+
+    labelCloseButtons(document);
+
+    // Modal bodies/partials are frequently swapped in via AJAX after initial
+    // page load, so keep watching for newly added close buttons.
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                if (!node || node.nodeType !== 1) return;
+                if (node.matches && (node.matches('.btn-close') || node.matches('[data-bs-dismiss="modal"]'))) {
+                    labelCloseButtons(node.parentElement || document);
+                } else if (node.querySelector && node.querySelector('.btn-close, [data-bs-dismiss="modal"]')) {
+                    labelCloseButtons(node);
+                }
+            });
+        });
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+})();

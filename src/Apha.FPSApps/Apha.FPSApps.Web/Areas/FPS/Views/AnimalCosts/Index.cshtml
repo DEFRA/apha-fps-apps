@@ -145,9 +145,26 @@
             items.forEach(function (item) {
                 const tr = document.createElement('tr');
                 tr.style.cursor = 'pointer';
+                tr.setAttribute('tabindex', '0');
+                tr.setAttribute('role', 'option');
                 tr.innerHTML = '<td>' + escapeHtml(item.label) + '</td><td>' + escapeHtml(item.dailyRate) + '</td>';
                 tr.addEventListener('click', function () {
                     selectAnimalType(item.value, item.label);
+                });
+                tr.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectAnimalType(item.value, item.label);
+                    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+                        const index = rows.indexOf(tr) + (e.key === 'ArrowDown' ? 1 : -1);
+                        const clamped = Math.max(0, Math.min(rows.length - 1, index));
+                        rows[clamped].focus();
+                        rows[clamped].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'Escape') {
+                        document.getElementById('animal-type-panel').style.display = 'none';
+                    }
                 });
                 tbody.appendChild(tr);
             });
@@ -174,12 +191,40 @@
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         });
 
+
         document.getElementById('animal-type-search').addEventListener('input', function () {
             const term = this.value.toLowerCase();
             const filtered = animalTypeData.filter(function (item) {
                 return item.label.toLowerCase().includes(term);
             });
             renderAnimalTypeDropdownRows(filtered);
+        });
+        
+        document.getElementById('animal-type-input').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const panel = document.getElementById('animal-type-panel');
+                const isOpen = panel.style.display === 'block';
+                panel.style.display = isOpen ? 'none' : 'block';
+                if (!isOpen) {
+                    const searchBox = document.getElementById('animal-type-search');
+                    if (searchBox) searchBox.focus();
+                }
+            } else if (e.key === 'Escape') {
+                document.getElementById('animal-type-panel').style.display = 'none';
+            }
+        });
+        document.getElementById('animal-type-search').addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const firstRow = document.querySelector('#animal-type-body tr');
+                if (firstRow) {
+                    firstRow.focus();
+                    firstRow.scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'Escape') {
+                document.getElementById('animal-type-panel').style.display = 'none';
+            }
         });
 
         document.addEventListener('click', function (e) {
