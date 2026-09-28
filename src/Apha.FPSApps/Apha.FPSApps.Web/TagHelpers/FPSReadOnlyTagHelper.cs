@@ -21,7 +21,10 @@ namespace Apha.FPSApps.Web.TagHelpers
             "StaffJob",
             "AnimalJob",
             "TestPlanJob",
-            "AdditionalCostJob"
+            "AdditionalCostJob",
+            "Project",
+            "ProgrammeSelect",
+            "ProjectGroupSelection"
         };
 
         // BulkRates supports FEC (Open-year), Staff and Animal (Planned-year) requests, so its buttons
