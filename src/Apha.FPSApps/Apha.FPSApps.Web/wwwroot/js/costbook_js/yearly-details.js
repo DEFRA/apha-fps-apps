@@ -1466,14 +1466,13 @@ var _accountCatRows = createLazyDropdownRows({
     dataId: 'accountCatPanelData',
     bodyId: 'accountCatDropdownBody',
     panelId: 'accountCatDropdownPanel',
-    searchKey: function (o) { return (o.v || '') + '\u0000' + (o.uid || ''); },
+    searchKey: function (o) { return o.v || ''; },
     buildRow: function (o) {
         var cell = ' style="padding:6px 8px; border-bottom:1px solid #f3f2f1;"';
         return '<tr data-value="' + escapeWgGradeHtml(o.v) + '"' +
                    ' data-useinflation="' + escapeWgGradeHtml(o.ui) + '"' +
                    ' style="cursor:pointer;">' +
                    '<td' + cell + '>' + escapeWgGradeHtml(o.v) + '</td>' +
-                   '<td' + cell + '>' + escapeWgGradeHtml(o.uid) + '</td>' +
                '</tr>';
     }
 });

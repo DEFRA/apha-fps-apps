@@ -39,7 +39,6 @@
                         <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
                             <tr>
                                 <th style="padding:6px 8px; text-align:left;">Category</th>
-                                <th style="padding:6px 8px; text-align:left;">Use Inflation</th>
                             </tr>
                         </thead>
                          <tbody id="accountCatDropdownBody"></tbody>
@@ -54,8 +53,7 @@
                         accountCats.Select(c => new
                         {
                             v = c.AccShortName,
-                            ui = c.UseInflation.ToString().ToLower(),
-                            uid = c.UseInflation ? "Yes" : "No"
+                            ui = c.UseInflation.ToString().ToLower()
                         })))
                 </script>
             </div>
