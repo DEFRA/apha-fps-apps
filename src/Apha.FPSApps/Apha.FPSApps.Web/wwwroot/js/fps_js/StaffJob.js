@@ -192,28 +192,30 @@ function getStaffJobExtraFilters() {
 }
 
 // ---- Staff panel dropdown ----
+// Lazy/chunked rendering, debounced search and delegated row selection are all
+// provided by common/lazy-panel-dropdown.js.
+
+var staffDropdown = createLazyPanelDropdown({
+    panelId: 'StaffDropdownPanel',
+    bodyId: 'StaffDropdownBody',
+    searchBoxId: 'StaffSearchBox',
+    displayId: 'StaffDisplay',
+    getOptions: function () { return window.staffPanelOptions; },
+    getSearchKey: function (s) { return s.n; },
+    getRowAttributes: function (s) { return { staffid: s.v, name: s.n }; },
+    getCells: function (s) { return [s.n, s.g, s.h]; },
+    onSelect: function (row) { selectStaff(row.staffid, row.name); }
+});
 
 function toggleStaffPanel() {
-    var panel = document.getElementById('StaffDropdownPanel');
-    if (!panel) return;
-    var isOpen = panel.style.display !== 'none';
-    panel.style.display = isOpen ? 'none' : 'block';
-    if (!isOpen) {
-        var searchBox = document.getElementById('StaffSearchBox');
-        if (searchBox) { searchBox.value = ''; filterStaffPanel(''); searchBox.focus(); }
-    }
+    staffDropdown.toggle();
 }
 
 function filterStaffPanel(query) {
-    var rows = document.querySelectorAll('#StaffDropdownBody tr');
-    var q = (query || '').toLowerCase();
-    rows.forEach(function (row) {
-        var name  = (row.getAttribute('data-name') || '').toLowerCase();
-        row.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
-    });
+    staffDropdown.filter(query);
 }
 
-function selectStaff(staffId, staffName, rowEl) {
+function selectStaff(staffId, staffName) {
     // Update display input
     var display = document.getElementById('StaffDisplay');
     if (display) display.value = staffName;
@@ -225,18 +227,8 @@ function selectStaff(staffId, staffName, rowEl) {
         $(select).trigger('change');
     }
 
-    // Close panel
-    var panel = document.getElementById('StaffDropdownPanel');
-    if (panel) panel.style.display = 'none';
+    staffDropdown.close();
 }
-
-// Close panel when clicking outside
-$(document).on('click', function (e) {
-    if (!$(e.target).closest('#StaffDropdownPanel, #StaffDisplay').length) {
-        var panel = document.getElementById('StaffDropdownPanel');
-        if (panel) panel.style.display = 'none';
-    }
-});
 
 // ---- Charge rate calculation ----
 

@@ -10,6 +10,15 @@
         pointer-events: auto !important;
         cursor: pointer;
     }
+
+    /* Disable default column sorting affordance for the Release Summaries grid */
+    #gridContainer_releaseSummariesGrid .sortable-header {
+        cursor: default !important;
+    }
+
+    #gridContainer_releaseSummariesGrid .sortable-header .sort-icon {
+        display: none !important;
+    }
 </style>
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
@@ -45,5 +54,21 @@
     <script src="~/js/pact_js/release-summary.js"></script>
     <script>
         var setFinalSummaryRunUrl = '@Url.Action("SetFinalSummaryRun", "ReleaseSummary", new { area = "PACT" })';
+
+        // Stop the shared DataGrid's default column sorting for the Release Summaries grid only.
+        // Uses a capture-phase listener on the persistent grid container so it keeps working
+        // after the grid body is re-rendered on paging/filtering.
+        (function () {
+            var container = document.getElementById('gridContainer_releaseSummariesGrid');
+            if (!container) {
+                return;
+            }
+
+            container.addEventListener('click', function (e) {
+                if (e.target && e.target.closest('.sortable-header')) {
+                    e.stopImmediatePropagation();
+                }
+            }, true);
+        })();
     </script>
 }
