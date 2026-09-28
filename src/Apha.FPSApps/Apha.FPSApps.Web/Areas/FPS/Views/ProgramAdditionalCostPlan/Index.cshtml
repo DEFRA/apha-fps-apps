@@ -16,7 +16,7 @@
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
                             <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-0 isNoBottomBorder govuk-!-text-align-right">
-                                <label class="fw-bold me-2" for="programmeSelect">Programme:</label>
+                                <label class="fw-bold me-2" for="programmeSelect">Programme: </label>
                             </th>
                             <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-padding-right-1 isNoBottomBorder govuk-!-text-align-right">
                                 <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo" class="govuk-select govuk-!-font-size-16 govuk-input--width-20">
@@ -167,7 +167,7 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
+            
             currentProgramNo = val;
             // Persist selection to session for other pages
             $.ajax({
@@ -180,10 +180,11 @@
             $('#hdnJobCode').val('');
             $('#txtSelectedProject').val('');
             $('#for_project').val('');
-            $('#Additional_Cost').val('');
-            $('#BudgetCVL').val('');
-            $('#Remainder').val('');
+            $('#Additional_Cost').val('0.00');
+            $('#BudgetCVL').val('0.00');
+            $('#Remainder').val('0.00');
 
+             $('#tbl_@Model.AdditionalCostGrid.GridId tbody').empty();
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramAdditionalCostPlan", new { area = "FPS" })',
                     { programNo: currentProgramNo },
@@ -195,7 +196,12 @@
                     }
                 );
             }
-
+              else {
+                // "-- Select Programme --" chosen: restore the page to its
+                // default empty state, matching a fresh page load.
+                $('#managerName').val('');
+                $('#Target').val('');
+            }
             showLoader();
             setTimeout(function () {
                 window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });

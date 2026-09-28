@@ -152,7 +152,7 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
+            
             currentProgramNo = val;
             // Persist selection to session for other pages
             $.ajax({
@@ -165,9 +165,11 @@
             $('#hdnJobCode').val('');
             $('#txtSelectedProject').val('');
             $('#for_project').val('');
-            $('#Test_Cost').val('0');
-            $('#BudgetCVL').val('0');
-            $('#Remainder').val('0');
+            $('#Test_Cost').val('0.00');
+            $('#BudgetCVL').val('0.00');
+            $('#Remainder').val('0.00');
+
+             $('#tbl_@Model.TestPlanGrid.GridId tbody').empty();
 
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramTestPlan", new { area = "FPS" })',
@@ -180,7 +182,12 @@
                     }
                 );
             }
-
+             else {
+                // "-- Select Programme --" chosen: restore the page to its
+                // default empty state, matching a fresh page load.
+                $('#managerName').val('');
+                $('#Target').val('');
+            }
             window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
         });
 

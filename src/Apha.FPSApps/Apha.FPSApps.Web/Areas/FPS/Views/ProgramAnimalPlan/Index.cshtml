@@ -163,7 +163,7 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
+            
             currentProgramNo = val;
             // Persist selection to session for other pages
             $.ajax({
@@ -176,9 +176,11 @@
             $('#hdnJobCode').val('');
             $('#txtSelectedProject').val('');
             $('#for_project').val('');
-            $('#Animal_Cost').val('');
-            $('#BudgetCVL').val('0');
-            $('#Remainder').val('0');
+            $('#Animal_Cost').val('0.00');
+            $('#BudgetCVL').val('0.00');
+            $('#Remainder').val('0.00');
+
+            $('#tbl_@Model.AnimalCostGrid.GridId tbody').empty();
 
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramAnimalPlan", new { area = "FPS" })',
@@ -191,7 +193,17 @@
                     }
                 );
             }
+             else {
+                // "-- Select Programme --" chosen: restore the page to its
+                // default empty state, matching a fresh page load.
+                $('#managerName').val('');
+                $('#Target').val('');
+            
 
+            // Reload the Projects grid. With an empty programme the extra filter
+            // sends no programNo, so the grid comes back empty (default state).
+            window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
+            }
             showLoader();
             setTimeout(function () {
                 window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });
