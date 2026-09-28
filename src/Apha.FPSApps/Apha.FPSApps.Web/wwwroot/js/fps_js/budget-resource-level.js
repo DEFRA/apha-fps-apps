@@ -179,7 +179,24 @@ function updatePurchase() {
 // ─── WorkGroup action buttons ────────────────────────────────────────────────
 function sendToExcel() {
     if (!currentProfitCentre) { showAlertMessage('Please select a Resource Centre first.', AlertType.INFO); return; }
-    window.location.href = '/FPS/BudgetResourceLevel/ExportToExcel?profitCentre=' + encodeURIComponent(currentProfitCentre) + '&year=' + currentYear;
+
+    var url = '/FPS/BudgetResourceLevel/ExportToExcel?profitCentre=' + encodeURIComponent(currentProfitCentre) + '&year=' + currentYear;
+    var fileName = 'BudgetBids_' + currentProfitCentre + '_' + currentYear + '.xlsx';
+
+    // Use the shared downloadFile helper: it shows the global loader while the
+    // server generates the workbook and hides it (via .finally) as soon as the
+    // file blob is received and ready to download. This keeps the spinner
+    // running for exactly the generation window and never leaves it stranded.
+    if (typeof window.downloadFile === 'function') {
+        window.downloadFile(url, fileName, { method: 'GET' });
+    } else {
+        var link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', '');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 
 // ─── Submit form fields as JSON ──────────────────────────────────────────────
@@ -276,4 +293,27 @@ $(document).ready(function () {
     var purchaseObserver = new MutationObserver(function () { recalcTotalPurchases(); });
     var purchasesNode = document.getElementById('gridContainer_purchasesGrid');
     if (purchasesNode) purchaseObserver.observe(purchasesNode, { childList: true, subtree: true });
+
+    // ── Page-scoped loader safety net ────────────────────────────────────────
+   
+    if (window.jQuery && typeof hideLoader === 'function') {
+        jQuery(document)
+            .ajaxComplete(function () { hideLoader(); })
+            .ajaxError(function () { hideLoader(); });
+    }
+
+
+    window.setInterval(function () {
+        if (typeof hideLoader !== 'function') return;
+
+        // #loader is position:fixed, so offsetParent is always null even when
+        // shown — use jQuery :visible (display state) to detect it instead.
+        var $loader = window.jQuery ? jQuery('#loader') : null;
+        var visible = $loader && $loader.length && $loader.is(':visible');
+        var ajaxActive = window.jQuery && jQuery.active > 0;
+
+        if (visible && !ajaxActive) {
+            hideLoader();
+        }
+    }, 1000);
 });
