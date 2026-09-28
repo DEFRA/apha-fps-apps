@@ -296,8 +296,6 @@
             return;
         }
 
-        var pendingScan = false;
-
         var observer = new MutationObserver(function (mutations) {
             var hasChanges = mutations.some(function (mutation) {
                 return mutation.type === "childList"
@@ -309,7 +307,7 @@
             // same tick is configured before it is displayed.
             if (hasChanges) {
                 initializeAllSafeModals();
-            });
+            }
         });
 
         observer.observe(document.body, {
