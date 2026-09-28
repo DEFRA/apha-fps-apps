@@ -1,0 +1,154 @@
+--liquibase formatted sql
+
+--changeset repo-admin:CR044 labels:bulk_rates_job context:all
+
+BEGIN;
+
+-- A. Bulk Rates job seed data moved to postdbscripts/cr044_seed_bulk_rates_jobs.sql
+
+-- B. Create the final staging tables (varchar, not citext).
+CREATE TABLE IF NOT EXISTS fps.tblstagingtestorproduct (
+    jobqueueid uuid NOT NULL,
+    testcode varchar(20) NOT NULL,
+    unitpricevla numeric(19,4)  NULL,
+    defraunitprice numeric(19,4)  NULL,
+    fecnewrate numeric(19,4)  NULL,
+    change varchar(30) NULL,
+    itemdescription text NULL,
+    shortdescription text NULL,
+    owner varchar(10) NULL,
+    comments text NULL,
+    validationcomments text NULL,
+    calculated_action varchar(30) NULL,
+    effective_new_rate numeric(19,4)  NULL,
+    source_current_rate numeric(19,4)  NULL,
+    validation_version integer NULL,
+    CONSTRAINT pk_tblstagingtestorproduct
+        PRIMARY KEY (jobqueueid, testcode),
+    CONSTRAINT fk_tblstagingtestorproduct_jobqueue
+        FOREIGN KEY (jobqueueid)
+        REFERENCES fps.job_queue (jobqueueid),
+    CONSTRAINT chk_tblstagingtestorproduct_owner
+        CHECK (owner IS NULL OR owner IN ('PT', 'PA', 'SD', 'LT'))
+);
+
+
+
+CREATE TABLE IF NOT EXISTS fps.tblstagingtlkptestreqmt (
+    jobqueueid uuid NOT NULL,
+    buyer varchar(20) NOT NULL,
+    testcode varchar(20) NOT NULL,
+    unitprice numeric(19,4)  NULL,
+    agrupnewrate numeric(19,4)  NULL,
+    norequired numeric(19,4)  NULL,
+    datecreated timestamp NULL,
+    active boolean NULL,
+    projectbuyercode varchar(50) NULL,
+    testbuyercode varchar(50) NULL,
+    testbuyerworkgroup varchar(50) NULL,
+    comments text NULL,
+    validationcomments text NULL,
+    calculated_action varchar(30) NULL,
+    effective_new_rate numeric(19,4)  NULL,
+    source_current_rate numeric(19,4)  NULL,
+    validation_version integer NULL,
+    CONSTRAINT pk_tblstagingtlkptestreqmt
+        PRIMARY KEY (jobqueueid, buyer, testcode),
+    CONSTRAINT fk_tblstagingtlkptestreqmt_jobqueue
+        FOREIGN KEY (jobqueueid)
+        REFERENCES fps.job_queue (jobqueueid)
+);
+
+
+CREATE TABLE IF NOT EXISTS fps.tblstagingprofitcentregrade (
+    jobqueueid uuid NOT NULL,
+    pcgrade varchar(20) NOT NULL,
+    currentrate numeric(19,4)  NULL,
+    newrate numeric(19,4)  NULL,
+    comments text NULL,
+    validationcomments text NULL,
+    CONSTRAINT pk_tblstagingprofitcentregrade
+        PRIMARY KEY (jobqueueid, pcgrade),
+    CONSTRAINT fk_tblstagingprofitcentregrade_jobqueue
+        FOREIGN KEY (jobqueueid)
+        REFERENCES fps.job_queue (jobqueueid)
+);
+
+
+CREATE TABLE IF NOT EXISTS fps.tblstaginganimals (
+    jobqueueid uuid NOT NULL,
+    animaltype varchar(50) NOT NULL,
+    currentrate numeric(19,4)  NULL,
+    newrate numeric(19,4)  NULL,
+    comments text NULL,
+    validationcomments text NULL,
+    CONSTRAINT pk_tblstaginganimals
+        PRIMARY KEY (jobqueueid, animaltype),
+    CONSTRAINT fk_tblstaginganimals_jobqueue
+        FOREIGN KEY (jobqueueid)
+        REFERENCES fps.job_queue (jobqueueid)
+);
+
+
+-- The invalid cross-staging AGRUP-to-FEC FK is deliberately absent.
+ALTER TABLE fps.tblstagingtlkptestreqmt
+    DROP CONSTRAINT IF EXISTS fk_stagingtlkptestreqmt_test_parent;
+
+-- C. Validation and permanent change audit.
+CREATE TABLE IF NOT EXISTS fps.rate_change_history (
+    ratechangehistoryid bigserial PRIMARY KEY,
+    jobqueueid uuid NOT NULL,
+    jobexecutionid uuid NULL,
+    ratecategory varchar(20) NOT NULL,
+    businesskey text NOT NULL,
+    fieldname varchar(100) NOT NULL,
+    operationtype varchar(20) NOT NULL,
+    oldvalue text NULL,
+    newvalue text NULL,
+    changedby varchar(100) NULL,
+    changedatutc timestamptz NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_rate_change_history_jobqueue
+        FOREIGN KEY (jobqueueid)
+        REFERENCES fps.job_queue (jobqueueid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_change_history_jobqueueid
+    ON fps.rate_change_history (jobqueueid);
+
+CREATE INDEX IF NOT EXISTS idx_rate_change_history_businesskey
+    ON fps.rate_change_history (ratecategory, businesskey);
+
+
+CREATE TABLE IF NOT EXISTS fps.staging_validation_error (
+    validationerrorid bigserial PRIMARY KEY,
+    jobqueueid uuid NOT NULL,
+    upload_version integer NOT NULL,
+    sheetname varchar(20) NULL,
+    sourcerownumber integer NULL,
+    testcode varchar(50) NULL,
+    buyer varchar(50) NULL,
+    fieldname varchar(100) NULL,
+    validationcode varchar(100) NOT NULL,
+    severity varchar(10) NOT NULL,
+    validationmessage text NOT NULL,
+    currentvalue text NULL,
+    expectedvalue text NULL,
+    is_request_level boolean NOT NULL DEFAULT false,
+    created_at_utc timestamptz NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_staging_validation_error_jobqueue
+        FOREIGN KEY (jobqueueid)
+        REFERENCES fps.job_queue (jobqueueid),
+    CONSTRAINT chk_staging_validation_error_severity
+        CHECK (severity IN ('Error', 'Warning', 'Info'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_staging_validation_error_jobqueue_upload
+    ON fps.staging_validation_error (jobqueueid, upload_version);
+
+CREATE INDEX IF NOT EXISTS idx_staging_validation_error_blocking
+    ON fps.staging_validation_error (jobqueueid, severity)
+    WHERE severity = 'Error';
+
+COMMIT;
+
+--ROLLBACK
