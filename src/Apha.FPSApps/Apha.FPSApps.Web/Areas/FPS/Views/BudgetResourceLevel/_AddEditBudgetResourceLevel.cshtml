@@ -292,6 +292,79 @@
                     setAccountExpanded(false);
                 }
             });
+
+            // --- Accessibility enhancement for account rows (kept separate from
+            // the existing rendering/selection logic above so that code is not modified) ---
+            function enhanceAccountRowAccessibility() {
+                var body = document.getElementById('accountTableBody');
+                if (!body) return;
+
+                var rows = body.querySelectorAll('.account-row');
+                rows.forEach(function (row) {
+                    if (row.hasAttribute('data-a11y-enhanced')) return;
+
+                    var cells = row.querySelectorAll('td');
+                    var accShortName = cells[0] ? cells[0].textContent : '';
+                    var accountDescription = cells[1] ? cells[1].textContent : '';
+                    var constituentCodes = cells[2] ? cells[2].textContent : '';
+
+                    row.setAttribute('tabindex', '0');
+                    row.setAttribute('role', 'option');
+                    row.setAttribute('aria-label',
+                        'Account Short Name: ' + accShortName +
+                        ', Account Description: ' + accountDescription +
+                        ', Constituent Account Codes: ' + constituentCodes);
+                    row.setAttribute('data-a11y-enhanced', 'true');
+
+                    row.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            selectAccount(row);
+                            return;
+                        }
+
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            var allRows = Array.prototype.slice.call(
+                                body.querySelectorAll('.account-row')
+                            );
+                            var idx = allRows.indexOf(row);
+                            var nextIdx = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
+                            if (nextIdx >= 0 && nextIdx < allRows.length) {
+                                allRows[nextIdx].focus();
+                            } else if (nextIdx >= allRows.length && renderedAccountCount < visibleAccounts.length) {
+                                renderMoreAccountRows(ACCOUNT_ROW_CHUNK_SIZE);
+                                var refreshedRows = body.querySelectorAll('.account-row');
+                                if (refreshedRows[nextIdx]) refreshedRows[nextIdx].focus();
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Watch the account row body for re-renders (search/filter/lazy-load)
+            // and re-apply accessibility attributes without altering existing rendering code.
+            var accountRowObserver = new MutationObserver(function () {
+                enhanceAccountRowAccessibility();
+            });
+            var accountTableBodyEl = document.getElementById('accountTableBody');
+            if (accountTableBodyEl) {
+                accountRowObserver.observe(accountTableBodyEl, { childList: true });
+            }
+
+            // Event: ArrowDown from the search box moves focus into the first row
+            var accountSearchInput = document.getElementById('accountSearch');
+            if (accountSearchInput) {
+                accountSearchInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'ArrowDown') {
+                        var firstRow = document.querySelector('#accountTableBody .account-row');
+                        if (firstRow) {
+                            e.preventDefault();
+                            firstRow.focus();
+                        }
+                    }
+                });
+            }
         </script>
     }
     else

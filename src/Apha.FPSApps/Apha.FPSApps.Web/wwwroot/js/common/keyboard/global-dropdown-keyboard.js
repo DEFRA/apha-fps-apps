@@ -341,7 +341,13 @@
         );
 
         var bodyRows = table.querySelectorAll('tbody tr');
+        var rowNumber = 0;
         Array.prototype.forEach.call(bodyRows, function (row) {
+            // Every row - including single-cell placeholder rows - counts
+            // towards the row number, so numbering stays in sync with the
+            // row's actual position in the table.
+            rowNumber++;
+
             if (row.getAttribute('data-a11y-row') === 'true') return;
             row.setAttribute('data-a11y-row', 'true');
 
@@ -354,13 +360,16 @@
             if (!cells.length) return;
 
             // A single full-width cell is a placeholder such as
-            // "No records found." - announce it as-is.
+            // "No records found." - announce it as-is, still prefixed with
+            // its row number.
             if (cells.length === 1) {
                 var onlyCell = cells[0];
                 var onlyValue = (onlyCell.textContent || '').trim();
                 if (!onlyValue) return;
                 if (!onlyCell.hasAttribute('tabindex')) onlyCell.setAttribute('tabindex', '0');
-                if (!onlyCell.hasAttribute('aria-label')) onlyCell.setAttribute('aria-label', onlyValue);
+                if (!onlyCell.hasAttribute('aria-label')) {
+                    onlyCell.setAttribute('aria-label', 'Row ' + rowNumber + ', ' + onlyValue);
+                }
                 return;
             }
 
@@ -369,6 +378,7 @@
                 if (!value) return;
                 var header = headers[index] || '';
                 var label = header ? header + ': ' + value : value;
+                label = 'Row ' + rowNumber + ', ' + label;
 
                 if (!cell.hasAttribute('tabindex')) cell.setAttribute('tabindex', '0');
                 if (!cell.hasAttribute('aria-label')) cell.setAttribute('aria-label', label);
@@ -3111,4 +3121,51 @@
     // Capture on window: runs before any document-level capture listener,
     // regardless of script order.
     window.addEventListener('keydown', handleGridArrowKey, true);
+})();
+
+// ── Ensure every ".btn-close" has an accessible name ─────────────────────────
+// Bootstrap's real .btn-close markup renders an empty button with a CSS
+// background-image icon and relies entirely on aria-label="Close" for its
+// accessible name. Several modal partials across the app instead put a
+// visible glyph ("×"/"x"/"X") inside the button and never set aria-label, so
+// screen readers compute the accessible name from that character - e.g. NVDA
+// announces "times, button" instead of "Close, button".
+//
+// This runs globally (rather than editing every partial) so any current or
+// future ".btn-close"/"[data-bs-dismiss='modal']" button is covered,
+// including ones injected later via AJAX-loaded modal content. It only adds
+// aria-label when one isn't already present, so buttons that already carry a
+// deliberate custom label are left untouched.
+(function () {
+    'use strict';
+
+    function labelCloseButtons(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        Array.prototype.forEach.call(
+            scope.querySelectorAll('.btn-close, [data-bs-dismiss="modal"]'),
+            function (btn) {
+                if (!btn.hasAttribute('aria-label') && !btn.hasAttribute('aria-labelledby')) {
+                    btn.setAttribute('aria-label', 'Close');
+                }
+            }
+        );
+    }
+
+    labelCloseButtons(document);
+
+    // Modal bodies/partials are frequently swapped in via AJAX after initial
+    // page load, so keep watching for newly added close buttons.
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                if (!node || node.nodeType !== 1) return;
+                if (node.matches && (node.matches('.btn-close') || node.matches('[data-bs-dismiss="modal"]'))) {
+                    labelCloseButtons(node.parentElement || document);
+                } else if (node.querySelector && node.querySelector('.btn-close, [data-bs-dismiss="modal"]')) {
+                    labelCloseButtons(node);
+                }
+            });
+        });
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 })();

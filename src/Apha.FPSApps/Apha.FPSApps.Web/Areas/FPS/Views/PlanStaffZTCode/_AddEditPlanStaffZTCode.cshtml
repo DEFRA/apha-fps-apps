@@ -184,6 +184,14 @@
             showPanel();
         });
 
+        // Event: open dropdown panel via keyboard (Enter/Space)
+        document.getElementById('JobCode').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showPanel();
+            }
+        });
+
         // Event: filter as user types (debounced)
         document.getElementById('modal-zt-code-search').addEventListener('input', function (e) {
             var value = e.target.value;
@@ -226,6 +234,66 @@
             var wrapper = document.querySelector('.tableselectdropdown');
             if (wrapper && !wrapper.contains(e.target)) {
                 hidePanel();
+            }
+        });
+
+        // --- Accessibility enhancement for ZT code rows (kept separate from
+        // the existing rendering/selection logic above so that code is not modified) ---
+        function enhanceZtRowAccessibility() {
+            var body = document.getElementById('modal-zt-code-body');
+            if (!body) return;
+
+            var rows = body.querySelectorAll('tr[data-zt-index]');
+            rows.forEach(function (row) {
+                if (row.hasAttribute('data-a11y-enhanced')) return;
+
+                var cells = row.querySelectorAll('td');
+                var code = cells[0] ? cells[0].textContent : '';
+                var description = cells[1] ? cells[1].textContent : '';
+
+                row.setAttribute('tabindex', '0');
+                row.setAttribute('role', 'option');
+                row.setAttribute('aria-label', 'ZT Code: ' + code + ', ZT Description: ' + description);
+                row.setAttribute('data-a11y-enhanced', 'true');
+
+                row.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        row.click();
+                        document.getElementById('JobCode').focus();
+                        return;
+                    }
+
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        var allRows = Array.prototype.slice.call(
+                            body.querySelectorAll('tr[data-zt-index]')
+                        );
+                        var idx = allRows.indexOf(row);
+                        var nextIdx = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
+                        if (nextIdx >= 0 && nextIdx < allRows.length) {
+                            allRows[nextIdx].focus();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Watch the row body for re-renders (search/filter) and re-apply
+        // accessibility attributes without altering the existing rendering code.
+        var ztRowObserver = new MutationObserver(function () {
+            enhanceZtRowAccessibility();
+        });
+        ztRowObserver.observe(document.getElementById('modal-zt-code-body'), { childList: true });
+
+        // Event: ArrowDown from the search box moves focus into the first row
+        document.getElementById('modal-zt-code-search').addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown') {
+                var firstRow = document.querySelector('#modal-zt-code-body tr[data-zt-index]');
+                if (firstRow) {
+                    e.preventDefault();
+                    firstRow.focus();
+                }
             }
         });
     })();
