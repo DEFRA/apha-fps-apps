@@ -99,6 +99,11 @@
                 <a asp-area="PACT" asp-controller="WorkGroupTestCapability" asp-action="Index" asp-route-workGroup="@ViewBag.SourceWorkGroup"
                    class="govuk-back-link sup_align_right">Back</a>
                 }
+             @if ((ViewBag.NavigationSource as string) == "TestCapability")
+                {
+                 <a asp-area="PACT" asp-controller="TestCapability" asp-action="Index"
+                     class="govuk-back-link sup_align_right">Back</a>
+                }
         </div>
     </div>
 </div>
@@ -210,10 +215,8 @@
                                 <label class="govuk-label govuk-!-font-weight-bold" asp-for="CurrentPortfolio.ProjectManager">
                                     Manager
                                 </label>
-                                <select class="govuk-select govuk-!-font-size-16" asp-for="CurrentPortfolio.ProjectManager"
-                                        id="dpManager" asp-items="Model.Managers" style="width:100%;">
-                                    <option value="">--select--</option>
-                                </select>
+                                <div id="managerSelectMultiDropdown" class="govuk-grid-column-two-thirds sup_p_0" style="width:100%;"></div>
+                                <input type="hidden" asp-for="CurrentPortfolio.ProjectManager" id="dpManager" />
                                 <span asp-validation-for="CurrentPortfolio.ProjectManager" class="govuk-error-message"></span>
                             </div>
                         </div>
@@ -313,6 +316,7 @@
         const portfolioOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
         const preselectedPortfolio = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.SelectedPortfolio as string ?? string.Empty));
         const programOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Programs));
+        const managerOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Managers));
         const testCodeOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TestorProducts));
     </script>
     <script src="~/js/ajax-form-validation.js"></script>

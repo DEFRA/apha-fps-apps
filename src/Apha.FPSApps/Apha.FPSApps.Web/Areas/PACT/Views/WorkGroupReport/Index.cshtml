@@ -49,26 +49,8 @@
             <label class="govuk-label govuk-label--l govuk-!-margin-bottom-1" for="SelectedProfitCentre">
                 Profit Centre:
             </label>
-            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                    id="SelectedProfitCentre"
-                    name="SelectedProfitCentre">
-                @{ var isFirstPc = true; }
-                @foreach (var pc in Model.ProfitCentreOptions)
-                {
-                    var isSelected = (!string.IsNullOrEmpty(Model.SelectedProfitCentre))
-                        ? Model.SelectedProfitCentre == pc.Value
-                        : isFirstPc;
-                    isFirstPc = false;
-                    if (isSelected)
-                    {
-                        <option value="@pc.Value" selected>@pc.Text</option>
-                    }
-                    else
-                    {
-                        <option value="@pc.Value">@pc.Text</option>
-                    }
-                }
-            </select>
+            <div id="profitCentreMultiDropdown" class="sup_select_option_width_100"></div>
+            <input type="hidden" id="SelectedProfitCentre" name="SelectedProfitCentre" value="@Model.SelectedProfitCentre" />
         </div>
 
         <div class="govuk-form-group govuk-!-margin-bottom-0">
@@ -332,6 +314,16 @@
                 });
             });
         }());
+
+        // Initialize Profit Centre multi-column dropdown for this page
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeProfitCentreDropdown({
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProfitCentreOptions.Select(pc => new { pc.Value, pc.Text }))),
+                selectedValue: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProfitCentre ?? string.Empty))
+            });
+        });
     </script>
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script src="~/js/pact_js/work-group-report.js"></script>
 }

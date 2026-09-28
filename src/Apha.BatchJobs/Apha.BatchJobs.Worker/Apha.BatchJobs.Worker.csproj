@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Apha.BatchJobs.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- local-only secrets file; gitignored, never published -->
     <None Update="appsettings.Local.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

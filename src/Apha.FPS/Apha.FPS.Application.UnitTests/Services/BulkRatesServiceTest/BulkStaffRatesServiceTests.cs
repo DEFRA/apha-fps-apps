@@ -74,17 +74,40 @@ public class BulkStaffRatesServiceTests
 
     // ── Negative rates ───────────────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData(-1, null, null, "payrate")]
-    [InlineData(null, -1, null, "npr")]
-    [InlineData(null, null, -1, "ohr")]
-    public async Task NegativeRate_IsBlockingError(int? pay, int? npr, int? ohr, string expectedField)
+    [Fact]
+    public async Task ExistingGrade_PositiveToNegativeRate_ClassifiesAsUpdate()
+    {
+        var repo = RepoWith([LiveStaff("G1", 10, 5, 2)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(ParseResult(staff: [Staff("G1", -10, 5, 2)]), FpsYear, 1);
+
+        result.Errors.Should().NotContain(e => e.ValidationCode == "NEGATIVE_RATE");
+        result.RowCounts.Update.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExistingGrade_SameNegativeRate_ClassifiesAsNoChange()
+    {
+        var repo = RepoWith([LiveStaff("G1", -10, 5, 2)]);
+        var sut = CreateService(repo);
+
+        var result = await sut.ProcessUploadAsync(ParseResult(staff: [Staff("G1", -10, 5, 2)]), FpsYear, 1);
+
+        result.RowCounts.Unchanged.Should().Be(1);
+        result.RowCounts.Update.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task UnknownPcGrade_NegativeRate_IsNotFound_NotInsert()
     {
         var sut = CreateService(RepoWith());
 
-        var result = await sut.ProcessUploadAsync(ParseResult(staff: [Staff("G1", pay, npr, ohr)]), FpsYear, 1);
+        var result = await sut.ProcessUploadAsync(ParseResult(staff: [Staff("UNKNOWN", -10)]), FpsYear, 1);
 
-        result.Errors.Should().ContainSingle(e => e.ValidationCode == "NEGATIVE_RATE" && e.FieldName == expectedField);
+        result.Errors.Should().ContainSingle(e => e.ValidationCode == "GRADE_NOT_FOUND");
+        result.RowCounts.Insert.Should().Be(0);
+        result.RowCounts.Invalid.Should().Be(1);
     }
 
     // ── NotFound (update-only — no insert path) ───────────────────────────────────

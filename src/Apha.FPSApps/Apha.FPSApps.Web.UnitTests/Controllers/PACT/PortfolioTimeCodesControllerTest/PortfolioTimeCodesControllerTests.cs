@@ -7,7 +7,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -1132,7 +1132,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             Assert.Equal("TestPurchaseRequirement", redirectResult.ControllerName);
             Assert.Equal("PACT", redirectResult.RouteValues!["area"]);
             Assert.Equal(parentProject, redirectResult.RouteValues["parentProject"]);
-            Assert.Equal("2024", redirectResult.RouteValues["year"]);
+            Assert.Equal("2024", redirectResult.RouteValues["fpsContextYear"]);
             Assert.Equal("PortfolioTimeCodes", _controller.TempData["PactOrigin"]);
         }
 
@@ -1154,7 +1154,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioTimeCodesControll
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirectResult.ActionName);
             Assert.Equal("TestPurchaseRequirement", redirectResult.ControllerName);
-            Assert.Equal("2025", redirectResult.RouteValues!["year"]);
+            Assert.Equal("2025", redirectResult.RouteValues!["fpsContextYear"]);
             Assert.Equal("PortfolioTimeCodes", _controller.TempData["PactOrigin"]);
         }
 

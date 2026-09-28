@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.DataAccess.Data;
 using Apha.PIMS.DataAccess.Repository;
@@ -11,7 +11,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
     {
         /// <summary>
         /// Creates a ProjectDetailsRepository with in-memory data for all DbSets.
-        /// All parameters are optional â€” omitted sets are initialised as empty.
+        /// All parameters are optional — omitted sets are initialised as empty.
         /// </summary>
         private static ProjectDetailsRepository CreateRepository(
             IEnumerable<ProjectRadTrackData>? radtrackData = null,
@@ -84,7 +84,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             return (repo, radtrackDataMockSet, proposedProjectsMockSet, mockContext);
         }
 
-        #region GetPimsDetailAsync â€” field mapping
+        #region GetPimsDetailAsync — field mapping
 
         [Fact]
         public async Task GetPimsDetailAsync_ReturnsProjectDetail_WhenParentprojectExists()
@@ -130,7 +130,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
         [Fact]
         public async Task GetPimsDetailAsync_ReturnsNullRiskid_WhenRiskidIsNull()
         {
-            // Arrange â€” Riskid is null on the radtrack record
+            // Arrange — Riskid is null on the radtrack record
             var radtrackData = new List<ProjectRadTrackData>
             {
                 new() { Parentproject = "PP001", Riskid = null, Useprojectyear = 0 }
@@ -169,7 +169,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
 
         #endregion
 
-        #region GetPimsDetailAsync â€” not found cases
+        #region GetPimsDetailAsync — not found cases
 
         [Fact]
         public async Task GetPimsDetailAsync_ReturnsNull_WhenParentprojectDoesNotExist()
@@ -222,7 +222,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
 
         #endregion
 
-        #region AddPimsDetailAsync â€” return value & side effects
+        #region AddPimsDetailAsync — return value & side effects
 
         [Fact]
         public async Task AddPimsDetailAsync_AddsEntityAndReturnsIt()
@@ -280,7 +280,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
 
         #endregion
 
-        #region AddPimsDetailAsync â€” ProjectRadTrackData field mapping
+        #region AddPimsDetailAsync — ProjectRadTrackData field mapping
 
         [Fact]
         public async Task AddPimsDetailAsync_MapsAllFields_ToProjectRadTrackData()
@@ -408,7 +408,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
 
         #endregion
 
-        #region UpdatePimsDetailAsync â€” when record exists
+        #region UpdatePimsDetailAsync — when record exists
 
         [Fact]
         public async Task UpdatePimsDetailAsync_UpdatesAllFields_WhenExistingRecordFound()
@@ -535,7 +535,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
         [Fact]
         public async Task UpdatePimsDetailAsync_SetsNullRiskid_WhenRiskidIsNull()
         {
-            // Arrange â€” existing record has a non-null Riskid; update clears it when Riskid is null
+            // Arrange — existing record has a non-null Riskid; update clears it when Riskid is null
             var existingRecord = new ProjectRadTrackData { Parentproject = "PP001", Useprojectyear = 0, Riskid = 3 };
             var repo = CreateRepository(radtrackData: new List<ProjectRadTrackData> { existingRecord });
             var entity = new ProjectDetail
@@ -554,7 +554,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
 
         #endregion
 
-        #region UpdatePimsDetailAsync â€” when record does not exist
+        #region UpdatePimsDetailAsync — when record does not exist
 
         [Fact]
         public async Task UpdatePimsDetailAsync_ReturnsEntityUnchanged_WhenRecordNotFound()
@@ -686,7 +686,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
                 Disease       = "FMD"
             };
 
-            // Act â€” transferTo same as Parentproject â†’ takes the Update/SaveChanges branch
+            // Act — transferTo same as Parentproject ? takes the Update/SaveChanges branch
             var result = await repo.UpdateProposedProjectAsync(entity, "PP001");
 
             // Assert
@@ -703,7 +703,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             var (repo, _, proposedProjectsDbSet, _) = CreateRepositoryWithMocks();
             var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
 
-            // Act â€” transferTo same as Parentproject â†’ Update should be called
+            // Act — transferTo same as Parentproject ? Update should be called
             await repo.UpdateProposedProjectAsync(entity, "PP001");
 
             // Assert
@@ -717,7 +717,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
             var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
 
-            // Act â€” transferTo same as Parentproject â†’ SaveChanges should be called
+            // Act — transferTo same as Parentproject ? SaveChanges should be called
             await repo.UpdateProposedProjectAsync(entity, "PP001");
 
             // Assert
@@ -727,11 +727,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
         [Fact]
         public async Task UpdateProposedProjectAsync_WhenTransferToDiffers_CallsDbSetUpdateBeforeTransferBranch()
         {
-            // Arrange â€” repository now updates/saves non-parent fields before transfer logic.
+            // Arrange — repository now updates/saves non-parent fields before transfer logic.
             var (repo, _, proposedProjectsDbSet, _) = CreateRepositoryWithMocks();
             var entity = new ProposedProject { Id = 1, Parentproject = "PP001" };
 
-            // Act + Assert â€” transfer branch still throws in this unit-test setup,
+            // Act + Assert — transfer branch still throws in this unit-test setup,
             // but initial ProposedProjects.Update should already have been called.
             await Assert.ThrowsAnyAsync<Exception>(() =>
                 repo.UpdateProposedProjectAsync(entity, "PP002"));

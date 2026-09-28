@@ -18,6 +18,7 @@
                        asp-for="WorkGroupGrade"
                        id="ssrEditGradeCode"
                        type="text"
+                       aria-label="Grade Code"
                        readonly />
             </div>
         </div>
@@ -28,6 +29,7 @@
                        asp-for="SpNumber"
                        id="ssrEditSpNo"
                        type="text"
+                       aria-label="SP No"
                        readonly />
             </div>
         </div>
@@ -40,6 +42,7 @@
                        asp-for="Name"
                        id="ssrEditName"
                        type="text"
+                       aria-label="Name"
                        readonly />
             </div>
         </div>
@@ -50,6 +53,7 @@
                        asp-for="HrsPaid"
                        id="ssrEditHrsPaid"
                        type="text"
+                       aria-label="Hrs Paid"
                        maxlength="20" />
                 <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -63,6 +67,7 @@
                        asp-for="Leave"
                        id="ssrEditLeave"
                        type="text"
+                       aria-label="Leave"
                        maxlength="20" />
                 <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -74,6 +79,7 @@
                        asp-for="SickSpecial"
                        id="ssrEditSickSp"
                        type="text"
+                       aria-label="Sick Sp"
                        maxlength="20" />
                 <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -88,6 +94,7 @@
                        id="ssrEditAtWork"
                        type="text"
                        maxlength="20"
+                       aria-label="At Work"
                        readonly />
             </div>
         </div>
@@ -98,6 +105,7 @@
                         <input class="govuk-checkboxes__input"
                                id="ssrEditPlanable"
                                type="checkbox"
+                               aria-label="Planable"
                                @(Model.MakeAvailable != 0 ? "checked" : "") />
                         <label class="govuk-checkboxes__label govuk-!-font-weight-bold govuk-!-font-size-16" for="ssrEditPlanable">Planable</label>
                     </div>

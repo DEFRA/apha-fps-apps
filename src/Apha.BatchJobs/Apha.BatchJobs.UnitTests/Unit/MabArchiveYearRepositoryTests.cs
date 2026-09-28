@@ -9,8 +9,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class MabArchiveYearRepositoryTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
-
     [Fact]
     public void Constructor_WhenContextIsNull_ShouldThrowArgumentNullException()
     {
@@ -132,7 +130,7 @@ public sealed class MabArchiveYearRepositoryTests
         Assert.Equal(new[] { 1, 2, 3 }, executionOrder);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task DeleteYearDataAsync_WhenYearHasNoRows_ShouldReturnZero_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -163,7 +161,7 @@ public sealed class MabArchiveYearRepositoryTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => subject.DeleteYearDataAsync(2026, CancellationToken.None));
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RefreshProjectsOnlyAsync_WhenLoader24ReturnsRows_ShouldReturnRows_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -275,13 +273,13 @@ public sealed class MabArchiveYearRepositoryTests
     private static string GetConnectionString()
     {
         return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
         var canConnect = await context.Database.CanConnectAsync();
-        Assert.True(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
+        Skip.IfNot(canConnect, "Integration DB unavailable for MabArchiveYearRepositoryTests.");
     }
 
     private static List<IMabArchiveLoader> CreateSequentialLoaders(int start, int end)

@@ -1,11 +1,11 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -127,16 +127,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookAccount
             await _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
         }
 
-        [Fact]
-        public async Task Methods_OnHttpException_ReturnsFailureWithInternalError()
-        {
-            _http.GetAsync<List<AccountGroupRes>>(Arg.Any<string>()).Throws(new Exception("boom"));
-
-            var result = await _client.GetAllAccountGroupsAsync();
-
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Contains(result.Errors!, e => e.Code == "INTERNAL_ERROR");
-        }
+        
     }
 }

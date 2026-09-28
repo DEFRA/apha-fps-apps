@@ -6,7 +6,8 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Mappings;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
@@ -332,8 +333,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRCCostApiClie
         [Fact]
         public void FpsApiDtoMapper_TestRCCostDto_MapsToResAndReq()
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsApiDtoMapper>(), NullLoggerFactory.Instance);
-            var mapper = config.CreateMapper();
+            var config = new TypeAdapterConfig();
+            config.Scan(typeof(FpsApiDtoMapper).Assembly);
+            var mapper = new ServiceMapper(null!, config);
 
             var dto = new TestRCCostDto { TestCode = "T001", ProfitCentre = "PC01", FpsYear = 2025 };
 

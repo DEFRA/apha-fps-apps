@@ -1,11 +1,11 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -101,7 +101,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
         }
 
         [Fact]
-        public async Task GetPimsDetailAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task GetPimsDetailAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var parentproject = "PP001";
@@ -109,10 +109,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
             var apiResponse = new ApiResponse<ProjectDetailRes> { Success = true, Data = new ProjectDetailRes { Parentproject = parentproject } };
 
             _http.GetAsync<ProjectDetailRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProjectDetailDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<ProjectDetailDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetPimsDetailAsync(parentproject));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetPimsDetailAsync(parentproject));
         }
 
         [Fact]
@@ -221,15 +221,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
         }
 
         [Fact]
-        public async Task SavePimsDetailAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsAutoMapperMappingException()
+        public async Task SavePimsDetailAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsInvalidOperationException()
         {
             // Arrange
             var parentproject = "PP001";
             var dto = new ProjectDetailDto { Parentproject = parentproject };
-            _mapper.Map<ProjectDetailReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ProjectDetailReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.SavePimsDetailAsync(parentproject, dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.SavePimsDetailAsync(parentproject, dto));
         }
 
         [Fact]
@@ -336,7 +336,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
         }
 
         [Fact]
-        public async Task GetProposedProjectAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task GetProposedProjectAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var parentproject = "PP001";
@@ -344,10 +344,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
             var apiResponse = new ApiResponse<ProposedProjectRes> { Success = true, Data = new ProposedProjectRes { Parentproject = parentproject } };
 
             _http.GetAsync<ProposedProjectRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProposedProjectDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<ProposedProjectDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetProposedProjectAsync(parentproject));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetProposedProjectAsync(parentproject));
         }
 
         [Fact]
@@ -456,15 +456,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
         }
 
         [Fact]
-        public async Task UpdateProposedProjectAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsAutoMapperMappingException()
+        public async Task UpdateProposedProjectAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsInvalidOperationException()
         {
             // Arrange
             var parentproject = "PP001";
             var dto = new ProposedProjectDto { Parentproject = parentproject };
-            _mapper.Map<ProposedProjectReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ProposedProjectReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.UpdateProposedProjectAsync(parentproject, dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.UpdateProposedProjectAsync(parentproject, dto));
         }
 
         [Fact]
@@ -598,7 +598,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
         }
 
         [Fact]
-        public async Task GetAllRiskAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task GetAllRiskAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<RiskRes>>
@@ -608,10 +608,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
             };
 
             _http.GetAsync<List<RiskRes>>(PimsApiEndpoints.GetAllRisks).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<RiskDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<RiskDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetAllRiskAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllRiskAsync());
         }
 
         [Fact]
@@ -739,7 +739,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
         }
 
         [Fact]
-        public async Task GetAllYearAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task GetAllYearAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<YearRes>>
@@ -749,10 +749,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectDetailsA
             };
 
             _http.GetAsync<List<YearRes>>(PimsApiEndpoints.GetAllYears).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<YearDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetAllYearAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllYearAsync());
         }
 
         [Fact]

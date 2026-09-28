@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +18,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Diseases
                 .AsNoTracking()
+                .OrderBy(d => d.DiseaseName)
                 .ToListAsync();
         }
     }

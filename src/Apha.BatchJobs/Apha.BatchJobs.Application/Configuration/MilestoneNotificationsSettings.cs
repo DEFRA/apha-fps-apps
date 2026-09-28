@@ -14,10 +14,9 @@ public class MilestoneNotificationsSettings
     public string? SupportContact { get; set; }
 
     /// <summary>
-    /// Base URL for the FPS application — used by MilestoneLinkBuilder as a fallback
-    /// path when the view's EditLink value is unavailable (plan section 9.2).
-    /// Must begin with "https://" — validated at job start (plan section 22).
-    /// Inert when the EditLink path is in use.
+    /// Authoritative base URL used by MilestoneEditLinkBuilder to build PM milestone edit
+    /// links (ApplicationBaseUrl + ParentProject). Must be an absolute https URI ending in
+    /// the expected query parameter — validated at job start.
     /// </summary>
     public string? ApplicationBaseUrl { get; set; }
 

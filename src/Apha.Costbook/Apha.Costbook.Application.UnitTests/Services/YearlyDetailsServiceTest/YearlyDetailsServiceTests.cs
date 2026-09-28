@@ -6,7 +6,8 @@ using Apha.Costbook.Application.Validation;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
-using AutoMapper;
+using Apha.Costbook.DataAccess;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.Costbook.Application.UnitTests.Services.YearlyDetailsServiceTest;
@@ -19,7 +20,7 @@ public class YearlyDetailsServiceTests
     private readonly ITestRequirementRepository _testRepo;
     private readonly IAnimalRequirementRepository _animalRepo;
     private readonly IAdditionalCostRepository _additionalCostRepo;
-    private readonly ISettingsService _settingsService;
+    private readonly ISettingsRepository _settingsRepository;
     private readonly IMapper _mapper;
     private readonly YearlyDetailsService _sut;
 
@@ -31,13 +32,44 @@ public class YearlyDetailsServiceTests
         _testRepo = Substitute.For<ITestRequirementRepository>();
         _animalRepo = Substitute.For<IAnimalRequirementRepository>();
         _additionalCostRepo = Substitute.For<IAdditionalCostRepository>();
-        _settingsService = Substitute.For<ISettingsService>();
+        _settingsRepository = Substitute.For<ISettingsRepository>();
         _mapper = Substitute.For<IMapper>();
 
         _sut = new YearlyDetailsService(
             _projectRepo, _projectYearRepo, _staffRepo,
-            _testRepo, _animalRepo, _additionalCostRepo, _settingsService, _mapper);
+            _testRepo, _animalRepo, _additionalCostRepo, _settingsRepository, _mapper);
     }
+
+    #region GetSettingsAsync
+
+    [Fact]
+    public async Task GetSettingsAsync_ReturnsMappedSettings()
+    {
+        var settings = new List<Apha.Costbook.DataAccess.Settings>
+        {
+            new() { Id = "InflationAnimals", Setting = "2.5" },
+            new() { Id = "InflationExceptional", Setting = "1.8" },
+            new() { Id = "InflationStaff", Setting = "3.0" },
+            new() { Id = "InflationTests", Setting = "2.0" },
+            new() { Id = "CurrentYear", Setting = "2024" },
+            new() { Id = "HoursInDay", Setting = "7.4" },
+            new() { Id = "DaysInYear", Setting = "220" },
+            new() { Id = "Profitanimals", Setting = "15.0" },
+            new() { Id = "ProfitExceptional", Setting = "12.5" },
+            new() { Id = "Profitstaff", Setting = "10.0" },
+            new() { Id = "Profittests", Setting = "8.0" }
+        };
+
+        _settingsRepository.GetAllUserUpdatableAsync().Returns(Task.FromResult(settings));
+
+        var result = await _sut.GetSettingsAsync();
+
+        Assert.Equal(2.5m, result.InflationAnimals);
+        Assert.Equal(2024, result.CurrentFinancialYear);
+        await _settingsRepository.Received(1).GetAllUserUpdatableAsync();
+    }
+
+    #endregion
 
     #region GetProjectHeaderAsync
 
@@ -345,6 +377,7 @@ public class YearlyDetailsServiceTests
         var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
         var entity = new TestRequirement { TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 };
 
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(false);
         _mapper.Map<TestRequirement>(dto).Returns(entity);
         _testRepo.AddTestRequirementAsync(entity).Returns(entity);
 
@@ -365,6 +398,7 @@ public class YearlyDetailsServiceTests
         var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, UnitPrice = 100, NumberOfTests = 5, TestCost = 500 };
         var entity = new TestRequirement { TestCode = "TC001" };
 
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(true);
         _mapper.Map<TestRequirement>(dto).Returns(entity);
         _testRepo.UpdateTestRequirementAsync(entity).Returns(entity);
 
@@ -372,6 +406,28 @@ public class YearlyDetailsServiceTests
 
         Assert.Equal("TC001", result.TestCode);
         await _testRepo.Received(1).UpdateTestRequirementAsync(entity);
+    }
+
+    [Fact]
+    public async Task UpdateTestRequirementAsync_ThrowsValidation_WhenTestCodeDoesNotExist()
+    {
+        var dto = new TestRequirementDto
+        {
+            TestCode = "TC404",
+            Project = "2024%2F001",
+            Year = 2024,
+            NumberOfTests = 5,
+            UnitPrice = 100,
+            TestCost = 500
+        };
+
+        _testRepo.ExistsAsync("2024%2F001", 2024, "TC404").Returns(false);
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateTestRequirementAsync(dto));
+
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_TESTCODE_NOT_PRESENT_TO_UPDATE");
+        Assert.Contains(ex.Errors, e => e.Message.Contains("project '2024/001'", StringComparison.OrdinalIgnoreCase));
+        await _testRepo.DidNotReceive().UpdateTestRequirementAsync(Arg.Any<TestRequirement>());
     }
 
     #endregion
@@ -778,6 +834,28 @@ public class YearlyDetailsServiceTests
 
         var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
         Assert.NotEmpty(ex.Errors);
+    }
+
+    [Fact]
+    public async Task AddTestRequirementAsync_ThrowsValidation_WhenTestCodeAlreadyExists()
+    {
+        var dto = new TestRequirementDto
+        {
+            TestCode = "TC001",
+            Project = "2024%2F001",
+            Year = 2024,
+            NumberOfTests = 5,
+            UnitPrice = 100,
+            TestCost = 500
+        };
+
+        _testRepo.ExistsAsync("2024%2F001", 2024, "TC001").Returns(true);
+
+        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
+
+        Assert.Contains(ex.Errors, e => e.Code == "TEST_TESTCODE_ALREADY_EXISTS");
+        Assert.Contains(ex.Errors, e => e.Message.Contains("project '2024/001'", StringComparison.OrdinalIgnoreCase));
+        await _testRepo.DidNotReceive().AddTestRequirementAsync(Arg.Any<TestRequirement>());
     }
 
     #endregion
@@ -1211,6 +1289,7 @@ public class YearlyDetailsServiceTests
         var entity = new TestRequirement { TestCode = "TC001" };
         var returned = new TestRequirement { TestCode = "TC001", UnitPrice = null, NumberOfTests = 5 };
 
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(false);
         _mapper.Map<TestRequirement>(dto).Returns(entity);
         _testRepo.AddTestRequirementAsync(entity).Returns(returned);
 
@@ -1226,6 +1305,7 @@ public class YearlyDetailsServiceTests
         var entity = new TestRequirement { TestCode = "TC001" };
         var returned = new TestRequirement { TestCode = "TC001", UnitPrice = 100, NumberOfTests = null };
 
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(false);
         _mapper.Map<TestRequirement>(dto).Returns(entity);
         _testRepo.AddTestRequirementAsync(entity).Returns(returned);
 
@@ -1376,6 +1456,23 @@ public class YearlyDetailsServiceTests
 
         Assert.False(result.Deleted);
         Assert.Single(result.Errors);
+    }
+
+    #endregion
+
+    #region CopyYearDataAsync
+
+    [Fact]
+    public async Task CopyYearDataAsync_ReturnsSuccessResult_WhenCopiedSuccessfully()
+    {
+        var expected = (Copied: true, Errors: (IReadOnlyList<string>)new List<string>());
+        _projectYearRepo.CopyYearDataAsync("2024/001", 2024, 2025).Returns(expected);
+
+        var result = await _sut.CopyYearDataAsync("2024/001", 2024, 2025);
+
+        Assert.True(result.Copied);
+        Assert.Empty(result.Errors);
+        await _projectYearRepo.Received(1).CopyYearDataAsync("2024/001", 2024, 2025);
     }
 
     #endregion
@@ -1610,6 +1707,7 @@ public class YearlyDetailsServiceTests
         var entity = new TestRequirement { TestCode = "TC001" };
         var returned = new TestRequirement { TestCode = "TC001", UnitPrice = null, NumberOfTests = 5 };
 
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(true);
         _mapper.Map<TestRequirement>(dto).Returns(entity);
         _testRepo.UpdateTestRequirementAsync(entity).Returns(returned);
 
@@ -1625,6 +1723,7 @@ public class YearlyDetailsServiceTests
         var entity = new TestRequirement { TestCode = "TC001" };
         var returned = new TestRequirement { TestCode = "TC001", UnitPrice = 50, NumberOfTests = 4 };
 
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(true);
         _mapper.Map<TestRequirement>(dto).Returns(entity);
         _testRepo.UpdateTestRequirementAsync(entity).Returns(returned);
 

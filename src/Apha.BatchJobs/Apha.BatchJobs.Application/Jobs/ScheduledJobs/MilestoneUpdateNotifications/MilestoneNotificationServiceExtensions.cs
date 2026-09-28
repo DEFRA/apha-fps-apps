@@ -17,6 +17,7 @@ public static class MilestoneNotificationServiceExtensions
         services.Configure<BatchAlertingSettings>(configuration.GetSection("BatchAlerting"));
         services.AddSingleton<IRecipientIdentityBuilder, RecipientIdentityBuilder>();
         services.AddSingleton<INotificationGroupingService, NotificationGroupingService>();
+        services.AddSingleton<IMilestoneEditLinkBuilder, MilestoneEditLinkBuilder>();
         services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
         services.AddScoped<ICapsSummaryService, CapsSummaryService>();
 

@@ -30,6 +30,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string Customer { get; set; } = null!;
 
         [Display(Name = "Manager")]
+        [Required(ErrorMessage = "Manager is required")]
         [StringLength(100)]
         [GridColumn(IsVisible = false)]
         public string? Manager { get; set; }

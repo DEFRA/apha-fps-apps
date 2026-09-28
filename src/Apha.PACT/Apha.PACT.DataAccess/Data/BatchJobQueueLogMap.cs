@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -28,6 +28,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasMaxLength(256)
                 .HasColumnName("performedby");
             entity.Property(e => e.StatusId).HasColumnName("statusid");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

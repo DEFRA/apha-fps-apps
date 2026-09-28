@@ -5,7 +5,7 @@ using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -809,7 +809,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectSubContractServiceTest
 
             result.PassedCount.Should().Be(2);
             result.FailedCount.Should().Be(0);
-            result.Message.Should().Contain("2 out of 2");
+            result.Message.Should().Contain("All 2 records successfully validated and is now live.");
         }
 
         [Fact]
@@ -1059,7 +1059,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectSubContractServiceTest
             // 1 from failedRows + 1 from rowsToUpdate
             result.FailedCount.Should().Be(2);
             result.PassedCount.Should().Be(0);
-            result.Message.Should().Contain("0 out of 2");
+            result.Message.Should().Contain("All 2 records failed validation.");
         }
 
         [Fact]
@@ -1139,7 +1139,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectSubContractServiceTest
 
             var result = await _sut.ImportSubContractRmsAsync(request, "user1");
 
-            result.Message.Should().Be("Import completed successfully. 2 out of 2 records successfully validated and is now live.");
+            result.Message.Should().Be("Import completed successfully. All 2 records successfully validated and is now live. ");
         }
 
         #endregion

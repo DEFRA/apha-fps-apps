@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -18,7 +18,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         /// <summary>
         /// Creates a ProjectInvoiceRepository alongside mocked DbSet and context for call verification.
         /// AddAsync is set up explicitly since it differs from the base SetupDbSetOperations.
-        /// UpdateAsync uses Entry().State — tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
+        /// UpdateAsync uses Entry().State � tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
         /// </summary>
         private static (
             ProjectInvoiceRepository Repo,
@@ -407,7 +407,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedProjectInvoicesAsync_FilterWithInvalidMonthString_IgnoresMonthFilter()
+        public async Task GetPagedProjectInvoicesAsync_FilterWithInvalidMonthString_ReturnsNoRecords()
         {
             var invoices = new List<ProjectInvoice>
             {
@@ -419,7 +419,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
             var result = await repo.GetPagedProjectInvoicesAsync(query, null);
 
-            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion

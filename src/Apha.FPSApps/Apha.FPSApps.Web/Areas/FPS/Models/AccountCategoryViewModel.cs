@@ -30,11 +30,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "For Project Specific Costs")]
         [GridColumn(Width = 150, Type = GridColumnType.Checkbox)]
-        public int? ProjectSpecific { get; set; }
+        public short? ProjectSpecific { get; set; }
 
         [Display(Name = "For Resource Centres")]
         [GridColumn(Width = 150, Type = GridColumnType.Checkbox)]
-        public int? RcSpecific { get; set; }
+        public short? RcSpecific { get; set; }
 
     }
 }

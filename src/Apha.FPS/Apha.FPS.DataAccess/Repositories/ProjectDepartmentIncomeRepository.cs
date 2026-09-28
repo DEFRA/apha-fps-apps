@@ -61,8 +61,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     on tc.Project equals proj.ParentProject
                 join emp in _context.WorkGroupEmployees.AsNoTracking()
                     .Where(e => e.FpsYear == fpsYear)
-                    on tc.StaffId equals emp.PactId into empJoin
-                from emp in empJoin.DefaultIfEmpty()
+                    on tc.StaffId equals emp.PactId
                 join cc in _context.CostCentres.AsNoTracking()
                     .Where(c => c.FpsYear == fpsYear)
                     on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
@@ -80,7 +79,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     WgCostCentre = wg.CostCentre,
                     tc.Name,
                     tc.GradeCode,
-                    SpNumber = emp != null ? emp.SpNumber : null,
+                    SpNumber = emp.SpNumber,
                     tc.ChargeRate,
                     tc.Pay,
                     tc.NonPay,
@@ -129,7 +128,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     .Where(p => p.FpsYear == fpsYear)
                     on mo.Buyer equals proj.ParentProject
                 join tr in _context.TestRequirements.AsNoTracking()
-                    .Where(t => t.FpsYear == fpsYear && t.Active == 1)
+                    .Where(t => t.FpsYear == fpsYear)
                     on new { mo.Buyer, mo.TestCode } equals new { tr.Buyer, tr.TestCode }
                 join cc in _context.CostCentres.AsNoTracking()
                     .Where(c => c.FpsYear == fpsYear)
@@ -166,14 +165,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<DepartmentIncomeTest>> GetTestSnapshotIncomeAsync(
             string? project, int startPeriod, int endPeriod)
         {
-            var fpsYear = _requestContext.FpsYear;
-
-            var validPeriodNumbers = (await _context.Periods
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .ToListAsync())
-                .Select(p => (int)p.EndPeriod)
-                .ToList();
+            var validPeriodNumbers = await GetValidPeriodNumbersAsync();
 
             var endRows = await _context.PeriodMonthlyOutputs
                 .AsNoTracking()
@@ -283,14 +275,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<DepartmentIncomeTime>> GetTimeSnapshotIncomeAsync(
             string? project, int startPeriod, int endPeriod)
         {
-            var fpsYear = _requestContext.FpsYear;
-
-            var validPeriodNumbers = (await _context.Periods
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .ToListAsync())
-                .Select(p => (int)p.EndPeriod)
-                .ToList();
+            var validPeriodNumbers = await GetValidPeriodNumbersAsync();
 
             var endRows = await _context.PeriodTimeCostCalcs
                 .AsNoTracking()
@@ -456,14 +441,7 @@ namespace Apha.FPS.DataAccess.Repositories
             string? project, int startPeriod, int endPeriod, bool animals,
             Func<PeriodSubContractGroup, T> map)
         {
-            var fpsYear = _requestContext.FpsYear;
-
-            var validPeriodNumbers = (await _context.Periods
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .ToListAsync())
-                .Select(p => (int)p.EndPeriod)
-                .ToList();
+            var validPeriodNumbers = await GetValidPeriodNumbersAsync();
 
             bool AcctMatches(string? acct) =>
                 acct != null && (animals ? AnimalAcctCodes.Contains(acct) : !AnimalAcctCodes.Contains(acct));
@@ -538,6 +516,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToList();
         }
 
+        private async Task<List<int>> GetValidPeriodNumbersAsync()
+        {
+            var fpsYear = _requestContext.FpsYear;
+            return (await _context.Periods
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .ToListAsync())
+                .Select(p => (int)p.EndPeriod)
+                .ToList();
+        }
+
         private sealed class PeriodSubContractGroup
         {
             public string? Project { get; init; }
@@ -553,75 +542,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeAsync(
             string? project, int monthFrom, int monthTo)
-        {
-            var fpsYear = _requestContext.FpsYear;
-
-            var subContracts = await
-                (from sc in _context.ProjectSubContracts.AsNoTracking()
-                     .Where(s => s.FpsYear == fpsYear
-                              && s.AcctCode != null
-                              && AnimalAcctCodes.Contains(s.AcctCode)
-                              && s.Month.HasValue
-                              && (int)s.Month.Value >= monthFrom
-                              && (int)s.Month.Value <= monthTo)
-                 join proj in _context.Projects.AsNoTracking()
-                     .Where(p => p.FpsYear == fpsYear)
-                     on sc.Project equals proj.ParentProject
-                 join cc in _context.CostCentres.AsNoTracking()
-                     .Where(c => c.FpsYear == fpsYear)
-                     on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
-                 from cc in ccJoin.DefaultIfEmpty()
-                 select new
-                 {
-                     proj.ParentProject,
-                     proj.OracleProjectCode,
-                     proj.SubAccountCode,
-                     proj.IsDefraProject,
-                     OCC   = cc != null ? (double?)cc.CostCentreNo : null,
-                     OPC   = cc != null ? cc.ProfitCentre          : (string?)null,
-                     Month = (int)(sc.Month ?? 0),
-                     Amount = sc.Amount ?? 0m,
-                 })
-                .ToListAsync();
-
-            if (!string.IsNullOrEmpty(project))
-                subContracts = subContracts.Where(r => r.ParentProject == project).ToList();
-
-            var result = subContracts
-                .GroupBy(r => new
-                {
-                    r.ParentProject,
-                    r.OracleProjectCode,
-                    r.SubAccountCode,
-                    r.IsDefraProject,
-                    r.OCC,
-                    r.OPC,
-                    r.Month,
-                })
-                .Select(g => new { Key = g.Key, TotalCost = g.Sum(r => r.Amount) })
-                .Where(g => Math.Abs(g.TotalCost) > 0.001m)
-                .Select(g => new DepartmentIncomeAnimal
-                {
-                    Project           = g.Key.ParentProject,
-                    OracleProjectCode = g.Key.OracleProjectCode,
-                    SubAccountCode    = g.Key.SubAccountCode,
-                    DefraProject      = DefraFlag(g.Key.IsDefraProject),
-                    OPC               = g.Key.OPC,
-                    OCC               = FmtDouble(g.Key.OCC),
-                    Month             = g.Key.Month,
-                    SPC               = "SSSD",
-                    SCC               = "35227",
-                    TotalCost         = g.TotalCost,
-                })
-                .OrderBy(r => r.Project)
-                .ToList();
-
-            return result;
-        }
+            => await QueryAnimalIncomeAsync(project, monthFrom, monthTo);
 
         public async Task<List<DepartmentIncomeAdditional>> GetAdditionalIncomeAsync(
             string? project, int monthFrom, int monthTo)
-            => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: true);
+            => await QueryAdditionalIncomeAsync(project, monthFrom, monthTo, positiveOnly: false);
 
         public async Task<List<DepartmentIncomeTotals>> GetTotalsAsync(
             string? project, int monthFrom, int monthTo)
@@ -652,8 +577,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     on tc.Project equals proj.ParentProject
                 join emp in _context.WorkGroupEmployees.AsNoTracking()
                     .Where(e => e.FpsYear == fpsYear)
-                    on tc.StaffId equals emp.PactId into empJoin
-                from emp in empJoin.DefaultIfEmpty()
+                    on tc.StaffId equals emp.PactId
                 join cc in _context.CostCentres.AsNoTracking()
                     .Where(c => c.FpsYear == fpsYear)
                     on proj.CostCentre equals (double?)cc.CostCentreNo into ccJoin
@@ -671,7 +595,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     WgCostCentre = wg.CostCentre,
                     tc.Name,
                     tc.GradeCode,
-                    SpNumber = emp != null ? emp.SpNumber : null,
+                    SpNumber = emp.SpNumber,
                     tc.ChargeRate,
                     tc.Pay,
                     tc.NonPay,
@@ -709,7 +633,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     .Where(p => p.FpsYear == fpsYear)
                     on mo.Buyer equals proj.ParentProject
                 join tr in _context.TestRequirements.AsNoTracking()
-                    .Where(t => t.FpsYear == fpsYear && t.Active == 1)
+                    .Where(t => t.FpsYear == fpsYear)
                     on new { mo.Buyer, mo.TestCode } equals new { tr.Buyer, tr.TestCode }
                 join cc in _context.CostCentres.AsNoTracking()
                     .Where(c => c.FpsYear == fpsYear)
@@ -745,6 +669,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<DepartmentIncomeAnimal>> GetAnimalIncomeCurrentAsync(
             string? project, int monthFrom, int monthTo)
+            => await QueryAnimalIncomeAsync(project, monthFrom, monthTo);
+
+        private async Task<List<DepartmentIncomeAnimal>> QueryAnimalIncomeAsync(
+            string? project, int monthFrom, int monthTo)
         {
             var fpsYear = _requestContext.FpsYear;
 
@@ -773,8 +701,6 @@ namespace Apha.FPS.DataAccess.Repositories
                      OPC        = cc != null ? cc.ProfitCentre          : (string?)null,
                      Month      = (int)(sc.Month ?? 0),
                      sc.Description,
-                     AnimalDays = (decimal)(sc.AnimalDays ?? 0),
-                     DailyRate  = sc.DailyRate ?? 0m,
                      Amount     = sc.Amount    ?? 0m,
                  })
                 .ToListAsync();
@@ -783,22 +709,38 @@ namespace Apha.FPS.DataAccess.Repositories
                 ? rows
                 : rows.Where(r => r.ParentProject == project).ToList();
 
+            // fnAnimalDesc(): text before " x " is the animal type; used to
+            // look up the daily rate from tblAnimals (Access DLookUp parity).
+            var animalRates = await _context.Animals.AsNoTracking()
+                .Where(a => a.FpsYear == fpsYear)
+                .ToListAsync();
+
+            var rateLookup = animalRates
+                .GroupBy(a => a.AnimalType)
+                .ToDictionary(g => g.Key, g => g.First().DailyRate, StringComparer.OrdinalIgnoreCase);
+
             return filtered
-                .Select(r => new DepartmentIncomeAnimal
+                .Select(r =>
                 {
-                    Project           = r.ParentProject,
-                    OracleProjectCode = r.OracleProjectCode,
-                    SubAccountCode    = r.SubAccountCode,
-                    DefraProject      = DefraFlag(r.IsDefraProject),
-                    OPC               = r.OPC,
-                    OCC               = FmtDouble(r.OCC),
-                    Month             = r.Month,
-                    SPC               = "SSSD",
-                    SCC               = "35227",
-                    AnimalType        = r.Description,
-                    AnimalDays        = r.AnimalDays,
-                    Rate              = r.DailyRate,
-                    TotalCost         = r.Amount,
+                    var animalType = ParseAnimalDesc(r.Description);
+                    return new DepartmentIncomeAnimal
+                    {
+                        Project           = r.ParentProject,
+                        OracleProjectCode = r.OracleProjectCode,
+                        SubAccountCode    = r.SubAccountCode,
+                        DefraProject      = DefraFlag(r.IsDefraProject),
+                        OPC               = r.OPC,
+                        OCC               = FmtDouble(r.OCC),
+                        Month             = r.Month,
+                        SPC               = "SSSD",
+                        SCC               = "35227",
+                        AnimalType        = animalType,
+                        AnimalDays        = ParseAnimalDays(r.Description) ?? 0m,
+                        Rate              = (animalType != null && rateLookup.TryGetValue(animalType, out var rate))
+                                                ? (rate ?? 0m)
+                                                : 0m,
+                        TotalCost         = r.Amount,
+                    };
                 })
                 .OrderBy(r => r.Project)
                 .ToList();
@@ -903,6 +845,36 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static string? FmtDouble(double? v) => v.HasValue ? ((long)v.Value).ToString() : null;
         private static string DefraFlag(short v) => v != 0 ? "Yes" : "No";
+
+        // Access parity: fnAnimalDesc() returns the text before " x " (the whole
+        // string when the separator is absent).
+        private static string? ParseAnimalDesc(string? description)
+        {
+            if (string.IsNullOrEmpty(description))
+                return description;
+
+            var idx = description.IndexOf(" x ", StringComparison.Ordinal);
+            return idx > 0 ? description.Substring(0, idx) : description;
+        }
+
+        // Access parity: fnAnimalDays() returns the number between " x " and "@".
+        private static decimal? ParseAnimalDays(string? description)
+        {
+            if (string.IsNullOrEmpty(description))
+                return null;
+
+            var p = description.IndexOf(" x ", StringComparison.Ordinal);
+            var q = description.IndexOf("@", StringComparison.Ordinal);
+
+            if (p > 0 && q > 0 && q - p - 4 > 0)
+            {
+                var segment = description.Substring(p + 3, q - p - 4).Trim();
+                if (decimal.TryParse(segment, out var days))
+                    return days;
+            }
+
+            return null;
+        }
 
 
         private readonly record struct TimeRowInput(

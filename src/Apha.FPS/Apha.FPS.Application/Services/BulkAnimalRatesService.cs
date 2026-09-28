@@ -264,9 +264,9 @@ namespace Apha.FPS.Application.Services
         // ── Validation rules (moved from StaffAnimalValidationService's Animal half) ─────
 
         /// <summary>
-        /// Invalid-data checks (missing/duplicate key, negative rate) take priority over
-        /// NotFound — they're a property of the uploaded row itself, independent of whether a
-        /// live counterpart exists — so a row failing both is reported as Invalid, not NotFound.
+        /// Invalid-data checks (missing/duplicate key) take priority over NotFound — they're a
+        /// property of the uploaded row itself, independent of whether a live counterpart
+        /// exists — so a row failing both is reported as Invalid, not NotFound.
         /// </summary>
         private static List<AnimalValidationResult> ValidateAnimal(AnimalValidationContext ctx)
         {
@@ -298,10 +298,6 @@ namespace Apha.FPS.Application.Services
 
                 if (duplicates.Contains(key))
                     errors.Add(Error("DUPLICATE_ANIMAL_TYPE", row.SourceRow, $"AnimalType '{row.AnimalType}' appears more than once.", row.AnimalType));
-                if (row.DailyRate is < 0)
-                    errors.Add(Error("NEGATIVE_RATE", row.SourceRow, "Negative rates are not permitted.", row.AnimalType, "dailyrate"));
-                if (row.DefraDailyRate is < 0)
-                    errors.Add(Error("NEGATIVE_RATE", row.SourceRow, "Negative rates are not permitted.", row.AnimalType, "defradailyrate"));
 
                 var hasLive = ctx.LiveAnimalLookup.TryGetValue(key, out var live);
                 var effective = new AnimalFieldState

@@ -98,14 +98,14 @@ namespace Apha.FPSApps.Web.Middleware
 
         private static int ResolveYear(HttpContext context, IEnumerable<YearMasterDto> allYears, int fallback)
         {
-            if (context.Request.Query.TryGetValue("year", out var q) && !string.IsNullOrEmpty(q))
+            if (context.Request.Query.TryGetValue("fpsContextYear", out var q) && !string.IsNullOrEmpty(q))
                 return int.Parse(q!);
 
-            if (context.Request.Headers.TryGetValue("X-FPS-Year", out var h) && !string.IsNullOrEmpty(h))
+            if (context.Request.Headers.TryGetValue("X-FPS-Context-Year", out var h) && !string.IsNullOrEmpty(h))
                 return int.Parse(h!);
 
             if (context.Request.HasFormContentType &&
-                context.Request.Form.TryGetValue("FPSYear", out var f) && !string.IsNullOrEmpty(f))
+                context.Request.Form.TryGetValue("FPSContextYear", out var f) && !string.IsNullOrEmpty(f))
                 return int.Parse(f!);
 
             return allYears.FirstOrDefault(y => y.YearStatus?.Equals("Open", StringComparison.OrdinalIgnoreCase) == true)

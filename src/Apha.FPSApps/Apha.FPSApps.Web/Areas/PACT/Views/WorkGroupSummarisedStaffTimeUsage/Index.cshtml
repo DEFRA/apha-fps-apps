@@ -52,43 +52,43 @@
                 var pcts   = new[] { s.PercentAllocatedApril, s.PercentAllocatedMay, s.PercentAllocatedJune, s.PercentAllocatedJuly, s.PercentAllocatedAugust, s.PercentAllocatedSeptember, s.PercentAllocatedOctober, s.PercentAllocatedNovember, s.PercentAllocatedDecember, s.PercentAllocatedJanuary, s.PercentAllocatedFebruary, s.PercentAllocatedMarch };
 
                         
-                                <div id="columnTotalsContainer" class="column-totals-container">
-                                    <div class="column-total-label govuk-!-font-size-16">Total time for the Month:</div>
+                                <div id="columnTotalsContainer" class="column-totals-container" role="group" aria-label="Total time for the month">
+                                    <div class="column-total-label govuk-!-font-size-16" aria-hidden="true">Total time for the Month:</div>
                                     @for (int i = 0; i < 12; i++)
                                     {
-                                        <div class="column-total">@(totals[i].ToString("0.##"))</div>
+                                        <div class="column-total" tabindex="0"><span class="govuk-visually-hidden">Total time for the month, @months[i], </span>@(totals[i].ToString("0.##"))</div>
                                     }
-                                    <div class="column-total">@s.GrandTotalTime.ToString("0.##")</div>
-                                    <div class="column-total">£@s.GrandTotalCost.ToString("N2")</div>
-                                    
+                                    <div class="column-total" tabindex="0"><span class="govuk-visually-hidden">Total time, </span>@s.GrandTotalTime.ToString("0.##")</div>
+                                    <div class="column-total" tabindex="0"><span class="govuk-visually-hidden">Total cost, </span>£@s.GrandTotalCost.ToString("N2")</div>
+
                                 </div>
 
-                        <div id="columnStandardHoursContainer" class="column-totals-container">
-                    <div class="column-total-label govuk-!-font-size-16">Standard Hours:</div>
+                        <div id="columnStandardHoursContainer" class="column-totals-container" role="group" aria-label="Standard hours">
+                    <div class="column-total-label govuk-!-font-size-16" aria-hidden="true">Standard Hours:</div>
                             @for (int i = 0; i < 12; i++)
                                     {
-                                <div class="column-total" id="stndHrs_april">
-                                    @(s.StandardHoursPerMonth.ToString("0.##"))
+                                <div class="column-total" id="stndHrs_april" tabindex="0">
+                                    <span class="govuk-visually-hidden">Standard hours, @months[i], </span>@(s.StandardHoursPerMonth.ToString("0.##"))
                                 </div>                        
                                         }
-                             <div class="column-total" id="stndHrs_time">@(s.TotalStandardHours.ToString("0.##"))</div>
-                            <div class="column-total" id="stndHrs_cost">&nbsp;</div>
+                             <div class="column-total" id="stndHrs_time" tabindex="0"><span class="govuk-visually-hidden">Total standard hours, </span>@(s.TotalStandardHours.ToString("0.##"))</div>
+                            <div class="column-total" id="stndHrs_cost" aria-hidden="true">&nbsp;</div>
                          </div>
                      
-                        <div id="columnStndHrsAllocatedContainer" class="column-totals-container">
-                    <div class="column-total-label govuk-!-font-size-16">% of Standard Hrs Allocated</div>
-                    
-                            
-                   
+                        <div id="columnStndHrsAllocatedContainer" class="column-totals-container" role="group" aria-label="Percentage of standard hours allocated">
+                    <div class="column-total-label govuk-!-font-size-16" aria-hidden="true">% of Standard Hrs Allocated</div>
+
+
+
                         @for (int i = 0; i < 12; i++)
                         {
-                                <div class="column-total">
-                                    
+                                <div class="column-total" tabindex="0">
+                                    <span class="govuk-visually-hidden">Percentage of standard hours allocated, @months[i], </span>
                                     @(pcts[i].ToString("0.#") + "%")</div>
                         }
-                            <div class="column-total">@(s.GrandTotalPercentAllocated.ToString("0.#") + "%")</div>
-                            <div class="column-total"></div>
-                     
+                            <div class="column-total" tabindex="0"><span class="govuk-visually-hidden">Total percentage of standard hours allocated, </span>@(s.GrandTotalPercentAllocated.ToString("0.#") + "%")</div>
+                            <div class="column-total" aria-hidden="true"></div>
+
                         </div> 
            
             }

@@ -162,7 +162,10 @@
     var currentTestCode = '@Model.SelectedTestCode';
     var currentShowRejected = @Model.ShowRejected.ToString().ToLower();
     var testCodeSelectDropdown = null;
-    const testCodeOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TestCodeList));
+    // Serialize only the two columns the dropdown renders, rather than the full
+    // SelectListItem shape, to keep the inline payload and parse time small.
+    const testCodeOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+        Model.TestCodeList.Select(t => new { t.Value, t.Text })));
 
     $(function () {
         initializeTestCodeMultiColumnDropdown();

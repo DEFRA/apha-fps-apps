@@ -1,4 +1,4 @@
-﻿using Apha.Common.Constants;
+using Apha.Common.Constants;
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.Common.Utilities.Query;
@@ -7,7 +7,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -118,7 +118,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task GetCommentsByProjectAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task GetCommentsByProjectAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var project = "PP001";
@@ -133,10 +133,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             };
 
             _http.GetAsync<List<CommentRes>>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<CommentDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetCommentsByProjectAsync(project, year, null, query));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetCommentsByProjectAsync(project, year, null, query));
         }
 
         [Fact]
@@ -263,7 +263,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task GetByIdAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task GetByIdAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var CommentNo = 1;
@@ -271,10 +271,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             var apiResponse = new ApiResponse<CommentRes> { Success = true, Data = new CommentRes { CommentNo = CommentNo } };
 
             _http.GetAsync<CommentRes>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<CommentDto>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.GetByIdAsync(CommentNo));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetByIdAsync(CommentNo));
         }
 
         [Fact]
@@ -380,14 +380,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task CreateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsAutoMapperMappingException()
+        public async Task CreateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsInvalidOperationException()
         {
             // Arrange
             var dto = new CommentDto { Project = "PP001" };
-            _mapper.Map<CommentReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<CommentReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.CreateCommentAsync(dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.CreateCommentAsync(dto));
         }
 
         [Fact]
@@ -500,15 +500,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task UpdateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsAutoMapperMappingException()
+        public async Task UpdateCommentAsync_WhenMapperThrowsExceptionOnRequestMapping_ThrowsInvalidOperationException()
         {
             // Arrange
             var CommentNo = 1;
             var dto = new CommentDto { CommentNo = CommentNo, Project = "PP001" };
-            _mapper.Map<CommentReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<CommentReq>(dto).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.UpdateCommentAsync(CommentNo, dto));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.UpdateCommentAsync(CommentNo, dto));
         }
 
         [Fact]
@@ -612,7 +612,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
         }
 
         [Fact]
-        public async Task DeleteCommentAsync_WhenMapperThrowsException_ThrowsAutoMapperMappingException()
+        public async Task DeleteCommentAsync_WhenMapperThrowsException_ThrowsInvalidOperationException()
         {
             // Arrange
             var CommentNo = 1;
@@ -620,10 +620,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectCommentA
             var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
 
             _http.DeleteAsync<bool>(url).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
             // Act / Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.DeleteCommentAsync(CommentNo));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _client.DeleteCommentAsync(CommentNo));
         }
 
         [Fact]

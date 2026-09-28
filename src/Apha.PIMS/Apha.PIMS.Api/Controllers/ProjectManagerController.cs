@@ -4,7 +4,7 @@ using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
@@ -48,7 +48,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decoded = HttpUtility.UrlDecode(projectmanager);
             ProjectManagerDto? result = await _service.GetProjectManagerByNameAsync(decoded);
-            return result is null ? NotFound() : Ok(_mapper.Map<ProjectManagerRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProjectManagerRes>();
+            }
+
+            return Ok(_mapper.Map<ProjectManagerRes>(result));
         }
 
         /// <summary>Create a new project manager.</summary>
@@ -79,6 +84,20 @@ namespace Apha.PIMS.Api.Controllers
             var decoded = HttpUtility.UrlDecode(projectmanager);
             bool deleted = await _service.DeleteProjectManagerAsync(decoded);
             return Ok(deleted);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

@@ -34,7 +34,7 @@ internal sealed class RefreshPeriodTccStep : RecreateSummariesExecutionStepBase
         return await db.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO fps.period_timecostcalcs
     (period, project, oracleprojectcode, subaccountcode, month, defraproject,
-     occ, opc, spc, scc, name, gradecode, spnumber, chargerate, pay, nonpay, overhead, time, totalcost)
+     occ, opc, spc, scc, name, gradecode, spnumber, chargerate, pay, nonpay, overhead, time, totalcost, fpsyear)
 SELECT
     {_period},
     p.parentproject,
@@ -54,7 +54,8 @@ SELECT
     tcc.nonpay,
     tcc.overhead,
     tcc.time,
-    tcc.cost::numeric::money
+    tcc.cost::numeric::money,
+    {fpsYear}
 FROM fps.timecostcalcs tcc
 JOIN fps.workgroup wg ON tcc.workgroup = wg.workgroup
 JOIN fps.tlkpproject p ON tcc.project = p.parentproject AND tcc.fpsyear = p.fpsyear

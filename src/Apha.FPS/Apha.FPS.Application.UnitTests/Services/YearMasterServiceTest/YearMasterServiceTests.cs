@@ -4,7 +4,7 @@ using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -696,10 +696,10 @@ namespace Apha.FPS.Application.UnitTests.Services.YearMasterServiceTest
 
             _mockRepository.GetFpsYearByIdAsync(fpsYear).Returns(yearMaster);
             _mockMapper.Map<YearMasterDto?>(yearMaster)
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+                .Throws(new InvalidOperationException("Mapping failed"));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<AutoMapperMappingException>(
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await _sut.GetFpsYearByIdAsync(fpsYear)
             );
 

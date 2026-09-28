@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.Common.Utilities.Email;
 using Apha.FPS.Application.Common.BulkRates;
 using Apha.FPS.Application.Email;
@@ -72,11 +73,14 @@ namespace Apha.FPS.Application.Services
                 return;
             }
 
+            var (subject, body) = BuildBulkRatesEmail(ctx.JobName, BulkRatesNotificationEvent.Approved);
+
             await _emailService.SendEmailAsync(new()
             {
-                To      = recipients,
-                Subject = ApplyTokens(_settings.ApprovedSubject, ctx),
-                Body    = ApplyTokens(_settings.ApprovedBody, ctx)
+                To         = recipients,
+                Subject    = subject,
+                Body       = body,
+                IsBodyHtml = false
             }, ct);
 
             _logger.LogInformation(
@@ -95,11 +99,14 @@ namespace Apha.FPS.Application.Services
                 return;
             }
 
+            var (subject, body) = BuildBulkRatesEmail(ctx.JobName, BulkRatesNotificationEvent.ReleasedForApproval);
+
             await _emailService.SendEmailAsync(new()
             {
-                To      = recipients,
-                Subject = ApplyTokens(_settings.ReleasedForApprovalSubject, ctx),
-                Body    = ApplyTokens(_settings.ReleasedForApprovalBody, ctx)
+                To         = recipients,
+                Subject    = subject,
+                Body       = body,
+                IsBodyHtml = false
             }, ct);
 
             _logger.LogInformation(
@@ -117,11 +124,14 @@ namespace Apha.FPS.Application.Services
                 return;
             }
 
+            var (subject, body) = BuildBulkRatesEmail(ctx.JobName, BulkRatesNotificationEvent.Rejected);
+
             await _emailService.SendEmailAsync(new()
             {
-                To      = [ctx.RequestedBy],
-                Subject = ApplyTokens(_settings.RejectedSubject, ctx),
-                Body    = ApplyTokens(_settings.RejectedBody, ctx)
+                To         = [ctx.RequestedBy],
+                Subject    = subject,
+                Body       = body,
+                IsBodyHtml = false
             }, ct);
 
             _logger.LogInformation(
@@ -148,11 +158,14 @@ namespace Apha.FPS.Application.Services
                 return;
             }
 
+            var (subject, body) = BuildBulkRatesEmail(ctx.JobName, BulkRatesNotificationEvent.Cancelled);
+
             await _emailService.SendEmailAsync(new()
             {
-                To      = [ctx.RequestedBy],
-                Subject = ApplyTokens(_settings.CancelledSubject, ctx),
-                Body    = ApplyTokens(_settings.CancelledBody, ctx)
+                To         = [ctx.RequestedBy],
+                Subject    = subject,
+                Body       = body,
+                IsBodyHtml = false
             }, ct);
 
             _logger.LogInformation(
@@ -166,14 +179,37 @@ namespace Apha.FPS.Application.Services
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToList();
 
-        /// <summary>Replaces well-known tokens in subject/body templates.</summary>
-        private static string ApplyTokens(string template, BulkRatesNotificationContext ctx)
-            => template
-                .Replace("{JobQueueId}",  ctx.JobQueueId.ToString())
-                .Replace("{JobName}",     ctx.JobName)
-                .Replace("{FpsYear}",     ctx.FpsYear.ToString())
-                .Replace("{RequestedBy}", ctx.RequestedBy)
-                .Replace("{ApprovedBy}",  ctx.ApprovedBy ?? string.Empty)
-                .Replace("{Reason}",      ctx.Reason ?? string.Empty);
+        /// <summary>
+        /// Business-facing rate-type wording for the {RateType} email token. Deliberately throws on an
+        /// unrecognized job name rather than falling back to it — the raw job constant must never appear
+        /// in a business email, and the caller already swallows-and-logs notification failures.
+        /// </summary>
+        private static string GetRateTypeDisplayName(string jobName) => jobName switch
+        {
+            BulkRatesJobNames.Fec    => "Test",
+            BulkRatesJobNames.Staff  => "Staff",
+            BulkRatesJobNames.Animal => "Animal",
+            _ => throw new ArgumentOutOfRangeException(nameof(jobName), jobName, "Unknown Bulk Rates job name.")
+        };
+
+        /// <summary>Selects the configured subject/body template for the event and renders {RateType}.</summary>
+        private (string Subject, string Body) BuildBulkRatesEmail(string jobName, BulkRatesNotificationEvent notificationEvent)
+        {
+            var (subjectTemplate, bodyTemplate) = notificationEvent switch
+            {
+                BulkRatesNotificationEvent.ReleasedForApproval =>
+                    (_settings.ReleasedForApprovalSubject, _settings.ReleasedForApprovalBody),
+                BulkRatesNotificationEvent.Approved =>
+                    (_settings.ApprovedSubject, _settings.ApprovedBody),
+                BulkRatesNotificationEvent.Rejected =>
+                    (_settings.RejectedSubject, _settings.RejectedBody),
+                BulkRatesNotificationEvent.Cancelled =>
+                    (_settings.CancelledSubject, _settings.CancelledBody),
+                _ => throw new ArgumentOutOfRangeException(nameof(notificationEvent), notificationEvent, "No email template for this event.")
+            };
+
+            var rateType = GetRateTypeDisplayName(jobName);
+            return (subjectTemplate.Replace("{RateType}", rateType), bodyTemplate.Replace("{RateType}", rateType));
+        }
     }
 }

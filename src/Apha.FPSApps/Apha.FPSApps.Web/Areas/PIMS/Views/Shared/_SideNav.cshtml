@@ -3,6 +3,7 @@
 @{
     string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     string? selectedProject = string.IsNullOrWhiteSpace(Model?.Parentproject) ? null : Model.Parentproject;
+    int showProjects = Model?.ShowProjects == 0 ? 0 : 1;
     bool showSideNav = !string.IsNullOrWhiteSpace(selectedProject);
 
     string GetActiveClass(string controllerName) =>
@@ -22,13 +23,13 @@
         </button>
         <ul>
             <li class="sidebar-link-two@(GetActiveClass("ProjectDetails"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
-                <a href="@Url.Action("Index", "ProjectDetails", new { area = "PIMS", parentproject = selectedProject })"
+                <a href="@Url.Action("Index", "ProjectDetails", new { area = "PIMS", parentproject = selectedProject, showprojects = showProjects })"
                    data-project-route="parentproject"
                    style="color: #fff">Project Details</a>
             </li>
 
             <li class="sidebar-link-two@(GetActiveClass("ProjectYearCosts"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
-                <a href="@Url.Action("Index", "ProjectYearCosts", new { area = "PIMS", parentproject = selectedProject })"
+                <a href="@Url.Action("Index", "ProjectYearCosts", new { area = "PIMS", parentproject = selectedProject, showprojects = showProjects })"
                    data-project-route="parentproject"
                    style="color: #fff">Yearly Finances</a>
             </li>
@@ -52,7 +53,7 @@
             </li>
 
             <li class="sidebar-link-two@(GetActiveClass("Comment"))" style="border-radius: 0 8px 8px 0; cursor: pointer;">
-                <a href="@Url.Action("Index", "Comment", new { area = "PIMS", parentproject = selectedProject })"
+                <a href="@Url.Action("Index", "Comment", new { area = "PIMS", parentproject = selectedProject, showprojects = showProjects })"
                    data-project-route="parentproject"
                    style="color: #fff">Comments</a>
             </li>

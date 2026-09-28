@@ -7,7 +7,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients

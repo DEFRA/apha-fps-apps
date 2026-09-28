@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         {
             ProgramNo = string.Empty;
             ProgramName = string.Empty;
-            Directorate = string.Empty;
+            Directorate = "Select Directorate";
             DirectorateOptions = new List<SelectListItem>();
             ManagerList = new List<SelectListItem>();
         }

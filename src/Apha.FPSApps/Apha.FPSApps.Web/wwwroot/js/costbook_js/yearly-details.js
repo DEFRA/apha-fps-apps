@@ -51,6 +51,9 @@ function attachButtonEventListeners() {
     var addYearBtn = document.getElementById('add_year');
     if (addYearBtn) addYearBtn.addEventListener('click', function () { addProjectYear(projectId); });
 
+    var openCopyDataBtn = document.getElementById('openCopyDataModal');
+    if (openCopyDataBtn) openCopyDataBtn.addEventListener('click', function () { openCopyYearDataModal(); });
+
     var addStaffBtn = document.getElementById('addstaffbookedBtn');
     if (addStaffBtn) addStaffBtn.addEventListener('click', function () { openAddStaffModal(projectId, selectedYear); });
 
@@ -201,23 +204,122 @@ function bindAddYearForm(pid, year) {
 
         var $form = $('#addNewProjectYearForm');
         var $modal = $('#project1ModalContent');
+        showLoader();
         clearValidationErrors($modal);
-        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+        if (!isFormValid($form)) { hideLoader(); displayClientValidationErrors($form, $modal); return; }
 
         fetch(yearlyDetailsUrls.addProjectYear, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
             body: new URLSearchParams(new FormData(form)).toString() + '&projectId=' + encodeURIComponent(pid) + '&year=' + year + '&programme=' + encodeURIComponent(programme)
         })
-            .then(function (r) { return r.json(); })
+            .then(function (r) { hideLoader(); return r.json(); })
             .then(function (data) {
                 if (data.success) { closeModal(); selectYear(pid, data.year); }
                 else if (data.errors) { _showModalErrors(data.errors, $modal); }
                 else { showAlertMessage(data.message || 'Failed to add project year.', AlertType.ERROR); }
             })
-            .catch(function (err) { console.error('Add project year error:', err); showAlertMessage('Failed to add project year.', AlertType.ERROR); });
+            .catch(function (err) { hideLoader(); console.error('Add project year error:', err); showAlertMessage('Failed to add project year.', AlertType.ERROR); });
     });
+}
+function openCopyYearDataModal() {
+    var html = document.getElementById('copyYearModalContentHidden').innerHTML;
+    document.getElementById('project1ModalContent').innerHTML = html;
+    openModal();
+    bindCopyYearDataForm();
+}
+
+function bindCopyYearDataForm() {
+    var modalContent = document.getElementById('project1ModalContent');
+    if (!modalContent) return;
+
+    var selectedYearFromGlobal = parseInt(selectedYear, 10);
+    var selectedYearFromRow = NaN;
+    var selectedYearRow = document.querySelector('.project-year-row.selected-table-rowbg');
+    if (selectedYearRow) {
+        selectedYearFromRow = parseInt(selectedYearRow.getAttribute('data-year'), 10);
     }
+
+    var selectedYearFromHeading = NaN;
+    var selectedYearHeading = document.querySelector('.project-year-costs-header h3');
+    if (selectedYearHeading && selectedYearHeading.textContent) {
+        var headingMatch = selectedYearHeading.textContent.match(/\d{4}/);
+        if (headingMatch && headingMatch[0]) {
+            selectedYearFromHeading = parseInt(headingMatch[0], 10);
+        }
+    }
+
+    var currentSelectedYear = !isNaN(selectedYearFromRow)
+        ? selectedYearFromRow
+        : (!isNaN(selectedYearFromHeading) ? selectedYearFromHeading : selectedYearFromGlobal);
+
+    var yearSelect = modalContent.querySelector('#copyFromYearSelect');
+    var doCopyBtn = modalContent.querySelector('#btnDoCopy');
+    if (!doCopyBtn) return;
+
+    if (yearSelect) {
+        yearSelect.innerHTML = '';
+
+        var years = (Array.isArray(projectYears) ? projectYears : [])
+            .map(function (y) { return parseInt(y, 10); })
+            .filter(function (y) { return !isNaN(y) && !isNaN(currentSelectedYear) && y < currentSelectedYear; })
+            .sort(function (a, b) { return b - a; });
+
+        years.forEach(function (y) {
+            var option = document.createElement('option');
+            option.value = y;
+            option.textContent = y;
+            yearSelect.appendChild(option);
+        });
+
+        var hasOptions = yearSelect.options.length > 0;
+        yearSelect.disabled = !hasOptions;
+        doCopyBtn.disabled = !hasOptions;
+    }
+
+
+    doCopyBtn.addEventListener('click', function () {
+        var form = modalContent.querySelector('#copyDataForm');
+        var $form = $(form);
+        var $modal = $('#project1ModalContent');
+        clearValidationErrors($modal);
+        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+
+        var sourceYear = yearSelect ? parseInt(yearSelect.value, 10) : NaN;
+        if (isNaN(sourceYear)) {
+            showAlertMessage('Please select a year to copy from.', AlertType.ERROR);
+            return;
+        }
+
+        showGovukConfirm('Copying will first delete all existing data for the selected year, then copy data from the selected source year. Do you want to continue?')
+            .then(function (result) {
+                if (!result) return;
+
+                fetch(yearlyDetailsUrls.copyYearData, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
+                    body: 'projectId=' + encodeURIComponent(projectId)
+                        + '&sourceYear=' + encodeURIComponent(sourceYear)
+                        + '&targetYear=' + encodeURIComponent(currentSelectedYear)
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            closeModal();
+                            selectYear(projectId, currentSelectedYear);
+                        } else if (data.errors) {
+                            _showModalErrors(data.errors, $modal);
+                        } else {
+                            showAlertMessage(data.message || 'Failed to copy year data.', AlertType.ERROR);
+                        }
+                    })
+                    .catch(function (err) {
+                        console.error('Copy year data error:', err);
+                        showAlertMessage('Failed to copy year data.', AlertType.ERROR);
+                    });
+            });
+    });
+}
 
 // ── DataGrid bridge functions ──────────────────────────────────────
 function gridAddStaff() { openAddStaffModal(projectId, selectedYear); }
@@ -275,8 +377,14 @@ function openEditStaffModal(pid, year, srIdentity) {
             var hiddenGrade = document.getElementById('WgGrade');
             var displayInput = document.getElementById('wgGradeSelect');
             if (hiddenGrade && displayInput && hiddenGrade.value) {
-                var matchRow = document.querySelector('#wgGradeDropdownBody tr[data-value="' + hiddenGrade.value + '"]');
-                displayInput.value = matchRow ? matchRow.querySelector('td').textContent.trim() : hiddenGrade.value;
+                // Resolve the display text from the cached option list rather than
+                // forcing every row into the DOM. Rendering the full list here
+                // defeated the lazy loading and made opening the panel in edit
+                // mode hang while the browser laid out thousands of rows.
+                var selected = getWgGradeOptions().filter(function (o) {
+                    return o.v === hiddenGrade.value;
+                })[0];
+                displayInput.value = selected ? selected.v : hiddenGrade.value;
             }
         });
 }
@@ -350,6 +458,7 @@ function openEditTestModal(pid, year, testCode) {
             var hiddenCode = document.getElementById('TestCode');
             var displayInput = document.getElementById('testCodeSelect');
             if (hiddenCode && displayInput && hiddenCode.value) {
+                _testCodeRows.ensureAllRendered();
                 var matchRow = document.querySelector('#testCodeDropdownBody tr[data-value="' + hiddenCode.value + '"]');
                 displayInput.value = matchRow ? matchRow.querySelector('td').textContent.trim() : hiddenCode.value;
             }
@@ -425,6 +534,7 @@ function openEditAnimalModal(pid, year, arIdentity) {
             var hiddenType = document.getElementById('AnimalType');
             var displayInput = document.getElementById('animalTypeSelect');
             if (hiddenType && displayInput && hiddenType.value) {
+                _animalTypeRows.ensureAllRendered();
                 var matchRow = document.querySelector('#animalTypeDropdownBody tr[data-value="' + hiddenType.value + '"]');
                 displayInput.value = matchRow ? matchRow.querySelector('td').textContent.trim() : hiddenType.value;
             }
@@ -509,6 +619,7 @@ function openEditAdditionalCostModal(pid, year, acIdentity) {
                     var hiddenCat = document.getElementById('AccountCat');
                     var displayInput = document.getElementById('accountCatSelect');
                     if (hiddenCat && displayInput && hiddenCat.value) {
+                         _accountCatRows.ensureAllRendered();
                         var matchRow = document.querySelector('#accountCatDropdownBody tr[data-value="' + hiddenCat.value + '"]');
                         displayInput.value = matchRow ? matchRow.querySelector('td').textContent.trim() : hiddenCat.value;
                     }
@@ -594,21 +705,22 @@ function bindMarkupAndProfitForm(pid, yearVal) {
 
         var $form = $('#addNewProjectYearForm');
         var $modal = $('#project1ModalContent');
+        showLoader();
         clearValidationErrors($modal);
-        if (!isFormValid($form)) { displayClientValidationErrors($form, $modal); return; }
+        if (!isFormValid($form)) { hideLoader(); displayClientValidationErrors($form, $modal); return; }
 
         fetch(yearlyDetailsUrls.updateProjectYearRate + '?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': getAntiForgeryToken() },
             body: new URLSearchParams(new FormData(form)).toString()
         })
-            .then(function (r) { return r.json(); })
+            .then(function (r) { hideLoader(); return r.json(); })
             .then(function (d) {
                 if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
                 else if (d.errors) { _showModalErrors(d.errors, $modal); }
                 else { showAlertMessage(d.message || 'Failed to save markup and profit rates.', AlertType.ERROR); }
             })
-            .catch(function (err) { console.error('Update markup and profit error:', err); showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); });
+            .catch(function (err) { hideLoader(); console.error('Update markup and profit error:', err); showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); });
     });
 }
 
@@ -709,7 +821,16 @@ function onYearRowClick(row) {
     var totalsTitle = document.querySelector('.project-year-totals-title');
     if (totalsTitle) totalsTitle.textContent = year + ' Year Totals:';
 }
+function clearNonActiveGridContainers(activeTabId) {
+    var activeGridId = tabGridIds[activeTabId];
+    if (!activeGridId) return;
 
+    ['staffGrid', 'testGrid', 'animalGrid', 'additionalCostGrid', 'markupAndProfitGrid'].forEach(function(gridId) {
+        if (gridId === activeGridId) return;
+        var gridContainer = document.getElementById('gridContainer_' + gridId);
+        if (gridContainer) gridContainer.innerHTML = '';
+    });
+}
 (function initTabClickHandlers() {
     document.addEventListener('DOMContentLoaded', function () {
         var tabLinks = document.querySelectorAll('.govuk-tabs__tab');
@@ -718,6 +839,7 @@ function onYearRowClick(row) {
                 var href = link.getAttribute('href');
                 if (!href) return;
                 var tabId = href.replace('#', '');
+                clearNonActiveGridContainers(tabId);
                 if (tabGridEndpoints[tabId]) loadTabGrid(tabId);
                 loadYearTotals();
                 document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) { li.classList.remove('govuk-tabs__list-item--selected'); });
@@ -817,7 +939,19 @@ function initSearchableDropdown(options) {
         });
     }
 
-    rows.forEach(function (row) {
+   rows.forEach(function (row) {
+        bindDropdownRow(row);
+    });
+
+    // Dropdowns that render their rows lazily re-bind the behaviour above each
+    // time a new chunk of rows is added to the DOM.
+    if (options.registerRowBinder) {
+        options.registerRowBinder(function (newRows) {
+            newRows.forEach(function (row) { bindDropdownRow(row); });
+        });
+    }
+
+    function bindDropdownRow(row) {
         row.tabIndex = 0;
 
         row.addEventListener('click', function () {
@@ -849,7 +983,7 @@ function initSearchableDropdown(options) {
 
         row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
         row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-    });
+    }
 
     document.addEventListener('click', function (e) {
         if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) closeDropdown();
@@ -857,7 +991,101 @@ function initSearchableDropdown(options) {
 }
 
 // ── WG Grade custom dropdown ───────────────────────────────────────
+// Rows are no longer emitted server-side. They are rendered lazily, in chunks,
+// from the #wgGradePanelData JSON block so the modal opens quickly. The selection
+// logic below is unchanged: rows still expose the same data-* attributes and
+// still update the hidden WgGrade / Chargerate fields.
+
+var WG_GRADE_CHUNK_SIZE = 50;
+var _wgGradeVisible = [];
+var _wgGradeRendered = 0;
+var _wgGradeBindRows = null;
+var _wgGradeOptions = null;
+
+function getWgGradeOptions() {
+    // The modal markup is injected with innerHTML, which does not execute
+    // <script> tags, so the payload is parsed from an inert JSON block instead.
+    if (_wgGradeOptions === null) {
+        var dataEl = document.getElementById('wgGradePanelData');
+        try {
+            _wgGradeOptions = dataEl ? (JSON.parse(dataEl.textContent) || []) : [];
+        } catch (e) {
+            console.warn('Failed to parse WG Grade options.', e);
+            _wgGradeOptions = [];
+        }
+        _wgGradeOptions.forEach(function (o) {
+            o.key = ((o.v || '') + '\u0000' + (o.crd || '')).toLowerCase();
+        });
+    }
+    return _wgGradeOptions;
+}
+
+function escapeWgGradeHtml(text) {
+    return String(text === null || text === undefined ? '' : text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderMoreWgGradeRows(count) {
+    var body = document.getElementById('wgGradeDropdownBody');
+    if (!body) return;
+
+    var start = _wgGradeRendered;
+    var end = Math.min(start + (count || WG_GRADE_CHUNK_SIZE), _wgGradeVisible.length);
+    if (end <= start) return;
+
+    var cell = ' style="padding:6px 8px; border-bottom:1px solid #f3f2f1;"';
+    var html = '';
+    for (var i = start; i < end; i++) {
+        var o = _wgGradeVisible[i];
+        html += '<tr data-value="' + escapeWgGradeHtml(o.v) + '"' +
+                    ' data-chargerate="' + escapeWgGradeHtml(o.cr) + '"' +
+                    ' data-chargeratewithinflamation="' + escapeWgGradeHtml(o.cri) + '"' +
+                    ' tabindex="0" role="option" style="cursor:pointer;">' +
+                    '<td' + cell + '>' + escapeWgGradeHtml(o.v) + '</td>' +
+                    '<td' + cell + '>' + escapeWgGradeHtml(o.crd) + '</td>' +
+                '</tr>';
+    }
+
+    body.insertAdjacentHTML('beforeend', html);
+
+    if (_wgGradeBindRows) {
+        _wgGradeBindRows(Array.prototype.slice.call(body.children, start, end));
+    }
+
+    _wgGradeRendered = end;
+}
+
+function renderWgGradeRows() {
+    var body = document.getElementById('wgGradeDropdownBody');
+    if (!body) return;
+
+    body.innerHTML = '';
+    _wgGradeRendered = 0;
+    renderMoreWgGradeRows(WG_GRADE_CHUNK_SIZE);
+}
+
+// Ensures every matching row exists in the DOM. Only use when code genuinely
+// needs the whole list materialised -- it renders every row synchronously and
+// so undoes the benefit of chunked rendering.
+function ensureAllWgGradeRowsRendered() {
+    if (_wgGradeRendered === 0) {
+        _wgGradeVisible = getWgGradeOptions();
+        renderWgGradeRows();
+    }
+    while (_wgGradeRendered < _wgGradeVisible.length) {
+        renderMoreWgGradeRows(WG_GRADE_CHUNK_SIZE);
+    }
+}
 function initWgGradeDropdown() {
+ // Reset lazy state: this runs fresh each time the modal is opened, and the
+    // modal markup (including the JSON payload) is replaced each time.
+    _wgGradeVisible = [];
+    _wgGradeRendered = 0;
+    _wgGradeBindRows = null;
+    _wgGradeOptions = null;
     initSearchableDropdown({
         inputId: 'wgGradeSelect',
         panelId: 'wgGradeDropdownPanel',
@@ -865,6 +1093,7 @@ function initWgGradeDropdown() {
         rowsSelector: '#wgGradeDropdownBody tr',
         preventTyping: true,
         filterRows: filterWgGradeRows,
+        registerRowBinder: function (binder) { _wgGradeBindRows = binder; },
         onRowSelect: function (row, input) {
             var grade = row.getAttribute('data-value');
             var chargeRate = row.getAttribute('data-chargeratewithinflamation') || row.getAttribute('data-chargerate');
@@ -880,6 +1109,21 @@ function initWgGradeDropdown() {
             calcStaffCost();
         }
     });
+     // Render the first chunk immediately so the list is populated even if the
+    // panel is opened without the search box firing an input event.
+    _wgGradeVisible = getWgGradeOptions();
+    renderWgGradeRows();
+
+    var wgGradePanel = document.getElementById('wgGradeDropdownPanel');
+    if (wgGradePanel && !wgGradePanel.dataset.lazyScrollBound) {
+        // 'scroll' does not bubble, so this is bound directly to the panel.
+        wgGradePanel.dataset.lazyScrollBound = '1';
+        wgGradePanel.addEventListener('scroll', function () {
+            if (_wgGradeRendered >= _wgGradeVisible.length) return;
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                renderMoreWgGradeRows(WG_GRADE_CHUNK_SIZE);
+            }
+        });    }
 
     var hoursInput = document.getElementById('Nohours');
     if (hoursInput) {
@@ -898,11 +1142,130 @@ function initWgGradeDropdown() {
     });
 }
 function filterWgGradeRows(term) {
-    document.querySelectorAll('#wgGradeDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
+    // Filtering now rebuilds the rendered chunk from the cached option list
+    // instead of toggling display on every server-rendered row.
+    var options = getWgGradeOptions();
+    var q = String(term || '').toLowerCase().trim();
+    _wgGradeVisible = q
+        ? options.filter(function (o) { return o.key.indexOf(q) !== -1; })
+        : options;
+    renderWgGradeRows();
 }
+// ── Generic lazy dropdown rows ───────────────────────────────────────────────
+// Same approach as the WG Grade dropdown above, factored out so the Test Code,
+// Animal Type and Account Category panels can reuse it. Rows are built from an
+// inert JSON payload in chunks; the selection logic in each dropdown is
+// unchanged because the generated rows expose the same data-* attributes.
+var LAZY_DROPDOWN_CHUNK_SIZE = 50;
 
+function createLazyDropdownRows(cfg) {
+    var state = {
+        options: null,
+        visible: [],
+        rendered: 0,
+        bindRows: null
+    };
+
+    function getOptions() {
+        // The modal markup is injected with innerHTML, which does not execute
+        // <script> tags, so the payload is parsed from an inert JSON block.
+        if (state.options === null) {
+            var dataEl = document.getElementById(cfg.dataId);
+            try {
+                state.options = dataEl ? (JSON.parse(dataEl.textContent) || []) : [];
+            } catch (e) {
+                console.warn('Failed to parse options for ' + cfg.dataId + '.', e);
+                state.options = [];
+            }
+            state.options.forEach(function (o) {
+                o.key = cfg.searchKey(o).toLowerCase();
+            });
+        }
+        return state.options;
+    }
+
+    function renderMore(count) {
+        var body = document.getElementById(cfg.bodyId);
+        if (!body) return;
+
+        var start = state.rendered;
+        var end = Math.min(start + (count || LAZY_DROPDOWN_CHUNK_SIZE), state.visible.length);
+        if (end <= start) return;
+
+        var html = '';
+        for (var i = start; i < end; i++) {
+            html += cfg.buildRow(state.visible[i]);
+        }
+        body.insertAdjacentHTML('beforeend', html);
+
+        if (state.bindRows) {
+            state.bindRows(Array.prototype.slice.call(body.children, start, end));
+        }
+        state.rendered = end;
+    }
+
+    function render() {
+        var body = document.getElementById(cfg.bodyId);
+        if (!body) return;
+        body.innerHTML = '';
+        state.rendered = 0;
+        renderMore(LAZY_DROPDOWN_CHUNK_SIZE);
+    }
+
+    return {
+        reset: function () {
+            state.options = null;
+            state.visible = [];
+            state.rendered = 0;
+            state.bindRows = null;
+        },
+        registerRowBinder: function (binder) { state.bindRows = binder; },
+        // Renders the first chunk so the list is populated as soon as the panel opens.
+        start: function () {
+            state.visible = getOptions();
+            render();
+
+            var panel = document.getElementById(cfg.panelId);
+            if (panel && !panel.dataset.lazyScrollBound) {
+                // 'scroll' does not bubble, so this is bound directly to the panel.
+                panel.dataset.lazyScrollBound = '1';
+                panel.addEventListener('scroll', function () {
+                    if (state.rendered >= state.visible.length) return;
+                    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 100) {
+                        renderMore(LAZY_DROPDOWN_CHUNK_SIZE);
+                    }
+                });
+            }
+        },
+        filter: function (term) {
+            var options = getOptions();
+            var q = String(term || '').toLowerCase().trim();
+            state.visible = q
+                ? options.filter(function (o) { return o.key.indexOf(q) !== -1; })
+                : options;
+            render();
+        },
+        // Ensures every matching row exists in the DOM. Used when code needs to
+        // look a row up by value (e.g. prepopulating the input in edit mode).
+        ensureAllRendered: function () {
+            if (state.rendered === 0) {
+                state.visible = getOptions();
+                render();
+            }
+            while (state.rendered < state.visible.length) {
+                renderMore(LAZY_DROPDOWN_CHUNK_SIZE);
+            }
+        },
+        findOption: function (value) {
+            var match = null;
+            getOptions().some(function (o) {
+                if (o.v === value) { match = o; return true; }
+                return false;
+            });
+            return match;
+        }
+    };
+}
 var _hoursPerDay = 7.2;
 var _additioncostinflamation = 1.00;
 
@@ -968,13 +1331,34 @@ function calcStaffCostFromDays() {
 }
 
 // ── Test Code custom dropdown ──────────────────────────────────────
+var _testCodeRows = createLazyDropdownRows({
+    dataId: 'testCodePanelData',
+    bodyId: 'testCodeDropdownBody',
+    panelId: 'testCodeDropdownPanel',
+    searchKey: function (o) { return (o.v || '') + '\u0000' + (o.d || '') + '\u0000' + (o.upd || ''); },
+    buildRow: function (o) {
+        var cell = ' style="padding:6px 8px; border-bottom:1px solid #f3f2f1;"';
+        return '<tr data-value="' + escapeWgGradeHtml(o.v) + '"' +
+                   ' data-description="' + escapeWgGradeHtml(o.d) + '"' +
+                   ' data-unitprice="' + escapeWgGradeHtml(o.up) + '"' +
+                   ' data-unitpricewithinflamation="' + escapeWgGradeHtml(o.upi) + '"' +
+                   ' style="cursor:pointer;">' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.v) + '</td>' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.d) + '</td>' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.upd) + '</td>' +
+               '</tr>';
+    }
+});
+
 function initTestCodeDropdown() {
+      _testCodeRows.reset();
     initSearchableDropdown({
         inputId: 'testCodeSelect',
         panelId: 'testCodeDropdownPanel',
         searchBoxId: 'testCodeSearchBox',
         rowsSelector: '#testCodeDropdownBody tr',
         filterRows: filterTestCodeRows,
+        registerRowBinder: _testCodeRows.registerRowBinder,
         onRowSelect: function (row, input) {
             var code = row.getAttribute('data-value');
             var unitPrice = row.getAttribute('data-unitpricewithinflamation') || row.getAttribute('data-unitprice');
@@ -986,6 +1370,7 @@ function initTestCodeDropdown() {
             calcTestCost();
         }
     });
+    _testCodeRows.start();
 
     var noInput = document.getElementById('NumberOfTests');
     if (noInput) {
@@ -995,9 +1380,7 @@ function initTestCodeDropdown() {
     }
 }
 function filterTestCodeRows(term) {
-    document.querySelectorAll('#testCodeDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
+    _testCodeRows.filter(term);
 }
 function calcTestCost() {
     var noEl = document.getElementById('NumberOfTests');
@@ -1011,13 +1394,32 @@ function calcTestCost() {
 }
 
 // ── Animal Type custom dropdown ────────────────────────────────────
+
+var _animalTypeRows = createLazyDropdownRows({
+    dataId: 'animalTypePanelData',
+    bodyId: 'animalTypeDropdownBody',
+    panelId: 'animalTypeDropdownPanel',
+    searchKey: function (o) { return (o.v || '') + '\u0000' + (o.drd || ''); },
+    buildRow: function (o) {
+        var cell = ' style="padding:6px 8px; border-bottom:1px solid #f3f2f1;"';
+        return '<tr data-value="' + escapeWgGradeHtml(o.v) + '"' +
+                   ' data-dailyrate="' + escapeWgGradeHtml(o.dr) + '"' +
+                   ' data-dailyratewithinflamation="' + escapeWgGradeHtml(o.dri) + '"' +
+                   ' style="cursor:pointer;">' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.v) + '</td>' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.drd) + '</td>' +
+               '</tr>';
+    }
+});
 function initAnimalTypeDropdown() {
+    _animalTypeRows.reset();
     initSearchableDropdown({
         inputId: 'animalTypeSelect',
         panelId: 'animalTypeDropdownPanel',
         searchBoxId: 'animalTypeSearchBox',
         rowsSelector: '#animalTypeDropdownBody tr',
         filterRows: filterAnimalTypeRows,
+        registerRowBinder: _animalTypeRows.registerRowBinder,
         onRowSelect: function (row, input) {
             var animalType = row.getAttribute('data-value');
             var dailyRate = row.getAttribute('data-dailyratewithinflamation') || row.getAttribute('data-dailyrate');
@@ -1030,6 +1432,7 @@ function initAnimalTypeDropdown() {
         }
     });
 
+    _animalTypeRows.start();
     ['NumberOfAnimals', 'NumberOfDays'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) {
@@ -1040,9 +1443,7 @@ function initAnimalTypeDropdown() {
     });
 }
 function filterAnimalTypeRows(term) {
-    document.querySelectorAll('#animalTypeDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
+    _animalTypeRows.filter(term);
 }
 function calcAnimalCost() {
     var noAnimalsEl = document.getElementById('NumberOfAnimals');
@@ -1060,13 +1461,31 @@ function calcAnimalCost() {
 }
 
 // ── Account Category custom dropdown ──────────────────────────────
+
+var _accountCatRows = createLazyDropdownRows({
+    dataId: 'accountCatPanelData',
+    bodyId: 'accountCatDropdownBody',
+    panelId: 'accountCatDropdownPanel',
+    searchKey: function (o) { return (o.v || '') + '\u0000' + (o.uid || ''); },
+    buildRow: function (o) {
+        var cell = ' style="padding:6px 8px; border-bottom:1px solid #f3f2f1;"';
+        return '<tr data-value="' + escapeWgGradeHtml(o.v) + '"' +
+                   ' data-useinflation="' + escapeWgGradeHtml(o.ui) + '"' +
+                   ' style="cursor:pointer;">' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.v) + '</td>' +
+                   '<td' + cell + '>' + escapeWgGradeHtml(o.uid) + '</td>' +
+               '</tr>';
+    }
+});
 function initAccountCatDropdown() {
+_accountCatRows.reset();
     initSearchableDropdown({
         inputId: 'accountCatSelect',
         panelId: 'accountCatDropdownPanel',
         searchBoxId: 'accountCatSearchBox',
         rowsSelector: '#accountCatDropdownBody tr',
         filterRows: filterAccountCatRows,
+        registerRowBinder: _accountCatRows.registerRowBinder,
         onRowSelect: function (row, input) {
             var cat = row.getAttribute('data-value');
             var useInflation = row.getAttribute('data-useinflation') === 'true';
@@ -1079,6 +1498,7 @@ function initAccountCatDropdown() {
         }
     });
 
+    _accountCatRows.start();
     var costInput = document.getElementById('CostEntered');
     if (costInput) {
         ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
@@ -1089,9 +1509,7 @@ function initAccountCatDropdown() {
     setTimeout(syncItemCost, 0);
 }
 function filterAccountCatRows(term) {
-    document.querySelectorAll('#accountCatDropdownBody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
+    _accountCatRows.filter(term);
 }
 function syncItemCost() {
     var costEl = document.getElementById('CostEntered');
@@ -1115,8 +1533,9 @@ function syncItemCost() {
     if (!useInflation) {
         var cat = catEl ? catEl.value : '';
         if (cat) {
-            var row = document.querySelector('#accountCatDropdownBody tr[data-value="' + cat + '"]');
-            useInflation = !!row && row.getAttribute('data-useinflation') === 'true';
+            // Rows are rendered lazily, so the option list is the source of truth here.
+            var option = _accountCatRows.findOption(cat);
+            useInflation = !!option && option.ui === 'true';
             if (catSelectEl) {
                 catSelectEl.setAttribute('data-current-useinflation', useInflation ? 'true' : 'false');
             }

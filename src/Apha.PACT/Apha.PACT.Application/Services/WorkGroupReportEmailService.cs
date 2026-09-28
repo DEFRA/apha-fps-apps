@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts.Email;
+using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.PACT.Application.Dtos;

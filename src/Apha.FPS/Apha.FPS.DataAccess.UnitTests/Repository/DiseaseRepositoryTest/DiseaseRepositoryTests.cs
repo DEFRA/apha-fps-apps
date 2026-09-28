@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -52,6 +52,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DiseaseRepositoryTest
         }
 
         [Fact]
+        public async Task GetAllDiseasesAsync_ReturnsDiseasesInAlphabeticalOrder()
+        {
+            // Arrange - unsorted, as newly added records are appended in the table
+            var diseases = new List<Disease>
+            {
+                new() { DiseaseName = "Scrapie" },
+                new() { DiseaseName = "Anthrax" },
+                new() { DiseaseName = "Test" },
+                new() { DiseaseName = "Rinderpest" }
+            };
+            var repo = CreateRepository(diseases);
+
+            // Act
+            var result = await repo.GetAllDiseasesAsync();
+
+            // Assert
+            Assert.Equal(
+                new[] { "Anthrax", "Rinderpest", "Scrapie", "Test" },
+                result.Select(d => d.DiseaseName));
+        }
+
+        [Fact]
         public async Task GetAllDiseasesAsync_ReturnsEmptyCollection_WhenNoDiseasesExist()
         {
             // Arrange
@@ -86,7 +108,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DiseaseRepositoryTest
         [Fact]
         public async Task GetAllDiseasesAsync_ReturnsIEnumerable_NotNull()
         {
-            // Arrange — verifies the return type contract is always IEnumerable, never null
+            // Arrange � verifies the return type contract is always IEnumerable, never null
             var repo = CreateRepository(new List<Disease>());
 
             // Act

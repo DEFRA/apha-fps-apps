@@ -19,8 +19,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class MabArchiveJobTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
-
     [Fact]
     public void Constructor_WhenDbContextIsNull_ShouldThrowArgumentNullException()
     {
@@ -173,7 +171,7 @@ public sealed class MabArchiveJobTests
         Assert.Equal("YearScopedRebuildWithDeterministicOrdering", subject.IdempotencyStrategy);
         Assert.Equal("cron(0 20 ? * MON-FRI *)", subject.ScheduleExpression);
         Assert.Equal("Weekdays (Monday to Friday) at 8:00 PM UTC", subject.ScheduleDescription);
-        Assert.Null(subject.MaxExecutionSeconds);
+        Assert.Equal(1800, subject.MaxExecutionSeconds);
     }
 
     [SkippableFact]
@@ -337,7 +335,7 @@ public sealed class MabArchiveJobTests
     private static string GetConnectionString()
     {
         return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     private static BatchJobsDbContext CreateDbContext()

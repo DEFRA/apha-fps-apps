@@ -64,7 +64,8 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
     public string IdempotencyStrategy => "RecipientMonthDeduplicationKey";
     public string? ScheduleExpression => null; // TBD — cron expression pending stakeholder confirmation
     public string? ScheduleDescription => null; // TBD
-    public int? MaxExecutionSeconds => null;
+    /// <summary>Maximum execution timeout: 30 minutes. Provisional — runtime scales with recipient count and there is no volume cap yet; revisit once real runtime telemetry is available.</summary>
+    public int? MaxExecutionSeconds => 1800;
 
     public MilestoneUpdateNotificationsJob(
         IMilestoneNotificationReadRepository readRepository,
@@ -334,6 +335,18 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
             return true;
         }
 
+        // OutcomeUnknown means we don't know if the recipient was already emailed — never
+        // auto-resend, even with forceResend. Requires manual operator resolution.
+        if (existing.DeliveryStatus == "OutcomeUnknown")
+        {
+            _logger.LogWarning(
+                "Prior OutcomeUnknown row found — send blocked pending manual operational resolution | " +
+                "RecipientId={RecipientId} | Manager={Manager} | PriorDeliveryId={PriorDeliveryId}",
+                group.RecipientId, group.ProjectManager, existing.NotificationDeliveryId);
+            counters.OutcomeUnknownRecipientCount++;
+            return true;
+        }
+
         // Sent + forceResend=true — proceed with a fresh attempt.
         _logger.LogInformation(
             "forceResend — prior Sent row found but forceResend=true; proceeding with new attempt | " +
@@ -384,48 +397,71 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
             jobQueueId, deliveryKey, group.DurablePersonId, group.ProjectManager, group.Email,
             isForceResend, TemplateVersion, children, cancellationToken);
 
-        await _deliveryRepository.UpdateDeliveryToSendingAsync(deliveryId, cancellationToken);
+        // Don't send unless the durable state successfully changed to Sending first.
+        var transitionedToSending = await _deliveryRepository.UpdateDeliveryToSendingAsync(deliveryId, cancellationToken);
+        if (!transitionedToSending)
+        {
+            _logger.LogError(
+                "Failed to durably transition delivery to Sending — email NOT sent | " +
+                "RecipientId={RecipientId} | Manager={Manager} | DeliveryId={DeliveryId}",
+                group.RecipientId, group.ProjectManager, deliveryId);
+            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
+                deliveryId, "Failed",
+                "Failed to durably transition delivery to Sending before the send attempt.",
+                null, cancellationToken);
+            counters.ManagerEmailFailedCount++;
+            return;
+        }
 
         var message = new EmailMessage(
             To: [group.Email!],
             Subject: _templateRenderer.Subject,
-            HtmlBody: renderResult.HtmlBody);
+            HtmlBody: renderResult.HtmlBody,
+            IsBodyHtml: true);
 
         var sendResult = await _emailService.SendAsync(message, cancellationToken);
         counters.ManagerEmailAttemptCount++;
 
         if (sendResult.Succeeded)
         {
-            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
-                deliveryId, "Sent", null, DateTime.UtcNow, cancellationToken);
             _logger.LogInformation(
                 "EmailSent | RecipientId={RecipientId} | Manager={Manager} | Email={Email} | Projects={ProjectCount} | DeliveryId={DeliveryId}",
                 group.RecipientId, group.ProjectManager, group.Email,
                 renderResult.IncludedProjects.Count, deliveryId);
             counters.ManagerEmailSentCount++;
+
+            // Graph already sent the email — a failure to persist that here is a durability
+            // failure, not a per-recipient one. UpdateDeliveryOutcomeAsync throws rather than
+            // returning a value we could shrug off; let it propagate and fail the job. The row
+            // is left Sending, so the next run's duplicate check routes it through
+            // OutcomeUnknown instead of resending.
+            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
+                deliveryId, "Sent", null, DateTime.UtcNow, cancellationToken);
         }
         else
         {
-            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
-                deliveryId, "Failed", sendResult.FailureMessage, null, cancellationToken);
             _logger.LogError(
                 "EmailSendFailed | RecipientId={RecipientId} | Manager={Manager} | Email={Email} | Reason={Reason} | DeliveryId={DeliveryId}",
                 group.RecipientId, group.ProjectManager, group.Email,
                 sendResult.FailureMessage, deliveryId);
             counters.ManagerEmailFailedCount++;
+
+            await _deliveryRepository.UpdateDeliveryOutcomeAsync(
+                deliveryId, "Failed", sendResult.FailureMessage, null, cancellationToken);
         }
     }
 
     /// <summary>
     /// Resolves the effective calendar month for this run.
     /// Supports a MILESTONE_TEST_UTCNOW environment variable for deterministic test overrides.
+    /// Prefers the immutable RequestedAtUtc over wall-clock UtcNow so a retry can't resolve a
+    /// different month than the original attempt.
     /// </summary>
     internal int ResolveEffectiveMonth(int? monthOverride)
     {
         if (monthOverride.HasValue)
             return monthOverride.Value;
 
-        var utcNow = DateTime.UtcNow;
         var overrideUtcNow = Environment.GetEnvironmentVariable("MILESTONE_TEST_UTCNOW");
         if (!string.IsNullOrWhiteSpace(overrideUtcNow)
             && DateTime.TryParse(
@@ -434,10 +470,11 @@ public sealed class MilestoneUpdateNotificationsJob : IBatchJob
                 System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal,
                 out var parsedOverride))
         {
-            utcNow = parsedOverride;
+            return parsedOverride.Month;
         }
 
-        return utcNow.Month;
+        var effectiveUtcNow = _executionContext.RequestedAtUtc ?? DateTime.UtcNow;
+        return effectiveUtcNow.Month;
     }
 
     /// <summary>

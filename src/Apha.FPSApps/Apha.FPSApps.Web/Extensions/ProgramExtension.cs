@@ -4,6 +4,8 @@ using Apha.FPSApps.Infrastructure.Mappings;
 using Apha.FPSApps.Web.Filters;
 using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -42,18 +44,13 @@ namespace Apha.FPSApps.Web.Extensions
                 options.Cookie.SameSite = SameSiteMode.Lax;
             });
 
-            // AutoMapper  
-            services.AddAutoMapper(config =>
-            {
-                config.AddMaps(typeof(FpsApiDtoMapper).Assembly);
-                config.AddMaps(typeof(PactApiDtoMapper).Assembly);
-                config.AddMaps(typeof(CostbookApiDtoMapper).Assembly);
-                config.AddMaps(typeof(PimsApiDtoMapper).Assembly);
-                config.AddMaps(typeof(FpsViewModelMapper));
-                config.AddMaps(typeof(PactViewModelMapper));
-                config.AddMaps(typeof(CostbookViewModelMapper));
-                config.AddMaps(typeof(PimsViewModelMapper));
-            });
+            // Mapster
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Default.NameMatchingStrategy(NameMatchingStrategy.IgnoreCase);
+            mapperConfig.Scan(typeof(FpsApiDtoMapper).Assembly);
+            mapperConfig.Scan(typeof(FpsViewModelMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
 
             // HTTP Context
             services.AddHttpContextAccessor();
@@ -97,6 +94,87 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Health checks
             services.AddHealthChecks();
+
+            // Bundling & minification of CSS/JS (LigerShark.WebOptimizer)
+            services.AddWebOptimizerBundles();
+        }
+
+        /// <summary>
+        /// Registers WebOptimizer with named CSS/JS bundles per layout/area.
+        /// Bundle order is preserved to respect the Bootstrap → GOV.UK → custom cascade.
+        /// Individually-loaded third-party libs (jQuery, jQuery-validation) remain unbundled
+        /// because they are required at specific points in the page lifecycle.
+        /// </summary>
+        private static void AddWebOptimizerBundles(this IServiceCollection services)
+        {
+            services.AddWebOptimizer(pipeline =>
+            {
+                // ── Root shared layout ──────────────────────────────────────
+                pipeline.AddCssBundle("/css/bundles/root.css",
+                    "lib/bootstrap/dist/css/bootstrap.min.css",
+                    "css/govuk-frontend-6.0.0.min.css",
+                    "css/main_style.css",
+                    "css/site.css");
+
+                pipeline.AddJavaScriptBundle("/js/bundles/root.js",
+                    "js/common/keyboard/global-dropdown-keyboard.js",
+                    "js/site.js");
+
+                // ── FPS area ────────────────────────────────────────────────
+                pipeline.AddCssBundle("/css/bundles/fps.css",
+                    "lib/bootstrap/dist/css/bootstrap.min.css",
+                    "css/govuk-frontend-6.0.0.min.css",
+                    "css/supplement_style_for_gov.uk_style.css",
+                    "css/fps_styles/styles.css",
+                    "DataGrid/datagrid.css",
+                    "css/main_style.css",
+                    "DataGrid/editable-grid.css",
+                    "css/common/headernav/navstyle.css");
+
+                pipeline.AddJavaScriptBundle("/js/bundles/fps.js",
+                    "js/common/headernav/navmenu.js",
+                    "js/common/numeric-decimal-input.js",
+                    "js/common/js-alphanumeric-field.js");
+
+                // ── PACT area ───────────────────────────────────────────────
+                pipeline.AddCssBundle("/css/bundles/pact.css",
+                    "css/govuk-frontend-6.0.0.min.css",
+                    "css/supplement_style_for_gov.uk_style.css",
+                    "css/pact_styles/styles.css",
+                    "css/main_style.css",
+                    "DataGrid/editable-grid.css",
+                    "css/common/headernav/navstyle.css");
+
+                pipeline.AddJavaScriptBundle("/js/bundles/pact.js",
+                    "js/common/headernav/navmenu.js",
+                    "js/number-validation.js",
+                    "js/site.js");
+
+                // ── PIMS area ───────────────────────────────────────────────
+                pipeline.AddCssBundle("/css/bundles/pims.css",
+                    "lib/bootstrap/dist/css/bootstrap.min.css",
+                    "css/common/_govuk_tabs.css",
+                    "css/govuk-frontend-6.0.0.min.css",
+                    "css/supplement_style_for_gov.uk_style.css",
+                    "css/pims_styles/styles.css",
+                    "css/main_style.css",
+                    "DataGrid/editable-grid.css",
+                    "css/common/headernav/navstyle.css");
+
+                pipeline.AddJavaScriptBundle("/js/bundles/pims.js",
+                    "js/common/headernav/navmenu.js",
+                    "js/common/numeric-decimal-input.js");
+
+                // ── CostBook area ───────────────────────────────────────────
+                pipeline.AddCssBundle("/css/bundles/costbook.css",
+                    "lib/bootstrap/dist/css/bootstrap.min.css",
+                    "css/govuk-frontend-6.0.0.min.css",
+                    "css/supplement_style_for_gov.uk_style.css",
+                    "css/costbook_styles/styles.css",
+                    "css/main_style.css",
+                    "DataGrid/editable-grid.css",
+                    "css/common/headernav/navstyle.css");
+            });
         }
 
         public static void ConfigureMiddleware(this WebApplication app)
@@ -136,6 +214,9 @@ namespace Apha.FPSApps.Web.Extensions
 
             // Use forwarded headers - must be before authentication
             app.UseForwardedHeaders();
+
+            // Bundling & minification - must run before static files
+            app.UseWebOptimizer();
 
             app.UseStaticFiles();
             app.UseRouting();

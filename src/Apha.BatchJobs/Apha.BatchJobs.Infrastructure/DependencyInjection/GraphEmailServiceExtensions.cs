@@ -1,5 +1,7 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Infrastructure.Email;
+using Apha.Common.Contracts.Email;
+using Apha.Common.Utilities.Email;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,19 +32,20 @@ public static class GraphEmailServiceExtensions
     }
 
     /// <summary>
-    /// Registers <see cref="IEmailService"/> (Graph-backed, with non-prod redirect) and its
-    /// <see cref="Func{IEmailService}"/> factory. Shared by all jobs — MABArchive resolves the
-    /// factory lazily so Graph credentials are never eagerly validated at startup.
+    /// Registers <see cref="IEmailService"/> (Graph-backed, sends directly to whatever
+    /// recipients the caller builds into the message) and its <see cref="Func{IEmailService}"/>
+    /// factory. Every job's recipients come from its own static config — for
+    /// MilestoneUpdateNotifications, whose recipients are resolved live from the database, the
+    /// job itself applies a recipient override under <c>MilestoneNotifications</c> config rather
+    /// than this service doing any redirection. MABArchive resolves the factory lazily so Graph
+    /// credentials are never eagerly validated at startup.
     /// </summary>
-    public static IServiceCollection AddEmailService(this IServiceCollection services)
+    public static IServiceCollection AddEmailService(this IServiceCollection services, IConfiguration configuration)
     {
-        // Graph credentials are validated only when IEmailService is first resolved.
-        services.AddScoped<IEmailService>(sp => new NonProdEmailRedirectDecorator(
-            new GraphBackedEmailService(
-                sp.GetRequiredService<IGraphEmailService>(),
-                sp.GetRequiredService<ILogger<GraphBackedEmailService>>()),
-            sp.GetRequiredService<IOptions<EmailDeliverySettings>>(),
-            sp.GetRequiredService<ILogger<NonProdEmailRedirectDecorator>>()));
+        // Graph credentials are validated only when the service is first resolved.
+        services.AddScoped<IEmailService>(sp => new GraphBackedEmailService(
+            sp.GetRequiredService<IGraphEmailService>(),
+            sp.GetRequiredService<ILogger<GraphBackedEmailService>>()));
 
         // Func<IEmailService> lets MABArchive resolve IEmailService lazily without triggering Graph.
         services.AddScoped<Func<IEmailService>>(sp => sp.GetRequiredService<IEmailService>);

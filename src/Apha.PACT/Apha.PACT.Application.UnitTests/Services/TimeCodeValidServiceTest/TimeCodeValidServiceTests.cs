@@ -4,7 +4,7 @@ using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -621,6 +621,33 @@ namespace Apha.PACT.Application.UnitTests.Services.TimeCodeValidServiceTest
             _mockRepository.DeleteAllByJobCodeAsync("JC_MISSING", "PRJ1").Returns(false);
 
             var result = await _sut.DeleteAllByJobCodeAsync("JC_MISSING", "PRJ1");
+
+            result.Should().BeFalse();
+        }
+
+        #endregion
+
+        #region SetWorkgroupsActiveStatusByJobCodeAsync
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_ValidJobCode_ReturnsTrue(bool isActive)
+        {
+            _mockRepository.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive).Returns(true);
+
+            var result = await _sut.SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive);
+
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).SetWorkgroupsActiveStatusByJobCodeAsync("JC1", "PRJ1", isActive);
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_NotFound_ReturnsFalse()
+        {
+            _mockRepository.SetWorkgroupsActiveStatusByJobCodeAsync("JC_MISSING", "PRJ1", true).Returns(false);
+
+            var result = await _sut.SetWorkgroupsActiveStatusByJobCodeAsync("JC_MISSING", "PRJ1", true);
 
             result.Should().BeFalse();
         }

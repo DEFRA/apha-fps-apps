@@ -6,6 +6,7 @@ namespace Apha.Costbook.Core.Interfaces;
 public interface ITestRequirementRepository
 {
     Task<PagedData<TestRequirementDetailView>> GetTestRequirementsByProjectYearAsync(string project, int year, PaginationParameters<string> query);
+    Task<bool> ExistsAsync(string project, int year, string testCode);
     Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement);
     Task<TestRequirement> UpdateTestRequirementAsync(TestRequirement testRequirement);
     Task<bool> DeleteTestRequirementAsync(string project, int year, string testCode);

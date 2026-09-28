@@ -48,7 +48,8 @@ internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
                 Occ = cc != null ? cc.CostCentre : null,
                 Month = psc.Month!.Value,
                 Amount = psc.Amount,
-                AcctCode = psc.AcctCode
+                AcctCode = psc.AcctCode,
+                FpsYear = fpsYear
             })
             .ToListAsync(cancellationToken);
 

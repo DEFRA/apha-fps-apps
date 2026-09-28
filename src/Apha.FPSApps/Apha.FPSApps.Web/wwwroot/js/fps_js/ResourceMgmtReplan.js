@@ -86,11 +86,14 @@
             const li = document.createElement('li');
             li.className = 'ssr-grade-item';
             li.role = 'option';
+            li.tabIndex = -1;
             li.textContent = item;
             li.dataset.wgGrade = item;
             li.addEventListener('click', function () {
                 rraOnGroupSelect(li);
+                li.focus();
             });
+            li.addEventListener('keydown', rraOnGroupListKeyDown);
             frag.appendChild(li);
         });
         list.appendChild(frag);
@@ -100,6 +103,47 @@
         // Auto-select the first workgroup so the grid loads immediately.
         const firstItem = list.querySelector('.ssr-grade-item');
         if (firstItem) rraOnGroupSelect(firstItem);
+    }
+
+    // Handles arrow-key / Home / End / Enter / Space navigation within the workgroup list.
+    function rraOnGroupListKeyDown(event) {
+        const list = el('ssrWorkGroupList');
+        if (!list) return;
+
+        const items = Array.prototype.slice.call(list.querySelectorAll('.ssr-grade-item'));
+        if (!items.length) return;
+
+        const currentIndex = items.indexOf(event.currentTarget);
+        let nextIndex = -1;
+
+        switch (event.key) {
+            case 'ArrowDown':
+                nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                break;
+            case 'ArrowUp':
+                nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                break;
+            case 'Home':
+                nextIndex = 0;
+                break;
+            case 'End':
+                nextIndex = items.length - 1;
+                break;
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                rraOnGroupSelect(event.currentTarget);
+                return;
+            default:
+                return;
+        }
+
+        event.preventDefault();
+        const nextItem = items[nextIndex];
+        if (nextItem) {
+            nextItem.focus();
+            rraOnGroupSelect(nextItem);
+        }
     }
 
     /* ── WorkGroup list sorting ─────────────────────────────────────────── */
@@ -132,8 +176,12 @@
     /* ── 2. Workgroup grade selected from list ──────────────────────────── */
     function rraOnGroupSelect(liEl) {
         document.querySelectorAll('#ssrWorkGroupList .ssr-grade-item')
-            .forEach(function (i) { i.classList.remove('ssr-grade-item--active'); });
+            .forEach(function (i) {
+                i.classList.remove('ssr-grade-item--active');
+                i.tabIndex = -1;
+            });
         liEl.classList.add('ssr-grade-item--active');
+        liEl.tabIndex = 0;
 
         _currentWorkGroup = liEl.dataset.wgGrade || '';   // WorkGroup name (e.g. "WG1")
         _currentWgGrade   = '';                            // Reset grade until a row is selected

@@ -17,7 +17,8 @@
     <!-- ── Side Navigation ──────────────────────────────────── -->
     @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
     {
-        Parentproject = Model.Parentproject
+        Parentproject = Model.Parentproject,
+        ShowProjects = Model.ShowProjects
     })
 
     <!-- ── Main Content ─────────────────────────────────────── -->
@@ -33,7 +34,7 @@
                          style="margin: 8px; display: flex; align-items: flex-end;">
 
                         <div style="margin: 0 7px; flex: 1;">
-                            <label for="dpprojectSelectMulti_input" class="govuk-label tab-font-size govuk-!-font-weight-bold sup_font_weight_700">
+                            <label class="govuk-label tab-font-size govuk-!-font-weight-bold sup_font_weight_700">
                                 Select a Project
                             </label>
                             <div id="dpprojectSelectMultiDropdown" style="width: 100%;"></div>
@@ -158,23 +159,23 @@
                                             <tr class="govuk-table__row" id="tableMPPTotalRow">
                                                 <td class="govuk-table__cell mpp-label-cell"></td>
                                                 <td class="govuk-table__cell mpp-label-cell">Totals</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="Proj Specific"
                                                     id="mpp-total-proj-specific">£0.00</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="Animals"
                                                     id="mpp-total-animals">£0.00</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="TimeCosts"
                                                     id="mpp-total-timecosts">£0.00</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="Test Costs"
                                                     id="mpp-total-transfercosts">
                                                     £0.00
                                                 </td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="Total Cost"
                                                     id="mpp-total-total-costs">£0.00</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="Total Hours"
                                                     id="mpp-total-total-hours">0</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="Invoices"
                                                     id="mpp-total-invoices">£0.00</td>
-                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                <td class="govuk-table__cell govuk-!-text-align-right" tabindex="0" data-total-label="COIW"
                                                     id="mpp-total-coiw">£0.00</td>
                                             </tr>
                                         </tbody>
@@ -257,10 +258,14 @@
                                     <tfoot class="govuk-table__foot tab-font-bold-size">
                                         <tr class="govuk-table__row">
                                             <td class="govuk-table__cell sup_text_align_right" colspan="2">Totals</td>
-                                            <td class="govuk-table__cell sup_text_align_right" id="pactPayTotalPay">£0.00</td>
-                                            <td class="govuk-table__cell sup_text_align_right" id="pactPayTotalNonPay">£0.00</td>
-                                            <td class="govuk-table__cell sup_text_align_right" id="pactPayTotalOverhead">£0.00</td>
-                                            <td class="govuk-table__cell sup_text_align_right" id="pactPayTotalStaffCosts">£0.00</td>
+                                            <td class="govuk-table__cell sup_text_align_right" tabindex="0" data-total-label="Pay"
+                                                id="pactPayTotalPay">£0.00</td>
+                                            <td class="govuk-table__cell sup_text_align_right" tabindex="0" data-total-label="Non-Pay"
+                                                id="pactPayTotalNonPay">£0.00</td>
+                                            <td class="govuk-table__cell sup_text_align_right" tabindex="0" data-total-label="Overhead"
+                                                id="pactPayTotalOverhead">£0.00</td>
+                                            <td class="govuk-table__cell sup_text_align_right" tabindex="0" data-total-label="Staff Costs"
+                                                id="pactPayTotalStaffCosts">£0.00</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -385,7 +390,7 @@
                                 <div id="@($"gridContainer_{Model.PlanStaffGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.PlanStaffGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="planStaffGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -398,7 +403,7 @@
                                 <div id="@($"gridContainer_{Model.PlanTestGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.PlanTestGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="planTestGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -414,7 +419,7 @@
                                 <div id="@($"gridContainer_{Model.PlanAnimalGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.PlanAnimalGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="planAnimalGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -427,7 +432,7 @@
                                 <div id="@($"gridContainer_{Model.PlanAdditionalGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.PlanAdditionalGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="planAdditionalGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -447,7 +452,7 @@
                                 <div id="@($"gridContainer_{Model.StaffPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.StaffPlansGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="staffPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -460,7 +465,7 @@
                                 <div id="@($"gridContainer_{Model.StaffActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.StaffActualsGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="staffActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -480,7 +485,7 @@
                                 <div id="@($"gridContainer_{Model.TestPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.TestPlansGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="testPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -493,7 +498,7 @@
                                 <div id="@($"gridContainer_{Model.TestActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.TestActualsGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="testActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -518,7 +523,7 @@
                                 <div id="@($"gridContainer_{Model.AnimalPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AnimalPlansGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="animalPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -531,7 +536,7 @@
                                 <div id="@($"gridContainer_{Model.AnimalActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AnimalActualsGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="animalActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -553,7 +558,7 @@
                                 <div id="@($"gridContainer_{Model.AdditionalPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AdditionalPlansGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="additionalCostPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -566,7 +571,7 @@
                                 <div id="@($"gridContainer_{Model.AdditionalActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AdditionalActualsGrid)
                                 </div>
-                                <div class="sup_total_footer">
+                                <div class="sup_total_footer" tabindex="0">
                                     <span class="sup_total_footer__label">Total</span>
                                     <span id="additionalActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
@@ -675,7 +680,24 @@
                 document.getElementById('pactPayTotalNonPay').textContent     = data.nonPayTotal;
                 document.getElementById('pactPayTotalOverhead').textContent   = data.overheadTotal;
                 document.getElementById('pactPayTotalStaffCosts').textContent = data.staffCostsTotal;
+                updatePactPayTotalsAriaLabels();
             });
+    }
+
+    // ── Announce each Pact Pay total cell as "label: value" ─────────────────
+    // These totals cells sit in a <tfoot> below the grid with no column
+    // headers of their own (the header row is visually hidden for pixel
+    // alignment), so without this NVDA reads a focused cell's bare value with
+    // no context. Each cell is individually focusable (tabindex="0") and gets
+    // its own aria-label built from its data-total-label attribute plus its
+    // current value - matching the Monthly Pact totals pattern.
+    function updatePactPayTotalsAriaLabels() {
+        var cells = document.querySelectorAll('#pactPayFooterTable td[data-total-label]');
+        cells.forEach(function (cell) {
+            var label = cell.getAttribute('data-total-label');
+            var value = cell.textContent.trim();
+            cell.setAttribute('aria-label', value ? (label + ': ' + value) : label);
+        });
     }
 
     function refreshPlanTotals() {
@@ -707,7 +729,23 @@
                 document.getElementById('mpp-total-total-hours').textContent   = data.totalHours;
                 document.getElementById('mpp-total-invoices').textContent      = data.totalInvoices;
                 document.getElementById('mpp-total-coiw').textContent          = data.totalCoiw;
+                updateMonthlyPactTotalsAriaLabels();
             });
+    }
+
+    // ── Announce each Monthly PACT total cell as "label: value" ─────────────
+    // These totals cells have no visible column headers of their own (the
+    // header row is visually hidden for pixel alignment), so without this
+    // NVDA reads a focused cell's bare number with no context. Each cell is
+    // individually focusable (tabindex="0") and gets its own aria-label built
+    // from its data-total-label attribute plus its current value.
+    function updateMonthlyPactTotalsAriaLabels() {
+        var cells = document.querySelectorAll('#tableMPPTotalRow td[data-total-label]');
+        cells.forEach(function (cell) {
+            var label = cell.getAttribute('data-total-label');
+            var value = cell.textContent.trim();
+            cell.setAttribute('aria-label', value ? (label + ': ' + value) : label);
+        });
     }
 
     function refreshMonthlyPactFpsPlanned() {

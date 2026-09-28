@@ -1,4 +1,4 @@
-﻿namespace Apha.PIMS.Core.Interfaces
+namespace Apha.PIMS.Core.Interfaces
 {
     public interface IFPSYearContext
     {

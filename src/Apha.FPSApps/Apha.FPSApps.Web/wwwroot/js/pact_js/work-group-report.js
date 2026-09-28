@@ -57,6 +57,61 @@ function saveWorkGroupEmail() {
 }
 
 // ── Document ready ────────────────────────────────────────────────────────────
+function initializeProfitCentreDropdown(config) {
+    if (typeof MultiColumnDropdownComponent === 'undefined') { return; }
+    if (!document.getElementById('profitCentreMultiDropdown')) { return; }
+
+    var profitCentreData = config.data || [];
+    var selectedProfitCentre = config.selectedValue || '';
+    var isInitializing = true;
+    var profitCentreDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'profitCentreDropdown',
+        containerSelector: '#profitCentreMultiDropdown',
+        placeholder: 'Select a Profit Centre',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by profit centre',
+        labelText: '',
+        columns: [
+            { field: 'Text', header: 'Profit Centre', width: '250px' }
+        ],
+        data: profitCentreData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: false,
+        showClearButton: false,
+        callbacks: {
+            onSelect: function (selectedItem) {
+                $('#SelectedProfitCentre').val(selectedItem.Value);
+                if (!isInitializing) {
+                    $('#SelectedProfitCentre').trigger('change');
+                }
+            },
+            onClear: function () {
+                $('#SelectedProfitCentre').val('');
+                if (!isInitializing) {
+                    $('#SelectedProfitCentre').trigger('change');
+                }
+            }
+        }
+    });
+
+    // Determine the value to select initially. If the provided value is null/empty
+    // or not a valid option in the data, fall back to the first profit centre.
+    var isValidSelection = selectedProfitCentre !== '' &&
+        profitCentreData.some(function (item) { return item.Value === selectedProfitCentre; });
+
+    var initialValue = isValidSelection
+        ? selectedProfitCentre
+        : (profitCentreData.length > 0 ? profitCentreData[0].Value : '');
+
+    // Set initial value if exists (without triggering change / grid reload)
+    if (initialValue && initialValue !== '') {
+        profitCentreDropdown.setValue(initialValue);
+        $('#SelectedProfitCentre').val(initialValue);
+    }
+    isInitializing = false;
+}
+
 $(function () {
 
     // Disable checkboxes when year is closed

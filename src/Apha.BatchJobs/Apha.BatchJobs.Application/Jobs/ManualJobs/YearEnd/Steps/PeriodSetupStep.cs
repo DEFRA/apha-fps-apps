@@ -12,6 +12,7 @@ public sealed class PeriodSetupStep : IYearEndDataSetupStep
     private const string TableSchema = "fps";
     private const string TableName = "tblperiod";
     private const string YearColumn = "fpsyear";
+    private const int ExpectedPeriodCount = 12;
 
     private readonly IYearEndDataSetupRepository _repository;
     private readonly ILogger<PeriodSetupStep> _logger;
@@ -46,10 +47,10 @@ public sealed class PeriodSetupStep : IYearEndDataSetupStep
         }
 
         var currentCount = await _repository.CountRowsByYearAsync(TableSchema, TableName, YearColumn, context.CurrentFpsYear.Value, cancellationToken);
-        if (currentCount == 0)
+        if (currentCount != ExpectedPeriodCount)
         {
             throw new InvalidOperationException(
-                $"Source year {context.CurrentFpsYear.Value} has no rows in {TableSchema}.{TableName}; cannot prepare target period rows.");
+                $"Source year {context.CurrentFpsYear.Value} must have exactly {ExpectedPeriodCount} rows in {TableSchema}.{TableName} to perform Year End period setup; found {currentCount}.");
         }
 
         var targetCount = await _repository.CountRowsByYearAsync(TableSchema, TableName, YearColumn, context.TargetFpsYear.Value, cancellationToken);
@@ -60,6 +61,11 @@ public sealed class PeriodSetupStep : IYearEndDataSetupStep
         }
 
         var inserted = await _repository.CopyPeriodRowsAsync(context.CurrentFpsYear.Value, context.TargetFpsYear.Value, cancellationToken);
+        if (inserted != ExpectedPeriodCount)
+        {
+            throw new InvalidOperationException(
+                $"Year End period setup inserted {inserted} rows into {TableSchema}.{TableName} for target year {context.TargetFpsYear.Value}; expected exactly {ExpectedPeriodCount}.");
+        }
 
         _logger.LogInformation(
             "YearEnd period setup completed | CorrelationId={CorrelationId} | Table={Schema}.{Table} | SourceYear={SourceYear} | TargetYear={TargetYear} | InsertedRows={InsertedRows}",

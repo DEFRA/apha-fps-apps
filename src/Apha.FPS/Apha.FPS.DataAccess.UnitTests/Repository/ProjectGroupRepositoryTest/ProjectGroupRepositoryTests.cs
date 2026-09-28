@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -86,7 +86,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectGroupRepositoryTest
         [Fact]
         public async Task GetAllProjectGroupsAsync_ReturnsIEnumerable_NotNull()
         {
-            // Arrange — verifies the return type contract is always IEnumerable, never null
+            // Arrange � verifies the return type contract is always IEnumerable, never null
             var repo = CreateRepository(new List<ProjectGroup>());
 
             // Act

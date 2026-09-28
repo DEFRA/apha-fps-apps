@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -35,9 +35,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             _projectDetailsService = projectDetailsService;
         }
 
-        public async Task<IActionResult> Index(string? parentproject, short? year, string? project = null)
+        public async Task<IActionResult> Index(string? parentproject, short? year, string? project = null, int? showprojects = null)
         {
-            Task<ApiResponseDto<List<ProjectListViewDto>>> projectsTask = _projectListService.GetAllProjectsListAsync();
+            int normalizedShowProjects = showprojects == 0 ? 0 : 1;
+            Task<ApiResponseDto<List<ProjectListViewDto>>> projectsTask = _projectListService.GetAllProjectsListAsync(normalizedShowProjects);
             Task<ApiResponseDto<List<YearDto>>> yearsTask = _projectDetailsService.GetAllYearAsync();
             await Task.WhenAll(projectsTask, yearsTask);
 
@@ -99,6 +100,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return View(new ProjectYearCostsViewModel
                 {
                     Parentproject = resolvedProject,
+                    ShowProjects = normalizedShowProjects,
                     SelectedYear = resolvedYear,
                     ProjectOptions = projectOptions,
                     YearOptions = yearOptions,

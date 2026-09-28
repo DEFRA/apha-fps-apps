@@ -7,12 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Email\" />
-    <Folder Include="ExcelImportExport\" />
+    <Compile Remove="Email\**" />
+    <Compile Remove="ExcelImportExport\**" />
+    <EmbeddedResource Remove="Email\**" />
+    <EmbeddedResource Remove="ExcelImportExport\**" />
+    <None Remove="Email\**" />
+    <None Remove="ExcelImportExport\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <PackageReference Include="Mapster" Version="10.0.12" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.10" />
     <PackageReference Include="Microsoft.Identity.Web" Version="4.7.0" />
   </ItemGroup>

@@ -25,5 +25,6 @@ namespace Apha.FPS.Core.Entities
         public decimal? Overhead { get; set; }
         public double? Time { get; set; }
         public decimal? TotalCost { get; set; }
+        public int FpsYear { get; set; }
     }
 }

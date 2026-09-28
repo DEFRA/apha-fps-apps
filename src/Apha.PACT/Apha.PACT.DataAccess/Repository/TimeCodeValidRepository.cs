@@ -150,6 +150,16 @@ namespace Apha.PACT.DataAccess.Repository
             return true;
         }
 
+        public async Task<bool> SetWorkgroupsActiveStatusByJobCodeAsync(string jobCode, string parentProject, bool isActive)
+        {
+            await _context.TimeCodeValids
+                .Where(t => t.JobCode == jobCode &&
+                            t.ParentProject == parentProject &&
+                            t.FpsYear == _fpsRequestContext.FpsYear)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.Active, isActive));
+            return true;
+        }
+
         public async Task<IEnumerable<TimeCodeValid>> CopyWorkGroupAsync(
             string sourceJobCode, string targetJobCode, string parentProject)
         {

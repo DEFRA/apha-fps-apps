@@ -1,4 +1,4 @@
-﻿namespace Apha.PACT.Core.Interfaces
+namespace Apha.PACT.Core.Interfaces
 {
     public interface IFpsRequestContext
     {

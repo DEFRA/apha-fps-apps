@@ -1,11 +1,11 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPS.Application.Services
 {
@@ -23,6 +23,12 @@ namespace Apha.FPS.Application.Services
         public async Task<IEnumerable<ProjectDto>> GetAllProjectsAsync()
         {
             var projects = await _projectRepository.GetAllProjectsAsync();
+            return _mapper.Map<IEnumerable<ProjectDto>>(projects);
+        }
+
+        public async Task<IEnumerable<ProjectDto>> GetDistinctParentProjectsAsync()
+        {
+            var projects = await _projectRepository.GetDistinctParentProjectsAsync();
             return _mapper.Map<IEnumerable<ProjectDto>>(projects);
         }
 

@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
     public interface IProjectListService
     {
         Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsAsync(QueryParameters<string> query, int filterOption = 2);
-        Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync();
+        Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync(int filterOption = 2);
         Task<ApiResponseDto<ProjectDto>> GetFpsProjectByIdAsync(string parentproject);
         Task<ApiResponseDto<ProposedProjectDto>> GetProposedProjectByIdAsync(string parentproject);
         Task<ApiResponseDto<List<ProjectsDto>>> GetYearlyDetailsByProjectAsync(string parentproject);

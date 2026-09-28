@@ -4,7 +4,7 @@ using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using ClosedXML.Excel;
 using FluentAssertions;
 using NSubstitute;
@@ -1064,35 +1064,62 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             using var stream = new MemoryStream(result);
             using var workbook = new XLWorkbook(stream);
 
-            workbook.Worksheet("StaffPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            static void AssertNoPoundCurrencyFormat(IXLWorkbook wb, string sheetName, int row, int column)
+            {
+                var cell = wb.Worksheet(sheetName).Cell(row, column);
+                cell.Style.NumberFormat.Format.Should().NotBe("£#,##0.00");
+                cell.GetFormattedString().Should().NotStartWith("£");
+            }
 
-            workbook.Worksheet("StaffActuals").Cell(2, 7).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffActuals").Cell(2, 8).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("StaffActuals").Cell(3, 8).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 3);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 7);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 9);
+            AssertNoPoundCurrencyFormat(workbook, "MonthlyPactData", 2, 10);
 
-            workbook.Worksheet("TestPlan").Cell(2, 3).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "StaffPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "StaffPlan", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "StaffPlan", 3, 5);
 
-            workbook.Worksheet("TestActuals").Cell(2, 6).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestActuals").Cell(2, 7).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("TestActuals").Cell(3, 7).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 2, 7);
+            AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 2, 8);
+            AssertNoPoundCurrencyFormat(workbook, "StaffActuals", 3, 8);
 
-            workbook.Worksheet("AnimalPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalPlan").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalPlan").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            workbook.Worksheet("TestPlan").Cell(1, 1).GetString().Should().Be("Test Code");
+            workbook.Worksheet("TestPlan").Cell(1, 2).GetString().Should().Be("Unit Price");
+            workbook.Worksheet("TestPlan").Cell(1, 3).GetString().Should().Be("No. Required");
+            workbook.Worksheet("TestPlan").Cell(1, 4).GetString().Should().Be("Cost");
+            workbook.Worksheet("TestPlan").Cell(1, 5).GetString().Should().BeEmpty();
+            workbook.Worksheet("TestPlan").Row(1).Cells(1, 4).Select(c => c.GetString()).Should().NotContain("Buyer");
+            workbook.Worksheet("TestPlan").Cell(2, 1).GetString().Should().Be("TC001");
+            workbook.Worksheet("TestPlan").Cell(2, 2).GetValue<double>().Should().Be(100d);
+            workbook.Worksheet("TestPlan").Cell(2, 3).GetValue<double>().Should().Be(2d);
+            workbook.Worksheet("TestPlan").Cell(2, 4).GetValue<double>().Should().Be(200d);
+            workbook.Worksheet("TestPlan").Cell(3, 3).GetString().Should().Be("Total");
+            workbook.Worksheet("TestPlan").Cell(3, 4).GetValue<double>().Should().Be(200d);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 2);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "TestPlan", 3, 4);
 
-            workbook.Worksheet("AnimalActuals").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalActuals").Cell(2, 6).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AnimalActuals").Cell(3, 6).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 7);
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 3, 7);
 
-            workbook.Worksheet("AdditionalPlan").Cell(2, 4).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AdditionalPlan").Cell(3, 4).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 3, 5);
 
-            workbook.Worksheet("AdditionalActuals").Cell(2, 5).GetFormattedString().Should().StartWith("£");
-            workbook.Worksheet("AdditionalActuals").Cell(3, 5).GetFormattedString().Should().StartWith("£");
+            AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 3, 6);
+
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 2, 4);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 3, 4);
+
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 2, 5);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 3, 5);
 
             await _mockRepository.Received(1).GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());

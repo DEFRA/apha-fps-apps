@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using System;
 using System.Collections.Generic;
@@ -40,6 +40,6 @@ namespace Apha.PIMS.Application.Interfaces
         Task<int> ImportWithOverwriteAsync(string project, string? changedBy = null, string? createdBy = null);
         Task<string> GetNextMilestoneNumberAsync(string project, int year);
 
-        Task<List<ProjectYearManagerDto>> GetProjectYearManagersAsync(int year, string? loginEmail = null, bool viewSpecificProject = false);
+        Task<List<ProjectYearManagerDto>> GetProjectYearManagersAsync(int year, string email, bool isAdmin);
     }
 }

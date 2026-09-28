@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;

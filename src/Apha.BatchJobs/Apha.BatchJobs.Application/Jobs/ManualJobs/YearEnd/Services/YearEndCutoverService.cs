@@ -10,6 +10,11 @@ namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 /// Service-layer entry point for Year End Cutover.
 /// Closes the current FPS year and activates the target FPS year in a single transaction.
 /// </summary>
+/// <remarks>
+/// The Data-Setup-Completed check below is a fast-fail only — <see cref="IYearEndCutoverRepository"/>
+/// re-validates the same precondition inside its own transaction, which is what actually guarantees
+/// correctness.
+/// </remarks>
 public sealed class YearEndCutoverService : IYearEndCutoverService
 {
     private readonly IYearEndCutoverRepository _cutoverRepository;
@@ -54,7 +59,7 @@ public sealed class YearEndCutoverService : IYearEndCutoverService
             targetYear,
             currentYear);
 
-        var latestDataSetupExecution = await _executionRepository.GetLastExecutionByFpsYearAsync(
+        var latestDataSetupExecution = await _executionRepository.GetLastExecutionByTargetFpsYearAsync(
             BatchJobNames.YearEndDataSetup,
             targetYear,
             cancellationToken);

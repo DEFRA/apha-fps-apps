@@ -10,5 +10,6 @@ public enum BatchFailureCategory
     DependencyOutage,
     Timeout,
     Authorization,
-    Business
+    Business,
+    LockLeaseLost
 }

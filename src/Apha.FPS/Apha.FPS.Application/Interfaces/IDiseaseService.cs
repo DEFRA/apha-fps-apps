@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Application.Interfaces
+namespace Apha.FPS.Application.Interfaces
 {
     public interface IDiseaseService
     {

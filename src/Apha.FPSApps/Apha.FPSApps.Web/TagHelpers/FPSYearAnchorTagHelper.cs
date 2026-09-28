@@ -33,11 +33,11 @@ namespace Apha.FPSApps.Web.TagHelpers
 
             var href = output.Attributes["href"]?.Value?.ToString();
 
-            if (string.IsNullOrEmpty(href) || href.Contains("year="))
+            if (string.IsNullOrEmpty(href) || href.Contains("fpsContextYear="))
                 return;
 
             var separator = href.Contains('?') ? "&" : "?";
-            output.Attributes.SetAttribute("href", $"{href}{separator}year={_fy.Year}");
+            output.Attributes.SetAttribute("href", $"{href}{separator}fpsContextYear={_fy.Year}");
 
         }
     }

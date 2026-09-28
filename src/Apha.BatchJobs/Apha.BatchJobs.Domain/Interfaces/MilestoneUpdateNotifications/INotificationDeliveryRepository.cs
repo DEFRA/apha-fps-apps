@@ -97,9 +97,10 @@ public interface INotificationDeliveryRepository
 
     /// <summary>
     /// Updates the parent row's <c>deliverystatus</c> from <c>Pending</c> to <c>Sending</c>.
-    /// Call this immediately before invoking <c>IEmailService.SendAsync</c>.
+    /// Call this immediately before invoking <c>IEmailService.SendAsync</c>. Returns
+    /// <c>true</c> only when exactly one row was updated; callers must not send on <c>false</c>.
     /// </summary>
-    Task UpdateDeliveryToSendingAsync(
+    Task<bool> UpdateDeliveryToSendingAsync(
         Guid notificationDeliveryId,
         CancellationToken cancellationToken);
 
@@ -107,6 +108,10 @@ public interface INotificationDeliveryRepository
     /// Updates the parent row to <c>Sent</c> or <c>Failed</c> and mirrors the same status onto
     /// every child row currently at <c>Pending</c> (preserving explicitly-set <c>Skipped</c>
     /// child rows unchanged). Also sets <c>sentatutc</c> / <c>failuremessage</c> on the parent.
+    /// Throws <see cref="InvalidOperationException"/> if the parent update doesn't affect
+    /// exactly one row — this runs after the email provider has already been called, so a
+    /// failure here is a batch-level durability failure, not a per-recipient one, and callers
+    /// must let it propagate rather than swallow it.
     /// </summary>
     Task UpdateDeliveryOutcomeAsync(
         Guid notificationDeliveryId,

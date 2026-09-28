@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Application.Dtos
+namespace Apha.FPS.Application.Dtos
 {
     public class AnimalCostViewDto
     {

@@ -6,6 +6,17 @@
         : !string.IsNullOrWhiteSpace(Model?.PactId);
     var title = isEditMode ? "Edit WG Staff" : "Add WG Staff";
     var saveLabel = isEditMode ? "Update" : "Save";
+
+    // The staff lookup returns several thousand records. Rendering one <tr> per
+    // record into the scrollable modal body makes every main-thread scroll (i.e.
+    // dragging the scrollbar thumb) recalculate style/layout over that subtree.
+    // The data is emitted as JSON instead and rows are built on demand.
+    var staffLookup = (Model?.StaffLookupOptions ?? Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
+        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+        .GroupBy(x => x.Name)
+        .Select(g => g.First())
+        .Select(x => new { pactId = x.PactId, name = x.Name, spNumber = x.SpNumber })
+        .ToList();
 }
 
 <div class="modal-header">
@@ -13,7 +24,31 @@
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 
-<div class="modal-body" style="overflow-y:auto; max-height:calc(80vh - 120px);">
+<style>
+    /* The shared .modal-dialog carries transform/transition, which makes it the
+       containing block for the dialog and forces a composited repaint of the whole
+       dialog while the modal body scrollbar is dragged. Not needed for this modal. */
+    #modalPopup .modal-dialog {
+        transform: none;
+        transition: none;
+    }
+
+    /* The base .dropdown-panel class carries no positioning rules, so this panel
+       was laid out in normal flow and pushed the form down when opened. */
+    #staff-name-dropdown {
+        position: relative;
+    }
+
+    #staff-name-panel {
+        position: absolute;
+        z-index: 9999;
+        background: #fff;
+        border: 1px solid #b1b4b6;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+<div id="wgStaffModalBody" class="modal-body" style="overflow-y:auto; overflow-x:hidden; max-height:calc(80vh - 120px); overscroll-behavior:contain;">
     <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title"
          tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
@@ -51,7 +86,7 @@
                            type="text"
                            placeholder="PACTId will be auto-generated"
                            readonly
-                           tabindex="-1" />
+                           tabindex="0" />
                 }
                 <span asp-validation-for="PactId" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -76,7 +111,7 @@
                            aria-controls="staffNameTableBody"
                            onclick="toggleWgStaffNameDropdown()" />
 
-                    <div class="dropdown-panel" id="staff-name-panel" style="display:none; width:100%; min-width:580px; top:100%; left:0; max-height:220px; overflow-y:auto;">
+                    <div class="dropdown-panel" id="staff-name-panel" style="display:none; width:100%; top:100%; left:0; max-height:220px; overflow-y:auto; overscroll-behavior:contain;">
                         <label for="staff-name-search" class="govuk-label govuk-visually-hidden">Search staff</label>
                         <input type="text"
                                class="search-box govuk-input govuk-!-font-size-16"
@@ -96,27 +131,10 @@
                                 </tr>
                             </thead>
                             <tbody class="govuk-table__body" id="staffNameTableBody" role="listbox" aria-label="Staff results">
-                                @foreach (var staff in (Model?.StaffLookupOptions ?? System.Linq.Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
-                                                                   .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-                                                                   .GroupBy(x => x.Name)
-                                                                   .Select(g => g.First()))
-                                {
-                                    var rowId = "staffNameRow_" + @staff.PactId + "_" + @staff.SpNumber;
-                                    <tr id="@rowId" class="govuk-table__row staff-name-row"
-                                        data-pactid="@staff.PactId"
-                                        data-name="@staff.Name"
-                                        data-spnumber="@staff.SpNumber"
-                                        role="option"
-                                        tabindex="-1"
-                                        style="cursor:pointer;"
-                                        onclick="selectWgStaffName(this)">
-                                        <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@staff.Name</td>
-                                        <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@staff.SpNumber</td>
-                                    </tr>
-                                }
                             </tbody>
                         </table>
                     </div>
+                    <script type="application/json" id="staff-lookup-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(staffLookup))</script>
                 </div>
                 <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
             </div>
@@ -335,6 +353,7 @@
 
         var isHidden = panel.style.display === 'none' || panel.style.display === '';
         if (isHidden) {
+            filterWgStaffNameTable(search.value);
             panel.style.display = 'block';
             panel.style.width = input.offsetWidth + 'px';
             input.setAttribute('aria-expanded', 'true');
@@ -342,6 +361,73 @@
         } else {
             panel.style.display = 'none';
             input.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    // Keyboard support for the trigger, search box and result rows. Handled
+    // explicitly here (rather than relying solely on the shared
+    // global-dropdown-keyboard.js conventions, which key off id suffixes like
+    // "...DropdownPanel"/"...SearchBox"/"...DropdownBody" that this markup
+    // doesn't use) so Enter/Space/Arrow navigation works reliably for this
+    // specific dropdown regardless of naming.
+    function onWgStaffNameTriggerKeydown(e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            toggleWgStaffNameDropdown();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            var panel = document.getElementById('staff-name-panel');
+            var isHidden = !panel || panel.style.display === 'none' || panel.style.display === '';
+            if (isHidden) toggleWgStaffNameDropdown();
+            var search = document.getElementById('staff-name-search');
+            if (search) search.focus();
+        } else if (e.key === 'Escape') {
+            var panel = document.getElementById('staff-name-panel');
+            if (panel && panel.style.display === 'block') {
+                e.preventDefault();
+                closeWgStaffNameDropdown();
+            }
+        }
+    }
+
+    function onWgStaffNameSearchKeydown(e) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            var body = document.getElementById('staffNameTableBody');
+            var firstRow = body && body.querySelector('tr');
+            if (firstRow) firstRow.focus();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeWgStaffNameDropdown();
+            var input = document.getElementById('staff-name-input');
+            if (input) input.focus();
+        }
+    }
+
+    function onWgStaffNameRowKeydown(e) {
+        var row = this;
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            selectWgStaffName(row);
+            var input = document.getElementById('staff-name-input');
+            if (input) input.focus();
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            var rows = Array.prototype.slice.call(row.parentElement.querySelectorAll('tr'));
+            var idx = rows.indexOf(row);
+            var delta = e.key === 'ArrowDown' ? 1 : -1;
+            var nextIdx = idx + delta;
+            if (nextIdx >= 0 && nextIdx < rows.length) {
+                rows[nextIdx].focus();
+            } else if (nextIdx < 0) {
+                var search = document.getElementById('staff-name-search');
+                if (search) search.focus();
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeWgStaffNameDropdown();
+            var input = document.getElementById('staff-name-input');
+            if (input) input.focus();
         }
     }
 
@@ -388,20 +474,79 @@
         var displayEl = document.getElementById('staff-name-input');
         if (displayEl) displayEl.setAttribute('aria-expanded', 'false');
         document.getElementById('staff-name-search').value = '';
-        filterWgStaffNameTable('');
+        var tableBody = document.getElementById('staffNameTableBody');
+        if (tableBody) tableBody.replaceChildren();
     }
 
-    function filterWgStaffNameTable(query) {
-        var rows = document.querySelectorAll('#staffNameTableBody .staff-name-row');
-        var lower = (query || '').trim().toLowerCase();
+    var WG_STAFF_MAX_ROWS = 50;
+    var wgStaffLookup = null;
 
-        rows.forEach(function (row) {
-            var name = (row.getAttribute('data-name') || '').toLowerCase();
-            var spNumber = (row.getAttribute('data-spnumber') || '').toLowerCase();
-            var rowText = (row.textContent || '').toLowerCase();
-            var matches = !lower || name.includes(lower) || spNumber.includes(lower) || rowText.includes(lower);
-            row.style.display = matches ? '' : 'none';
-        });
+    function getWgStaffLookup() {
+        if (wgStaffLookup) return wgStaffLookup;
+        var dataEl = document.getElementById('staff-lookup-data');
+        try {
+            wgStaffLookup = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+        } catch (e) {
+            wgStaffLookup = [];
+        }
+        return wgStaffLookup;
+    }
+
+    // Builds only the rows that match the current search term, capped at
+    // WG_STAFF_MAX_ROWS. The full lookup holds several thousand entries, so they
+    // are never all placed in the DOM.
+    function filterWgStaffNameTable(query) {
+        var body = document.getElementById('staffNameTableBody');
+        if (!body) return;
+
+        var lower = (query || '').trim().toLowerCase();
+        var items = getWgStaffLookup();
+        var fragment = document.createDocumentFragment();
+        var shown = 0;
+
+        for (var i = 0; i < items.length && shown < WG_STAFF_MAX_ROWS; i++) {
+            var item = items[i];
+            var name = (item.name || '');
+            var spNumber = (item.spNumber || '') + '';
+
+            if (lower &&
+                name.toLowerCase().indexOf(lower) === -1 &&
+                spNumber.toLowerCase().indexOf(lower) === -1) {
+                continue;
+            }
+
+            var row = document.createElement('tr');
+            row.id = 'staffNameRow_' + item.pactId + '_' + spNumber;
+            row.className = 'govuk-table__row staff-name-row';
+            row.setAttribute('data-pactid', item.pactId == null ? '' : item.pactId);
+            row.setAttribute('data-name', name);
+            row.setAttribute('data-spnumber', spNumber);
+            row.setAttribute('role', 'option');
+            row.setAttribute('tabindex', '-1');
+            row.style.cursor = 'pointer';
+            row.onclick = function () { selectWgStaffName(this); };
+            row.addEventListener('keydown', onWgStaffNameRowKeydown);
+
+            var nameCell = document.createElement('td');
+            nameCell.className = 'govuk-table__cell';
+            nameCell.style.overflow = 'hidden';
+            nameCell.style.textOverflow = 'ellipsis';
+            nameCell.textContent = name;
+
+            var spCell = document.createElement('td');
+            spCell.className = 'govuk-table__cell';
+            spCell.style.whiteSpace = 'nowrap';
+            spCell.style.overflow = 'hidden';
+            spCell.style.textOverflow = 'ellipsis';
+            spCell.textContent = spNumber;
+
+            row.appendChild(nameCell);
+            row.appendChild(spCell);
+            fragment.appendChild(row);
+            shown++;
+        }
+
+        body.replaceChildren(fragment);
     }
 
     function recalculateHrsAvail() {
@@ -416,6 +561,29 @@
         }
     }
 
+    function closeWgStaffNameDropdown() {
+        var panel = document.getElementById('staff-name-panel');
+        // Writing style.display unconditionally mutates the style attribute even
+        // when the value is unchanged. A global MutationObserver watches every
+        // .dropdown-panel for style/class changes and measures visibility, which
+        // forces a synchronous layout, so only touch the DOM when actually open.
+        if (!panel || panel.style.display === 'none' || panel.style.display === '') {
+            return;
+        }
+
+        panel.style.display = 'none';
+        var displayEl = document.getElementById('staff-name-input');
+        if (displayEl) displayEl.setAttribute('aria-expanded', 'false');
+    }
+
+    function onWgStaffDocumentClick(e) {
+        var dropdown = document.getElementById('staff-name-dropdown');
+        if (!dropdown) return;
+        if (!dropdown.contains(e.target)) {
+            closeWgStaffNameDropdown();
+        }
+    }
+
     (function initialiseWgStaffModalDropdowns() {
         var initialName = document.getElementById('Name')?.value || '';
         var initialSpNumber = document.getElementById('SpNumber')?.value || '';
@@ -427,6 +595,18 @@
             }
         }
 
+        var triggerInput = document.getElementById('staff-name-input');
+        if (triggerInput) {
+            triggerInput.removeEventListener('keydown', onWgStaffNameTriggerKeydown);
+            triggerInput.addEventListener('keydown', onWgStaffNameTriggerKeydown);
+        }
+
+        var searchInput = document.getElementById('staff-name-search');
+        if (searchInput) {
+            searchInput.removeEventListener('keydown', onWgStaffNameSearchKeydown);
+            searchInput.addEventListener('keydown', onWgStaffNameSearchKeydown);
+        }
+
         ['HrsPaid', 'Leave', 'SickSpecial'].forEach(function (fieldId) {
             var input = document.getElementById(fieldId);
             if (input) {
@@ -434,14 +614,77 @@
             }
         });
 
-        document.addEventListener('click', function (e) {
-            var dropdown = document.getElementById('staff-name-dropdown');
-            var panel = document.getElementById('staff-name-panel');
-            if (dropdown && panel && !dropdown.contains(e.target)) {
-                panel.style.display = 'none';
-                var displayEl = document.getElementById('staff-name-input');
-                if (displayEl) displayEl.setAttribute('aria-expanded', 'false');
+        // govuk-modal-dialog.js attaches a keydown listener directly to every
+        // input/textarea/select/button inside ".modal" that calls
+        // event.stopPropagation(), so keydown events on these checkboxes never
+        // bubble up to the document-level Enter-toggle handler in
+        // global-dropdown-keyboard.js. Space still works natively (the browser
+        // toggles checkboxes on Space before any bubbling occurs), but Enter
+        // needs its own handler wired directly on the checkbox.
+        ['MakeAvailable', 'TimeRecorder'].forEach(function (fieldId) {
+            var checkbox = document.getElementById(fieldId);
+            if (checkbox) {
+                checkbox.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('input', { bubbles: true }));
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
             }
         });
+
+        // "Available?" and "Time recorder?" are mutually exclusive - a staff member can
+        // be one or the other (or neither), never both. Checking one clears the other.
+        // Handlers are attached directly to each checkbox because the modal script calls
+        // event.stopPropagation() on events inside ".modal".
+        (function wireMutuallyExclusiveFlags() {
+            var makeAvailable = document.getElementById('MakeAvailable');
+            var timeRecorder = document.getElementById('TimeRecorder');
+            if (!makeAvailable || !timeRecorder) {
+                return;
+            }
+
+            function clearOther(source, other) {
+                if (!source.checked || !other.checked) {
+                    return;
+                }
+                other.checked = false;
+                other.dispatchEvent(new Event('input', { bubbles: true }));
+                other.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            makeAvailable.addEventListener('change', function () {
+                clearOther(makeAvailable, timeRecorder);
+            });
+            timeRecorder.addEventListener('change', function () {
+                clearOther(timeRecorder, makeAvailable);
+            });
+
+            // Guard against legacy rows that were saved with both flags set.
+            if (makeAvailable.checked && timeRecorder.checked) {
+                timeRecorder.checked = false;
+            }
+        })();
+
+        // The partial is re-injected each time the modal opens and each injection
+        // creates a brand new function object, so the previously registered
+        // handler must be tracked on window to be removable.
+        if (window.__wgStaffDocClickHandler) {
+            document.removeEventListener('click', window.__wgStaffDocClickHandler);
+        }
+        window.__wgStaffDocClickHandler = onWgStaffDocumentClick;
+        document.addEventListener('click', onWgStaffDocumentClick);
+
+        var modalBody = document.getElementById('wgStaffModalBody');
+        if (modalBody) {
+            modalBody.addEventListener('scroll', function () {
+                var panel = document.getElementById('staff-name-panel');
+                if (panel && panel.style.display === 'block') {
+                    closeWgStaffNameDropdown();
+                }
+            }, { passive: true });
+        }
     })();
 </script>

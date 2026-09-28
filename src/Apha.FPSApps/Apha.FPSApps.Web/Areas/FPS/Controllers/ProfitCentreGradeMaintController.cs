@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -95,7 +95,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editMaintPCGrade",
                 AllowDelete = true,
                 DeleteFunction = "deleteMaintPCGrade",
-                BindGridUrl = $"/FPS/ProfitCentreGradeMaint/LoadProfitCentreGradeMaintGrid?year={_fpsYearContext.Year}",
+                BindGridUrl = $"/FPS/ProfitCentreGradeMaint/LoadProfitCentreGradeMaintGrid?fpsContextYear={_fpsYearContext.Year}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<ProfitCentreGradeMaintItem>(null),
                 Pagination = paginationModel,

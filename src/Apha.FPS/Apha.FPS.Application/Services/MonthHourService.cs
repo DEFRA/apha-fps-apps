@@ -5,7 +5,7 @@ using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPS.Application.Services
 {
@@ -69,9 +69,15 @@ namespace Apha.FPS.Application.Services
             var errors = new List<BusinessValidationError>();
 
 
-            bool hasmissingMissingVal = dto.Days < 0 || dto.VidHours < 0 || dto.CvlHours < 0;
+            bool hasInvalidValues =
+                dto.Days is null ||
+                dto.VidHours is null ||
+                dto.CvlHours is null ||
+                dto.Days < 0 ||
+                dto.VidHours < 0 ||
+                dto.CvlHours < 0;
 
-            if (hasmissingMissingVal)
+            if (hasInvalidValues)
                 errors.Add(new BusinessValidationError($"Provided Month Working days, VID hours and CVL hours values are not valid. Values should be non-negative and greater than zero. Please verify.", "Missing_Config"));
 
 

@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
@@ -164,6 +164,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             var dto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> SetWorkgroupsActiveStatusByJobCodeAsync(string jobCode, string parentProject, bool isActive)
+        {
+            var url = string.Format(PactApiEndpoints.SetWorkgroupsActiveStatusByJobCode, Uri.EscapeDataString(jobCode), Uri.EscapeDataString(parentProject), isActive.ToString().ToLowerInvariant());
+            var response = await _http.PostAsync<object, bool?>(url, new { });
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var errorDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(errorDto.Errors, errorDto.Meta);
         }
 
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject)

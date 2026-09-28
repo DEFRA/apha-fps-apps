@@ -1,4 +1,4 @@
-﻿namespace Apha.PACT.Core.Pagination
+namespace Apha.PACT.Core.Pagination
 {
     public class PagedData<T>
     {

@@ -306,18 +306,20 @@
                                             <div class="col-lg-12 p-0">
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
-                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        
                                                         <div class="govuk-input__wrapper">
-                                                            <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                                        <input type="text" value="@Model.StaffTotalActualHrs.ToString("F2")" aria-label="Total Hrs"
-                                                               id="staff-total-hrs" class="govuk-input text-AlignRight pva-input-120" readonly>
-                                                               </div>
+                                                            <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label" style=" margin-top: 8px;">Total Time:</label>
+                                          
+                                                            <input type="text" value="@Model.StaffTotalActualHrs.ToString("F2")" aria-label="Total Time"
+                                                                   id="staff-total-hrs" class="govuk-input text-AlignRight pva-input-120 govuk-!-margin-left-1 " readonly>
+                                                        </div>
                                                         <div class="govuk-input__wrapper">
+                                                            <label class="govuk-label govuk-label--s  govuk-!-margin-bottom-0 govuk-!-margin-left-2  govuk-!-margin-right-1 pva-nowrap-label" style="margin-top: 8px;">Total Cost:</label>
                                                             <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                                        <input type="text" value="@Model.StaffTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
-                                                               id="staff-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
-                                                               </div>
-                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
+                                                            <input type="text" value="@Model.StaffTotalActualCost.ToString("N2")" aria-label="Total Cost"
+                                                                   id="staff-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                        </div>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-2 pva-nowrap-label">Percent of Plan:</label>
                                                         <input type="text" value="@Model.StaffPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
                                                                id="staff-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
                                                     </div>
@@ -371,10 +373,10 @@
                                             <div class="col-lg-12 p-0">
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
-                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Charge:</label>
                                                         <div class="govuk-input__wrapper">
                                                             <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                                        <input type="text" value="@Model.TestTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
+                                                        <input type="text" value="@Model.TestTotalActualCost.ToString("N2")" aria-label="Total Charge"
                                                                id="test-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
                                                                </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
@@ -431,10 +433,10 @@
                                             <div class="col-lg-12 p-0">
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
-                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total&nbsp; Amount:</label>
                                                         <div class="govuk-input__wrapper">
                                                             <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                                        <input type="text" value="@Model.AnimalTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
+                                                        <input type="text" value="@Model.AnimalTotalActualCost.ToString("N2")" aria-label="Total Amount"
                                                                id="animal-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
                                                                </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
@@ -491,10 +493,10 @@
                                             <div class="col-lg-12 p-0">
                                                 <div class="financial-summary mt-2">
                                                     <div class="summary-row govuk-!-margin-0 pva-inline-summary">
-                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total&nbsp; Amount:</label>
                                                         <div class="govuk-input__wrapper">
                                                             <div class="govuk-input__prefix" aria-hidden="true">&pound;</div>
-                                                        <input type="text" value="@Model.AdditionalTotalActualCost.ToString("N2")" aria-label="Total Actual Cost"
+                                                        <input type="text" value="@Model.AdditionalTotalActualCost.ToString("N2")" aria-label="Total Amount"
                                                                id="additional-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
                                                                </div>
                                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>

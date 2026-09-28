@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Apha.FPS.Core.Entities
@@ -9,7 +9,7 @@ namespace Apha.FPS.Core.Entities
     public partial class YearMaster
     {
         /// <summary>
-        /// Four-digit calendar year that starts the fiscal period (e.g. 2025 for Apr 2025 – Mar 2026). Primary key.
+        /// Four-digit calendar year that starts the fiscal period (e.g. 2025 for Apr 2025 � Mar 2026). Primary key.
         /// </summary>
         public int FpsYear { get; set; }
 

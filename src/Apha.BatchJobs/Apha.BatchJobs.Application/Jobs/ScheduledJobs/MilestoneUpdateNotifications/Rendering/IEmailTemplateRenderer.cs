@@ -8,7 +8,7 @@ public interface IEmailTemplateRenderer
     /// <summary>Fixed subject constant — not configurable, for legacy logic parity.</summary>
     string Subject { get; }
 
-    /// <summary>Renders one manager's email body. Projects whose EditLink cannot be resolved to a safe HTTPS href are dropped from <see cref="EmailTemplateRenderResult.IncludedProjects"/> and surfaced instead in <see cref="EmailTemplateRenderResult.ExcludedProjects"/> (plan section 9.2, section 10.3).</summary>
+    /// <summary>Renders one manager's email body. Projects with a missing/blank ParentProject are dropped from <see cref="EmailTemplateRenderResult.IncludedProjects"/> and surfaced instead in <see cref="EmailTemplateRenderResult.ExcludedProjects"/>, since a valid milestone edit URL cannot be generated for them.</summary>
     /// <param name="managerName">Recipient display name, substituted into {{ManagerName}}.</param>
     /// <param name="projects">Deduplicated, code-ordered project links for this recipient group.</param>
     /// <param name="includeConfirmationInstruction">

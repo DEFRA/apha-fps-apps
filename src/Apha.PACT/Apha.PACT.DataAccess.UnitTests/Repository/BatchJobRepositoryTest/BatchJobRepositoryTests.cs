@@ -77,6 +77,46 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BatchJobRepositoryTest
             await Task.CompletedTask;
         }
 
+        // NOTE: the following document the required behaviour of the Remarks correlated
+        // subquery (mirrors Apha.FPS.DataAccess.Repositories.YearEndRepositoryTests). Same
+        // PostgreSQL-provider limitation as above — covered by integration tests, not here.
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_CompletedJob_RemarksReturnsInitiatedNote()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_FailedJobWithInitiatedAndFailedLogs_RemarksReturnsInitiatedNoteOnly()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_NoInitiatedLogRow_RemarksIsNull()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_NonInitiatedLogRowsOnly_RemarksIsNull()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_TimestampTieOnInitiatedRows_RemarksResolvesByJobqueueLogId()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in join query requires PostgreSQL provider; covered by integration tests.")]
+        public async Task GetBatchJobsHistoryAsync_MultipleInitiatedLogRows_DoesNotFanOutHistoryRow()
+        {
+            await Task.CompletedTask;
+        }
+
         #endregion
 
         #region CanRunBatchJobAsync
@@ -216,6 +256,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BatchJobRepositoryTest
 
             // Assert
             Assert.Equal(expectedYear, result.FpsYear);
+        }
+
+        [Fact(Skip = "EF.Functions.ILike in FirstOrDefaultAsync predicate requires PostgreSQL provider; covered by integration tests.")]
+        public async Task EnqueueBatchJobAsync_LogEntry_UsesRequestContextFpsYear()
+        {
+            // Arrange
+            const int expectedYear = 2025;
+            const string jobName = "RecreateSummary";
+            var job = new BatchJobMaster { JobId = 1, JobName = jobName };
+            var status = new BatchJobStatus { JobId = 1, StatusId = 10, Status = "initiated" };
+
+            var (repo, mockContext, _) = CreateRepository(jobs: [job], queues: [], statuses: [status], fpsYear: expectedYear);
+
+            // Act
+            var result = await repo.EnqueueBatchJobAsync(jobName, "user@test.com", Guid.NewGuid().ToString(), "note");
+
+            // Assert: request context -> queue entry -> log entry all agree
+            Assert.Equal(expectedYear, result.FpsYear);
+
+            var logsMock = Mock.Get(mockContext.Object.BatchJobQueueLogs);
+            logsMock.Verify(s => s.Add(It.Is<BatchJobQueueLog>(l => l.FpsYear == result.FpsYear)), Times.Once);
         }
 
         [Fact(Skip = "EF.Functions.ILike in FirstOrDefaultAsync predicate requires PostgreSQL provider; covered by integration tests.")]

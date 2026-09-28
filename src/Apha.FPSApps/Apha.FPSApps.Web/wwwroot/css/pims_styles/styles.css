@@ -428,9 +428,9 @@ body {
 .sidebar-link-two {
     transition: all 0.2s ease;
     border-radius: 0;
-    margin-bottom: 1px;
+    margin-bottom: 0;
     white-space: nowrap;
-    /* border-bottom: 1px solid #25257e;*/
+    border-bottom: 1px solid #ffffff;
     color: #ffffff;
     background: rgba(255, 255, 255, 0.1);
 /*    overflow: hidden;*/
@@ -708,7 +708,7 @@ body {
 }
 
 .govuk-footer {
-    position: sticky !important;
+    margin-top: 5vh;
     bottom: 0 !important;
     z-index: 999 !important;
 }
@@ -3056,13 +3056,8 @@ th.sorted-desc {
 .other-col-id {
     width: 90px;
 }
-/*-- Add button- right align*/
-#gridContainer_comments .editable-grid-container div div,
-#gridContainer_milestonesGrid .editable-grid-container div div,
-#gridContainer_milestoneFormDatesGrid .editable-grid-container div div {
-    justify-content: end
-}
-=====================================================
+
+/*=====================================================
 Manager Tab Panel Styles
 (#tab-manager)
 ===================================================== */

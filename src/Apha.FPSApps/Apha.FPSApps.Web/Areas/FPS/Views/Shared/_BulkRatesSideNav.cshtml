@@ -7,6 +7,11 @@
     }
 </style>
 <nav class="sidenav flex-column flex-shrink-0 govuk-!-padding-left-2" id="shortnav" aria-label="Bulk Rates navigation">
+    <button type="button" class="toggle-btn"
+            onclick="toggleSidebar()"
+            aria-label="Toggle side navigation">
+        <img src="~/images/chevron-left-solid-full.svg" alt="side nav menu arrow" width="24">
+    </button>
     <ul>
         <li>
             <a class="dropdown-item@(Model == "BulkRates" ? " sidenav-title" : "")"

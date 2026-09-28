@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -96,6 +96,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new DataGridConfig<ProjectGroupStaffPlanViewItem>
             {
                 GridId         = "projectGroupStaffPlanGrid",
+                Title          = "Planned Staff Project Group Details",
                 KeyProperty    = "ParentProject",
                 AllowAdd       = false,
                 AllowEdit      = false,

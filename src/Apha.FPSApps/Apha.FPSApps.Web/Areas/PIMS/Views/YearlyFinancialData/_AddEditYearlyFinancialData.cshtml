@@ -600,20 +600,20 @@
 
                             @* Actual Expenditure / Actual ManYears reported display (read-only) *@
                             <div class="yfd-costing-reported">
-                                <p class="govuk-!-font-weight-bold yfd-costing-reported__label">
+                                <p class="govuk-!-font-weight-bold yfd-costing-reported__label" id="yfdActualExpReportedLabel">
                                     Actual Expenditure Reported as:
                                 </p>
                                 <p class="govuk-body govuk-!-font-size-16 yfd-costing-reported__value--spaced"
-                                   id="yfdActualExpReported">
+                                   id="yfdActualExpReported" tabindex="0" aria-labelledby="yfdActualExpReportedLabel yfdActualExpReported">
                                     @(Model.ActualExpenditure.HasValue
                                         ? "£" + Model.ActualExpenditure.Value.ToString("N2")
                                         : "—")
                                 </p>
-                                <p class="govuk-!-font-weight-bold yfd-costing-reported__label">
+                                <p class="govuk-!-font-weight-bold yfd-costing-reported__label" id="yfdActualManYearsReportedLabel">
                                     Actual ManYears Reported as:
                                 </p>
                                 <p class="govuk-body govuk-!-font-size-16"
-                                   id="yfdActualManYearsReported">
+                                   id="yfdActualManYearsReported" tabindex="0" aria-labelledby="yfdActualManYearsReportedLabel yfdActualManYearsReported">
                                     @(Model.ActualManYears.HasValue
                                         ? Model.ActualManYears.Value.ToString("F3")
                                         : "—")

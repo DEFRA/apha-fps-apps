@@ -1154,7 +1154,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
         }
 
         [Fact]
-        public async Task GetPagedProjectSubContractsAsync_FilterByMonth_NonNumeric_ReturnsAll()
+        public async Task GetPagedProjectSubContractsAsync_FilterByMonth_NonNumeric_ReturnsNoRecords()
         {
             var subContracts = new List<ProjectSubContract>
             {
@@ -1165,7 +1165,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectSubContractRepository
 
             var result = await repo.GetPagedProjectSubContractsAsync(query, null);
 
-            Assert.Single(result.Data);
+            Assert.Empty(result.Data);
         }
 
         [Fact]

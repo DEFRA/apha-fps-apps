@@ -35,7 +35,8 @@ public sealed class MabArchiveJob : IBatchJob
     public string IdempotencyStrategy => "YearScopedRebuildWithDeterministicOrdering";
     public string? ScheduleExpression => "cron(0 20 ? * MON-FRI *)";
     public string? ScheduleDescription => "Weekdays (Monday to Friday) at 8:00 PM UTC";
-    public int? MaxExecutionSeconds => null;
+    /// <summary>Maximum execution timeout: 30 minutes. Starting bound based on historical runtime evidence, now that the totals-rebuild query bottleneck behind it is fixed.</summary>
+    public int? MaxExecutionSeconds => 1800;
 
     public MabArchiveJob(
         IMabArchiveTransactionManager transactionManager,

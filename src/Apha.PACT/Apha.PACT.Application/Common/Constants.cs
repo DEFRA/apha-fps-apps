@@ -1,4 +1,4 @@
-﻿namespace Apha.PACT.Application.Common
+namespace Apha.PACT.Application.Common
 {
     //Note : Define all constants in this class, and use nested static classes to group related constants together.
     public static class Constants 

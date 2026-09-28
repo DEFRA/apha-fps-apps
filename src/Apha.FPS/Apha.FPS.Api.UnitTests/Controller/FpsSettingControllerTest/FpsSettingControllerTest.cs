@@ -1,11 +1,11 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -322,7 +322,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.FpsSettingControllerTest
             // Act
             await _sut.PutAsync(routeId, request);
 
-            // Assert — the route id must override the body id before mapping
+            // Assert � the route id must override the body id before mapping
             request.Id.Should().Be(routeId);
         }
 

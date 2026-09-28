@@ -1,4 +1,4 @@
-﻿using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Interfaces;
 using Apha.PACT.DataAccess.Context;
 
 namespace Apha.PACT.Api.Middleware
@@ -6,7 +6,7 @@ namespace Apha.PACT.Api.Middleware
     public class RequestContextMiddleware
     {
         private readonly RequestDelegate _next;        
-        private const string FpsYearHeader = "X-FPS-Year";
+        private const string FpsYearHeader = "X-FPS-Context-Year";
         private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestContextMiddleware(

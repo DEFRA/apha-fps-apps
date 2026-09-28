@@ -4,7 +4,7 @@ using Apha.Costbook.Application.Services;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using ClosedXML.Excel;
 using NSubstitute;
 

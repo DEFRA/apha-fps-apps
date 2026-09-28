@@ -1,11 +1,11 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
@@ -111,6 +111,26 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookMainten
             Assert.True(result.Success);
             Assert.Same(mapped, result.Data);
             Assert.Null(result.Pagination);
+        }
+
+        [Fact]
+        public async Task GetPaginatedAccountCategoriesAsync_WhenFailureAndErrorsNull_ReturnsEmptyFailureErrors()
+        {
+            var apiResponse = new ApiResponse<List<AccountCategoryMaintenanceRes>>
+            {
+                Success = false,
+                Data = null,
+                Errors = null
+            };
+            var mappedErrors = new List<ApiErrorDto>();
+            _http.GetAsync<List<AccountCategoryMaintenanceRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<List<ApiErrorDto>>(Arg.Any<object>()).Returns(mappedErrors);
+
+            var result = await _client.GetPaginatedAccountCategoriesAsync(new QueryParameters<string>());
+
+            Assert.False(result.Success);
+            Assert.Same(mappedErrors, result.Errors);
+            await _http.Received(1).GetAsync<List<AccountCategoryMaintenanceRes>>(Arg.Any<string>());
         }
 
         [Fact]

@@ -1,15 +1,17 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using System.Net.Mail;
+using System.Security.Claims;
 using System.Web;
 
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
@@ -33,7 +35,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             PMDMilestoneViewModel viewModel = new();
 
             int year = GetFY();
-            var managersResponse = await _milestoneService.GetProjectYearManagersAsync(year);
+            string email = ResolveUserEmail(User);
+            bool isAdmin = User?.IsInRole("PMDAdmin") == true;
+            var managersResponse = await _milestoneService.GetProjectYearManagersAsync(year, email, isAdmin);
 
             viewModel.ProjectOptions = (managersResponse.Success && managersResponse.Data != null)
                 ? managersResponse.Data
@@ -46,11 +50,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 : [];
 
             viewModel.Parentproject = parentproject ?? viewModel.ProjectOptions.FirstOrDefault()?.Value ?? string.Empty;
+            if (managersResponse.Data == null || managersResponse.Data.Count == 0) viewModel.Parentproject = string.Empty;
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(viewModel.Parentproject, defaultRequest);
 
-            bool hasMilestoneRecords = viewModel.MilestonesGrid.Data?.Any() == true;
+            bool hasMilestoneRecords = viewModel.MilestonesGrid.Data?.Count > 0;
             (viewModel.ShowConfirmationSection, viewModel.ShowSubmitButton, viewModel.ConfirmationLabelText) =
                 await BuildConfirmationStateAsync(viewModel.Parentproject, hasMilestoneRecords);
 
@@ -64,6 +69,24 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             return currentMonth < 6 ? currentYear - 1 : currentYear;
         }
+
+        private static string ResolveUserEmail(ClaimsPrincipal? user)
+        {
+            string identityName = user?.Identity?.Name ?? string.Empty;
+            if (IsEmailAddress(identityName))
+                return identityName;
+
+            string email = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(email))
+                return email;
+
+            return user?.Identity?.Name ?? string.Empty;
+        }
+
+        private static bool IsEmailAddress(string value)
+            => !string.IsNullOrWhiteSpace(value)
+                && MailAddress.TryCreate(value, out MailAddress? address)
+                && string.Equals(address.Address, value, StringComparison.OrdinalIgnoreCase);
 
         private static string GetMonthToUpdate()
         {
@@ -132,6 +155,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<PMDMilestoneItem>
             {
                 GridId = "pmdMilestonesGrid",
+                Title = " PMD Milestones",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Number",

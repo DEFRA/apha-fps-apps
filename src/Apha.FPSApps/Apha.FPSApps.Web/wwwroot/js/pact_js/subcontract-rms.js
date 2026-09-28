@@ -267,6 +267,7 @@ function editFailedSubContractRms(btn) {
             setTimeout(function() {
                 initializeFormValidation('#formEditFailedSubContractRms');
             }, 50);
+            initializeFailedProjectCostDropdown();
         },
         error: function () {
             showAlertMessage('Error loading form.', AlertType.ERROR);
@@ -495,6 +496,62 @@ function initializeProjectCostDropdown() {
     }, 100);
 }
 
+// ========================================
+// Multi-Column Dropdown for Edit Failed Sub-Contract Modal
+// ========================================
+function initializeFailedProjectCostDropdown() {
+    var container = document.querySelector('#rmsFailedProjectMultiDropdown');
+    if (!container || typeof MultiColumnDropdownComponent === 'undefined') {
+        return;
+    }
+
+    var projectsData = [];
+    var raw = container.getAttribute('data-projects');
+    if (raw) {
+        try { projectsData = JSON.parse(raw); } catch (e) { projectsData = []; }
+    }
+
+    var selectedProject = container.getAttribute('data-selected') || '';
+
+    setTimeout(function () {
+        var projectDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'rmsFailedProjectDropdown',
+            containerSelector: '#rmsFailedProjectMultiDropdown',
+            placeholder: 'Select Project',
+            showSerialNumber: false,
+            searchPlaceholder: 'Search by code or title',
+            labelText: '',
+            required: true,
+            columns: [
+                { field: 'Value', header: 'Project Code', width: '120px' },
+                { field: 'Text', header: 'Project Title', width: '300px' }
+            ],
+            data: projectsData || [],
+            displayField: 'Value',
+            valueField: 'Value',
+            clearButtonClearsSelection: true,
+            callbacks: {
+                onSelect: function (selectedItem, dropdown) {
+                    $('#Project').val(selectedItem.Value).trigger('change');
+                    setTimeout(function () {
+                        if (dropdown && typeof dropdown.closeDropdown === 'function') {
+                            dropdown.closeDropdown();
+                        }
+                    }, 50);
+                },
+                onClear: function (dropdown) {
+                    $('#Project').val('').trigger('change');
+                }
+            }
+        });
+
+        var initialProject = selectedProject || $('#Project').val();
+        if (initialProject) {
+            projectDropdown.setValue(initialProject);
+        }
+    }, 100);
+}
+
 window.getRmsSubContractFilters = getRmsSubContractFilters;
 window.addSubContractRms = addSubContractRms;
 window.editSubContractRms = editSubContractRms;
@@ -508,3 +565,4 @@ window.deleteFailedSubContractRms = deleteFailedSubContractRms;
 window.saveFailedSubContractRms = saveFailedSubContractRms;
 window.exportFailedSubContractRms = exportFailedSubContractRms;
 window.initializeProjectCostDropdown = initializeProjectCostDropdown;
+window.initializeFailedProjectCostDropdown = initializeFailedProjectCostDropdown;

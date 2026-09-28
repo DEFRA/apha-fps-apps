@@ -4,7 +4,7 @@ using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -278,10 +278,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
 
             _serviceMock.GetWorkGroupValidTimeCodeAsync(query, "WG1").Returns(serviceResult);
             _mapperMock.Map<PaginationRes<WorkGroupValidTimeCodeRes>>(serviceResult)
-                       .Throws(new AutoMapperMappingException("Mapping error"));
+                       .Throws(new InvalidOperationException("Mapping error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.GetPagedWorkGroupValidTimeCodes(query, "WG1"));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetPagedWorkGroupValidTimeCodes(query, "WG1"));
         }
 
         #endregion
@@ -472,10 +472,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
 
             _serviceMock.GetWgSummarisedStaffTimeUsageAsync(query, "WG1").Returns(serviceResult);
             _mapperMock.Map<WgSummarisedStaffTimeUsageRes>(serviceResult)
-                       .Throws(new AutoMapperMappingException("Mapping error"));
+                       .Throws(new InvalidOperationException("Mapping error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(
+            await Assert.ThrowsAsync<InvalidOperationException>(
                 () => _controller.GetWgSummarisedStaffTimeUsage(query, "WG1"));
         }
 
@@ -607,10 +607,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
 
             _serviceMock.GetSummarisedWorkgroupTimeSummaryAsync(query, "WG1").Returns(serviceResult);
             _mapperMock.Map<SummarisedWgTimePivotRes>(serviceResult)
-                       .Throws(new AutoMapperMappingException("Mapping error"));
+                       .Throws(new InvalidOperationException("Mapping error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.GetPagedSummarisedWorkgroupTime(query, "WG1"));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetPagedSummarisedWorkgroupTime(query, "WG1"));
         }
 
         #endregion

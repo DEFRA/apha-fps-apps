@@ -1,4 +1,4 @@
-﻿namespace Apha.PACT.Application.Validation
+namespace Apha.PACT.Application.Validation
 {
     public class ValidationErrorResponse
     {

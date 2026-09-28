@@ -6,10 +6,10 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients;
-using AutoMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Web;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiClientTest
 {
@@ -363,10 +363,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             var dto = new MilestoneDto { Project = "PP001", Number = "M1" };
-            _mapper.Map<MilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<MilestoneReq>(dto).Throws(new Exception("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.SaveMilestoneAsync("PP001", dto));
+            await Assert.ThrowsAsync<Exception>(() => _client.SaveMilestoneAsync("PP001", dto));
         }
 
         #endregion
@@ -1090,7 +1090,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
 
         #endregion
 
-        #region DeleteMilestoneFormDatesAsync — has try/catch
+        #region DeleteMilestoneFormDatesAsync
 
         [Fact]
         public async Task DeleteMilestoneFormDatesAsync_WithSuccessResponse_ReturnsMappedDto()
@@ -1141,27 +1141,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
             Assert.Equal("NOT_FOUND", result.Errors![0].Code);
         }
 
-        [Fact]
-        public async Task DeleteMilestoneFormDatesAsync_WhenHttpExecutorThrows_ReturnsInternalError()
-        {
-            // Arrange — DeleteMilestoneFormDatesAsync has a try/catch; exception should be swallowed
-            const string parent = "PP001";
-            const short  year   = 2024;
-            var url = string.Format(PimsApiEndpoints.DeleteMilestoneFormDates, Uri.EscapeDataString(parent), year);
 
-            _http.DeleteAsync<object>(url).ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteMilestoneFormDatesAsync(parent, year);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to delete milestone form dates", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-        }
 
         [Fact]
         public async Task DeleteMilestoneFormDatesAsync_CallsCorrectUrl()
@@ -1520,10 +1500,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         {
             // Arrange
             var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
-            _mapper.Map<StagingMilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<StagingMilestoneReq>(dto).Throws(new Exception("Mapping failed"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.AddStagingRowAsync(dto, 2025));
+            await Assert.ThrowsAsync<Exception>(() => _client.AddStagingRowAsync(dto, 2025));
         }
 
         #endregion

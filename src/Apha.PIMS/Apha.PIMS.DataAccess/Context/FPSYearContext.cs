@@ -1,4 +1,4 @@
-﻿using Apha.PIMS.Core.Interfaces;
+using Apha.PIMS.Core.Interfaces;
 
 namespace Apha.PIMS.DataAccess.Context
 {

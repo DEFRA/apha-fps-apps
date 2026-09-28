@@ -4,7 +4,7 @@ using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.PACT.Application.Services
 {
@@ -109,6 +109,11 @@ namespace Apha.PACT.Application.Services
         public async Task<bool> DeleteAllByJobCodeAsync(string jobCode, string parentProject)
         {
             return await _repository.DeleteAllByJobCodeAsync(jobCode, parentProject);
+        }
+
+        public async Task<bool> SetWorkgroupsActiveStatusByJobCodeAsync(string jobCode, string parentProject, bool isActive)
+        {
+            return await _repository.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
         }
 
         public async Task<IEnumerable<TimeCodeValidDto>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject)

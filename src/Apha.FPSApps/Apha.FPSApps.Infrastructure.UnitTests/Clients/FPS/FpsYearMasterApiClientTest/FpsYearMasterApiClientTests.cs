@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsYearMasterApiClientTest

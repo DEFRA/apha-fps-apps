@@ -4144,3 +4144,8 @@ table#tblMonthPeriod > tbody > tr:hover {
 #tbl_wgTestCapabilitiesGrid td[data-property="ItemDescription"]{
     text-align: left !important;
 }
+
+.sup_border.sup_overflow_hidden:has(#programDetailForm) {
+    overflow: visible !important;
+    display: flow-root;
+}

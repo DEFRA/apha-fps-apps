@@ -4,7 +4,7 @@ using Apha.Costbook.Api.Controllers;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -72,6 +72,23 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.CapsStaffControllerTest
             Assert.Same(resList, okResult.Value);
         }
 
+        [Fact]
+        public async Task GetAllCapsStaff_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _service.GetAllStaffAsync().Returns(Task.FromResult<List<StaffDto>>(null!));
+
+            // Act
+            var result = await _controller.GetAllCapsStaff();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<StaffRes>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+        }
+
         #endregion
 
         // ── GetPaginatedCapsStaff ─────────────────────────────────────────────
@@ -102,6 +119,26 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.CapsStaffControllerTest
             await _service.Received(1).GetPaginatedAsync(queryParams);
         }
 
+        [Fact]
+        public async Task GetPaginatedCapsStaff_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
+            _service.GetPaginatedAsync(queryParams).Returns(Task.FromResult<PaginatedResult<StaffDto>>(null!));
+
+            // Act
+            var result = await _controller.GetPaginatedCapsStaff(query);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<PaginationRes<StaffRes>>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+        }
+
         #endregion
 
         // ── GetCapsStaff ──────────────────────────────────────────────────────
@@ -128,7 +165,7 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.CapsStaffControllerTest
         }
 
         [Fact]
-        public async Task GetCapsStaff_NonExistentMnumber_ReturnsNotFound()
+        public async Task GetCapsStaff_NonExistentMnumber_ReturnsNullSuccessResponse()
         {
             // Arrange
             var Mnumber = "NOTEXIST";
@@ -138,7 +175,11 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.CapsStaffControllerTest
             var result = await _controller.GetCapsStaff(Mnumber);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<StaffRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
         }
 
         #endregion

@@ -38,10 +38,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectStaffPlanRepositoryTes
 
         private static List<ProjectStaffPlanView> SampleData() =>
         [
-            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Alice Smith",  StaffId = "S001", WorkGroup = "WG_CSU",  GradeCode = "GR1", Contract = "CON_A", ProfitCentre = "PC_A", WgGrade = "WGA", PcGrade = "PCA", PlannedHours = 100, Cost = 500m, PayCost = 400m },
-            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Bob Jones",    StaffId = "S002", WorkGroup = "WG_BSU",  GradeCode = "GR2", Contract = "CON_B", ProfitCentre = "PC_B", WgGrade = "WGB", PcGrade = "PCB", PlannedHours = 80,  Cost = 400m, PayCost = 320m },
-            new() { ParentProject = "P002", ProgramNo = "PROG2", Name = "Carol White",  StaffId = "S003", WorkGroup = "WG_CSU",  GradeCode = "GR1", Contract = "CON_A", ProfitCentre = "PC_A", WgGrade = "WGA", PcGrade = "PCA", PlannedHours = 60,  Cost = 300m, PayCost = 240m },
-            new() { ParentProject = "P003", ProgramNo = "PROG3", Name = "Dave Brown",   StaffId = "S004", WorkGroup = "WG_OTHER",GradeCode = "GR3", Contract = "CON_C", ProfitCentre = "PC_C", WgGrade = "WGC", PcGrade = "PCC", PlannedHours = 40,  Cost = 200m, PayCost = 160m }
+            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Alice Smith",  StaffId = "S001", WorkGroup = "WG_CSU",  GradeCode = "GR1", Contract = "CON_A", ProfitCentre = "PC_A", WgGrade = "WGA", PcGrade = "PCA", PlannedHours = 100, ChargeRate = 53.34m, Cost = 500m, PayCost = 400m },
+            new() { ParentProject = "P001", ProgramNo = "PROG1", Name = "Bob Jones",    StaffId = "S002", WorkGroup = "WG_BSU",  GradeCode = "GR2", Contract = "CON_B", ProfitCentre = "PC_B", WgGrade = "WGB", PcGrade = "PCB", PlannedHours = 80,  ChargeRate = 95.22m, Cost = 400m, PayCost = 320m },
+            new() { ParentProject = "P002", ProgramNo = "PROG2", Name = "Carol White",  StaffId = "S003", WorkGroup = "WG_CSU",  GradeCode = "GR1", Contract = "CON_A", ProfitCentre = "PC_A", WgGrade = "WGA", PcGrade = "PCA", PlannedHours = 60,  ChargeRate = 69.92m, Cost = 300m, PayCost = 240m },
+            new() { ParentProject = "P003", ProgramNo = "PROG3", Name = "Dave Brown",   StaffId = "S004", WorkGroup = "WG_OTHER",GradeCode = "GR3", Contract = "CON_C", ProfitCentre = "PC_C", WgGrade = "WGC", PcGrade = "PCC", PlannedHours = 40,  ChargeRate = 46.98m, Cost = 200m, PayCost = 160m }
         ];
 
         #region GetPagedAsync — Happy path
@@ -404,6 +404,28 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectStaffPlanRepositoryTes
             var list = result.Data.ToList();
             for (int i = 1; i < list.Count; i++)
                 Assert.True(list[i - 1].Cost >= list[i].Cost);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByChargeRateAscending_ReturnsOrderedResults()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(sortBy: "chargerate", descending: false));
+
+            var list = result.Data.ToList();
+            for (int i = 1; i < list.Count; i++)
+                Assert.True(list[i - 1].ChargeRate <= list[i].ChargeRate);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByChargeRateDescending_ReturnsOrderedResults()
+        {
+            var repo   = CreateRepository(SampleData());
+            var result = await repo.GetPagedAsync(DefaultQuery(sortBy: "chargerate", descending: true));
+
+            var list = result.Data.ToList();
+            for (int i = 1; i < list.Count; i++)
+                Assert.True(list[i - 1].ChargeRate >= list[i].ChargeRate);
         }
 
         [Fact]

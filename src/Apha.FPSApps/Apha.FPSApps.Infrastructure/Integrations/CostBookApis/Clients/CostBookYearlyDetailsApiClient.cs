@@ -1,14 +1,14 @@
 ﻿using Apha.Common.Constants;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.CostBookApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using System.Web;
 using Apha.FPSApps.Application.Pagination;
-using Apha.Common.Contracts;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 
@@ -21,6 +21,15 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
     {
         _http = http;
         _mapper = mapper;
+    }
+
+    public async Task<ApiResponseDto<MaintenanceSettingsDto>> GetSettingsAsync()
+    {
+        var response = await _http.GetAsync<MaintenanceSettingsRes>(CostBookApiEndpoints.GetYearlyDetailsSettings);
+        if (response.Success && response.Data != null)
+            return ApiResponseDto<MaintenanceSettingsDto>.SuccessResponse(_mapper.Map<MaintenanceSettingsDto>(response.Data));
+        var err = _mapper.Map<ApiResponseDto<MaintenanceSettingsDto>>(response);
+        return ApiResponseDto<MaintenanceSettingsDto>.FailureResponse(err.Errors, err.Meta);
     }
 
     public async Task<ApiResponseDto<ProjectHeaderDto>> GetProjectHeaderAsync(string projectId)
@@ -84,6 +93,24 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
             string.Format(CostBookApiEndpoints.DeleteProjectYear, HttpUtility.UrlEncode(projectId), year));
         if (response.Success)
             return ApiResponseDto<bool>.SuccessResponse(response.Data);
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    public async Task<ApiResponseDto<bool>> CopyYearDataAsync(string projectId, int sourceYear, int targetYear)
+    {
+        var req = new CopyYearDataReq
+        {
+            SourceYear = sourceYear,
+            TargetYear = targetYear
+        };
+
+        var response = await _http.PostAsync<CopyYearDataReq, bool>(
+            string.Format(CostBookApiEndpoints.CopyYearData, HttpUtility.UrlEncode(projectId)), req);
+
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
         var err = _mapper.Map<ApiResponseDto<bool>>(response);
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }

@@ -177,14 +177,6 @@ function updatePurchase() {
 }
 
 // ─── WorkGroup action buttons ────────────────────────────────────────────────
-function selectByAccount() {
-    showAlertMessage('Select by Account feature coming soon.', AlertType.ERROR);
-}
-
-function viewReport() {
-    showAlertMessage('View Report feature coming soon.', AlertType.ERROR);
-}
-
 function sendToExcel() {
     if (!currentProfitCentre) { showAlertMessage('Please select a Resource Centre first.', AlertType.INFO); return; }
     window.location.href = '/FPS/BudgetResourceLevel/ExportToExcel?profitCentre=' + encodeURIComponent(currentProfitCentre) + '&year=' + currentYear;
@@ -275,7 +267,7 @@ function recalcTotalPurchases() {
     $('#fpsBrlTotalPurchases').val(total.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 }
 
-// ─── DOM-ready: observers and grid height constraint ─────────────────────────
+// ─── DOM-ready: grid total observers ─────────────────────────────────────────
 $(document).ready(function () {
     var bidObserver = new MutationObserver(function () { recalcTotalBid(); });
     var budgetBidsNode = document.getElementById('gridContainer_budgetBidsGrid');
@@ -284,23 +276,4 @@ $(document).ready(function () {
     var purchaseObserver = new MutationObserver(function () { recalcTotalPurchases(); });
     var purchasesNode = document.getElementById('gridContainer_purchasesGrid');
     if (purchasesNode) purchaseObserver.observe(purchasesNode, { childList: true, subtree: true });
-
-    function applyWorkgroupGridHeight() {
-        var wgScroll = document.querySelector('#gridContainer_workGroupGrid .grid-scroll-container');
-        if (wgScroll) {
-            wgScroll.style.height = '300px';
-            wgScroll.style.maxHeight = '300px';
-        }
-        var wgContainer = document.querySelector('#gridContainer_workGroupGrid .editable-grid-container');
-        if (wgContainer) {
-            wgContainer.style.minHeight = 'unset';
-        }
-    }
-    applyWorkgroupGridHeight();
-
-    var wgNode = document.getElementById('gridContainer_workGroupGrid');
-    if (wgNode) {
-        var wgObserver = new MutationObserver(applyWorkgroupGridHeight);
-        wgObserver.observe(wgNode, { childList: true, subtree: false });
-    }
 });

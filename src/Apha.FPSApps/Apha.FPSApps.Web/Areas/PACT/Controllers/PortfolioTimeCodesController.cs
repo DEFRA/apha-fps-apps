@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -582,7 +582,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var currentYear = HttpContext.Items["SelectedFPSYear"]?.ToString();
 
             // Redirect to Test Purchase Requirements, preserving the year
-            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject, year = currentYear });
+            return RedirectToAction("Index", "TestPurchaseRequirement", new { area = "PACT", parentProject, fpsContextYear = currentYear });
         }
 
     }

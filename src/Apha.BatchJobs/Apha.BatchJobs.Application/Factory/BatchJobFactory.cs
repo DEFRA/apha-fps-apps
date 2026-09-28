@@ -1,4 +1,6 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Domain.Constants;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,10 +15,6 @@ public sealed class BatchJobFactory : IBatchJobFactory
     private static readonly IReadOnlyDictionary<string, Type> ConventionalJobMap =
         BuildConventionalJobMap(GetCandidateJobTypes(typeof(IBatchJob).Assembly));
 
-    /// <summary>
-    /// Initializes a new instance of the BatchJobFactory.
-    /// </summary>
-    /// <param name="serviceProvider">Service provider for resolving job instances.</param>
     public BatchJobFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
@@ -28,9 +26,8 @@ public sealed class BatchJobFactory : IBatchJobFactory
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
-        // Resolve only the requested job type. No fallback: an unresolvable job name is a
-        // registration/naming bug and must fail loudly here, not silently construct every
-        // other registered job (which can fail for reasons unrelated to the requested job).
+        // No fallback: an unresolvable job name is a registration bug and must fail loudly
+        // here, not silently construct every other registered job.
         if (!ConventionalJobMap.TryGetValue(jobName, out var jobType))
         {
             throw new InvalidOperationException(
@@ -63,9 +60,8 @@ public sealed class BatchJobFactory : IBatchJobFactory
     }
 
     /// <summary>
-    /// Builds the conventional-name lookup from a set of candidate <see cref="IBatchJob"/> types.
-    /// Internal (not private) so the collision-detection behavior is directly unit-testable
-    /// without relying on reflection over the real production assembly.
+    /// Builds the conventional-name lookup from candidate <see cref="IBatchJob"/> types. Internal
+    /// (not private) so collision detection is unit-testable without reflecting the real assembly.
     /// </summary>
     internal static IReadOnlyDictionary<string, Type> BuildConventionalJobMap(IEnumerable<Type> candidateTypes)
     {
@@ -78,8 +74,7 @@ public sealed class BatchJobFactory : IBatchJobFactory
             .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        // No fallback here either: a naming collision between two job types must fail the
-        // process at startup, not silently drop both from the fast-path map.
+        // A naming collision must fail startup, not silently drop both types from the map.
         var collisions = grouped.Where(g => g.Count() > 1).ToList();
         if (collisions.Count > 0)
         {
@@ -94,6 +89,18 @@ public sealed class BatchJobFactory : IBatchJobFactory
 
     internal static string GetConventionalName(Type type)
     {
+        // Explicit overrides for names a C# identifier can't hold (hyphens). Generic suffix
+        // stripping below would otherwise drop YearEnd-DataSetup/YearEnd-CutOver's hyphens and
+        // reject the real dispatch names used everywhere else in the system.
+        if (type == typeof(MabArchiveJob))
+            return BatchJobNames.MabArchive;
+
+        if (type == typeof(YearEndDataSetupJobHandler))
+            return BatchJobNames.YearEndDataSetup;
+
+        if (type == typeof(YearEndCutoverJobHandler))
+            return BatchJobNames.YearEndCutover;
+
         var name = type.Name;
 
         if (name.EndsWith("JobHandler", StringComparison.Ordinal))
@@ -102,10 +109,6 @@ public sealed class BatchJobFactory : IBatchJobFactory
             name = name[..^"Handler".Length];
         else if (name.EndsWith("Job", StringComparison.Ordinal))
             name = name[..^"Job".Length];
-
-        // Keep historical capitalization used by callers.
-        if (string.Equals(name, nameof(BatchJobNames.MabArchive), StringComparison.Ordinal))
-            return BatchJobNames.MabArchive;
 
         return name;
     }

@@ -2,7 +2,7 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 

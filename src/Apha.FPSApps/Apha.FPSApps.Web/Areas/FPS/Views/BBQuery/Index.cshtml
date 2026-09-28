@@ -44,6 +44,16 @@
     </div>
 </div>
 
+@* ── Prompt shown before any Resource Centre is selected ── *@
+<div id="bbQueryPrompt"
+     style="margin-top:16px; @(string.IsNullOrWhiteSpace(Model.SelectedProfitCentre) ? "" : "display:none")"
+     role="status"
+     aria-live="polite">
+    <div class="govuk-inset-text">
+        <p class="govuk-body">Select a Resource Centre above to view the Budget Bids data.</p>
+    </div>
+</div>
+
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
     <div class="govuk-grid-column-full">
         @* The grid partial is always rendered so its gridManager is registered for reloads,
@@ -78,6 +88,7 @@
 
             pc.addEventListener('change', function () {
                 var container = document.getElementById('gridContainer_bbQueryGrid');
+                var prompt = document.getElementById('bbQueryPrompt');
 
                 // No Resource Centre selected: clear any existing table structure/data
                 // and keep the grid hidden. Columns are generated per Resource Centre.
@@ -86,6 +97,7 @@
                         container.innerHTML = '';
                         container.style.display = 'none';
                     }
+                    if (prompt) prompt.style.display = '';
                     return;
                 }
 
@@ -94,6 +106,7 @@
                     if (container) {
                         container.style.display = '';
                     }
+                    if (prompt) prompt.style.display = 'none';
                     showLoader();
                     gm.reloadGrid({ filter: '{}', sortBy: '', descending: false, page: 1 });
                 }

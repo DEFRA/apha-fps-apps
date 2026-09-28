@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
@@ -13,7 +13,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository
         /// <summary>
         /// Creates a BaseRepository instance using a mocked FpsDbContext.
         /// IFpsYearContext is substituted via NSubstitute.
-        /// BaseRepository is concrete so it is instantiated directly â€” no subclass needed.
+        /// BaseRepository is concrete so it is instantiated directly — no subclass needed.
         /// </summary>
         private static BaseRepository CreateRepository()
         {
@@ -72,7 +72,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository
         [Fact]
         public void ApplyPaging_ReturnsRemainingItems_WhenLastPageIsPartial()
         {
-            // Arrange â€” 10 items with pageSize 3: last page (4) has only 1 item
+            // Arrange — 10 items with pageSize 3: last page (4) has only 1 item
             var source = Enumerable.Range(1, 10).Select(i => $"Item{i}").ToList();
             var repo = CreateRepository();
 
@@ -87,7 +87,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository
         [Fact]
         public void ApplyPaging_ReturnsCorrectPaginationData_WithTotalPagesAndRecords()
         {
-            // Arrange â€” 10 items, pageSize 3 â†’ TotalPages = ceil(10/3) = 4
+            // Arrange — 10 items, pageSize 3 ? TotalPages = ceil(10/3) = 4
             var source = Enumerable.Range(1, 10).Select(i => $"Item{i}").ToList();
             var repo = CreateRepository();
 
@@ -120,7 +120,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository
         [Fact]
         public void ApplyPaging_ReturnsSinglePage_WhenItemsExactlyFillPageSize()
         {
-            // Arrange â€” 5 items, pageSize 5 â†’ exactly 1 full page
+            // Arrange — 5 items, pageSize 5 ? exactly 1 full page
             var source = Enumerable.Range(1, 5).Select(i => $"Item{i}").ToList();
             var repo = CreateRepository();
 
@@ -136,7 +136,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository
         [Fact]
         public void ApplyPaging_ReturnsEmptyData_WhenPageExceedsTotalPages()
         {
-            // Arrange â€” requesting page 99 of a 3-item list should return no data
+            // Arrange — requesting page 99 of a 3-item list should return no data
             var source = Enumerable.Range(1, 3).Select(i => $"Item{i}").ToList();
             var repo = CreateRepository();
 

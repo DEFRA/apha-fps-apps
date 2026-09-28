@@ -4,7 +4,7 @@ using Apha.Costbook.Api.Controllers;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -47,6 +47,23 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
             Assert.Same(res, okResult.Value);
             await _settingsService.Received(1).GetSettingsAsync();
             _mapper.Received(1).Map<MaintenanceSettingsRes>(dto);
+        }
+
+        [Fact]
+        public async Task GetSettings_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _settingsService.GetSettingsAsync().Returns(Task.FromResult<MaintenanceSettingsDto>(null!));
+
+            // Act
+            var result = await _controller.GetSettings();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<MaintenanceSettingsRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
         }
 
         [Fact]
@@ -146,6 +163,23 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
             Assert.Same(resList, okResult.Value);
         }
 
+        [Fact]
+        public async Task GetAccountCategories_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            _accountCategoryService.GetAllForMaintenanceAsync().Returns(Task.FromResult<List<AccountCategoryMaintenanceDto>>(null!));
+
+            // Act
+            var result = await _controller.GetAccountCategories();
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<List<AccountCategoryMaintenanceRes>>>(jsonResult.Value!);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+        }
+
         #endregion
 
         // ── GetAccountCategoriesPaginated ─────────────────────────────────────
@@ -179,6 +213,26 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
             await _accountCategoryService.Received(1).GetPaginatedAsync(queryParams);
         }
 
+        [Fact]
+        public async Task GetAccountCategoriesPaginated_ServiceReturnsNull_ReturnsNullSuccessResponse()
+        {
+            // Arrange
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
+            _accountCategoryService.GetPaginatedAsync(queryParams).Returns(Task.FromResult<PaginatedResult<AccountCategoryMaintenanceDto>>(null!));
+
+            // Act
+            var result = await _controller.GetAccountCategoriesPaginated(query);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<ApiResponse<PaginationRes<AccountCategoryMaintenanceRes>>>(jsonResult.Value!);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotNull(response.Meta);
+        }
+
         #endregion
 
         // ── UpdateAccountCategory ─────────────────────────────────────────────
@@ -210,8 +264,8 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
         {
             // Arrange
             var accShortName = "ACC01";
-            var req = new AccountCategoryMaintenanceReq { Csg7Group = null };
-            var updatedDto = new AccountCategoryMaintenanceDto { AccShortName = accShortName, Csg7Group = null };
+            var req = new AccountCategoryMaintenanceReq { Csg7Group = null! };
+            var updatedDto = new AccountCategoryMaintenanceDto { AccShortName = accShortName, Csg7Group = null! };
             var res = new AccountCategoryMaintenanceRes();
             _accountCategoryService.UpdateCsg7GroupAsync(accShortName, null).Returns(updatedDto);
             _mapper.Map<AccountCategoryMaintenanceRes>(updatedDto).Returns(res);

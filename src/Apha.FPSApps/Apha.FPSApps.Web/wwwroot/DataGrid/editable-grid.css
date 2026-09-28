@@ -180,6 +180,13 @@
     text-align:right;
 }
 
+/* Keep numeric/monetary values (including the leading negative sign) on a single line */
+.govuk-table__cell--numeric,
+.govuk-table__header--numeric,
+.grid-data-right-align {
+    white-space: nowrap;
+}
+
     .grid-footer {
         /* background-color: #e0e0e0;
     border-top: 1px solid #999;*/

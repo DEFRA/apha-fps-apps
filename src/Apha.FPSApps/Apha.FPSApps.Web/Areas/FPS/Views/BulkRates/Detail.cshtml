@@ -182,22 +182,19 @@
                                             Select an Excel (.xlsx) file. Uploading a new file replaces any previously uploaded data and re-runs validation.
                                         </div>
                                         @{
-                                            var (testDataDownloadUrl, testDataDownloadLabel) = entry.JobName switch
+                                            var (testDataDownloadUrl, testDataDownloadLabel, testDataDownloadFileName) = entry.JobName switch
                                             {
-                                                "BulkStaffRatesUpdate"  => ($"/FPS/BulkRates/DownloadStaffTestDataForRequest?id={entry.JobExecutionId}", "Download Staff Data (Excel)"),
-                                                "BulkAnimalRatesUpdate" => ($"/FPS/BulkRates/DownloadAnimalTestDataForRequest?id={entry.JobExecutionId}", "Download Animal Data (Excel)"),
-                                                _                       => ($"/FPS/BulkRates/DownloadTestDataForRequest?id={entry.JobExecutionId}", "Download Test Data (Excel)")
+                                                "BulkStaffRatesUpdate"  => ($"/FPS/BulkRates/DownloadStaffTestDataForRequest?id={entry.JobExecutionId}", "Download Staff Data (Excel)", $"Staff_Rates_{entry.JobExecutionId}.xlsx"),
+                                                "BulkAnimalRatesUpdate" => ($"/FPS/BulkRates/DownloadAnimalTestDataForRequest?id={entry.JobExecutionId}", "Download Animal Data (Excel)", $"Animal_Rates_{entry.JobExecutionId}.xlsx"),
+                                                _                       => ($"/FPS/BulkRates/DownloadTestDataForRequest?id={entry.JobExecutionId}", "Download Test Data (Excel)", $"FEC_TestRates_{entry.JobExecutionId}.xlsx")
                                             };
                                         }
                                         <div class="govuk-button-group govuk-!-margin-bottom-2">
-                                            @* data-no-loader: this link's response is a file attachment, not a page
-                                               navigation — the browser never unloads/reloads this page, so the global
-                                               navigation loader (govuk-modal-dialog.js) would show on click and never
-                                               hide again without this opt-out. *@
-                                            <a href="@testDataDownloadUrl" data-no-loader
-                                               class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
+                                            <button type="button" id="btnDownloadTestDataForRequest"
+                                                    data-download-url="@testDataDownloadUrl" data-download-file-name="@testDataDownloadFileName"
+                                                    class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
                                                 @testDataDownloadLabel
-                                            </a>
+                                            </button>
                                         </div>
                                         <div class="govuk-form-group govuk-!-margin-bottom-2">
                                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ratesFile">File</label>

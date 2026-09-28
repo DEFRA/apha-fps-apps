@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -204,7 +204,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             new()
             {
                 GridId = "RePlanGrid",
-                Title = "",
+                Title = "2.All Jobs for Staff in Workgroup",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffRowKey",
@@ -228,7 +228,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             new()
             {
                 GridId = "AllTimeGrid",
-                Title = "",
+                Title = "3. All Time for Project",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "StaffId",

@@ -24,12 +24,6 @@ namespace Apha.BatchJobs.UnitTests.MilestoneUpdateNotifications;
 [Trait("Category", "Integration")]
 public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifetime
 {
-    // ── Connection ──────────────────────────────────────────────────────────────
-    // Fallback used only when no local config file or env var is present (i.e. in CI/sandbox).
-    // Without a password the connection attempt fails → InitializeAsync sets _skipReason → all tests skip.
-    private const string DefaultConnectionString =
-        "Host=localhost;Port=5432;Database=batch_jobs_foundation_db_cloud;Username=postgres;Timeout=5";
-
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -129,12 +123,12 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         var row = await ReadRunSummaryAsync(runSummaryId);
         Assert.NotNull(row);
         Assert.Equal("Pending", row!["capssummarystatus"]);
-        Assert.Equal(0, (int)row["candidatecount"]);
-        Assert.True((bool)row["diagnosticavailable"]);
+        Assert.Equal(0, (int)row["candidatecount"]!);
+        Assert.True((bool)row["diagnosticavailable"]!);
     }
 
     [SkippableFact]
-    public async Task GetOrCreateRunSummaryAsync_WhenCalledTwiceForSameJobQueueId_ReturnsSameRowAndDoesNotThrow()
+    public async Task GetOrCreateRunSummaryAsync_WhenCalledTwiceWithSameYearMonth_ReturnsSameRowAndDoesNotThrow()
     {
         // Simulates a whole-job retry: JobOrchestrator re-invokes the job with the same
         // jobQueueId after a transient failure. The second call must resume the existing row
@@ -147,13 +141,30 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
             _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 7, CancellationToken.None);
 
         var secondId = await repo.GetOrCreateRunSummaryAsync(
-            _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 8, CancellationToken.None);
+            _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 7, CancellationToken.None);
 
         Assert.Equal(firstId, secondId);
 
         var row = await ReadRunSummaryAsync(firstId);
         Assert.NotNull(row);
-        Assert.Equal(8, (int)row!["monthnumber"]);
+        Assert.Equal(7, (int)row!["monthnumber"]!);
+    }
+
+    [SkippableFact]
+    public async Task GetOrCreateRunSummaryAsync_WhenRetrySuppliesDifferentYearOrMonth_ShouldThrow()
+    {
+        // Run identity is immutable once created — a retry that resolves a different
+        // year/month than the original attempt indicates a bug upstream and must fail loudly
+        // rather than silently overwrite the original run's identity.
+        Skip.IfNot(CanRun(), _skipReason!);
+
+        var repo = CreateRepository();
+        await repo.GetOrCreateRunSummaryAsync(
+            _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 7, CancellationToken.None);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            repo.GetOrCreateRunSummaryAsync(
+                _testJobQueueId, "MilestoneUpdate", fpsYear: 2026, monthNumber: 8, CancellationToken.None));
     }
 
     [SkippableFact]
@@ -189,13 +200,13 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         await repo.UpdateRunSummaryCountersAsync(runSummaryId, counters, CancellationToken.None);
 
         var row = await ReadRunSummaryAsync(runSummaryId);
-        Assert.Equal(10, (int)row!["candidatecount"]);
-        Assert.Equal(20, (int)row!["candidateprojectcount"]);
-        Assert.Equal(5,  (int)row!["identifiedrecipientcount"]);
-        Assert.Equal(2,  (int)row!["manageremailsentcount"]);
-        Assert.Equal(1,  (int)row!["manageremailfailedcount"]);
-        Assert.Equal(3,  (int)row!["unresolvedrecipientcount"]);
-        Assert.Equal(6,  (int)row!["unresolvedprojectcount"]);
+        Assert.Equal(10, (int)row!["candidatecount"]!);
+        Assert.Equal(20, (int)row!["candidateprojectcount"]!);
+        Assert.Equal(5,  (int)row!["identifiedrecipientcount"]!);
+        Assert.Equal(2,  (int)row!["manageremailsentcount"]!);
+        Assert.Equal(1,  (int)row!["manageremailfailedcount"]!);
+        Assert.Equal(3,  (int)row!["unresolvedrecipientcount"]!);
+        Assert.Equal(6,  (int)row!["unresolvedprojectcount"]!);
     }
 
     [SkippableFact]
@@ -258,9 +269,9 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         Assert.Equal("Pending", parent!["deliverystatus"]);
         Assert.Equal("mgr@example.com", parent["recipientemail"]);
         Assert.Equal(2, childRows.Count);
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Pending");
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Skipped"
-                                     && (string)r["outcomereason"] == "NoValidProjectLinks");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Pending");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Skipped"
+                                     && (string)r["outcomereason"]! == "NoValidProjectLinks");
     }
 
     [SkippableFact]
@@ -303,8 +314,8 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         Assert.NotNull(parent["sentatutc"]);
 
         // Pending child promoted to Sent; Skipped child preserved.
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Sent");
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Skipped");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Sent");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Skipped");
     }
 
     [SkippableFact]
@@ -320,7 +331,7 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
         var (parent, childRows) = await ReadDeliveryAsync(deliveryId);
         Assert.Equal("Failed", parent!["deliverystatus"]);
         Assert.Equal("Graph error", parent!["failuremessage"]);
-        Assert.All(childRows, r => Assert.Equal("Failed", (string)r["deliverystatus"]));
+        Assert.All(childRows, r => Assert.Equal("Failed", (string)r["deliverystatus"]!));
     }
 
     [SkippableFact]
@@ -403,11 +414,11 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
 
         var (parent, childRows) = await ReadDeliveryAsync(deliveryId);
         Assert.Equal("OutcomeUnknown", parent!["deliverystatus"]);
-        Assert.Contains("crashed", ((string)parent["failuremessage"]).ToLowerInvariant());
+        Assert.Contains("crashed", ((string)parent!["failuremessage"]!).ToLowerInvariant());
 
         // Only the Pending child is transitioned; Skipped is preserved.
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "OutcomeUnknown");
-        Assert.Contains(childRows, r => (string)r["deliverystatus"] == "Skipped");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "OutcomeUnknown");
+        Assert.Contains(childRows, r => (string)r["deliverystatus"]! == "Skipped");
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -436,9 +447,9 @@ public sealed class NotificationDeliveryRepositoryIntegrationTests : IAsyncLifet
                 return cs;
         }
 
-        // 3. No credentials available — return password-less fallback so InitializeAsync
-        //    catches the auth failure and skips cleanly (same as CI behaviour).
-        return DefaultConnectionString;
+        // 3. No credentials available — return empty so InitializeAsync
+        //    catches the connection failure and skips cleanly (same as CI behaviour).
+        return string.Empty;
     }
 
     private static string? FindWorkerLocalJson()

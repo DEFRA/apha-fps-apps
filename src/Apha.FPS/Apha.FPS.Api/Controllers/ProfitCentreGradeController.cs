@@ -4,7 +4,7 @@ using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -99,7 +99,7 @@ namespace Apha.FPS.Api.Controllers
             {
                 throw new ArgumentException($"Profit centre grade {pcGrade} not found");
             }
-            return Ok(new { success = true });
+            return Ok(true);
         }
 
         /// <summary>

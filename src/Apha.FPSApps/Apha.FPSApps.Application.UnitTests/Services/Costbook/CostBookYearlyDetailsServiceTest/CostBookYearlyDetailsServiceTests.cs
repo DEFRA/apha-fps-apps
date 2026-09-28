@@ -22,6 +22,24 @@ public class CostBookYearlyDetailsServiceTests
         _sut = new CostBookYearlyDetailsService(_mockApiClient);
     }
 
+    #region GetSettingsAsync
+
+    [Fact]
+    public async Task GetSettingsAsync_DelegatesToClient()
+    {
+        var dto = new MaintenanceSettingsDto { InflationAnimals = 2.5m };
+        var expected = ApiResponseDto<MaintenanceSettingsDto>.SuccessResponse(dto);
+        _yearlyDetailsClient.GetSettingsAsync().Returns(expected);
+
+        var result = await _sut.GetSettingsAsync();
+
+        Assert.True(result.Success);
+        Assert.Equal(2.5m, result.Data!.InflationAnimals);
+        await _yearlyDetailsClient.Received(1).GetSettingsAsync();
+    }
+
+    #endregion
+
     #region GetProjectHeaderAsync
 
     [Fact]
@@ -393,6 +411,23 @@ public class CostBookYearlyDetailsServiceTests
         Assert.False(result.Success);
         Assert.Single(result.Errors!);
         Assert.Contains("staff requirements", result.Errors![0].Message);
+    }
+
+    #endregion
+
+    #region CopyYearDataAsync
+
+    [Fact]
+    public async Task CopyYearDataAsync_DelegatesToClient_WhenSuccess()
+    {
+        _yearlyDetailsClient.CopyYearDataAsync("2024/001", 2024, 2025)
+            .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+        var result = await _sut.CopyYearDataAsync("2024/001", 2024, 2025);
+
+        Assert.True(result.Success);
+        Assert.True(result.Data);
+        await _yearlyDetailsClient.Received(1).CopyYearDataAsync("2024/001", 2024, 2025);
     }
 
     #endregion

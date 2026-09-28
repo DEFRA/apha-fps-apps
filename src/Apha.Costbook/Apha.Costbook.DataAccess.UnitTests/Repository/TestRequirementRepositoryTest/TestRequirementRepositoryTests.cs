@@ -57,6 +57,55 @@ public class TestRequirementRepositoryTests
         return (repo, testReqMockSet, mockContext);
     }
 
+    #region ExistsAsync
+
+    [Fact]
+    public async Task ExistsAsync_ReturnsTrue_WhenRequirementExists()
+    {
+        var (repo, _, _) = CreateRepository(testRequirements: [new TestRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            TestCode = "TC001"
+        }]);
+
+        var result = await repo.ExistsAsync("2024/001", 2024, "TC001");
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task ExistsAsync_ReturnsFalse_WhenRequirementMissing()
+    {
+        var (repo, _, _) = CreateRepository(testRequirements: [new TestRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            TestCode = "TC001"
+        }]);
+
+        var result = await repo.ExistsAsync("2024/001", 2024, "TC999");
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task ExistsAsync_DecodesUrlEncodedValues()
+    {
+        var (repo, _, _) = CreateRepository(testRequirements: [new TestRequirement
+        {
+            Project = "2024/001",
+            Year = 2024,
+            TestCode = "TC001"
+        }]);
+
+        var result = await repo.ExistsAsync("2024%2F001", 2024, "TC001");
+
+        Assert.True(result);
+    }
+
+    #endregion
+
     #region AddTestRequirementAsync
 
     [Fact]

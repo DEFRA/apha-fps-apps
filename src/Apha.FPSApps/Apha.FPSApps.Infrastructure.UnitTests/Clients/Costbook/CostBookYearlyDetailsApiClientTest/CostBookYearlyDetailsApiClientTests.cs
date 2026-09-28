@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using Xunit;
 
@@ -23,6 +23,27 @@ public class CostBookYearlyDetailsApiClientTests
         _mapper = Substitute.For<IMapper>();
         _client = new CostBookYearlyDetailsApiClient(_http, _mapper);
     }
+
+    #region GetSettingsAsync
+
+    [Fact]
+    public async Task GetSettingsAsync_WithSuccessResponse_ReturnsMappedSettings()
+    {
+        var res = new MaintenanceSettingsRes { InflationAnimals = 2.5m };
+        var apiResponse = new ApiResponse<MaintenanceSettingsRes> { Success = true, Data = res };
+        var mappedDto = new MaintenanceSettingsDto { InflationAnimals = 2.5m };
+
+        _http.GetAsync<MaintenanceSettingsRes>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<MaintenanceSettingsDto>(res).Returns(mappedDto);
+
+        var result = await _client.GetSettingsAsync();
+
+        Assert.True(result.Success);
+        Assert.Equal(2.5m, result.Data!.InflationAnimals);
+        await _http.Received(1).GetAsync<MaintenanceSettingsRes>(Arg.Any<string>());
+    }
+
+    #endregion
 
     #region GetProjectHeaderAsync
 
@@ -652,6 +673,25 @@ public class CostBookYearlyDetailsApiClientTests
         Assert.False(result.Success);
         Assert.Single(result.Errors!);
         Assert.Contains("staff requirements", result.Errors![0].Message);
+    }
+
+    #endregion
+
+    #region CopyYearDataAsync
+
+    [Fact]
+    public async Task CopyYearDataAsync_WithSuccessResponse_ReturnsTrue()
+    {
+        _http.PostAsync<CopyYearDataReq, bool>(Arg.Any<string>(), Arg.Any<CopyYearDataReq>())
+            .Returns(new ApiResponse<bool> { Success = true, Data = true });
+
+        var result = await _client.CopyYearDataAsync("2024/001", 2024, 2025);
+
+        Assert.True(result.Success);
+        Assert.True(result.Data);
+        await _http.Received(1).PostAsync<CopyYearDataReq, bool>(
+            Arg.Any<string>(),
+            Arg.Is<CopyYearDataReq>(x => x.SourceYear == 2024 && x.TargetYear == 2025));
     }
 
     #endregion

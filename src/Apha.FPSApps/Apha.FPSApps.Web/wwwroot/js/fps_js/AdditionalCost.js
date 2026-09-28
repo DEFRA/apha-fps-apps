@@ -1,4 +1,4 @@
-var AdditionalCostConfig = {
+﻿var AdditionalCostConfig = {
     getJobCode: function () { return ''; },
     requireJobCodeForAdd: false,
     fromProjectPlanning: false,
@@ -180,27 +180,30 @@ function closeModal() {
 }
 
 // ---- Account multi-column dropdown ----
+// Lazy/chunked rendering, debounced search and delegated row selection are all
+// provided by common/lazy-panel-dropdown.js.
+
+var accountDropdown = createLazyPanelDropdown({
+    panelId: 'AccountDropdownPanel',
+    bodyId: 'AccountDropdownBody',
+    searchBoxId: 'AccountSearchBox',
+    displayId: 'AccountDisplay',
+    getOptions: function () { return window.accountPanelOptions; },
+    getSearchKey: function (a) { return a.n + '\u0000' + a.d + '\u0000' + a.c; },
+    getRowAttributes: function (a) { return { value: a.v, display: a.n }; },
+    getCells: function (a) { return [a.n, a.d, a.c]; },
+    onSelect: function (row) { selectAccount(row.value, row.display); }
+});
 
 function toggleAccountPanel() {
-    var panel = document.getElementById('AccountDropdownPanel');
-    if (!panel) return;
-    var isOpen = panel.style.display !== 'none';
-    panel.style.display = isOpen ? 'none' : 'block';
-    if (!isOpen) {
-        var searchBox = document.getElementById('AccountSearchBox');
-        if (searchBox) { searchBox.value = ''; filterAccountPanel(''); searchBox.focus(); }
-    }
+    accountDropdown.toggle();
 }
 
 function filterAccountPanel(query) {
-    var rows = document.querySelectorAll('#AccountDropdownBody tr');
-    var q = (query || '').toLowerCase();
-    rows.forEach(function (row) {
-        row.style.display = (!q || row.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
-    });
+    accountDropdown.filter(query);
 }
 
-function selectAccount(value, displayName, rowEl) {
+function selectAccount(value, displayName) {
     var display = document.getElementById('AccountDisplay');
     if (display) display.value = displayName;
 
@@ -210,14 +213,5 @@ function selectAccount(value, displayName, rowEl) {
         $(select).trigger('change');
     }
 
-    var panel = document.getElementById('AccountDropdownPanel');
-    if (panel) panel.style.display = 'none';
+    accountDropdown.close();
 }
-
-// Close panel when clicking outside
-$(document).on('click', function (e) {
-    if (!$(e.target).closest('#AccountDropdownPanel, #AccountDisplay').length) {
-        var panel = document.getElementById('AccountDropdownPanel');
-        if (panel) panel.style.display = 'none';
-    }
-});

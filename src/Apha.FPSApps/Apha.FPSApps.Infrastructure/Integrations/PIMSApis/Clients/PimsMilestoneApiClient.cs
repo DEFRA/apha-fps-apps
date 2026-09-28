@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PimsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 
 using System.Web;
 
@@ -190,21 +190,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year)
         {
-            try
-            {
-                var response = await _http.DeleteAsync<object>(
-                    string.Format(PimsApiEndpoints.DeleteMilestoneFormDates, Uri.EscapeDataString(parentProject), year));
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<object>>(response);
-                var dto = _mapper.Map<ApiResponseDto<object>>(response);
-                return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<object>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to delete milestone form dates", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            var response = await _http.DeleteAsync<object>(
+                string.Format(PimsApiEndpoints.DeleteMilestoneFormDates, Uri.EscapeDataString(parentProject), year));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<object>>(response);
+            var dto = _mapper.Map<ApiResponseDto<object>>(response);
+            return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
@@ -337,10 +328,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<ProjectYearManagerDto>>> GetProjectYearManagersAsync(int year)
+        public async Task<ApiResponseDto<List<ProjectYearManagerDto>>> GetProjectYearManagersAsync(int year, string email, bool isAdmin)
         {
-            var response = await _http.GetAsync<List<ProjectYearManagerRes>>(
-                string.Format(PimsApiEndpoints.GetProjectYearManagers, year));
+            string url = string.Format(PimsApiEndpoints.GetProjectYearManagers, year);
+            url += $"{(url.Contains('?') ? "&" : "?")}email={Uri.EscapeDataString(email)}";
+            url += $"{(url.Contains('?') ? "&" : "?")}isAdmin={isAdmin}";
+
+            var response = await _http.GetAsync<List<ProjectYearManagerRes>>(url);
 
             if (response.Success && (response.Data == null || response.Data.Count == 0))
                 return ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse([]);

@@ -7,6 +7,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     public class ProjectDetailsViewModel
     {
         public string Parentproject { get; set; } = string.Empty;
+        public int ShowProjects { get; set; } = 1;
 
         // FPS Project Details (read-only tab)
         public ProjectDto? FpsProjectDetails { get; set; }

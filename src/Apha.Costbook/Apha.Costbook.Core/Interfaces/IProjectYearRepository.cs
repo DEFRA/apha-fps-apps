@@ -9,5 +9,6 @@ public interface IProjectYearRepository
     Task<ProjectYear> AddProjectYearAsync(string project, int year, ProjectYear yearData);
     Task<ProjectYear> UpdateProjectYearAsync(ProjectYear projectYear);
     Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string project, int year);
-   
+    Task<(bool Copied, IReadOnlyList<string> Errors)> CopyYearDataAsync(string project, int sourceYear, int targetYear);
+
 }

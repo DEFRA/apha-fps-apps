@@ -6,7 +6,7 @@ using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -112,9 +112,9 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
         {
             var serviceResult = new List<CostCentreWorkgroup> { new() { CostCentre = 100 } };
             _repositoryMock.GetAllCostCentreWorkgroupAsync().Returns(serviceResult);
-            _mapperMock.Map<IEnumerable<CostCentreWorkgroupRes>>(serviceResult).Throws(new AutoMapperMappingException("Mapping error"));
+            _mapperMock.Map<IEnumerable<CostCentreWorkgroupRes>>(serviceResult).Throws(new InvalidOperationException("Mapping error"));
 
-            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.GetAllCostCentresAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetAllCostCentresAsync());
         }
 
         // ─── CRUD Endpoint Tests ────────────────────────────────────────────────────

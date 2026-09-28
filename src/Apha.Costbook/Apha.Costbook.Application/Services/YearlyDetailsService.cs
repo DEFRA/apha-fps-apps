@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Web;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
@@ -8,7 +9,7 @@ using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.Costbook.Application.Services;
 
@@ -20,8 +21,20 @@ public class YearlyDetailsService : IYearlyDetailsService
     private readonly ITestRequirementRepository _testRepo;
     private readonly IAnimalRequirementRepository _animalRepo;
     private readonly IAdditionalCostRepository _additionalCostRepo;
-    private readonly ISettingsService _settingsService;
+    private readonly ISettingsRepository _settingsRepository;
     private readonly IMapper _mapper;
+
+    private const string IdInflationAnimals = "InflationAnimals";
+    private const string IdInflationExceptional = "InflationExceptional";
+    private const string IdInflationStaff = "InflationStaff";
+    private const string IdInflationTests = "InflationTests";
+    private const string IdCurrentYear = "CurrentYear";
+    private const string IdWorkingHoursInDay = "HoursInDay";
+    private const string IdWorkingDaysInYear = "DaysInYear";
+    private const string IdProfitAnimals = "Profitanimals";
+    private const string IdProfitExceptional = "ProfitExceptional";
+    private const string IdProfitStaff = "Profitstaff";
+    private const string IdProfitTests = "Profittests";
 
     public YearlyDetailsService(
         IProjectRepository projectRepo,
@@ -30,7 +43,7 @@ public class YearlyDetailsService : IYearlyDetailsService
         ITestRequirementRepository testRepo,
         IAnimalRequirementRepository animalRepo,
         IAdditionalCostRepository additionalCostRepo,
-        ISettingsService settingsService,
+        ISettingsRepository settingsRepository,
         IMapper mapper)
     {
         _projectRepo = projectRepo;
@@ -39,14 +52,58 @@ public class YearlyDetailsService : IYearlyDetailsService
         _testRepo = testRepo;
         _animalRepo = animalRepo;
         _additionalCostRepo = additionalCostRepo;
-        _settingsService = settingsService;
+        _settingsRepository = settingsRepository;
         _mapper = mapper;
+    }
+
+    public async Task<MaintenanceSettingsDto> GetSettingsAsync()
+    {
+        var settings = await _settingsRepository.GetAllUserUpdatableAsync();
+        var lookup = settings.ToDictionary(s => s.Id, s => s.Setting ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+        return new MaintenanceSettingsDto
+        {
+            InflationAnimals = ParseDecimal(lookup, IdInflationAnimals),
+            InflationExceptionalCosts = ParseDecimal(lookup, IdInflationExceptional),
+            InflationStaff = ParseDecimal(lookup, IdInflationStaff),
+            InflationTests = ParseDecimal(lookup, IdInflationTests),
+            CurrentFinancialYear = ParseInt(lookup, IdCurrentYear),
+            WorkingHoursInDay = ParseDecimal(lookup, IdWorkingHoursInDay),
+            WorkingDaysInYear = ParseDecimal(lookup, IdWorkingDaysInYear),
+            ProfitAnimals = ParseDecimal(lookup, IdProfitAnimals),
+            ProfitExceptionalCosts = ParseDecimal(lookup, IdProfitExceptional),
+            ProfitStaff = ParseDecimal(lookup, IdProfitStaff),
+            ProfitTests = ParseDecimal(lookup, IdProfitTests),
+        };
     }
 
     public async Task<ProjectHeaderDto?> GetProjectHeaderAsync(string projectId)
     {
         var project = await _projectRepo.GetProjectByIdAsync(projectId);
         return project is null ? null : _mapper.Map<ProjectHeaderDto>(project);
+    }
+
+    private static decimal ParseDecimal(Dictionary<string, string> lookup, string id)
+    {
+        if (!lookup.TryGetValue(id, out var raw))
+            throw new InvalidOperationException($"Required setting '{id}' was not found in tbl_settings (Userupdateable rows).");
+
+        if (!decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
+                              System.Globalization.CultureInfo.InvariantCulture, out var value))
+            throw new InvalidOperationException($"Setting '{id}' value '{raw}' could not be parsed as a decimal.");
+
+        return value;
+    }
+
+    private static int ParseInt(Dictionary<string, string> lookup, string id)
+    {
+        if (!lookup.TryGetValue(id, out var raw))
+            throw new InvalidOperationException($"Required setting '{id}' was not found in tbl_settings (Userupdateable rows).");
+
+        if (!int.TryParse(raw, out var value))
+            throw new InvalidOperationException($"Setting '{id}' value '{raw}' could not be parsed as an integer.");
+
+        return value;
     }
 
     public async Task<IEnumerable<ProjectYearDto>> GetProjectYearsAsync(string projectId)
@@ -71,6 +128,9 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<(bool Deleted, IReadOnlyList<string> Errors)> DeleteProjectYearAsync(string projectId, int year)
         => await _projectYearRepo.DeleteProjectYearAsync(projectId, year);
+
+    public async Task<(bool Copied, IReadOnlyList<string> Errors)> CopyYearDataAsync(string projectId, int sourceYear, int targetYear)
+        => await _projectYearRepo.CopyYearDataAsync(projectId, sourceYear, targetYear);
 
     // ── Staff ─────────────────────────────────────────────────────────────────────
 
@@ -151,6 +211,16 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<TestRequirementDto> AddTestRequirementAsync(TestRequirementDto dto)
     {
         ValidateTestRequirement(dto);
+
+        var exists = await _testRepo.ExistsAsync(dto.Project, dto.Year ?? 0, dto.TestCode);
+        if (exists)
+        {
+            throw new BusinessValidationErrorException([
+                new BusinessValidationError(
+                    $"Test code '{dto.TestCode}' is already present for project '{HttpUtility.UrlDecode(dto.Project ?? string.Empty)}' in year '{dto.Year}'.",
+                    "TEST_TESTCODE_ALREADY_EXISTS")]);
+        }
+
         var entity = _mapper.Map<TestRequirement>(dto);
         var result = await _testRepo.AddTestRequirementAsync(entity);
         return MapTestToDto(result);
@@ -159,6 +229,16 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<TestRequirementDto> UpdateTestRequirementAsync(TestRequirementDto dto)
     {
         ValidateTestRequirement(dto);
+
+        var exists = await _testRepo.ExistsAsync(dto.Project, dto.Year ?? 0, dto.TestCode);
+        if (!exists)
+        {
+            throw new BusinessValidationErrorException([
+                new BusinessValidationError(
+                    $"Test code '{dto.TestCode}' is not present for project '{HttpUtility.UrlDecode(dto.Project ?? string.Empty)}' in year '{dto.Year}'.",
+                    "TEST_TESTCODE_NOT_PRESENT_TO_UPDATE")]);
+        }
+
         var entity = _mapper.Map<TestRequirement>(dto);
         var result = await _testRepo.UpdateTestRequirementAsync(entity);
         return MapTestToDto(result);
@@ -307,7 +387,8 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<string> GetAdditionalCostinflamationAsync(string projectId, int year)
     {
-        var currentYearValue = await _settingsService.GetSettingValueByIdAsync("CurrentYear");
+        var settings = await _settingsRepository.GetAllUserUpdatableAsync();
+        var currentYearValue = settings.FirstOrDefault(s => s.Id == IdCurrentYear)?.Setting;
         var currentYear = int.TryParse(currentYearValue, out var parsedCurrentYear) ? parsedCurrentYear : 2025;
 
         var inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationExceptional", projectId, year, currentYear);

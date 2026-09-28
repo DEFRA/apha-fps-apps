@@ -6,7 +6,9 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.Common.Utilities.ExcelImport;
-using AutoMapper;
+using MapsterMapper;
+using Microsoft.Extensions.Logging;
+using MapsterMapper;
 
 namespace Apha.PACT.Application.Services
 {
@@ -14,6 +16,11 @@ namespace Apha.PACT.Application.Services
     {
         private readonly IProjectInvoiceRepository _repository;
         private readonly IMapper _mapper;
+        private const int ProjectMaxLength = 20;
+        private const int DetailMaxLength = 100;
+        private const int TypeMaxLength = 10;
+        private const int AmountPrecision = 19;
+        private const int AmountScale = 4;
 
         public ProjectInvoiceService(IProjectInvoiceRepository repository, IMapper mapper)
         {
@@ -284,11 +291,26 @@ namespace Apha.PACT.Application.Services
             var totalFailed = result.FailedCount + rowsToUpdate.Count;
             var totalCount = totalPassed + totalFailed;
 
+            var message = $"Import completed successfully. ";
+            if (totalFailed > 0 && totalPassed >0)
+            {
+                message += $"{totalPassed} out of {totalCount} records successfully validated and is now live. {totalFailed} records failed validation.";
+            }
+            else if( totalFailed > 0 && totalPassed == 0)
+            {
+                message += $" All {totalFailed} records failed validation. ";
+            }
+            else if (totalFailed == 0 && totalPassed > 0)
+            {
+                message += $"All {totalPassed} records successfully validated and is now live. ";
+            }
+          
+
             return new InvoiceImportResultDto
             {
                 PassedCount = totalPassed,
                 FailedCount = totalFailed,
-                Message = $"Import completed successfully. {totalPassed} out of {totalCount} records successfully validated and is now live."
+                Message = message
             };
         }
 
@@ -300,7 +322,9 @@ namespace Apha.PACT.Application.Services
 
             ExcelValidationHelper.ValidateStringInSet(row.ProjectParent, validProjects, "Project Parent", failures);
 
-            if (failures.Count == 0 && !string.IsNullOrWhiteSpace(row.ProjectParent))
+            var isProjectValid = failures.Count == 0;
+
+            if (isProjectValid && !string.IsNullOrWhiteSpace(row.ProjectParent))
             {
                 var canonicalProjectParent = validProjects
                     .FirstOrDefault(x => string.Equals(x, row.ProjectParent, StringComparison.OrdinalIgnoreCase));
@@ -316,6 +340,19 @@ namespace Apha.PACT.Application.Services
             ExcelValidationHelper.ValidateDecimal(row.CostOfWork, "Cost Of Work", failures, required: false);
             ExcelValidationHelper.ValidateDecimal(row.Wip, "WIP", failures, required: false);
             ExcelValidationHelper.ValidateDecimal(row.ProfitLoss, "Profit Loss", failures, required: false);
+
+            if (isProjectValid)
+            {
+                ExcelValidationHelper.ValidateMaxLength(row.ProjectParent, ProjectMaxLength, "Project", failures);
+            }
+
+            ExcelValidationHelper.ValidateMaxLength(row.Detail, DetailMaxLength, "Detail", failures);
+            ExcelValidationHelper.ValidateMaxLength(row.Type, TypeMaxLength, "Type", failures);
+
+            ExcelValidationHelper.ValidateDecimalPrecision(row.Amount, AmountPrecision, AmountScale, "Amount", failures);
+            ExcelValidationHelper.ValidateDecimalPrecision(row.CostOfWork, AmountPrecision, AmountScale, "Cost Of Work", failures);
+            ExcelValidationHelper.ValidateDecimalPrecision(row.Wip, AmountPrecision, AmountScale, "WIP", failures);
+            ExcelValidationHelper.ValidateDecimalPrecision(row.ProfitLoss, AmountPrecision, AmountScale, "Profit Loss", failures);
 
             return failures;
         }
@@ -342,7 +379,9 @@ namespace Apha.PACT.Application.Services
                     { "Month", "Month" },
                     { "Cost Of Work", "CostOfWork" },
                     { "WIP", "Wip" },
-                    { "Profit Loss", "ProfitLoss" }
+                    { "Profit Loss", "ProfitLoss" },
+                    { "Detail", "Detail" },
+                    { "Type", "Type" }
                 };
 
                 var validationErrors = failures.Select(failure =>

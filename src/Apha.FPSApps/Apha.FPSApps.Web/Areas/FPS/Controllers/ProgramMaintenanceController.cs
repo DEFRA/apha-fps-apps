@@ -1,11 +1,11 @@
-ï»¿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Enums;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -214,7 +214,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 programItems = _mapper.Map<List<ProgramViewModel>>(response.Data.ToList());
             }
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
+            PaginationModel paginationModel = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
 
             paginationModel.SortColumn = query?.SortBy;
             paginationModel.SortDirection = query?.Descending ?? false;
@@ -242,7 +244,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task PopulateDropdownsAsync(ProgramViewModel model)
         {
-            // Directorate dropdown â€” blank first item
+            // Directorate dropdown — blank first item
             var directorateResponse = await _masterLookupService.GetLookupItemsAsync(MasterLookupTable.Directorate.ToString());
             var directorates = directorateResponse.Data?.Select(d => d.Value).ToList() ?? new List<string>();
 
@@ -253,10 +255,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Text = d,
                     Selected = string.Equals(model.Directorate, d, StringComparison.OrdinalIgnoreCase)
                 })
-                .Prepend(new SelectListItem { Value = string.Empty, Text = string.Empty, Selected = string.IsNullOrEmpty(model.Directorate) })
+                .Prepend(new SelectListItem { Value = string.Empty, Text = "Select Directorate", Selected = string.IsNullOrEmpty(model.Directorate) })
                 .ToList();
 
-            // Manager dropdown â€” blank first item
+            // Manager dropdown — blank first item
             var managerResponse = await _employeeService.GetAllManagersAsync();
             model.ManagerList = (managerResponse.Data ?? new List<ManagerDto>())
                 .Where(m => !string.IsNullOrEmpty(m.Name))

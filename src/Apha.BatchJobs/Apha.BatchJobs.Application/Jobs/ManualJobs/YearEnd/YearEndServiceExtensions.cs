@@ -17,13 +17,13 @@ public static class YearEndServiceExtensions
         services.AddScoped<IYearEndDataSetupStep, ValidateYearEndContextStep>();
         services.AddScoped<IYearEndDataSetupStep, ValidateYearScopedSchemaStep>();
         services.AddScoped<IYearEndDataSetupStep, CreatePlannedYearStep>();
+        services.AddScoped<IYearEndDataSetupStep, MaterializeYearEndConfigurationStep>();
         services.AddScoped<IYearEndDataSetupStep, CopyFpsYearScopedTablesStep>();
-        services.AddScoped<IYearEndDataSetupStep, CopyMabArchiveYearScopedTablesStep>();
+        services.AddScoped<IYearEndDataSetupStep, ConditionalMabArchiveYearSetupStep>();
         services.AddScoped<IYearEndDataSetupStep, PeriodSetupStep>();
         services.AddScoped<IYearEndDataSetupStep, ProjectFinancialResetStep>();
         services.AddScoped<IYearEndDataSetupStep, ConfiguredPlanningResetStep>();
         services.AddScoped<IYearEndDataSetupStep, InactiveEmployeeCleanupStep>();
-        services.AddScoped<IYearEndDataSetupStep, TargetYearEmptyTablesStep>();
         services.AddScoped<IYearEndDataSetupStep, FinalValidationStep>();
 
         services.AddScoped<IYearEndDataSetupService, YearEndDataSetupService>();

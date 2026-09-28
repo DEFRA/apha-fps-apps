@@ -71,6 +71,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<bool>> DeleteAllByJobCodeAsync(string jobCode, string parentProject)
             => await _pactClient.PactTimeCodeValid.DeleteAllByJobCodeAsync(jobCode, parentProject);
 
+        public async Task<ApiResponseDto<bool>> SetWorkgroupsActiveStatusByJobCodeAsync(string jobCode, string parentProject, bool isActive)
+            => await _pactClient.PactTimeCodeValid.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+
         public async Task<ApiResponseDto<List<TimeCodeValidDto>>> CopyWorkGroupAsync(string sourceJobCode, string targetJobCode, string parentProject)
             => await _pactClient.PactTimeCodeValid.CopyWorkGroupAsync(sourceJobCode, targetJobCode, parentProject);
 

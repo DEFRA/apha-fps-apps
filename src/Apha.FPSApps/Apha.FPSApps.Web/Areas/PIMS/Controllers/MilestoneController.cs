@@ -1,11 +1,11 @@
-﻿using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.PIMS;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +51,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 && viewModel.ProjectOptions.Any(option => string.Equals(option.Value, requestedProject, StringComparison.OrdinalIgnoreCase))
                     ? requestedProject
                     : string.Empty;
+            viewModel.IsSideNavContext = !string.IsNullOrWhiteSpace(parentproject);
             viewModel.NavigationProject = requestedProject ?? string.Empty;
             viewModel.Parentproject = resolvedProject;
 
@@ -70,9 +71,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> LogIndex(string? project = null)
+        public async Task<IActionResult> LogIndex(string? project = null, bool fromSideNav = false)
         {
-            LogMilestoneViewModel viewModel = new();
+            LogMilestoneViewModel viewModel = new()
+            {
+                FromSideNav = fromSideNav
+            };
             ApiResponseDto<List<ProjectListMilestoneDto>> allProjects =
                 await _projectListService.GetAllProjectsForMilestoneAsync();
 
@@ -87,7 +91,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return View(viewModel);
         }
 
-        // ── Milestones DataGrid ──────────────────────────────────────────────
+        // -- Milestones DataGrid ----------------------------------------------
 
         [HttpPost]
         public async Task<IActionResult> LoadMilestoneGrid(
@@ -119,6 +123,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return new DataGridConfig<MilestoneItem>
                 {
                     GridId = "milestonesGrid",
+                    Title = "Milestones",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "Number",
@@ -159,7 +164,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             return new DataGridConfig<MilestoneItem>
             {
-                GridId = "milestonesGrid",                
+                GridId = "milestonesGrid",
+                Title = "Milestones",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Number",
@@ -185,6 +191,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 return new DataGridConfig<MilestoneFormDatesItem>
                 {
                     GridId = "milestoneFormDatesGrid",
+                    Title = "Milestone Form Dates",
                     ShowCheckboxColumn = false,
                     ShowPagination = true,
                     KeyProperty = "Year",
@@ -224,7 +231,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             return new DataGridConfig<MilestoneFormDatesItem>
             {
-                GridId = "milestoneFormDatesGrid",               
+                GridId = "milestoneFormDatesGrid",
+                Title = "Milestone Form Dates",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Year",
@@ -396,7 +404,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return Json(new { formRequired, typeLookUp });
         }
 
-        // ── Log Milestones DataGrid ──────────────────────────────────────────
+        // -- Log Milestones DataGrid ------------------------------------------
 
         [HttpPost]
         public async Task<IActionResult> LoadLogMilestonesGrid(
@@ -453,7 +461,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             };
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────
+        // -- Helpers ----------------------------------------------------------
 
         private async Task PopulateDropdownsAsync(MilestoneViewModel viewModel)
         {

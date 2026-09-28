@@ -333,8 +333,9 @@ namespace Apha.FPS.Application.Services
             RequireStatus(entry, StatusReleasedForApproval, "approve");
 
             // Maker-checker — approver must differ from initiator.
-            // TEMPORARILY DISABLED at the requester's request so a single admin can
-            // self-approve during testing. Restore this check before release.
+            if (!string.IsNullOrEmpty(entry.RequestedBy) && entry.RequestedBy == approvedBy)
+                throw new BusinessValidationErrorException([
+                    new($"Initiator and approver for job '{entry.JobName}' cannot be the same person. The request was created by '{entry.RequestedBy}'.", "INVALID_Approval")]);
 
             // Verify upload metadata is stored (immutability of frozen upload)
             if (entry.UploadFilename == null)
@@ -409,8 +410,9 @@ namespace Apha.FPS.Application.Services
             RequireStatus(entry, StatusReleasedForApproval, "reject");
 
             // Approver must differ from initiator (same maker-checker rule applies for rejection).
-            // TEMPORARILY DISABLED at the requester's request so a single admin can
-            // self-reject during testing. Restore this check before release.
+            if (!string.IsNullOrEmpty(entry.RequestedBy) && entry.RequestedBy == rejectedBy)
+                throw new BusinessValidationErrorException([
+                    new($"Initiator and rejector for job '{entry.JobName}' cannot be the same person. The request was created by '{entry.RequestedBy}'.", "INVALID_Approval")]);
 
             var releasedStatusId = entry.StatusId;
             var rejectedStatusId = await _repository.GetStatusIdByNameAsync(entry.JobId, StatusRejected, ct)

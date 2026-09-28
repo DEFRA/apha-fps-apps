@@ -2,7 +2,7 @@ using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,6 +27,11 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetProposedProjectById(string parentproject)
         {
             ProposedProjectDto? result = await _service.GetProposedProjectByIdAsync(parentproject);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProposedProjectRes>();
+            }
+
             return Ok(_mapper.Map<ProposedProjectRes>(result));
         }
 
@@ -59,6 +64,20 @@ namespace Apha.PIMS.Api.Controllers
         {
             List<string> result = await _service.GetProjectStatusesAsync();
             return Ok(result);
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

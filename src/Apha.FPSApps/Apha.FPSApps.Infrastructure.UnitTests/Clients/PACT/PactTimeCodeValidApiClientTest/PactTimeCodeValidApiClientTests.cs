@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using Xunit;
 
@@ -742,6 +742,60 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTimeCodeValidAp
 
             // Act
             var result = await _client.DeleteAllByJobCodeAsync("JC001", "PP001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region SetWorkgroupsActiveStatusByJobCodeAsync Tests
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_WithValidParams_ReturnsSuccess(bool isActive)
+        {
+            // Arrange
+            var jobCode = "JC001";
+            var parentProject = "PP001";
+            var expectedUrl = $"api/v1/timecodevalid/setworkgroupsactivestatusbyjobcode?jobCode={Uri.EscapeDataString(jobCode)}&parentProject={Uri.EscapeDataString(parentProject)}&isActive={isActive.ToString().ToLowerInvariant()}";
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PostAsync<object, bool?>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PostAsync<object, bool?>(expectedUrl, Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task SetWorkgroupsActiveStatusByJobCodeAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<object, bool?>(Arg.Any<string>(), Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.SetWorkgroupsActiveStatusByJobCodeAsync("JC001", "PP001", true);
 
             // Assert
             Assert.NotNull(result);

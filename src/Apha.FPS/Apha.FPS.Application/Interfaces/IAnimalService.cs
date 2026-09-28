@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
@@ -17,7 +17,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<List<AnimalDto>> GetAnimalLookupAsync();
         Task<PaginatedResult<AnimalCostViewDto>> GetAnimalCostAsync(QueryParameters<string> query, string jobCode);
 
-        // Animal Costs ASU View (AnimalCosts — frmAnimalCosts)
+        // Animal Costs ASU View (AnimalCosts � frmAnimalCosts)
         Task<PaginatedResult<AnimalCostViewDto>> GetAnimalCostByAnimalTypeAsync(QueryParameters<string> query, string animalType);
         Task<PaginatedResult<AnimalSnapshotViewDto>> GetAnimalSnapshotAsync(QueryParameters<string> query);
         Task<decimal> GetTotalAnimalCostAsync(string jobCode);

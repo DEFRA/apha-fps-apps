@@ -2,7 +2,7 @@ using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -122,7 +122,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ReportControllerTest
         }
 
         [Fact]
-        public async Task GetById_ServiceReturnsNull_ReturnsNotFound()
+        public async Task GetById_ServiceReturnsNull_ReturnsJsonResultWithSuccessTrueAndNullData()
         {
             // Arrange
             _service.GetReportByIdAsync(99).Returns((ReportDto?)null);
@@ -131,7 +131,11 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ReportControllerTest
             var result = await _controller.GetReportById(99);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var response = Assert.IsType<Apha.Common.Contracts.ApiResponse<ReportRes>>(jsonResult.Value);
+            Assert.True(response.Success);
+            Assert.Null(response.Data);
+            Assert.NotEmpty(response.Meta.CorrelationId);
         }
 
         [Fact]

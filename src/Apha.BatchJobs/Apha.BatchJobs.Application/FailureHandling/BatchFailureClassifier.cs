@@ -32,6 +32,11 @@ public sealed class BatchFailureClassifier
             JobValidationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.Validation),
             MabArchiveYearConfigurationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.General),
             NotificationSettingsConfigurationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.General),
+            // Checked before the general JobLockException case below — BatchLockLeaseLostException
+            // is a subclass, and a lease lost mid-execution is a different failure from never
+            // acquiring the lock at all, so it gets its own category/message even though it keeps
+            // the same exit code and CloudWatch marker (still "a lock problem" for alerting purposes).
+            BatchLockLeaseLostException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.LockLeaseLost, MarkerKey.Concurrency),
             JobLockException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.Concurrency, MarkerKey.Concurrency),
             BusinessEmailException => Build(BatchExitCodes.EmailFailure, BatchFailureCategory.Email, MarkerKey.General),
             _ => ClassifyByExceptionChain(exception)

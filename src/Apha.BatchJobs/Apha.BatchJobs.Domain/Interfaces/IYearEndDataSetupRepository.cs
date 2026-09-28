@@ -36,36 +36,81 @@ public interface IYearEndDataSetupRepository
     /// </summary>
     Task<string?> ResolveYearColumnAsync(string schema, string table, CancellationToken cancellationToken = default);
 
-    /// <summary>Deletes rows in the given table matching the specified year column value.</summary>
-    Task<int> DeleteRowsByYearAsync(string schema, string table, string yearColumn, int targetYear, CancellationToken cancellationToken = default);
-
     /// <summary>
-    /// Deletes target-year staff-job rows linked to inactive employees.
-    /// Awaiting implementation from the active Year End branch.
+    /// Removes target-year <c>fps.tblwgemployee</c> rows (and their dependent <c>fps.tblstaffjob</c>
+    /// rows, deleted first for the FK) for employees who were inactive in the target year and are not
+    /// the General Staff exemption, per the legacy <c>Annual_WGEmployeeList.sql</c> rule: inactive
+    /// candidate is <c>personstatus = 'I'</c> (case-insensitive) AND <c>enddate IS NULL</c>; General
+    /// Staff exemption (retained even if inactive) is <c>spnumber LIKE 'G%'</c> (case-sensitive) AND
+    /// <c>UPPER(firstname) = 'GENERAL'</c>, both required. Any <c>personstatus</c> value other than
+    /// <c>A</c>/<c>a</c>/<c>I</c>/<c>i</c> is a data-quality error and throws before any deletion.
+    /// FPS-only — never touches <c>mabarchive</c>; MABArchive participation in Year End is gated
+    /// exclusively through the dedicated MABArchive setup step. Returns the total rows deleted across
+    /// both tables.
     /// </summary>
-    Task<int> DeleteInactiveEmployeeJobRowsAsync(string schema, string jobTable, string yearColumn, string jobStaffColumn, string employeeTable, string employeeStaffColumn, int targetYear, CancellationToken cancellationToken = default);
+    Task<int> DeleteInactiveEmployeesForYearEndAsync(int targetYear, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Copies fps.tblperiod rows from sourceYear into targetYear.
-    /// Awaiting implementation from the active Year End branch.
+    /// Copies fps.tblperiod rows from sourceYear into targetYear, using a dynamic column projection
+    /// resolved from information_schema. Resets <c>periodlocked</c> and <c>finalsummariesrun</c> to
+    /// <c>0</c> on the copied rows, rather than carrying the source year's lock/release state forward,
+    /// and regenerates <c>periodname</c> for the target year instead of copying the source year's text.
     /// </summary>
     Task<int> CopyPeriodRowsAsync(int sourceYear, int targetYear, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Applies field reset rules to target-year rows in the specified table.
-    /// Awaiting implementation from the active Year End branch.
+    /// Applies field reset rules to target-year rows in the specified table. Skips any column in
+    /// <paramref name="rules"/> that doesn't exist on the table, rather than failing the whole
+    /// operation — matrix entries carry the full override set for a reset phase and not every
+    /// column applies to every table it's ever mixed with.
     /// </summary>
     Task<int> ResetFieldsByYearAsync(string schema, string table, string yearColumn, IReadOnlyDictionary<string, string> rules, int targetYear, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Copies fps-schema year-scoped rows from sourceYear into targetYear for the given table.
-    /// Awaiting implementation from the active Year End branch.
+    /// Copies fps-schema year-scoped rows from sourceYear into targetYear for the given table, using
+    /// a dynamic column projection resolved from information_schema (excludes identity/generated
+    /// columns, replaces the year column with the target year literal).
     /// </summary>
     Task<int> CopyFpsYearScopedTableAsync(string table, int sourceYear, int targetYear, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Copies mabarchive-schema year-scoped rows from sourceYear into targetYear for the given table.
-    /// Awaiting implementation from the active Year End branch.
+    /// Resolves the <c>fps.job_queue</c> row for a <c>YearEnd-DataSetup</c> request by its
+    /// <c>jobexecutionid</c>, scoped to that job type via a join to <c>fps.job_master</c> so a
+    /// <c>JobExecutionId</c> belonging to some other job never resolves as if it were a valid Data
+    /// Setup request. Returns null if no matching row exists.
     /// </summary>
-    Task<int> CopyMabArchiveYearScopedTableAsync(string table, int sourceYear, int targetYear, CancellationToken cancellationToken = default);
+    Task<(Guid JobQueueId, int? TargetFpsYear)?> ResolveJobQueueByExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Materializes the Approve-frozen <c>fps.tblsettings_staging</c> rows into <c>fps.tblsettings</c>
+    /// for <paramref name="targetFpsYear"/>, then clears the staging table. Staging is a singleton (not
+    /// scoped by job/request) — the API/UI side guarantees at most one non-terminal Year End DataSetup
+    /// request exists at a time, so there is only ever one candidate row set. Every staged row's
+    /// <c>fpsyear</c> must equal <paramref name="targetFpsYear"/>; throws <see cref="InvalidOperationException"/>
+    /// and writes nothing if any staged row disagrees. <c>updated_by</c>/<c>updated_at</c> are copied
+    /// straight through from staging (the original confirmer's identity/timestamp), not regenerated by
+    /// the Worker. Returns the number of rows inserted.
+    /// </summary>
+    Task<int> MaterializeStagedSettingsAsync(int targetFpsYear, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Materializes the Approve-frozen <c>fps.tlkpmonthhours_staging</c> rows into
+    /// <c>fps.tlkpmonthhours</c> for <paramref name="targetFpsYear"/>, then clears the staging table.
+    /// Staging is a singleton (not scoped by job/request) — the API/UI side guarantees at most one
+    /// non-terminal Year End DataSetup request exists at a time, so there is only ever one candidate row
+    /// set. Every staged row's <c>fpsyear</c> must equal <paramref name="targetFpsYear"/>; throws
+    /// <see cref="InvalidOperationException"/> and writes nothing if any staged row disagrees.
+    /// <c>fmonth</c> is copied straight through from staging, not recomputed by the Worker. Returns the
+    /// number of rows inserted.
+    /// </summary>
+    Task<int> MaterializeStagedMonthHoursAsync(int targetFpsYear, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reads <c>fps.tblsettings.setting</c> where <c>id = 'CapApprovalReceivedForReset'</c> for
+    /// <paramref name="targetFpsYear"/>. Returns <c>null</c> if no such row exists — FPS is expected to
+    /// guarantee the row exists with a valid <c>Yes</c>/<c>No</c> value before Year End Data Setup can be
+    /// initiated or approved (<c>YearEndService.ValidateConfiguration</c>), so callers should treat
+    /// <c>null</c> as a hard failure, not a default.
+    /// </summary>
+    Task<string?> GetCapApprovalReceivedForResetSettingAsync(int targetFpsYear, CancellationToken cancellationToken = default);
 }

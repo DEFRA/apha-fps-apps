@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -52,7 +52,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
                 Descending = descending
             };
 
-        #region GetTimeCostCalcsByProjectAsync â€” Happy path
+        #region GetTimeCostCalcsByProjectAsync — Happy path
 
         [Fact]
         public async Task GetTimeCostCalcsByProjectAsync_ReturnsRowsForMatchingProject()
@@ -110,7 +110,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
 
         #endregion
 
-        #region GetTimeCostCalcsByProjectAsync â€” Filtering
+        #region GetTimeCostCalcsByProjectAsync — Filtering
 
         [Fact]
         public async Task GetTimeCostCalcsByProjectAsync_FilterByName_ReturnsMatchingRows()
@@ -171,7 +171,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
 
         #endregion
 
-        #region GetTimeCostCalcsByProjectAsync — JSON filter (ApplyJsonFilter)
+        #region GetTimeCostCalcsByProjectAsync � JSON filter (ApplyJsonFilter)
 
         [Fact]
         public async Task GetTimeCostCalcsByProjectAsync_JsonFilter_ByWorkGroup_ReturnsMatchingRows()
@@ -294,7 +294,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
 
         #endregion
 
-        #region GetTimeCostCalcsByProjectAsync â€” Sorting
+        #region GetTimeCostCalcsByProjectAsync — Sorting
 
         [Theory]
         [InlineData("name",      false)]
@@ -344,7 +344,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
 
         #endregion
 
-        #region GetTimeCostCalcsByProjectAsync â€” Pagination
+        #region GetTimeCostCalcsByProjectAsync — Pagination
 
         [Fact]
         public async Task GetTimeCostCalcsByProjectAsync_Pagination_ReturnsCorrectPage()
@@ -382,7 +382,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
 
         #endregion
 
-        #region GetTimeCostCalcsByProjectAsync â€” ProjectCode edge cases
+        #region GetTimeCostCalcsByProjectAsync — ProjectCode edge cases
 
         [Theory]
         [InlineData("")]

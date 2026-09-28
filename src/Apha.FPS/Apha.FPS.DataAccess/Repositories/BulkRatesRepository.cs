@@ -256,13 +256,13 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task WriteJobQueueLogAsync(
             Guid jobQueueId, string note, string? actor, CancellationToken ct = default)
         {
-            // Resolve current statusid (required by fps.job_queue_log FK constraint)
-            var statusId = await _dbContext.BatchJobQueues.IgnoreQueryFilters()
+            // Resolve current statusid and fpsyear (required by fps.job_queue_log FK/not-null constraints)
+            var queueRow = await _dbContext.BatchJobQueues.IgnoreQueryFilters()
                 .Where(q => q.JobqueueId == jobQueueId)
-                .Select(q => (int?)q.StatusId)
+                .Select(q => new { q.StatusId, q.FpsYear })
                 .FirstOrDefaultAsync(ct);
 
-            if (statusId is null)
+            if (queueRow is null)
             {
                 _logger.LogWarning("WriteJobQueueLogAsync: jobqueueid {JobQueueId} not found; log entry skipped.", jobQueueId);
                 return;
@@ -271,13 +271,14 @@ namespace Apha.FPS.DataAccess.Repositories
             _dbContext.BatchJobQueueLogs.Add(new BatchJobQueueLog
             {
                 JobqueueId = jobQueueId,
-                StatusId = statusId.Value,
+                StatusId = queueRow.StatusId,
                 // BatchJobQueueLog.PerformedBy is modeled non-nullable (shared with YearEnd) —
                 // every real caller always passes a real actor (see BulkRatesRequestService),
                 // so this only matters in the never-hit null case; empty string rather than a
                 // literal DB NULL to keep the existing entity's own nullability contract intact.
                 PerformedBy = actor ?? string.Empty,
-                Note = note
+                Note = note,
+                FpsYear = queueRow.FpsYear
             });
             await _dbContext.SaveChangesAsync(ct);
         }
@@ -1333,7 +1334,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     SET calculated_action    = @calculated_action,
                         effective_new_rate   = @effective_new_rate,
                         source_current_rate  = @source_current_rate,
-                        validation_version   = @validation_version
+                        validation_version   = @validation_version,
+                        testcode             = @resolved_testcode
                     WHERE jobqueueid = @jobqueueid AND testcode = @testcode;";
                 ApplyFecFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
@@ -1348,7 +1350,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     SET calculated_action    = @calculated_action,
                         effective_new_rate   = @effective_new_rate,
                         source_current_rate  = @source_current_rate,
-                        validation_version   = @validation_version
+                        validation_version   = @validation_version,
+                        testcode             = @resolved_testcode,
+                        buyer                = @resolved_buyer
                     WHERE jobqueueid = @jobqueueid AND testcode = @testcode AND buyer = @buyer;";
                 ApplyAgrupFreezeParams(upd, jobQueueId, entry, validationVersion);
                 await upd.ExecuteNonQueryAsync(ct);
@@ -1565,6 +1569,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
             cmd.Parameters.AddWithValue("testcode",            entry.TestCode);
+            cmd.Parameters.AddWithValue("resolved_testcode",   entry.ResolvedTestCode);
             cmd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
             cmd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate  ?? DBNull.Value);
             cmd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);
@@ -1577,6 +1582,8 @@ namespace Apha.FPS.DataAccess.Repositories
             cmd.Parameters.AddWithValue("jobqueueid",          jobQueueId);
             cmd.Parameters.AddWithValue("testcode",            entry.TestCode);
             cmd.Parameters.AddWithValue("buyer",               (object?)entry.Buyer           ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("resolved_testcode",   entry.ResolvedTestCode);
+            cmd.Parameters.AddWithValue("resolved_buyer",      (object?)entry.ResolvedBuyer   ?? DBNull.Value);
             cmd.Parameters.AddWithValue("calculated_action",   entry.CalculatedAction);
             cmd.Parameters.AddWithValue("effective_new_rate",  (object?)entry.EffectiveNewRate  ?? DBNull.Value);
             cmd.Parameters.AddWithValue("source_current_rate", (object?)entry.SourceCurrentRate ?? DBNull.Value);

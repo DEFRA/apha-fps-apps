@@ -2,7 +2,7 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Interfaces;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.PACT.Application.Services
 {

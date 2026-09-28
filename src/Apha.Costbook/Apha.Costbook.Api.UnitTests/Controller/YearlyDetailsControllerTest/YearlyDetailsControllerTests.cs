@@ -5,7 +5,7 @@ using Apha.Costbook.Api.Controllers;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
@@ -24,16 +24,41 @@ public class YearlyDetailsControllerTests
         _controller = new YearlyDetailsController(_service, _mapper);
     }
 
+    #region GetSettings
+
+    [Fact]
+    public async Task GetSettings_ReturnsOk_WithMappedData()
+    {
+        var dto = new MaintenanceSettingsDto { InflationAnimals = 2.5m, CurrentFinancialYear = 2024 };
+        var res = new MaintenanceSettingsRes { InflationAnimals = 2.5m, CurrentFinancialYear = 2024 };
+
+        _service.GetSettingsAsync().Returns(dto);
+        _mapper.Map<MaintenanceSettingsRes>(dto).Returns(res);
+
+        var result = await _controller.GetSettings();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<MaintenanceSettingsRes>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Same(res, apiResponse.Data);
+    }
+
+    #endregion
+
     #region GetProjectHeader
 
     [Fact]
-    public async Task GetProjectHeader_ReturnsNotFound_WhenProjectNotFound()
+    public async Task GetProjectHeader_ReturnsOkWithNullSuccessResponse_WhenProjectNotFound()
     {
-        _service.GetProjectHeaderAsync("NOTFOUND").Returns((ProjectHeaderDto?)null);
+        _service.GetProjectHeaderAsync("NOTFOUND").Returns(Task.FromResult<ProjectHeaderDto?>(null));
 
         var result = await _controller.GetProjectHeader("NOTFOUND");
 
-        Assert.IsType<NotFoundResult>(result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<ProjectHeaderRes>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Null(apiResponse.Data);
+        Assert.NotNull(apiResponse.Meta);
         await _service.Received(1).GetProjectHeaderAsync("NOTFOUND");
     }
 
@@ -629,6 +654,27 @@ public class YearlyDetailsControllerTests
         var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
         Assert.True(apiResponse.Success);
         Assert.False(apiResponse.Data);
+    }
+
+    #endregion
+
+    #region CopyYearData
+
+    [Fact]
+    public async Task CopyYearData_ReturnsOk_WhenCopiedSuccessfully()
+    {
+        var req = new CopyYearDataReq { SourceYear = 2024, TargetYear = 2025 };
+
+        _service.CopyYearDataAsync("2024/001", 2024, 2025)
+            .Returns((true, (IReadOnlyList<string>)Array.Empty<string>()));
+
+        var result = await _controller.CopyYearData("2024/001", req);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<bool>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.True(apiResponse.Data);
+        await _service.Received(1).CopyYearDataAsync("2024/001", 2024, 2025);
     }
 
     #endregion

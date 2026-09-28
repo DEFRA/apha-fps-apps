@@ -1214,7 +1214,18 @@ function exportMonthlyTime() {
     const url = passed === null || passed === undefined
         ? '/PACT/MonthlyTime/ExportStaging'
         : '/PACT/MonthlyTime/ExportStaging?passed=' + passed;
-    window.location = url;
+        
+    const filename = getExportedMonthlyTimeFileName();
+
+    window.downloadFile(url, filename, { method: 'get' });
+    //window.location = url;
+}
+function getExportedMonthlyTimeFileName() {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    return `ExportedTS_${dd}${mm}${yyyy}.xlsx`;
 }
 
 $(function () {

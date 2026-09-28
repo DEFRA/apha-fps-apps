@@ -119,7 +119,8 @@
     flex: 0 0 auto;
 }
 
-/* Readonly totals render bold black, matching the MS Access form */
+/* Readonly totals render bold black. Colour is not used to convey
+   positive/negative meaning. */
 .fps-dg-summary-item input.govuk-input.fps-dg-summary-value,
 input.fps-dg-summary-value[readonly],
 .fps-dg-summary-value {
@@ -128,26 +129,7 @@ input.fps-dg-summary-value[readonly],
 }
 
 .fps-dg-summary-item .govuk-input__prefix {
-    font-weight: 700;
-    color: #0b0c0c;
-}
-
-/* Total value colour conventions: positive blue, negative red, zero black */
-.fps-dg-summary-item input.govuk-input.fps-dg-summary-value--positive,
-input.fps-dg-summary-value--positive[readonly],
-.fps-dg-summary-value--positive {
-    color: #1d70b8;
-}
-
-.fps-dg-summary-item input.govuk-input.fps-dg-summary-value--negative,
-input.fps-dg-summary-value--negative[readonly],
-.fps-dg-summary-value--negative {
-    color: #d4351c;
-}
-
-.fps-dg-summary-item input.govuk-input.fps-dg-summary-value--zero,
-input.fps-dg-summary-value--zero[readonly],
-.fps-dg-summary-value--zero {
+    font-weight: 400;
     color: #0b0c0c;
 }
 

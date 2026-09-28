@@ -1,7 +1,8 @@
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Mappings;
 using Apha.FPS.Application.Dtos.BulkRates;
-using AutoMapper;
+using Mapster;
+using MapsterMapper;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,30 +29,31 @@ namespace Apha.FPS.Api.UnitTests.Mappings
         {
             var services = new ServiceCollection();
             services.AddLogging();
-            services.AddAutoMapper(cfg => cfg.AddMaps(typeof(RequestMapper)));
+            var mapperConfig = new TypeAdapterConfig();
+            mapperConfig.Scan(typeof(RequestMapper).Assembly);
+            services.AddSingleton(mapperConfig);
+            services.AddScoped<IMapper, ServiceMapper>();
             _mapper = services.BuildServiceProvider().GetRequiredService<IMapper>();
         }
 
         [Fact]
         public void Configuration_IsValid()
         {
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<BulkRatesQueueEntryDto, BulkRatesQueueEntryRes>();
-                cfg.CreateMap<BulkRatesUploadMetadataDto, BulkRatesUploadMetadataRes>();
-                cfg.CreateMap<BulkRatesRowCountsDto, BulkRatesRowCountsRes>();
-                cfg.CreateMap<BulkRatesQueueLogDto, BulkRatesQueueLogRes>();
-                cfg.CreateMap<BulkRatesValidationErrorDto, BulkRatesValidationErrorRes>();
-                cfg.CreateMap<BulkRatesFecStagingRowDto, BulkRatesFecStagingRowRes>();
-                cfg.CreateMap<BulkRatesAgrupStagingRowDto, BulkRatesAgrupStagingRowRes>();
-                cfg.CreateMap<BulkRatesAnimalStagingRowDto, BulkRatesAnimalStagingRowRes>();
-                cfg.CreateMap<BulkRatesStaffStagingRowDto, BulkRatesStaffStagingRowRes>();
-                cfg.CreateMap<BulkRatesRequestDto, BulkRatesRequestDetailRes>();
-                cfg.CreateMap<BulkRatesUploadResultDto, BulkRatesUploadResultRes>();
-                cfg.CreateMap<BulkRatesStagingDataDto, BulkRatesStagingDataRes>();
-            }, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
+            var config = new TypeAdapterConfig();
+            config.NewConfig<BulkRatesQueueEntryDto, BulkRatesQueueEntryRes>();
+            config.NewConfig<BulkRatesUploadMetadataDto, BulkRatesUploadMetadataRes>();
+            config.NewConfig<BulkRatesRowCountsDto, BulkRatesRowCountsRes>();
+            config.NewConfig<BulkRatesQueueLogDto, BulkRatesQueueLogRes>();
+            config.NewConfig<BulkRatesValidationErrorDto, BulkRatesValidationErrorRes>();
+            config.NewConfig<BulkRatesFecStagingRowDto, BulkRatesFecStagingRowRes>();
+            config.NewConfig<BulkRatesAgrupStagingRowDto, BulkRatesAgrupStagingRowRes>();
+            config.NewConfig<BulkRatesAnimalStagingRowDto, BulkRatesAnimalStagingRowRes>();
+            config.NewConfig<BulkRatesStaffStagingRowDto, BulkRatesStaffStagingRowRes>();
+            config.NewConfig<BulkRatesRequestDto, BulkRatesRequestDetailRes>();
+            config.NewConfig<BulkRatesUploadResultDto, BulkRatesUploadResultRes>();
+            config.NewConfig<BulkRatesStagingDataDto, BulkRatesStagingDataRes>();
 
-            config.Invoking(c => c.AssertConfigurationIsValid()).Should().NotThrow();
+            config.Invoking(c => c.Compile()).Should().NotThrow();
         }
 
         [Fact]

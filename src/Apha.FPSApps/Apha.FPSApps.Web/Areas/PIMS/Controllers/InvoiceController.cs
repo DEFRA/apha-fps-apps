@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -113,6 +113,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         {
             Dictionary<string, string> filterDict =
                 JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new();
+
+            year ??= DateTime.Now.Year;
 
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
             queryParameters.Search = request.Filter;

@@ -1,5 +1,5 @@
 # ================================
-# -------- Development Stage -----------
+# -------- Development Stage ----------
 # ================================
 ARG PARENT_VERSION=dotnet10.0
 FROM defradigital/dotnetcore-development:$PARENT_VERSION AS development

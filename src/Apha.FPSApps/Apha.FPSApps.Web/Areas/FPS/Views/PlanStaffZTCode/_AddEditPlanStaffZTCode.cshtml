@@ -87,43 +87,39 @@
     (function () {
         var ztCodesUrl = '@Url.Action("GetZtCodes", "PlanStaffZTCode", new { area = "FPS" })';
         var ztCodeOptions = [];
+        var searchDebounceTimer = null;
+        var SEARCH_DEBOUNCE_MS = 150;
+
+        // ZT codes are static reference data, so cache the lookup on the page and
+        // reuse it every time the modal is (re)opened instead of re-fetching.
+        window.ztCodeLookupCache = window.ztCodeLookupCache || null;
+
+        function escapeHtml(text) {
+            return String(text === null || text === undefined ? '' : text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
 
         function renderZtCodeRows(filterText) {
             var body = document.getElementById('modal-zt-code-body');
             if (!body) return;
 
             var term = (filterText || '').toLowerCase();
-            body.innerHTML = '';
+            var html = '';
 
-            ztCodeOptions
-                .filter(function (item) {
-                    return item.code.toLowerCase().indexOf(term) !== -1 ||
-                           item.description.toLowerCase().indexOf(term) !== -1;
-                })
-                .forEach(function (item) {
-                    var tr = document.createElement('tr');
-                    tr.className = 'govuk-table__row';
-                    tr.style.cursor = 'pointer';
+            for (var i = 0; i < ztCodeOptions.length; i++) {
+                var item = ztCodeOptions[i];
+                if (term && item.searchKey.indexOf(term) === -1) continue;
 
-                    var tdCode = document.createElement('td');
-                    tdCode.className = 'govuk-table__cell';
-                    tdCode.textContent = item.code;
+                html += '<tr class="govuk-table__row" style="cursor:pointer;" data-zt-index="' + i + '">' +
+                            '<td class="govuk-table__cell">' + escapeHtml(item.code) + '</td>' +
+                            '<td class="govuk-table__cell">' + escapeHtml(item.description) + '</td>' +
+                        '</tr>';
+            }
 
-                    var tdDesc = document.createElement('td');
-                    tdDesc.className = 'govuk-table__cell';
-                    tdDesc.textContent = item.description;
-
-                    tr.appendChild(tdCode);
-                    tr.appendChild(tdDesc);
-
-                    tr.addEventListener('click', function () {
-                        document.getElementById('JobCode').value = item.code;
-                        document.getElementById('ZtDescription').value = item.description;
-                        hidePanel();
-                    });
-
-                    body.appendChild(tr);
-                });
+            body.innerHTML = html;
         }
 
         function showPanel() {
@@ -132,7 +128,8 @@
             if (!panel || !input) return;
 
             panel.style.display = 'block';
-            panel.style.width = input.offsetWidth + 'px';
+            // Width comes from the wrapper via CSS; avoids a forced layout read.
+            panel.style.width = '100%';
             document.getElementById('modal-zt-code-search').value = '';
             renderZtCodeRows('');
             document.getElementById('modal-zt-code-search').focus();
@@ -143,29 +140,43 @@
             if (panel) panel.style.display = 'none';
         }
 
-        // Load ZT codes and bind events
-        fetch(ztCodesUrl)
-            .then(function (r) { return r.json(); })
-            .then(function (json) {
-                if (json.success && json.data) {
-                    ztCodeOptions = json.data.map(function (d) {
-                        return { code: d.value, description: d.text };
-                    });
-                    renderZtCodeRows('');
+        function applyZtCodes(options) {
+            ztCodeOptions = options;
 
-                    // Sync description for the already-selected code (edit mode)
-                    var currentCode = document.getElementById('JobCode').value;
-                    if (currentCode) {
-                        var match = ztCodeOptions.find(function (opt) {
-                            return opt.code === currentCode;
-                        });
-                        if (match) {
-                            document.getElementById('ZtDescription').value = match.description;
-                        }
-                    }
+            // Sync description for the already-selected code (edit mode)
+            var jobCodeInput = document.getElementById('JobCode');
+            var currentCode = jobCodeInput ? jobCodeInput.value : '';
+            if (currentCode) {
+                var match = ztCodeOptions.find(function (opt) {
+                    return opt.code === currentCode;
+                });
+                if (match) {
+                    document.getElementById('ZtDescription').value = match.description;
                 }
-            })
-            .catch(function (e) { console.error('Failed to load ZT codes', e); });
+            }
+        }
+
+        // Load ZT codes (from cache when available) and bind events.
+        // Rows are rendered only when the panel is opened.
+        if (window.ztCodeLookupCache) {
+            applyZtCodes(window.ztCodeLookupCache);
+        } else {
+            fetch(ztCodesUrl)
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    if (json.success && json.data) {
+                        window.ztCodeLookupCache = json.data.map(function (d) {
+                            return {
+                                code: d.value,
+                                description: d.text,
+                                searchKey: (String(d.value) + '\u0000' + String(d.text)).toLowerCase()
+                            };
+                        });
+                        applyZtCodes(window.ztCodeLookupCache);
+                    }
+                })
+                .catch(function (e) { console.error('Failed to load ZT codes', e); });
+        }
 
         // Event: open dropdown panel
         document.getElementById('JobCode').addEventListener('click', function (e) {
@@ -173,16 +184,36 @@
             showPanel();
         });
 
-        // Event: filter as user types
+        // Event: filter as user types (debounced)
         document.getElementById('modal-zt-code-search').addEventListener('input', function (e) {
-            renderZtCodeRows(e.target.value);
+            var value = e.target.value;
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function () {
+                searchDebounceTimer = null;
+                renderZtCodeRows(value);
+            }, SEARCH_DEBOUNCE_MS);
         });
 
         // Event: clear search
         document.getElementById('modal-zt-code-clear').addEventListener('click', function () {
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = null;
             document.getElementById('modal-zt-code-search').value = '';
             renderZtCodeRows('');
             document.getElementById('modal-zt-code-search').focus();
+        });
+
+        // Single delegated handler for row selection
+        document.getElementById('modal-zt-code-body').addEventListener('click', function (e) {
+            var row = e.target.closest('tr[data-zt-index]');
+            if (!row) return;
+
+            var item = ztCodeOptions[parseInt(row.getAttribute('data-zt-index'), 10)];
+            if (!item) return;
+
+            document.getElementById('JobCode').value = item.code;
+            document.getElementById('ZtDescription').value = item.description;
+            hidePanel();
         });
 
         // Prevent panel clicks from closing the dropdown

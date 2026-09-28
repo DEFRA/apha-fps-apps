@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 8, Width = 110, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? ProjectStatus { get; set; }
 
-        [GridColumn(Order = 9, Width = 70, Type = GridColumnType.ReadOnly)]
+        [GridColumn(Order = 9, Width = 70, Type = GridColumnType.DecimalNumber)]
         public double? Hrs { get; set; }
 
         [GridColumn(Order = 10, Width = 100, Type = GridColumnType.GbpValue)]

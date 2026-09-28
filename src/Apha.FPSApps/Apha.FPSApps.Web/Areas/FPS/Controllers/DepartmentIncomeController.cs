@@ -2,7 +2,7 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private async Task PopulateDropdownsAsync(DepartmentIncomeViewModel model)
         {
             // Project dropdown — IProjectService (separate lookup service, not CRUD resource)
-            var projectsResult = await _projectService.GetAllProjectsAsync();
+            var projectsResult = await _projectService.GetDistinctParentProjectsAsync();
             if (projectsResult.Success && projectsResult.Data != null)
             {
                 model.ProjectList = projectsResult.Data

@@ -28,6 +28,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Display(Name = "Period")]
         [GridColumn(Order = 5, Width = 100, Type = GridColumnType.Text)]
-        public short? Period { get; set; }
+        public int? Period { get; set; }
     }
 }

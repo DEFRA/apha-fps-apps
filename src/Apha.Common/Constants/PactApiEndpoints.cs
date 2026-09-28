@@ -30,6 +30,7 @@ namespace Apha.Common.Constants
         public const string UpdateTimeCodeValid = "api/v1/timecodevalid";
         public const string DeleteTimeCodeValid = "api/v1/timecodevalid/delete?workGroup={0}&timeCode={1}&parentProject={2}";
         public const string DeleteTimeCodesByJobCode = "api/v1/timecodevalid/deletebyjobcode?jobCode={0}&parentProject={1}";
+        public const string SetWorkgroupsActiveStatusByJobCode = "api/v1/timecodevalid/setworkgroupsactivestatusbyjobcode?jobCode={0}&parentProject={1}&isActive={2}";
         public const string CopyWorkGroup = "api/v1/timecodevalid/copy?sourceJobCode={0}&targetJobCode={1}&parentProject={2}";
         public const string DeleteBulkTimeCodes = "api/v1/timecodevalid/deletebulk";
         public const string CopySelectedWorkGroups = "api/v1/timecodevalid/copybulkworkgroups";

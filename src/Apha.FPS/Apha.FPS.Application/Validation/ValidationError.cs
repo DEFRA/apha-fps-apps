@@ -1,4 +1,4 @@
-﻿namespace Apha.FPS.Application.Validation
+namespace Apha.FPS.Application.Validation
 {
     public class ValidationError
     {

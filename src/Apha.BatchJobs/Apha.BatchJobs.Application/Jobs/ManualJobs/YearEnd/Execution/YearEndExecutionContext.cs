@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 
 namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
 
@@ -18,7 +19,7 @@ public sealed record YearEndExecutionContext(
     {
         var parametersJson = Environment.GetEnvironmentVariable("BATCH_JOB_PARAMETERS_JSON");
         var currentFpsYear = TryReadInt(parametersJson, "currentFpsYear");
-        var targetFpsYear = TryReadInt(parametersJson, "targetFpsYear");
+        var targetFpsYear = YearEndPlannedYearParser.Parse(parametersJson);
 
         return new YearEndExecutionContext(
             string.IsNullOrWhiteSpace(correlationId) ? Guid.NewGuid().ToString("D") : correlationId,

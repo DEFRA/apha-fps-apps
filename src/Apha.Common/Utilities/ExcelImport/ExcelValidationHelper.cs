@@ -93,6 +93,12 @@ namespace Apha.Common.Utilities.ExcelImport
                 return;
             }
 
+            if (month.Value != Math.Floor(month.Value))
+            {
+                failures.Add("Month must be a whole number.");
+                return;
+            }
+
             if (month.Value < 1 || month.Value > 12)
                 failures.Add("Month must be between 1 and 12.");
         }
@@ -128,6 +134,29 @@ namespace Apha.Common.Utilities.ExcelImport
 
             if (value.Value.CompareTo(min) < 0 || value.Value.CompareTo(max) > 0)
                 failures.Add($"{fieldName} must be between {min} and {max}.");
+        }
+
+        public static void ValidateFiniteDouble(double? value, string fieldName, List<string> failures)
+        {
+            if (!value.HasValue)
+                return;
+
+            if (double.IsNaN(value.Value) || double.IsInfinity(value.Value))
+                failures.Add($"{fieldName} must be a valid number.");
+        }
+
+        public static void ValidateDecimalPrecision(string? value, int precision, int scale, string fieldName, List<string> failures)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            var parsed = ExcelParseHelper.TryParseDecimal(value);
+            if (!parsed.HasValue)
+                return;
+
+            var digits = Math.Abs(decimal.Truncate(parsed.Value)).ToString(System.Globalization.CultureInfo.InvariantCulture).TrimStart('0').Length;
+            if (digits > precision - scale)
+                failures.Add($"{fieldName} cannot exceed {precision - scale} digits before the decimal point.");
         }
 
         public static void ValidateMaxLength(string? value, int maxLength, string fieldName, List<string> failures)

@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -33,6 +33,8 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("performedby");
            
             entity.Property(e => e.StatusId).HasColumnName("statusid");
+
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

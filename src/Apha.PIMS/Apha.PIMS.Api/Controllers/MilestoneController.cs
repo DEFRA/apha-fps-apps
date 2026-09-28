@@ -1,12 +1,14 @@
-﻿    using Apha.Common.Contracts;
+    using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mail;
+using System.Security.Claims;
 using System.Web;
 
 namespace Apha.PIMS.Api.Controllers
@@ -41,7 +43,12 @@ namespace Apha.PIMS.Api.Controllers
         {
             var decodedId = HttpUtility.UrlDecode(number);
             MilestoneDto? result = await _service.GetMilestoneAsync(project, decodedId);
-            return Ok(result is null ? null : _mapper.Map<MilestoneRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<MilestoneRes>();
+            }
+
+            return Ok(_mapper.Map<MilestoneRes>(result));
         }
 
         /// <summary>Create a milestone.</summary>
@@ -50,7 +57,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
-            string? changedBy = User.Identity?.Name;
+            string? changedBy = ResolveUserEmail(User);
             MilestoneDto result = await _service.SaveMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
@@ -63,7 +70,7 @@ namespace Apha.PIMS.Api.Controllers
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
             dto.Number = decodedId;
-            string? changedBy = User.Identity?.Name;
+            string? changedBy = ResolveUserEmail(User);
             MilestoneDto result = await _service.UpdateMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
@@ -107,7 +114,12 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetMilestoneFormDates(string parentProject, short year)
         {
             MilestoneFormDatesDto? result = await _service.GetMilestoneFormDatesAsync(year, parentProject);
-            return Ok(result is null ? null : _mapper.Map<MilestoneFormDatesRes>(result));
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<MilestoneFormDatesRes>();
+            }
+
+            return Ok(_mapper.Map<MilestoneFormDatesRes>(result));
         }
 
         /// <summary>Create or update a financial form dates record.</summary>
@@ -136,12 +148,12 @@ namespace Apha.PIMS.Api.Controllers
             PaginatedResult<LogMilestoneDto> result = await _service.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
             return Ok(_mapper.Map<PaginationRes<LogMilestoneRes>>(result));
         }
-        // ── Staging / Import ─────────────────────────────────────────────────
+        // -- Staging / Import -------------------------------------------------
         /// <summary>Get staging milestone rows, optionally filtered by project.</summary>
         [HttpGet("allstaging")]
         public async Task<IActionResult> GetAllStagingRows([FromQuery] QueryParameters<string> parameters)
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             PaginatedResult<StagingMilestoneDto> result = await _service.GetAllStagingRowsAsync(parameters, createdBy);
             return Ok(_mapper.Map<PaginationRes<StagingMilestoneRes>>(result));
         }
@@ -161,7 +173,7 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> AddStagingRow(int year, [FromBody] StagingMilestoneReq request)
         {
             StagingMilestoneDto dto = _mapper.Map<StagingMilestoneDto>(request);
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             StagingMilestoneDto result = await _service.AddStagingRowAsync(dto, year, createdBy);
             return Ok(_mapper.Map<StagingMilestoneRes>(result));
         }
@@ -172,7 +184,7 @@ namespace Apha.PIMS.Api.Controllers
         {
             StagingMilestoneDto dto = _mapper.Map<StagingMilestoneDto>(request);
             dto.Id = id;
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             StagingMilestoneDto result = await _service.UpdateStagingRowAsync(dto, createdBy);
             return Ok(_mapper.Map<StagingMilestoneRes>(result));
         }
@@ -181,7 +193,7 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("staging/{id:int}")]
         public async Task<IActionResult> DeleteStagingRow(int id)
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             bool deleted = await _service.DeleteStagingRowAsync(id, createdBy);
             return Ok(new { success = deleted });
         }
@@ -190,12 +202,12 @@ namespace Apha.PIMS.Api.Controllers
         [HttpDelete("staging")]
         public async Task<IActionResult> ClearStaging()
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             int rows = await _service.ClearStagingAsync(createdBy);
             return Ok(new { deleted = rows });
         }
 
-        /// <summary>Validate staging rows — checks dates, number format and duplicate detection.</summary>
+        /// <summary>Validate staging rows � checks dates, number format and duplicate detection.</summary>
         [HttpPost("{project}/staging/validate")]
         public async Task<IActionResult> ValidateStaging(
             string project,
@@ -203,7 +215,7 @@ namespace Apha.PIMS.Api.Controllers
             [FromQuery] bool isDeliverableMode = false
             )
         {
-            string? createdBy = User.Identity?.Name;
+            string? createdBy = ResolveUserEmail(User);
             await _service.ValidateStagingAsync(project, typeId, isDeliverableMode, createdBy);
             return Ok(new { success = true });
         }
@@ -212,18 +224,20 @@ namespace Apha.PIMS.Api.Controllers
         [HttpPost("{project}/staging/import")]
         public async Task<IActionResult> ImportStaging(string project)
         {
-            string? changedBy = User.Identity?.Name;
-            string? createdBy = User.Identity?.Name;
+            string? userEmail = ResolveUserEmail(User);
+            string? changedBy = userEmail;
+            string? createdBy = userEmail;
             int imported = await _service.ImportStagingAsync(project, changedBy, createdBy);
             return Ok(new { imported });
         }
 
-        /// <summary>Import with overwrite — updates existing milestones from staging then clears matched rows.</summary>
+        /// <summary>Import with overwrite � updates existing milestones from staging then clears matched rows.</summary>
         [HttpPost("{project}/staging/import-overwrite")]
         public async Task<IActionResult> ImportWithOverwrite(string project)
         {
-            string? changedBy = User.Identity?.Name;
-            string? createdBy = User.Identity?.Name;
+            string? userEmail = ResolveUserEmail(User);
+            string? changedBy = userEmail;
+            string? createdBy = userEmail;
             int updated = await _service.ImportWithOverwriteAsync(project, changedBy, createdBy);
             return Ok(new { updated });
         }
@@ -235,5 +249,37 @@ namespace Apha.PIMS.Api.Controllers
             string next = await _service.GetNextMilestoneNumberAsync(project, year);
             return Ok(new { next });
         }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
+        }
+
+        private static string ResolveUserEmail(ClaimsPrincipal? user)
+        {
+            string identityName = user?.Identity?.Name ?? string.Empty;
+            if (IsEmailAddress(identityName))
+                return identityName;
+
+            string email = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(email))
+                return email;
+
+            return user?.Identity?.Name ?? string.Empty;
+        }
+
+        private static bool IsEmailAddress(string value)
+            => !string.IsNullOrWhiteSpace(value)
+                && MailAddress.TryCreate(value, out MailAddress? address)
+                && string.Equals(address.Address, value, StringComparison.OrdinalIgnoreCase);
     }
 }

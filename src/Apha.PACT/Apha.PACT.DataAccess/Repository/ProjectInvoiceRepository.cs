@@ -87,8 +87,8 @@ namespace Apha.PACT.DataAccess.Repository
             if (dict.TryGetValue("ProjectParent", out object? projectParent) && projectParent != null)
                 query = query.Where(x => EF.Functions.ILike(x.ProjectParent, $"%{projectParent}%"));
 
-            if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthVal))
-                query = query.Where(x => x.Month == monthVal);
+            if (dict.TryGetValue("Month", out object? month) && month != null)
+                query = int.TryParse(month.ToString(), out int monthVal) ? query.Where(x => x.Month == monthVal) : query.Where(x => false);
 
             if (dict.TryGetValue("Detail", out object? detail) && detail != null)
                 query = query.Where(x => x.Detail != null && EF.Functions.ILike(x.Detail, $"%{detail}%"));

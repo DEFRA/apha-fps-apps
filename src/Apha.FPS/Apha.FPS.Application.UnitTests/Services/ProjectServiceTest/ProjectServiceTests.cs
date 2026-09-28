@@ -5,7 +5,7 @@ using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
-using AutoMapper;
+using MapsterMapper;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -204,6 +204,86 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
             exception.Message.Should().Be("Database connection failed");
             await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
+        }
+
+        #endregion
+
+        #region GetDistinctParentProjectsAsync
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_WithValidData_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var projectEntities = new List<Project>
+            {
+                new() { ParentProject = "PROJ001" },
+                new() { ParentProject = "PROJ002" }
+            };
+
+            var expectedDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PROJ001" },
+                new() { ParentProject = "PROJ002" }
+            };
+
+            _mockRepository.GetDistinctParentProjectsAsync()
+                .Returns(Task.FromResult<IEnumerable<Project>>(projectEntities));
+
+            _mockMapper.Map<IEnumerable<ProjectDto>>(projectEntities)
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetDistinctParentProjectsAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().ParentProject.Should().Be("PROJ001");
+
+            await _mockRepository.Received(1).GetDistinctParentProjectsAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(projectEntities);
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_WithEmptyList_ReturnsEmptyDtoList()
+        {
+            // Arrange
+            var emptyEntities = new List<Project>();
+            var emptyDtos = new List<ProjectDto>();
+
+            _mockRepository.GetDistinctParentProjectsAsync()
+                .Returns(Task.FromResult<IEnumerable<Project>>(emptyEntities));
+
+            _mockMapper.Map<IEnumerable<ProjectDto>>(emptyEntities)
+                .Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetDistinctParentProjectsAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetDistinctParentProjectsAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(emptyEntities);
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetDistinctParentProjectsAsync()
+                .Returns(Task.FromException<IEnumerable<Project>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetDistinctParentProjectsAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetDistinctParentProjectsAsync();
         }
 
         #endregion

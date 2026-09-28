@@ -1,7 +1,12 @@
 ﻿using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.HealthCheck;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Execution;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Configuration;
+using Apha.BatchJobs.Domain.Constants;
+using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -80,11 +85,68 @@ public sealed class BatchJobFactoryTests
             "MABArchive",
             "MilestoneUpdateNotifications",
             "RecreateSummary",
-            "YearEndCutover",
-            "YearEndDataSetup"
+            BatchJobNames.YearEndCutover,
+            BatchJobNames.YearEndDataSetup
         };
 
         Assert.Equal(expected, factory.GetAvailableJobs());
+    }
+
+    [Fact]
+    public void Create_WithOfficialYearEndDataSetupContractName_ResolvesYearEndDataSetupJobHandler()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IYearEndDataSetupService, FakeYearEndDataSetupService>();
+        services.AddSingleton<ICorrelationContextAccessor, FakeCorrelationContextAccessor>();
+        services.AddSingleton<ILogger<YearEndDataSetupJobHandler>>(NullLogger<YearEndDataSetupJobHandler>.Instance);
+        services.AddSingleton<YearEndDataSetupJobHandler>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var factory = new BatchJobFactory(serviceProvider);
+
+        // Phase 7D regression proof: dispatch must use the official, hyphenated contract name
+        // (job_master.jobname / BATCH_JOB_NAME), not the type-derived "YearEndDataSetup".
+        var job = factory.Create(BatchJobNames.YearEndDataSetup);
+
+        Assert.IsType<YearEndDataSetupJobHandler>(job);
+        Assert.Equal(BatchJobNames.YearEndDataSetup, job.Name);
+    }
+
+    [Fact]
+    public void Create_WithOfficialYearEndCutoverContractName_ResolvesYearEndCutoverJobHandler()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IYearEndCutoverService, FakeYearEndCutoverService>();
+        services.AddSingleton<ICorrelationContextAccessor, FakeCorrelationContextAccessor>();
+        services.AddSingleton<ILogger<YearEndCutoverJobHandler>>(NullLogger<YearEndCutoverJobHandler>.Instance);
+        services.AddSingleton<YearEndCutoverJobHandler>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var factory = new BatchJobFactory(serviceProvider);
+
+        var job = factory.Create(BatchJobNames.YearEndCutover);
+
+        Assert.IsType<YearEndCutoverJobHandler>(job);
+        Assert.Equal(BatchJobNames.YearEndCutover, job.Name);
+    }
+
+    private sealed class FakeYearEndDataSetupService : IYearEndDataSetupService
+    {
+        public Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class FakeYearEndCutoverService : IYearEndCutoverService
+    {
+        public Task ExecuteAsync(YearEndExecutionContext context, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class FakeCorrelationContextAccessor : ICorrelationContextAccessor
+    {
+        public string? GetCorrelationId() => null;
+        public void SetCorrelationId(string correlationId) { }
+        public string GenerateCorrelationId() => Guid.NewGuid().ToString("D");
     }
 
     [Fact]

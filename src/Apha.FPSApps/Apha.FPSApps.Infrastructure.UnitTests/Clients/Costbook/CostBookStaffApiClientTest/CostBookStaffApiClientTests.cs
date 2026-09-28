@@ -1,10 +1,10 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Infrastructure.Integrations.CostBookApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -113,48 +113,32 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookStaffAp
         }
 
         [Fact]
-        public async Task GetAllStaffAsync_WhenHttpExecutorThrowsException_ReturnsInternalError()
+        public async Task GetAllStaffAsync_WhenHttpExecutorThrowsException_PropagatesException()
         {
             // Arrange
             var exceptionMessage = "Network connection failed";
             _http.GetAsync<List<StaffRes>>("api/v1/projects/staff")
                 .ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act
-            var result = await _client.GetAllStaffAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _client.GetAllStaffAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve staff", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
-            Assert.Equal(exceptionMessage, result.Errors[0].Details);
-            Assert.NotNull(result.Meta);
+            Assert.Equal(exceptionMessage, exception.Message);
             await _http.Received(1).GetAsync<List<StaffRes>>("api/v1/projects/staff");
         }
 
         [Fact]
-        public async Task GetAllStaffAsync_WhenMapperThrowsException_ReturnsInternalError()
+        public async Task GetAllStaffAsync_WhenMapperThrowsException_PropagatesException()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<StaffRes>> { Success = true, Data = new List<StaffRes> { new StaffRes() } };
             _http.GetAsync<List<StaffRes>>("api/v1/projects/staff").Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<StaffDto>>>(apiResponse).Throws(new AutoMapperMappingException("Mapping failed"));
+            _mapper.Map<ApiResponseDto<List<StaffDto>>>(apiResponse).Throws(new InvalidOperationException("Mapping failed"));
 
-            // Act
-            var result = await _client.GetAllStaffAsync();
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _client.GetAllStaffAsync());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Null(result.Data);
-            Assert.NotNull(result.Errors);
-            Assert.Single(result.Errors);
-            Assert.Equal("Failed to retrieve staff", result.Errors[0].Message);
-            Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
+            Assert.Equal("Mapping failed", exception.Message);
             await _http.Received(1).GetAsync<List<StaffRes>>("api/v1/projects/staff");
         }
 

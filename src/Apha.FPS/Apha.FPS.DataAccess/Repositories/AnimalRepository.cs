@@ -1,4 +1,4 @@
-ï»¿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -521,7 +521,7 @@ namespace Apha.FPS.DataAccess.Repositories
         /// </summary>
         public async Task<decimal> GetGlobalAnimalCostAsync()
         {
-            // Step 1 â€” IQueryable: fetch raw typed columns, no arithmetic
+            // Step 1 — IQueryable: fetch raw typed columns, no arithmetic
             var raw = await (from req in _dbContext.AnimalRequests
                              join animal in _dbContext.Animals
                                  on req.AnimalType equals animal.AnimalType
@@ -534,39 +534,39 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .ToListAsync();
 
-            // Step 2 â€” LINQ-to-Objects: safe mixed-type arithmetic after materialisation
+            // Step 2 — LINQ-to-Objects: safe mixed-type arithmetic after materialisation
             return raw.Sum(x => (decimal)x.NumberOfDays * (decimal)x.NumberOfAnimals * (x.DailyRate ?? 0m));
         }
 
-        // Animal Costs ASU View (AnimalCosts â€” frmAnimalCosts)
+        // Animal Costs ASU View (AnimalCosts — frmAnimalCosts)
 
         /// <summary>
         /// Converted from qryJobAnimalCost (RecordSource of fsubAnimalCosts).
         /// Returns a paged list of all animal cost records for the current FPS year,
-        /// optionally filtered by animal type. No user-email guard â€” this is the ASU admin view.
+        /// optionally filtered by animal type. No user-email guard — this is the ASU admin view.
         ///
         /// Two-step pattern: NumberOfDays and NumberOfAnimals are double precision (C# double);
         /// DailyRate/DefraDailyRate are money (C# decimal). Mixed-type arithmetic is performed
-        /// in LINQ-to-Objects after materialisation to avoid a double Ã— decimal compile error
+        /// in LINQ-to-Objects after materialisation to avoid a double × decimal compile error
         /// inside the IQueryable projection.
         /// </summary>
         public async Task<PagedData<AnimalCostView>> GetAnimalCostByAnimalTypeAsync(
             PaginationParameters<string> query, string animalType)
         {
-            // Step 1 â€” IQueryable: apply provider-side filter, then materialise
+            // Step 1 — IQueryable: apply provider-side filter, then materialise
             var animalCostQuery = BuildProgrammeAnimalCostQuery(animalType);
 
             animalCostQuery = ApplyAnimalCostFilter(animalCostQuery, query.Filter);
 
             var raw = await animalCostQuery.ToListAsync();
 
-            // Step 2 â€” LINQ-to-Objects: compute AnimalCost (double Ã— decimal) before sorting
+            // Step 2 — LINQ-to-Objects: compute AnimalCost (double × decimal) before sorting
             foreach (var e in raw)
             {
                 e.AnimalCost = (decimal)e.NumberOfDays * (decimal)e.NumberOfAnimals * (e.DailyRate ?? 0m);
             }
 
-            // Step 3 â€” sort in memory so AnimalCost ordering reflects the computed value
+            // Step 3 — sort in memory so AnimalCost ordering reflects the computed value
             var result = ApplyAnimalCostInMemorySorting(raw, query.SortBy, query.Descending);
 
             return base.ApplyPaging(result, query.Page, query.PageSize);

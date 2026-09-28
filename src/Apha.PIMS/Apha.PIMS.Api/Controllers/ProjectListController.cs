@@ -1,10 +1,10 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,15 +28,17 @@ namespace Apha.PIMS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllProjectsAsync([FromQuery] PaginationReq<string> query, [FromQuery] int showWhichProjects = 2)
         {
+            Console.WriteLine($"GetAllProjectsAsync roles: API-PIMSUser={User.IsInRole("API-PIMSUser")}, API-PIMSAdmin={User.IsInRole("API-PIMSAdmin")}");
+
             QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
             PaginatedResult<ProjectListViewDto> result = await _service.GetAllProjectsAsync(filter, showWhichProjects);
             return Ok(_mapper.Map<PaginationRes<ProjectListRes>>(result));
         }
 
         [HttpGet("AllProjectsList")]
-        public async Task<IActionResult> GetAllProjectsForDropDownAsync()
+        public async Task<IActionResult> GetAllProjectsForDropDownAsync([FromQuery] int showWhichProjects = 2)
         {
-            List<ProjectListViewDto> result = await _service.GetAllProjectsForDropDownAsync();
+            List<ProjectListViewDto> result = await _service.GetAllProjectsForDropDownAsync(showWhichProjects);
             return Ok(_mapper.Map<List<ProjectListRes>>(result));
         }
 
@@ -56,7 +58,26 @@ namespace Apha.PIMS.Api.Controllers
         public async Task<IActionResult> GetProjectsDetailsForMilestoneAsync(string parentproject)
         {
             ProjectDetailsMilestoneDto? result = await _service.GetProjectsDetailsForMilestoneAsync(parentproject);
+            if (result is null)
+            {
+                return CreateNullSuccessResponse<ProjectDetailsMilestoneRes>();
+            }
+
             return Ok(_mapper.Map<ProjectDetailsMilestoneRes>(result));
+        }
+
+        private static JsonResult CreateNullSuccessResponse<T>()
+        {
+            return new JsonResult(new Apha.Common.Contracts.ApiResponse<T>
+            {
+                Success = true,
+                Data = default,
+                Meta = new Apha.Common.Contracts.ApiMeta
+                {
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    TimestampUtc = DateTime.UtcNow
+                }
+            });
         }
     }
 }

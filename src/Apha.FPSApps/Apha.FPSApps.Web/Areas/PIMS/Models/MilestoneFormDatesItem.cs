@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [RegularExpression(@"^\d{4}$", ErrorMessage = "Year must be a 4-digit number")]
         [Display(Name = "Financial Year")]
         [GridColumn(Order = 1, Width = 110, Type = GridColumnType.Text, IsFilterable = false)]
-        public short? Year { get; set; }
+        public int? Year { get; set; }
 
         [Display(Name = "Jun")]
         [GridColumn(Order = 2, Width = 90, Type = GridColumnType.Date)]

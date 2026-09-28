@@ -1,4 +1,4 @@
-﻿using Amazon.CloudWatchLogs;
+using Amazon.CloudWatchLogs;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;

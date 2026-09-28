@@ -1,4 +1,4 @@
-﻿namespace Apha.PACT.Application.Dtos
+namespace Apha.PACT.Application.Dtos
 {
     public class MonthlyTimeLogFilterDto
     {

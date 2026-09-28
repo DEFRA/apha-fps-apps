@@ -952,16 +952,16 @@ namespace Apha.Costbook.DataAccess.Repositories
             };
         }
 
-        private static int fnYearGapSign(int yearGap)
+        internal static int fnYearGapSign(int yearGap)
         {
             if (yearGap == 0) return 0;
             if (yearGap > 0) return 1;
             return -1;
         }
 
-        private async Task<bool> fnUseInflation(string accountCat)
+        internal async Task<bool> fnUseInflation(string accountCat)
         {
-            
+
             var useInflation = await (from ac in _context.FpsAccountCategories
                                        join ag in _context.AccountGroups 
                                        on ac.Csg7Group equals ag.Csg7group
@@ -973,7 +973,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             return useInflation ?? false;
         }
 
-        private async Task<double> fnInflation(string infType, string proj, int year,int currentYear)
+        internal async Task<double> fnInflation(string infType, string proj, int year,int currentYear)
         {
             // Get project data
             var project = await _context.Projects
@@ -1131,9 +1131,9 @@ namespace Apha.Costbook.DataAccess.Repositories
                     ? ar.DailyRate.Value * ar.NumberOfDays.Value * ar.NumberOfAnimals.Value
                     : 0.0);
 
-            double additionalCostTotal = (double)await _context.AdditionalCosts
+            double additionalCostTotal = await _context.AdditionalCosts
                 .Where(ac => ac.Project == decodedId && ac.Year == year)
-                .SumAsync(ac => ac.ItemCost);            
+                .SumAsync(ac => ac.ItemCost ?? 0.0);
 
             double profitStaff       = await GetProfitFactorAsync("Profitstaff");
             double profitTests       = await GetProfitFactorAsync("Profittests");

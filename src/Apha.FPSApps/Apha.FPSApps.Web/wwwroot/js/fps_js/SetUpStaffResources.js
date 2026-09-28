@@ -133,7 +133,9 @@
             li.setAttribute('role', 'option');
             li.setAttribute('aria-selected', 'false');
             li.setAttribute('data-grade-code', gradeCode);
+            li.tabIndex = -1;
             li.addEventListener('click', function () { ssrSelectWorkGroup(wg); });
+            li.addEventListener('keydown', ssrGradeListKeyDown);
             list.appendChild(li);
         });
 
@@ -180,6 +182,47 @@
         applyGradeSort();
     }
 
+    // Handles arrow-key / Home / End / Enter / Space navigation within the grade list.
+    function ssrGradeListKeyDown(event) {
+        const list = el('ssrGradeList');
+        if (!list) return;
+
+        const items = Array.prototype.slice.call(list.querySelectorAll('.ssr-grade-item'));
+        if (!items.length) return;
+
+        const currentIndex = items.indexOf(event.currentTarget);
+        let nextIndex = -1;
+
+        switch (event.key) {
+            case 'ArrowDown':
+                nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                break;
+            case 'ArrowUp':
+                nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                break;
+            case 'Home':
+                nextIndex = 0;
+                break;
+            case 'End':
+                nextIndex = items.length - 1;
+                break;
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                ssrSelectWorkGroup(event.currentTarget.textContent.trim());
+                return;
+            default:
+                return;
+        }
+
+        event.preventDefault();
+        const nextItem = items[nextIndex];
+        if (nextItem) {
+            nextItem.focus();
+            ssrSelectWorkGroup(nextItem.textContent.trim());
+        }
+    }
+
     /* ── Grade selection ────────────────────────────────────────────── */
     function ssrSelectWorkGroup(wg) {
         currentGrade = wg;
@@ -189,6 +232,7 @@
             const active = li.textContent.trim() === wg;
             li.classList.toggle('ssr-grade-item--active', active);
             li.setAttribute('aria-selected', active ? 'true' : 'false');
+            li.tabIndex = active ? 0 : -1;
         });
 
         // Clear person selection; keep grade/workhrs until the AJAX result arrives
@@ -515,6 +559,7 @@
     window.LoadGradeByGroup = LoadGradeByGroup;
     window.ssrSelectWorkGroup = ssrSelectWorkGroup;
     window.ssrToggleGradeSort = ssrToggleGradeSort;
+    window.ssrGradeListKeyDown = ssrGradeListKeyDown;
     window.ssrGetStaffExtraFilters = ssrGetStaffExtraFilters;
     window.ssrOnStaffRowSelect = ssrOnStaffRowSelect;
     window.editSsrStaff = editSsrStaff;

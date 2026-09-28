@@ -1,4 +1,4 @@
-﻿namespace Apha.PACT.Application.Pagination
+namespace Apha.PACT.Application.Pagination
 {
     public class QueryParameters<TFilter>
     {

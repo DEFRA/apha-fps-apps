@@ -6,7 +6,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -35,6 +35,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync()
         {
             var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjectsForAllUsers);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetDistinctParentProjectsAsync()
+        {
+            var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetDistinctParentProjects);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
 

@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
-using AutoMapper;
+using MapsterMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -13,7 +13,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
     /// Infrastructure implementation of <see cref="IFpsBulkRatesApiClient"/>.
     /// Calls the FPS API Bulk Rates endpoints (Phase 3). Deserializes the shared
     /// <c>Apha.Common.Contracts.FPS.BulkRates*</c> wire contracts and maps them onto this app's
-    /// own <c>Apha.FPSApps.Application.Dtos.FPS.BulkRates*</c>-named shapes via AutoMapper.
+    /// own <c>Apha.FPSApps.Application.Dtos.FPS.BulkRates*</c>-named shapes via Mapster.
     /// </summary>
     public class FpsBulkRatesApiClient : IFpsBulkRatesApiClient
     {

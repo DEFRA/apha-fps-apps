@@ -2,7 +2,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -95,6 +95,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var grid = new DataGridConfig<Dictionary<string, string?>>
             {
                 GridId         = "testPlanCrossTabGrid",
+                Title          = "Test Planned Data - Programme & WG",
                 Columns        = columns,
                 Data           = rows,
                 ShowPagination = true,

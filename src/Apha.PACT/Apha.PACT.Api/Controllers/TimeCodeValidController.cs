@@ -4,7 +4,7 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -119,6 +119,13 @@ namespace Apha.PACT.Api.Controllers
                 throw new ArgumentException("JobCode record with ID: {jobCode} not found for deletion", jobCode);
             }
             return Ok(isDeleted);
+        }
+
+        [HttpPost("setworkgroupsactivestatusbyjobcode")]
+        public async Task<IActionResult> SetWorkgroupsActiveStatusByJobCode([FromQuery] string jobCode, [FromQuery] string parentProject, [FromQuery] bool isActive)
+        {
+            var result = await _service.SetWorkgroupsActiveStatusByJobCodeAsync(jobCode, parentProject, isActive);
+            return Ok(result);
         }
 
         [HttpPost("copy")]

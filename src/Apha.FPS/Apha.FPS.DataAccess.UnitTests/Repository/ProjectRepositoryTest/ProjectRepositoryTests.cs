@@ -410,6 +410,81 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
+        #region GetDistinctParentProjectsAsync Tests
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_ReturnsDistinctParentProjects_ForCurrentFpsYear()
+        {
+            // Arrange — duplicate ParentProject rows for the current year plus a row from a different year
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", FpsYear = 2024 },
+                new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", FpsYear = 2024 },
+                new() { ParentProject = "PP001", ProjectTitle = "Project One Dup", Program = "P003", FpsYear = 2024 },
+                new() { ParentProject = "PP999", ProjectTitle = "Other Year",     Program = "P004", FpsYear = 2023 }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            // Act
+            var result = (await repo.GetDistinctParentProjectsAsync()).ToList();
+
+            // Assert — distinct parent projects for 2024 only, ordered ascending
+            Assert.Equal(2, result.Count);
+            Assert.Equal("PP001", result[0].ParentProject);
+            Assert.Equal("PP002", result[1].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_ReturnsEmptyList_WhenNoProjectsExist()
+        {
+            // Arrange
+            var repo = CreateRepository(projects: new List<Project>());
+
+            // Act
+            var result = (await repo.GetDistinctParentProjectsAsync()).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_ExcludesProjects_FromOtherFpsYears()
+        {
+            // Arrange — none of the projects belong to the current FPS year (2024)
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", FpsYear = 2023 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", FpsYear = 2022 }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            // Act
+            var result = (await repo.GetDistinctParentProjectsAsync()).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetDistinctParentProjectsAsync_ReturnsProjects_RegardlessOfUserEmail()
+        {
+            // Arrange — user email is irrelevant for this method (no email filter)
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", FpsYear = 2024 },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(projects: projects, userEmailId: "differentuser@example.com");
+
+            // Act
+            var result = (await repo.GetDistinctParentProjectsAsync()).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+        }
+
+        #endregion
+
         #region GetProjectByIdAsync Tests
 
         [Fact]

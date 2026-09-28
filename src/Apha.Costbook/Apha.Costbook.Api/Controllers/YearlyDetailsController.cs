@@ -4,7 +4,7 @@ using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
 using Asp.Versioning;
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,13 +26,24 @@ public class YearlyDetailsController : ControllerBase
         _mapper = mapper;
     }
 
+    // ── Settings ─────────────────────────────────────────────────────────────
+
+    [HttpGet("settings")]
+    public async Task<IActionResult> GetSettings()
+    {
+        var dto = await _service.GetSettingsAsync();
+        return Ok(BuildOk(_mapper.Map<MaintenanceSettingsRes>(dto)));
+    }
+
     // ── Project header ────────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/header")]
     public async Task<IActionResult> GetProjectHeader(string projectId)
     {
         var dto = await _service.GetProjectHeaderAsync(projectId);
-        if (dto is null) return NotFound();
+        if (dto is null)
+            return Ok(BuildOk<ProjectHeaderRes>(default!));
+
         return Ok(BuildOk(_mapper.Map<ProjectHeaderRes>(dto)));
     }
 
@@ -72,6 +83,15 @@ public class YearlyDetailsController : ControllerBase
         if (errors.Count > 0)
             return BadRequest(BuildError<bool>(string.Join("\n", errors)));
         return Ok(BuildOk(deleted));
+    }
+
+    [HttpPost("{projectId}/years/copy")]
+    public async Task<IActionResult> CopyYearData(string projectId, [FromBody] CopyYearDataReq req)
+    {
+        var (copied, errors) = await _service.CopyYearDataAsync(projectId, req.SourceYear, req.TargetYear);
+        if (errors.Count > 0)
+            return BadRequest(BuildError<bool>(string.Join("\n", errors)));
+        return Ok(BuildOk(copied));
     }
 
     // ── Staff requirements ────────────────────────────────────────────────────

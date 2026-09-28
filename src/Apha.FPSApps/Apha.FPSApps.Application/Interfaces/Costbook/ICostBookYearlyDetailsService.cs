@@ -6,11 +6,13 @@ namespace Apha.FPSApps.Application.Interfaces.Costbook;
 
 public interface ICostBookYearlyDetailsService
 {
+    Task<ApiResponseDto<MaintenanceSettingsDto>> GetSettingsAsync();
     Task<ApiResponseDto<ProjectHeaderDto>> GetProjectHeaderAsync(string projectId);
     Task<ApiResponseDto<List<ProjectYearDto>>> GetProjectYearsAsync(string projectId);
     Task<ApiResponseDto<ProjectYearDto>> AddProjectYearAsync(string projectId, int year, ProjectYearDto dto);
     Task<ApiResponseDto<ProjectYearDto>> UpdateProjectYearAsync(string projectId, int year, ProjectYearDto dto);
     Task<ApiResponseDto<bool>> DeleteProjectYearAsync(string projectId, int year);
+    Task<ApiResponseDto<bool>> CopyYearDataAsync(string projectId, int sourceYear, int targetYear);
 
     // ── Staff — now paginated ─────────────────────────────────────────────────
     Task<ApiResponseDto<PaginatedResult<StaffRequirementDto>>> GetStaffRequirementsAsync(string projectId, int year, QueryParameters<string> query);

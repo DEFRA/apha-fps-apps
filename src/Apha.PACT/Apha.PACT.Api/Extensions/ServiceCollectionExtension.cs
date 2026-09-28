@@ -1,4 +1,4 @@
-﻿using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.ExcelImport;
