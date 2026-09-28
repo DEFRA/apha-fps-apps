@@ -275,13 +275,14 @@ SAVEPOINT cr088_contract_test;
 
 DO $$
 DECLARE
-    v_table_name  text;
-    v_column_list text;
-    v_value_list  text;
-    v_dummy_value text;
-    v_sql         text;
-    v_test_id     integer;
-    rec           record;
+    v_table_name    text;
+    v_column_list   text;
+    v_value_list    text;
+    v_dummy_value   text;
+    v_sql           text;
+    v_test_id       integer;
+    v_fpsyear_value integer;
+    rec             record;
 BEGIN
 
     FOREACH v_table_name IN ARRAY ARRAY['period_monthlyoutput', 'period_timecostcalcs', 'recreatesummaries_log']
@@ -308,23 +309,39 @@ BEGIN
             ORDER BY ordinal_position
         LOOP
 
-            v_dummy_value := CASE
-                -- fpsyear carries a real FK to fps.tblyearmaster on some of
-                -- these tables (recreatesummaries_log, confirmed live) but
-                -- not others (period_monthlyoutput/period_timecostcalcs,
-                -- per CR082/CR084) -- pull a real valid year rather than
-                -- assuming either shape.
-                WHEN rec.column_name = 'fpsyear' THEN '(SELECT fpsyear FROM fps.tblyearmaster LIMIT 1)'
-                WHEN rec.data_type IN ('character varying', 'text', 'character') THEN quote_literal('X')
-                WHEN rec.data_type IN ('smallint', 'integer', 'bigint', 'numeric', 'double precision', 'real', 'money') THEN '-1'
-                WHEN rec.data_type = 'boolean' THEN 'false'
-                WHEN rec.data_type = 'date' THEN quote_literal(current_date::text)
-                WHEN rec.data_type LIKE 'timestamp%' THEN quote_literal(now()::text)
-                ELSE NULL
-            END;
+            -- fpsyear carries a real FK to fps.tblyearmaster on some of
+            -- these tables (recreatesummaries_log, confirmed live) but
+            -- not others (period_monthlyoutput/period_timecostcalcs,
+            -- per CR082/CR084) -- pull a real valid year rather than
+            -- assuming either shape. Fetched eagerly (not as an embedded
+            -- subquery) so an empty tblyearmaster fails with a clear
+            -- diagnostic here instead of surfacing as a generic NOT NULL
+            -- violation on the target table's partition.
+            IF rec.column_name = 'fpsyear' THEN
 
-            IF v_dummy_value IS NULL THEN
-                RAISE EXCEPTION 'CR088 contract test: no dummy-value rule for fps.%.% (data_type %). Extend the test before proceeding -- do not skip the column.', v_table_name, rec.column_name, rec.data_type;
+                SELECT fpsyear INTO v_fpsyear_value FROM fps.tblyearmaster LIMIT 1;
+
+                IF v_fpsyear_value IS NULL THEN
+                    RAISE EXCEPTION 'CR088 contract test cannot run for fps.%: fps.tblyearmaster has no rows, so no value is available for the NOT NULL column %.%.fpsyear.', v_table_name, v_table_name;
+                END IF;
+
+                v_dummy_value := v_fpsyear_value::text;
+
+            ELSE
+
+                v_dummy_value := CASE
+                    WHEN rec.data_type IN ('character varying', 'text', 'character') THEN quote_literal('X')
+                    WHEN rec.data_type IN ('smallint', 'integer', 'bigint', 'numeric', 'double precision', 'real', 'money') THEN '-1'
+                    WHEN rec.data_type = 'boolean' THEN 'false'
+                    WHEN rec.data_type = 'date' THEN quote_literal(current_date::text)
+                    WHEN rec.data_type LIKE 'timestamp%' THEN quote_literal(now()::text)
+                    ELSE NULL
+                END;
+
+                IF v_dummy_value IS NULL THEN
+                    RAISE EXCEPTION 'CR088 contract test: no dummy-value rule for fps.%.% (data_type %). Extend the test before proceeding -- do not skip the column.', v_table_name, rec.column_name, rec.data_type;
+                END IF;
+
             END IF;
 
             v_column_list := v_column_list || quote_ident(rec.column_name) || ', ';
