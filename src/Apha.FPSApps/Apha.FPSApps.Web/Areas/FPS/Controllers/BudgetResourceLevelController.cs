@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             await PopulateProfitCentresAsync(viewModel);
 
             var defaultRequest     = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
-            var workGroupRequest   = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 5 };
+            var workGroupRequest   = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
 
             viewModel.WorkGroupGrid   = await GetWorkGroupGridConfigAsync(workGroupRequest, profitCentre);
             viewModel.BudgetBidsGrid  = await GetBudgetBidsGridConfigAsync(defaultRequest, null);
