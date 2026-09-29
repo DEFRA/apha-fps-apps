@@ -4,7 +4,7 @@
 --comment: DML extracted from changesets/cr028_add_constraint_job_queue.sql. Independent stale-lock cleanup, safe to run after all changesets.
 
 DELETE FROM fps.job_lock
-WHERE expires_at < NOW();
+WHERE lock_expires_at_utc < NOW();
 
 --ROLLBACK
 --Not Applicable

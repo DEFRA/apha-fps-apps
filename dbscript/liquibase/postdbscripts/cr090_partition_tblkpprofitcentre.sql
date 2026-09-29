@@ -1,0 +1,366 @@
+--liquibase formatted sql
+
+--changeset repo-admin:CR090 labels:ddl context:all splitStatements:false
+--comment: Convert fps.tblkpprofitcentre to PARTITION BY LIST (fpsyear). Runs after the CR089 data-migration program and cutover, using the shadow-table pattern. Captures dependent foreign keys and views from the catalog, drops them, swaps in the partitioned table, then restores them, so no FK/view definitions are duplicated from the cutover script.
+
+BEGIN;
+
+-- ============================================================================
+-- CR090
+--
+-- Purpose:
+--   Convert fps.tblkpprofitcentre (year-scoped by CR089) into a table
+--   partitioned by LIST (fpsyear), matching the shadow-table pattern already
+--   used for the other partitioned tables in this repository (CR082-CR085).
+--
+-- Why this is more involved than the other partition CRs:
+--   fps.tblkpprofitcentre is a parent table. By the time this runs, the
+--   CR089 cutover has re-added six inbound composite foreign keys to it and
+--   recreated several dependent views, and the table also keeps its outbound
+--   division/fpsyear foreign keys. A partitioned replacement cannot be
+--   swapped in while those foreign keys and views still point at the old
+--   table, so this script:
+--     1. Captures the live definitions of every foreign key touching the
+--        table and every view depending on it (directly or transitively)
+--        straight from the catalog - no definitions are hardcoded here, so
+--        this never drifts out of sync with the CR089 cutover.
+--     2. Drops those foreign keys and views.
+--     3. Builds the partitioned replacement, copies the data, verifies the
+--        row count, and swaps it in.
+--     4. Restores the captured foreign keys and views against the new
+--        partitioned table.
+--
+-- Depends on:
+--   - CR089 (composite primary key (profitcentre, fpsyear) in place).
+--   - The fpsyear data-migration program (no -1 sentinel rows remain).
+--   - The CR089 cutover (foreign keys and fpsyear-aware views in place).
+-- ============================================================================
+
+
+-- ============================================================================
+-- 0. Preconditions
+-- ============================================================================
+
+DO $$
+BEGIN
+
+	IF to_regclass('fps.tblkpprofitcentre') IS NULL THEN
+		RAISE EXCEPTION
+			'CR090 precondition failed: fps.tblkpprofitcentre does not exist.';
+	END IF;
+
+	IF EXISTS (
+		SELECT 1
+		FROM pg_partitioned_table
+		WHERE partrelid = 'fps.tblkpprofitcentre'::regclass
+	) THEN
+		RAISE EXCEPTION
+			'CR090 precondition failed: fps.tblkpprofitcentre is already partitioned. CR090 appears to have already run.';
+	END IF;
+
+	IF to_regclass('fps.tblkpprofitcentre_p') IS NOT NULL
+	   OR to_regclass('fps.tblkpprofitcentre_old') IS NOT NULL THEN
+		RAISE EXCEPTION
+			'CR090 precondition failed: a tblkpprofitcentre migration/backup table already exists.';
+	END IF;
+
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'pk_tblkpprofitcentre'
+		  AND conrelid = 'fps.tblkpprofitcentre'::regclass
+	) THEN
+		RAISE EXCEPTION
+			'CR090 precondition failed: composite primary key (profitcentre, fpsyear) is missing. Run CR089 first.';
+	END IF;
+
+	IF EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre WHERE fpsyear = -1
+	) THEN
+		RAISE EXCEPTION
+			'CR090 precondition failed: fps.tblkpprofitcentre still has -1 sentinel rows. Run the fpsyear data-migration program first.';
+	END IF;
+
+END
+$$;
+
+
+-- Prevent writes during capture, copy and table swap.
+LOCK TABLE fps.tblkpprofitcentre IN ACCESS EXCLUSIVE MODE;
+
+
+-- ============================================================================
+-- 0a. Reject unsupported dependents
+-- ============================================================================
+-- This script only knows how to save and restore plain views (relkind 'v').
+-- If anything else depends on the table - a materialized view, a foreign
+-- table, a rule on another relation, etc. - fail loudly instead of dropping
+-- it via CASCADE or silently losing it during the swap.
+
+DO $$
+DECLARE
+	v_bad text;
+BEGIN
+	SELECT string_agg(
+		format('%s (%s)', dep.oid::regclass, dep.relkind),
+		', '
+	)
+	INTO v_bad
+	FROM (
+		SELECT DISTINCT c.oid, c.relkind
+		FROM pg_depend d
+		JOIN pg_rewrite r
+			ON d.objid = r.oid
+		   AND d.classid = 'pg_rewrite'::regclass
+		JOIN pg_class c
+			ON c.oid = r.ev_class
+		WHERE d.refobjid = 'fps.tblkpprofitcentre'::regclass
+		  AND d.refclassid = 'pg_class'::regclass
+		  AND c.relkind <> 'v'
+		  AND c.oid <> 'fps.tblkpprofitcentre'::regclass
+	) dep;
+
+	IF v_bad IS NOT NULL THEN
+		RAISE EXCEPTION
+			'CR090 aborted: fps.tblkpprofitcentre has non-view dependent object(s) this script cannot save/restore: %. Handle them manually before partitioning.',
+			v_bad;
+	END IF;
+END
+$$;
+
+
+-- ============================================================================
+-- 1. Capture live foreign key and dependent-view definitions
+-- ============================================================================
+-- Definitions are read from the catalog so this script never duplicates - and
+-- never drifts from - what the CR089 cutover created.
+
+-- Every foreign key that references the table (inbound) or lives on it
+-- (outbound: division, fpsyear). Only top-level constraints (conparentid = 0)
+-- are captured; inherited copies on partition children are managed by their
+-- partitioned parent and cannot be dropped or added directly.
+CREATE TEMP TABLE _cr090_fks ON COMMIT DROP AS
+SELECT
+	(conrelid::regclass)::text AS tbl,
+	conname,
+	pg_get_constraintdef(oid) AS def
+FROM pg_constraint
+WHERE contype = 'f'
+  AND conparentid = 0
+  AND (
+		confrelid = 'fps.tblkpprofitcentre'::regclass
+	 OR conrelid  = 'fps.tblkpprofitcentre'::regclass
+  );
+
+-- Every view that depends on the table, directly or transitively, with a
+-- dependency depth so they can be dropped deepest-first and recreated
+-- shallowest-first.
+CREATE TEMP TABLE _cr090_views ON COMMIT DROP AS
+WITH RECURSIVE deps AS (
+	SELECT DISTINCT r.ev_class AS viewoid, 1 AS lvl
+	FROM pg_depend d
+	JOIN pg_rewrite r
+		ON d.objid = r.oid
+	   AND d.classid = 'pg_rewrite'::regclass
+	JOIN pg_class c
+		ON c.oid = r.ev_class
+	   AND c.relkind = 'v'
+	WHERE d.refobjid = 'fps.tblkpprofitcentre'::regclass
+	  AND d.refclassid = 'pg_class'::regclass
+	  AND r.ev_class <> 'fps.tblkpprofitcentre'::regclass
+
+	UNION ALL
+
+	SELECT DISTINCT r.ev_class, p.lvl + 1
+	FROM deps p
+	JOIN pg_depend d
+		ON d.refobjid = p.viewoid
+	   AND d.classid = 'pg_rewrite'::regclass
+	   AND d.refclassid = 'pg_class'::regclass
+	JOIN pg_rewrite r
+		ON d.objid = r.oid
+	JOIN pg_class c
+		ON c.oid = r.ev_class
+	   AND c.relkind = 'v'
+	WHERE r.ev_class <> p.viewoid
+)
+SELECT
+	(viewoid::regclass)::text AS viewname,
+	MAX(lvl) AS lvl,
+	pg_get_viewdef(viewoid) AS def
+FROM deps
+GROUP BY viewoid;
+
+
+-- ============================================================================
+-- 2. Drop the captured foreign keys, then the captured views
+-- ============================================================================
+-- Views are dropped deepest dependency first so no CASCADE is needed.
+
+DO $$
+DECLARE
+	r record;
+BEGIN
+	FOR r IN SELECT tbl, conname FROM _cr090_fks LOOP
+		EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', r.tbl, r.conname);
+	END LOOP;
+
+	FOR r IN SELECT viewname FROM _cr090_views ORDER BY lvl DESC LOOP
+		EXECUTE format('DROP VIEW IF EXISTS %s', r.viewname);
+	END LOOP;
+END
+$$;
+
+
+-- ============================================================================
+-- 3. Build the partitioned replacement table
+-- ============================================================================
+
+CREATE TABLE fps.tblkpprofitcentre_p
+(
+	LIKE fps.tblkpprofitcentre
+	INCLUDING ALL
+	EXCLUDING INDEXES
+)
+PARTITION BY LIST (fpsyear);
+
+ALTER TABLE fps.tblkpprofitcentre_p
+	ADD CONSTRAINT pk_tblkpprofitcentre_p
+		PRIMARY KEY (profitcentre, fpsyear);
+
+-- Yearly partitions 2016..2027 + DEFAULT (same convention as CR082-CR085).
+DO $$
+DECLARE
+	y integer;
+BEGIN
+	FOR y IN 2016..2027 LOOP
+		EXECUTE format(
+			'CREATE TABLE fps.tblkpprofitcentre_p_y%s
+			 PARTITION OF fps.tblkpprofitcentre_p
+			 FOR VALUES IN (%s)',
+			y, y
+		);
+	END LOOP;
+END
+$$;
+
+CREATE TABLE fps.tblkpprofitcentre_p_default
+	PARTITION OF fps.tblkpprofitcentre_p
+	DEFAULT;
+
+
+-- Preserve existing data.
+INSERT INTO fps.tblkpprofitcentre_p
+SELECT * FROM fps.tblkpprofitcentre;
+
+
+-- Verify row-count parity before the swap.
+DO $$
+DECLARE
+	v_source_count bigint;
+	v_target_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_source_count FROM fps.tblkpprofitcentre;
+	SELECT COUNT(*) INTO v_target_count FROM fps.tblkpprofitcentre_p;
+
+	IF v_source_count <> v_target_count THEN
+		RAISE EXCEPTION
+			'CR090 row-count validation failed: source %, target %.',
+			v_source_count, v_target_count;
+	END IF;
+END
+$$;
+
+
+-- ============================================================================
+-- 4. Swap tables
+-- ============================================================================
+
+ALTER TABLE fps.tblkpprofitcentre RENAME TO tblkpprofitcentre_old;
+ALTER TABLE fps.tblkpprofitcentre_p RENAME TO tblkpprofitcentre;
+
+-- The new PK keeps its temporary name (pk_tblkpprofitcentre_p) until the old
+-- table - whose PK index still occupies the name pk_tblkpprofitcentre - is
+-- dropped at the end of the script.
+
+-- The -1 sentinel default was only needed to seed CR089's pre-migration rows.
+ALTER TABLE fps.tblkpprofitcentre
+	ALTER COLUMN fpsyear DROP DEFAULT;
+
+
+-- ============================================================================
+-- 5. Restore the captured foreign keys and views
+-- ============================================================================
+-- Foreign keys first (views may read through them); views shallowest-first so
+-- each view's dependencies already exist when it is recreated.
+
+DO $$
+DECLARE
+	r record;
+BEGIN
+	FOR r IN SELECT tbl, conname, def FROM _cr090_fks LOOP
+		EXECUTE format('ALTER TABLE %s ADD CONSTRAINT %I %s', r.tbl, r.conname, r.def);
+	END LOOP;
+
+	FOR r IN SELECT viewname, def FROM _cr090_views ORDER BY lvl ASC LOOP
+		EXECUTE format('CREATE VIEW %s AS %s', r.viewname, r.def);
+	END LOOP;
+END
+$$;
+
+
+-- ============================================================================
+-- 6. Postconditions
+-- ============================================================================
+
+DO $$
+DECLARE
+	v_partition_count integer;
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_partitioned_table
+		WHERE partrelid = 'fps.tblkpprofitcentre'::regclass
+	) THEN
+		RAISE EXCEPTION
+			'CR090 postcondition failed: fps.tblkpprofitcentre is not partitioned.';
+	END IF;
+
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conrelid = 'fps.tblkpprofitcentre'::regclass
+		  AND contype = 'p'
+	) THEN
+		RAISE EXCEPTION
+			'CR090 postcondition failed: composite primary key is missing after the swap.';
+	END IF;
+
+	-- 12 yearly partitions (2016..2027) + DEFAULT = 13.
+	SELECT COUNT(*) INTO v_partition_count
+	FROM pg_inherits
+	WHERE inhparent = 'fps.tblkpprofitcentre'::regclass;
+
+	IF v_partition_count <> 13 THEN
+		RAISE EXCEPTION
+			'CR090 postcondition failed: expected 13 partitions, found %.',
+			v_partition_count;
+	END IF;
+END
+$$;
+
+
+-- ============================================================================
+-- 7. Finalize: drop the old table, then reclaim its index/constraint names
+-- ============================================================================
+-- The division index and the primary key can only take their canonical names
+-- once the old table - which still holds indexes of those names - is dropped.
+
+DROP TABLE fps.tblkpprofitcentre_old;
+
+CREATE INDEX division
+	ON fps.tblkpprofitcentre (division);
+
+ALTER TABLE fps.tblkpprofitcentre
+	RENAME CONSTRAINT pk_tblkpprofitcentre_p TO pk_tblkpprofitcentre;
+
+COMMIT;
+
+--rollback empty ;

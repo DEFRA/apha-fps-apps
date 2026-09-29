@@ -10,7 +10,7 @@ WITH stale_jobs AS (
     INNER JOIN fps.job_status js
         ON js.statusid = jq.statusid
     WHERE js.status IN ('Running', 'Initiated')
-      AND COALESCE(jq.heartbeat_at_utc, jq.startdatetime)
+      AND COALESCE(jq.heartbeat_at_utc, jq.updated_at_utc, jq.startdatetime)
             < NOW() - INTERVAL '15 minutes'
 )
 UPDATE fps.job_queue q
@@ -19,8 +19,8 @@ SET statusid = failed_status.statusid,
         q.failure_reason,
         'Stale in-progress record recovered by can-run reconciliation'
     ),
-    enddatetime = COALESCE(q.enddatetime, NOW()),
-    updated_at = NOW()
+    ended_at_utc = COALESCE(q.ended_at_utc, NOW()),
+    updated_at_utc = NOW()
 FROM stale_jobs s
 INNER JOIN fps.job_status failed_status
     ON failed_status.jobid = s.jobid
@@ -28,7 +28,7 @@ INNER JOIN fps.job_status failed_status
 WHERE q.jobqueueid = s.jobqueueid;
 
 DELETE FROM fps.job_lock
-WHERE expires_at < NOW();
+WHERE lock_expires_at_utc < NOW();
 
 --ROLLBACK
 --Not Applicable
