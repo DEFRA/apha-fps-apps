@@ -113,6 +113,7 @@
 
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/common/lazy-panel-dropdown.js"></script>
     <script src="~/js/fps_js/StaffJob.js"></script>
     <script>
         var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
@@ -142,6 +143,19 @@
                     if (firstRow.length) {
                         firstRow.trigger('click');
                     }
+                    else {
+                        // No projects for the selected programme: clear the project
+                        // selection state and reload the Staff Plan grid so it shows
+                        // its "No records found" empty state instead of stale data.
+                        currentJobCode = '';
+                        $('#hdnJobCode').val('');
+                        $('#txtSelectedProject').val('');
+                        $('#for_project').val('');
+                        $('#External_Income').val('0.00');
+                        $('#BudgetCVL').val('0.00');
+                        $('#Total_Costs').val('0.00');
+                        window['gridManager_@Model.StaffCostGrid.GridId'].reloadGrid({ page: 1 });
+                    }
                 }
             });
 
@@ -158,7 +172,6 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
             currentProgramNo = val;
             // Persist selection to session for other pages
             $.ajax({
@@ -185,6 +198,12 @@
                             }
                     }
                 );
+            }
+            else {
+                // "-- Select Programme --" chosen: clear the programme details so
+                // the page returns to its default empty state.
+                $('#managerName').val('');
+                $('#Target').val('');
             }
 
             window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });

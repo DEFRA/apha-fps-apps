@@ -25,7 +25,7 @@
                             </h1>
                              @if (isEditMode)
                         {
-                            <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link isFloatRight">Back</a>
+                            <a href="javascript:history.back()" class="govuk-back-link isFloatRight">Back</a>
                         }
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                                     @if (isEditMode)
                                     {
                                         <button class="govuk-button sup_margin_0" type="button"
-                                                onclick="window.location.href='@Url.Action("Add", "Project", new { area = "FPS" })'">
+                                                onclick="fpsNavigateTo('@Url.Action("Add", "Project", new { area = "FPS" })')">
                                             Add Another Project
                                         </button>
                                         <button class="govuk-button sup_margin_0" type="button"
@@ -457,7 +457,7 @@
                 .then(function (result) {
                     if (result.success) {
                         showAlertMessage(result.message || 'Project deleted successfully.', AlertType.SUCCESS).then(function () {
-                            window.location.href = result.redirectUrl;
+                            fpsNavigateTo(result.redirectUrl);
                         });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#main-content');
@@ -482,7 +482,7 @@
                 .then(function (result) {
                     if (result.success) {
                         showAlertMessage(result.message || 'Project code changed successfully.', AlertType.SUCCESS).then(function () {
-                            window.location.href = result.redirectUrl;
+                            fpsNavigateTo(result.redirectUrl);
                         });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#main-content');
@@ -543,7 +543,7 @@
                 if (result.success) {
                     if (!isEdit && result.data && result.data.parentProject) {
                         showAlertMessage(result.message || 'Project created successfully.', AlertType.SUCCESS).then(function () {
-                            window.location.href = '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject);
+                                fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject));
                         });
                     } else {
                         showAlertMessage(result.message || 'Project updated successfully.', AlertType.SUCCESS);

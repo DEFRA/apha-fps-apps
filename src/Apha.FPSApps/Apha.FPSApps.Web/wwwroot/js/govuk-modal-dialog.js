@@ -282,6 +282,15 @@
         });
     }
 
+    function isIgnorableMutation(mutation) {
+        // Lazily loaded dropdown rows are appended in chunks while the user
+        // scrolls. They are not modals and never need re-initialising, but
+        // reacting to them re-scanned the whole document on every chunk, which
+        // froze the page once several dropdowns had been scrolled.
+        var target = mutation.target;
+        return !!(target && target.closest && target.closest(".multicolumn-dropdown-panel"));
+    }
+
     function watchDynamicModals() {
         if (!window.MutationObserver || !document.body) {
             return;
@@ -289,9 +298,13 @@
 
         var observer = new MutationObserver(function (mutations) {
             var hasChanges = mutations.some(function (mutation) {
-                return mutation.type === "childList" && (mutation.addedNodes && mutation.addedNodes.length > 0);
+                return mutation.type === "childList"
+                    && (mutation.addedNodes && mutation.addedNodes.length > 0)
+                    && !isIgnorableMutation(mutation);
             });
 
+            // Scanning stays synchronous so a modal injected and shown in the
+            // same tick is configured before it is displayed.
             if (hasChanges) {
                 initializeAllSafeModals();
             }

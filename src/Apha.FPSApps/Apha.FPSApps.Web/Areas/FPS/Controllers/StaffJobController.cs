@@ -49,14 +49,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter!);
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(queryParameters, jobCode ?? string.Empty);
             List<StaffJobItemViewModel> staffJobItems = new List<StaffJobItemViewModel>();
-            if (staffJobPagedData.Data != null)
+            PaginationModel paginationModel = new PaginationModel();
+
+            if (!string.IsNullOrWhiteSpace(jobCode))
             {
-                staffJobItems = _mapper.Map<List<StaffJobItemViewModel>>(staffJobPagedData.Data.ToList());
+                var staffJobPagedData = await _staffJobService.GetAllStaffJobsAsync(queryParameters, jobCode);
+                if (staffJobPagedData.Data != null)
+                {
+                    staffJobItems = _mapper.Map<List<StaffJobItemViewModel>>(staffJobPagedData.Data.ToList());
+                }
+
+                if (staffJobPagedData.Pagination != null)
+                {
+                    paginationModel = _mapper.Map<PaginationModel>(staffJobPagedData.Pagination);
+                }
             }
-            var paginationModel = _mapper.Map<PaginationModel>(staffJobPagedData.Pagination)
-                 ?? new PaginationModel();
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 

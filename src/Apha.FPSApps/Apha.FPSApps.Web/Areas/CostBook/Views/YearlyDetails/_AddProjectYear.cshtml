@@ -40,65 +40,65 @@
                 <div class="govuk-grid-column-one-half">
 
                     <div class="rates-section">
-                        <h3 class="govuk-heading-s">Contingency Mark-up %</h3>
+                        <h3 class="govuk-heading-s" tabindex="0">Contingency Mark-up %</h3>
 
                         <table class="govuk-table govuk-!-margin-bottom-0">
                             <tbody class="govuk-table__body">
                                 <tr class="govuk-table__row">
-                                    <td scope="row" asp-for="MarkupTime" class="govuk-table__header">Time <span class="sup_color_red">*</span></td>
+                                    <td scope="row" asp-for="MarkupTime"  id="lblMarkupTime" class="govuk-table__header">Time <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="MarkupTime" type="number" step="any" class="govuk-input" required data-val-required="Time is required." />
+                                            <input asp-for="MarkupTime" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupTime" required data-val-required="Time is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="MarkupTime" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="MarkupTime" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupTime" />
                                         }
                                         <span asp-validation-for="MarkupTime" class="govuk-error-message" style="display:none;"></span>
                                     </td>
                                 </tr>
 
                                 <tr class="govuk-table__row">
-                                    <td scope="row" asp-for="MarkupTests" class="govuk-table__header">Tests <span class="sup_color_red">*</span></td>
+                                    <td scope="row" id="lblMarkupTests" asp-for="MarkupTests" class="govuk-table__header">Tests <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="MarkupTests" type="number" step="any" class="govuk-input" required data-val-required="Tests is required." />
+                                            <input asp-for="MarkupTests" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupTests" required data-val-required="Tests is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="MarkupTests" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="MarkupTests" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupTests" />
                                         }
                                         <span asp-validation-for="MarkupTests" class="govuk-error-message" style="display:none;"></span>
                                     </td>
                                 </tr>
 
                                 <tr class="govuk-table__row">
-                                    <td asp-for="MarkupAnimals" scope="row" class="govuk-table__header">Animals <span class="sup_color_red">*</span></td>
+                                    <td asp-for="MarkupAnimals" scope="row" id="lblMarkupAnimals" class="govuk-table__header">Animals <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="MarkupAnimals" type="number" step="any" class="govuk-input" required data-val-required="Animals is required." />
+                                            <input asp-for="MarkupAnimals" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupAnimals" required data-val-required="Animals is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="MarkupAnimals" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="MarkupAnimals" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupAnimals" />
                                         }
                                         <span asp-validation-for="MarkupAnimals" class="govuk-error-message" style="display:none;"></span>
                                     </td>
                                 </tr>
 
                                 <tr class="govuk-table__row">
-                                    <td asp-for="MarkupAdditional" scope="row" class="govuk-table__header">Additional <span class="sup_color_red">*</span></td>
+                                    <td asp-for="MarkupAdditional" scope="row" id="lblMarkupAdditional" class="govuk-table__header">Additional <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="MarkupAdditional" type="number" step="any" class="govuk-input" required data-val-required="Additional is required." />
+                                            <input asp-for="MarkupAdditional" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupAdditional" required data-val-required="Additional is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="MarkupAdditional" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="MarkupAdditional" type="number" step="any" class="govuk-input" aria-labelledby="lblMarkupAdditional" />
                                         }
                                         <span asp-validation-for="MarkupAdditional" class="govuk-error-message" style="display:none;"></span>
                                     </td>
@@ -112,64 +112,64 @@
                 @* Profit Margin % *@
                 <div class="govuk-grid-column-one-half">
                     <div class="rates-section">
-                        <h3 class="govuk-heading-s">Profit Margin %</h3>
+                        <h3 class="govuk-heading-s" tabindex="0">Profit Margin %</h3>
                         <table class="govuk-table govuk-!-margin-bottom-0">
                             <tbody class="govuk-table__body">
                                 <tr class="govuk-table__row">
-                                    <td scope="row" asp-for="ProfitTime" class="govuk-table__header">Time <span class="sup_color_red">*</span></td>
+                                    <td scope="row" asp-for="ProfitTime" id="lblProfitTime" class="govuk-table__header">Time <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="ProfitTime" type="number" step="any" class="govuk-input" required data-val-required="Time is required." />
+                                            <input asp-for="ProfitTime" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitTime" required data-val-required="Time is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="ProfitTime" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="ProfitTime" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitTime" />
                                         }
                                         <span asp-validation-for="ProfitTime" class="govuk-error-message" style="display:none;"></span>
                                     </td>
                                 </tr>
 
                                 <tr class="govuk-table__row">
-                                    <td scope="row" asp-for="ProfitTests" class="govuk-table__header">Tests <span class="sup_color_red">*</span></td>
+                                    <td scope="row"  asp-for="ProfitTests" id="lblProfitTests" class="govuk-table__header">Tests <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="ProfitTests" type="number" step="any" class="govuk-input" required data-val-required="Tests is required." />
+                                            <input asp-for="ProfitTests" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitTests" required data-val-required="Tests is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="ProfitTests" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="ProfitTests" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitTests" />
                                         }
                                         <span asp-validation-for="ProfitTests" class="govuk-error-message" style="display:none;"></span>
                                     </td>
                                 </tr>
 
                                 <tr class="govuk-table__row">
-                                    <td asp-for="ProfitAnimals" scope="row" class="govuk-table__header">Animals <span class="sup_color_red">*</span></td>
+                                    <td scope="row" asp-for="ProfitAnimals" id="lblProfitAnimals" class="govuk-table__header">Animals <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="ProfitAnimals" type="number" step="any" class="govuk-input" required data-val-required="Animals is required." />
+                                            <input asp-for="ProfitAnimals" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitAnimals" required data-val-required="Animals is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="ProfitAnimals" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="ProfitAnimals" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitAnimals" />
                                         }
                                         <span asp-validation-for="ProfitAnimals" class="govuk-error-message" style="display:none;"></span>
                                     </td>
                                 </tr>
 
                                 <tr class="govuk-table__row">
-                                    <td asp-for="ProfitAdditional" scope="row" class="govuk-table__header">Additional <span class="sup_color_red">*</span></td>
+                                    <td asp-for="ProfitAdditional" scope="row" id="lblProfitAdditional" class="govuk-table__header">Additional <span class="sup_color_red">*</span></td>
                                     <td class="govuk-table__cell govuk-form-group">
                                         @if (isCommProgramme)
                                         {
-                                            <input asp-for="ProfitAdditional" type="number" step="any" class="govuk-input" required data-val-required="Additional is required." />
+                                            <input asp-for="ProfitAdditional" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitAdditional" required data-val-required="Additional is required." />
                                         }
                                         else
                                         {
-                                            <input asp-for="ProfitAdditional" type="number" step="any" class="govuk-input" />
+                                            <input asp-for="ProfitAdditional" type="number" step="any" class="govuk-input" aria-labelledby="lblProfitAdditional" />
                                         }
                                         <span asp-validation-for="ProfitAdditional" class="govuk-error-message" style="display:none;"></span>
                                     </td>

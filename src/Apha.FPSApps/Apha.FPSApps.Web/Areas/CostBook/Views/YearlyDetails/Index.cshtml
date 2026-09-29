@@ -332,6 +332,8 @@
         const projectYears = [@string.Join(",", Model?.ProjectYears ?? Enumerable.Empty<int>())];
         const programme   = '@Model?.ProjectHeaderDto?.Programme';
         const isDefra     = @(isDefra ? "true" : "false");
+        const autoOpenAddProjectYear = @(programme && !(Model?.ProjectYears?.Any() ?? false) && selectedYear > 0 ? "true" : "false");
+        const autoOpenProjectYear = @selectedYear;
 
         // All controller URLs resolved here so yearly-details.js stays plain JS
         const yearlyDetailsUrls = {
