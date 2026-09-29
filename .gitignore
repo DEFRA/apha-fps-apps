@@ -59,6 +59,10 @@ node_modules/
 *.jfm
 *.publish.xml
 
+# Local liquibase planning/working docs (not for commit)
+dbscript/liquibase/*-plan.md
+dbscript/liquibase/*-report.xlsx
+
 # Publish
 publish/
 *.PublishProfiles/

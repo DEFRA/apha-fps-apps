@@ -2,34 +2,7 @@
 
 --changeset repo-admin:CR047 labels:ddl context:all
 
--- A. Register the scheduled notification job and its non-approval lifecycle.
-INSERT INTO fps.job_master
-    (jobname, frequency, timetolive, created_at, updated_at)
-SELECT
-    'MilestoneUpdateNotifications',
-    'Scheduled',
-    20,
-    NOW(),
-    NOW()
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM fps.job_master
-    WHERE jobname = 'MilestoneUpdateNotifications'
-);
-
-INSERT INTO fps.job_status (jobid, status)
-SELECT jm.jobid, s.status
-FROM fps.job_master jm
-CROSS JOIN (
-    VALUES ('Initiated'), ('Running'), ('Completed'), ('Failed')
-) AS s(status)
-WHERE jm.jobname = 'MilestoneUpdateNotifications'
-AND NOT EXISTS (
-    SELECT 1
-    FROM fps.job_status js
-    WHERE js.jobid = jm.jobid
-      AND js.status = s.status
-);
+-- A. Notification job seed data moved to postdbscripts/cr047_seed_milestone_notifications_job.sql
 
 -- B. Recipient delivery audit.
 CREATE TABLE IF NOT EXISTS fps.notification_delivery (

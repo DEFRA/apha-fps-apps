@@ -10,9 +10,7 @@ ADD CONSTRAINT chk_job_queue_ended_at_utc_after_start CHECK (
     ended_at_utc IS NULL OR ended_at_utc >= startdatetime
 );
 
---changeset repo-admin:CR028_cleanup labels:dml context:all
-DELETE FROM fps.job_lock
-WHERE lock_expires_at_utc < NOW();
+-- CR028_cleanup DML moved to postdbscripts/cr028_cleanup_job_lock.sql
 
 --ROLLBACK
 --Not Applicable

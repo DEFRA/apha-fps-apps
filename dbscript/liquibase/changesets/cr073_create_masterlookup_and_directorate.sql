@@ -5,16 +5,7 @@
 CREATE TABLE IF NOT EXISTS fps.tblmasterlookup ( mastertablename varchar(100) NOT NULL, 
 CONSTRAINT pk_tblmasterlookup PRIMARY KEY (mastertablename));
 
-delete FROM fps.tblmasterlookup;
-
-INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
-    ('Disease');
-
-INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
-    ('Customer');
-
-INSERT INTO fps.tblmasterlookup (mastertablename) VALUES
-    ('Directorate');
+-- tblmasterlookup seed data moved to postdbscripts/cr073_seed_masterlookup.sql
 
 
 CREATE TABLE IF NOT EXISTS fps.tbldirectorate
