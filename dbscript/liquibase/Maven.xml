@@ -6,6 +6,12 @@
   <artifactId>fps-liquibase-update</artifactId>
   <version>1.0.0</version>
 
+  <properties>
+    <liquibase.plugin.version>4.29.2</liquibase.plugin.version>
+    <postgresql.driver.version>42.7.4</postgresql.driver.version>
+    <liquibase.propertyFile>liquibase.properties</liquibase.propertyFile>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
