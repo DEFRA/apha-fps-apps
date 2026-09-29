@@ -259,8 +259,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout)
         {
+            var fpsYear = _context.FilterFpsYear;
             var entities = await _context.ProfitCentres
-                .Where(p => p.ProfitCentreId == profitCentre)
+                .Where(p => p.ProfitCentreId == profitCentre && p.FpsYear == fpsYear)
                 .ToListAsync();
 
             foreach (var p in entities)
