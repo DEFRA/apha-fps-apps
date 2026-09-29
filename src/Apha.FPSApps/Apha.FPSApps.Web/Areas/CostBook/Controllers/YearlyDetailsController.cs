@@ -57,7 +57,16 @@ public class YearlyDetailsController : Controller
         if (projectYears.Count == 0)
         {
             var startYear = (int)(header.StartFYear ?? 0);
-            if (startYear > 0)
+            var isCommProgramme = string.Equals(header.Programme, "comm", StringComparison.OrdinalIgnoreCase);
+
+            if (isCommProgramme)
+            {
+                if (startYear > 0)
+                {
+                    selectedYear = startYear;
+                }
+            }
+            else if (startYear > 0)
             {
                 var dto = new ProjectYearDto
                 {

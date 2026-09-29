@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <div class="container-fluid">
+    <div class="container-fluid govuk-!-margin-top-4">
         <div class="row">
             <div class="col-lg-12">
                 <main class="main-content" style="padding:0;">
@@ -285,6 +285,12 @@
         }
 
         function resetSelectedProject() {
+
+            document.getElementById('summary-total-budget').value = "0.00";
+            document.getElementById('summary-total-cost-inc').value = "0.00";
+            document.getElementById('summary-total-trans-inc').value = "0.00";
+            document.getElementById('summary-total-cw-debit').value = "0.00";
+
             document.getElementById('selected-project-input').value = '';
             document.getElementById('hdnSelectedProject').value     = '';
             currentProjectCode = '';

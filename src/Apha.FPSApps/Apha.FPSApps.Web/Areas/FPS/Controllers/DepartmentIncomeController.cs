@@ -273,7 +273,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var extraFilter = isSnapshot ? "getDeptIncomeSnapshotQueryExtraFilters" : "getDeptIncomeCurrentExtraFilters";
 
             int page     = request.Page > 0     ? request.Page     : 1;
-            int pageSize = request.PageSize > 0 ? request.PageSize : 20;
+            int pageSize = request.PageSize > 0 ? request.PageSize : 10;
             int total    = filtered.Count;
 
             var pagination = new PaginationModel

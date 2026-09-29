@@ -198,6 +198,7 @@
     SearchableSelect.prototype.close = function () {
         this.wrapper.classList.remove('fps-searchable-select--open');
         this.input.setAttribute('aria-expanded', 'false');
+        this.input.removeAttribute('aria-activedescendant');
         this.activeIndex = -1;
         if (openInstance === this) { openInstance = null; }
     };
@@ -214,13 +215,14 @@
             var text = option.text || '';
             if (needle && text.toLowerCase().indexOf(needle) === -1) { continue; }
 
+            var optionId = this.panel.id + '_opt_' + this.visibleOptions.length;
             this.visibleOptions.push({ value: option.value, text: text });
 
             var classes = 'fps-searchable-select__option';
             if (option.value && option.value === currentValue) {
                 classes += ' fps-searchable-select__option--selected';
             }
-            html += '<li class="' + classes + '" role="option"'
+            html += '<li id="' + optionId + '" class="' + classes + '" role="option"'
                 + ' aria-selected="' + (option.value === currentValue) + '"'
                 + ' data-value="' + escapeHtml(option.value) + '">'
                 + escapeHtml(text) + '</li>';
@@ -232,6 +234,7 @@
 
         this.panel.innerHTML = html;
         this.activeIndex = -1;
+        this.input.removeAttribute('aria-activedescendant');
     };
 
     SearchableSelect.prototype.moveActive = function (delta) {
@@ -247,8 +250,11 @@
         }
 
         var active = items[this.activeIndex];
-        if (active && active.scrollIntoView) {
-            active.scrollIntoView({ block: 'nearest' });
+        if (active) {
+            this.input.setAttribute('aria-activedescendant', active.id);
+            if (active.scrollIntoView) {
+                active.scrollIntoView({ block: 'nearest' });
+            }
         }
     };
 

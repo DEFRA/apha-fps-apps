@@ -146,7 +146,15 @@
                     if (firstRow.length) {
                         firstRow.trigger('click');
                     } else {
-                        hideLoader();
+                        currentJobCode = '';
+                        $('#hdnJobCode').val('');
+                        $('#txtSelectedProject').val('');
+                        $('#for_project').val('');
+                        $('#Additional_Cost').val('0.00');
+                        $('#BudgetCVL').val('0.00');
+                        $('#Remainder').val('0.00');
+                        $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
+                        window['gridManager_@Model.AdditionalCostGrid.GridId'].reloadGrid({ page: 1 });
                     }
                 }
                 if (e.detail.gridId === '@Model.AdditionalCostGrid.GridId') {
@@ -167,7 +175,6 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
             currentProgramNo = val;
             // Persist selection to session for other pages
             $.ajax({
@@ -194,6 +201,9 @@
                         }
                     }
                 );
+            } else {
+                $('#managerName').val('');
+                $('#Target').val('');
             }
 
             showLoader();

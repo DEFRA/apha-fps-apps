@@ -139,6 +139,19 @@
                     if (firstRow.length) {
                         firstRow.trigger('click');
                     }
+                    else {
+                        // No projects for the selected programme: clear the project
+                        // selection state and reload the Test Purchase Plan grid so it
+                        // shows its "No records found" empty state instead of stale data.
+                        currentJobCode = '';
+                        $('#hdnJobCode').val('');
+                        $('#txtSelectedProject').val('');
+                        $('#for_project').val('');
+                        $('#Test_Cost').val('0.00');
+                        $('#BudgetCVL').val('0.00');
+                        $('#Remainder').val('0.00');
+                        window['gridManager_@Model.TestPlanGrid.GridId'].reloadGrid({ page: 1 });
+                    }
                 }
             });
 
@@ -152,7 +165,6 @@
 
         $('#programmeSelect').on('change', function () {
             const val = $(this).val();
-            if (!val) return;
             currentProgramNo = val;
             // Persist selection to session for other pages
             $.ajax({
@@ -179,6 +191,12 @@
                         }
                     }
                 );
+            }
+            else {
+                // "-- Select Programme --" chosen: clear the programme details so
+                // the page returns to its default empty state.
+                $('#managerName').val('');
+                $('#Target').val('');
             }
 
             window['gridManager_@Model.ProjectsGrid.GridId'].reloadGrid({ page: 1 });

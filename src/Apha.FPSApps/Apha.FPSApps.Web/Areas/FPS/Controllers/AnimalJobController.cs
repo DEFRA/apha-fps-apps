@@ -44,13 +44,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ?? new Dictionary<string, string>();
 
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            ApiResponseDto<List<AnimalCostViewDto>> pagedData = await _animalPlanService.GetAllAnimalCostAsync(queryParameters, jobCode ?? string.Empty);
+            List<AnimalPlanItem> animalItems = new List<AnimalPlanItem>();
+            PaginationModel paginationModel = new PaginationModel();
 
-            List<AnimalPlanItem> animalItems = pagedData.Data != null
-                ? _mapper.Map<List<AnimalPlanItem>>(pagedData.Data.ToList())
-                : new List<AnimalPlanItem>();
+            if (!string.IsNullOrWhiteSpace(jobCode))
+            {
+                ApiResponseDto<List<AnimalCostViewDto>> pagedData = await _animalPlanService.GetAllAnimalCostAsync(queryParameters, jobCode);
 
-            PaginationModel paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                if (pagedData.Data != null)
+                {
+                    animalItems = _mapper.Map<List<AnimalPlanItem>>(pagedData.Data.ToList());
+                }
+
+                if (pagedData.Pagination != null)
+                {
+                    paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination);
+                }
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 

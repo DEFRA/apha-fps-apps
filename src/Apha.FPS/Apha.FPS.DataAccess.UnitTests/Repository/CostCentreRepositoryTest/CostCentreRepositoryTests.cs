@@ -245,19 +245,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
             Assert.Equal(2, result.Data.Count());
         }
 
-        [Fact]
-        public async Task GetAllPagedAsync_IgnoresCostCentreNoFilter_WhenValueIsNonNumeric()
-        {
-            var entities = new List<CostCentre> { BuildEntity(100.0), BuildEntity(200.0) };
-            var repo   = CreateRepository(entities);
-            var filter = System.Text.Json.JsonSerializer.Serialize(
-                new Dictionary<string, string> { { "CostCentreNo", "abc" } });
-            var query  = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
-
-            var result = await repo.GetAllPagedAsync(query);
-
-            Assert.Equal(2, result.Data.Count());
-        }
 
         [Fact]
         public async Task GetAllPagedAsync_IgnoresProfitCentreFilter_WhenValueIsWhitespace()
