@@ -52,16 +52,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ?? new Dictionary<string, string>();
 
             QueryParameters<string> query = _mapper.Map<QueryParameters<string>>(request);
-            ApiResponseDto<List<TestRequirementDto>> response =
-                await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, jobCode ?? string.Empty);
+            List<TestPlanItem> items = new List<TestPlanItem>();
+            PaginationModel paginationModel = new PaginationModel();
 
-            List<TestPlanItem> items = response.Success && response.Data != null
-                ? _mapper.Map<List<TestPlanItem>>(response.Data)
-                : new List<TestPlanItem>();
+            if (!string.IsNullOrWhiteSpace(jobCode))
+            {
+                ApiResponseDto<List<TestRequirementDto>> response =
+                    await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, jobCode);
 
-            PaginationModel paginationModel = response.Pagination is null
-                ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(response.Pagination);
+                if (response.Success && response.Data != null)
+                {
+                    items = _mapper.Map<List<TestPlanItem>>(response.Data);
+                }
+
+                if (response.Pagination != null)
+                {
+                    paginationModel = _mapper.Map<PaginationModel>(response.Pagination);
+                }
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 

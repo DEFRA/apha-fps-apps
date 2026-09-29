@@ -1568,12 +1568,12 @@ public class YearlyDetailsControllerTests
 
     #endregion
 
-    #region Index – auto-add year when projectYears is empty
+    #region Index – zero project years behavior
 
     [Fact]
-    public async Task Index_AddsProjectYear_WhenProjectYearsEmptyAndStartFYearValid()
+    public async Task Index_AddsProjectYear_WhenProjectYearsEmpty_StartFYearValid_AndProgrammeIsNotComm()
     {
-        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0, StartFYear = 2024 };
+        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0, StartFYear = 2024, Programme = "Core" };
         _service.GetProjectHeaderAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
         _service.GetProjectYearsAsync(Arg.Any<string>())
@@ -1589,6 +1589,24 @@ public class YearlyDetailsControllerTests
         Assert.Equal(2024, model.ProjectYears[0]);
         Assert.Equal(2024, model.SelectedYear);
         await _service.Received(1).AddProjectYearAsync("2024/001", 2024, Arg.Any<ProjectYearDto>());
+    }
+
+    [Fact]
+    public async Task Index_DoesNotAddProjectYear_WhenProjectYearsEmpty_StartFYearValid_AndProgrammeIsComm()
+    {
+        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0, StartFYear = 2024, Programme = "comm" };
+        _service.GetProjectHeaderAsync(Arg.Any<string>())
+            .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
+        _service.GetProjectYearsAsync(Arg.Any<string>())
+            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
+
+        var result = await _controller.Index("2024/001");
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<YearlyDetailsViewModel>(viewResult.Model);
+        Assert.Empty(model.ProjectYears);
+        Assert.Equal(2024, model.SelectedYear);
+        await _service.DidNotReceive().AddProjectYearAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<ProjectYearDto>());
     }
 
     [Fact]
@@ -1610,9 +1628,9 @@ public class YearlyDetailsControllerTests
     }
 
     [Fact]
-    public async Task Index_DoesNotUpdateYears_WhenAddProjectYearFails()
+    public async Task Index_DoesNotUpdateYears_WhenAddProjectYearFails_ForNonCommProgramme()
     {
-        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0, StartFYear = 2024 };
+        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0, StartFYear = 2024, Programme = "Core" };
         _service.GetProjectHeaderAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
         _service.GetProjectYearsAsync(Arg.Any<string>())

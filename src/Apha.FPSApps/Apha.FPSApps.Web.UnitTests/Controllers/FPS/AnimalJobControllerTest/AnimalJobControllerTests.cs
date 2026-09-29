@@ -86,26 +86,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalJobControllerTest
                 Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
-        [Fact]
-        public async Task LoadAnimalPlanGrid_WithNullJobCode_UsesEmptyString()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadAnimalPlanGrid_WithEmptyJobCode_ReturnsEmptyGridWithoutCallingService(string? jobCode)
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResponse = ApiResponseDto<List<AnimalCostViewDto>>.SuccessResponse(
-                new List<AnimalCostViewDto>(), new PaginationDto());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _animalPlanService.GetAllAnimalCostAsync(queryParameters, string.Empty).Returns(serviceResponse);
-            _mapper.Map<List<AnimalPlanItem>>(Arg.Any<List<AnimalCostViewDto>>()).Returns(new List<AnimalPlanItem>());
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
             // Act
-            var result = await _controller.LoadAnimalPlanGrid(request, null);
+            var result = await _controller.LoadAnimalPlanGrid(request, jobCode);
 
             // Assert
-            Assert.IsType<PartialViewResult>(result);
-            await _animalPlanService.Received(1).GetAllAnimalCostAsync(queryParameters, string.Empty);
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<AnimalPlanItem>>(partialView.Model);
+            Assert.Empty(gridConfig.Data);
+            await _animalPlanService.DidNotReceive().GetAllAnimalCostAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            _mapper.DidNotReceive().Map<List<AnimalPlanItem>>(Arg.Any<List<AnimalCostViewDto>>());
         }
 
         [Fact]

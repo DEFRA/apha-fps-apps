@@ -134,8 +134,7 @@
 
             sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
             fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
-                + '?parentProject=' + encodeURIComponent(parentProject)
-                + '&returnUrl=' + encodeURIComponent(returnUrl));
+                + '?parentProject=' + encodeURIComponent(parentProject));
         }
 
         window.addEventListener('pageshow', function () {

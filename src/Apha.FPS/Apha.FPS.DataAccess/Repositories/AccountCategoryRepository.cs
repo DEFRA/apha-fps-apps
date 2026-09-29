@@ -161,6 +161,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 "accountdescription" => ApplyOrder(query, i => i.AccountDescription, descending),
                 "accounttype" => ApplyOrder(query, i => i.AccountType, descending),
                 "constituentaccountcodes" => ApplyOrder(query, i => i.ConstituentAccountCodes, descending),
+                "projectspecific" => ApplyOrder(query, i => i.ProjectSpecific, descending),
+                "rcspecific" => ApplyOrder(query, i => i.RcSpecific, descending),
                 _ => query
             };
         }

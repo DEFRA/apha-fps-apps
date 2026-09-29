@@ -5576,18 +5576,55 @@ input.govuk-input.ssr-total-input[readonly] {
         vertical-align: middle;
     }
 }
+
+/* Resource Allocation (Stage 2) "Set Up Staff Resources" header alignment.
+   Dedicated classes are used here (added alongside the existing markup classes)
+   so that no globally-shared class such as .isFloatLeft, .isFloatRight or
+   .isCustomPageHeadings is modified. These only affect this header. */
+.ra-setup-header-row {
+    display: flex;
+    align-items: center;
+    padding-top: 7px;
+    padding-bottom: 12px;
+}
+
+.ra-setup-header-row > .ra-setup-heading-col,
+.ra-setup-header-row > .ra-setup-controls-col {
+    float: none;
+}
+
+.ra-setup-header-row .ra-setup-heading {
+    margin-top: 0 !important;
+}
+
+.ra-setup-controls-col {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0 !important;
+}
+
+.ra-setup-controls-col .govuk-table {
+    margin-bottom: 0 !important;
+}
+
+.ra-setup-controls-col .govuk-table__header,
+.ra-setup-controls-col .govuk-table__cell {
+    padding-top: 0;
+    padding-bottom: 0;
+    vertical-align: middle;
+}
 .isBudgetBidsQuery{
-    width: 20%;
+    width: 34%;
 }
 .isProjectGroupManagement {
     width: 35%;
 }
 .isResourceReAllocationScreen {
-    width: 24%;
+    width: 38%;
 }
 .isMiscReport,
 .isStaffPlanDetails {
-    width: 20%;
+    width: 34%;
 }
 
 /* Staff Plan Pivot header controls.
@@ -5620,6 +5657,46 @@ input.govuk-input.ssr-total-input[readonly] {
 }
 .isTestPriceCheck {
     width: 16%;
+}
+
+/* Resource Centre selector header rows (label + select in a 2-cell table).
+   Without these rules the select keeps its intrinsic width -- which is driven by
+   the longest option text -- so the auto-layout table grows wider than its
+   column and spills past the page border. The oversized select also pushes the
+   header cell to take the leftover space, which is the gap that appears between
+   the label and the control. Pinning the label cell to its content and letting
+   the select flex into whatever remains fixes both symptoms. */
+.isMiscReport,
+.isStaffPlanDetails,
+.isBudgetBidsQuery,
+.isResourceReAllocationScreen {
+    .govuk-table {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    form {
+        width: 100%;
+    }
+
+    .govuk-table__header {
+        white-space: nowrap;
+        width: 1%;
+    }
+
+    /* Gap between the label and the control. Applied to the select's cell
+       because the views set govuk-!-padding-right-0 on the label cell, which
+       would override a padding-right rule here. */
+    .govuk-table__cell {
+        padding-left: 10px;
+    }
+
+    .govuk-select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        vertical-align: middle;
+    }
 }
 .isPlanAllAdditionalCosts.isHalfGrid {
     width: 54%;

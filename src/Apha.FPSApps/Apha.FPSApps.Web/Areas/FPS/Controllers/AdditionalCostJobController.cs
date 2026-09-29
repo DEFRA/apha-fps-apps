@@ -43,14 +43,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                 ?? new Dictionary<string, string>();
 
-            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _additionalCostService.GetAdditionalCostsAsync(queryParameters, jobCode ?? string.Empty);
+            List<AdditionalCostItemViewModel> items = new List<AdditionalCostItemViewModel>();
+            PaginationModel paginationModel = new PaginationModel();
 
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<AdditionalCostItemViewModel>>(pagedData.Data)
-                : new List<AdditionalCostItemViewModel>();
+            if (!string.IsNullOrWhiteSpace(jobCode))
+            {
+                var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _additionalCostService.GetAdditionalCostsAsync(queryParameters, jobCode);
 
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                if (pagedData.Data != null)
+                {
+                    items = _mapper.Map<List<AdditionalCostItemViewModel>>(pagedData.Data);
+                }
+
+                if (pagedData.Pagination != null)
+                {
+                    paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination);
+                }
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 

@@ -1,6 +1,7 @@
 // Yearly Details Page JavaScript
 // Depends on globals declared in Index.cshtml:
-//   projectId, selectedYear, programme, isDefra, yearlyDetailsUrls
+//   projectId, selectedYear, projectYears, programme, isDefra,
+//   autoOpenAddProjectYear, autoOpenProjectYear, yearlyDetailsUrls
 
 // ── Tab grid endpoint / id maps ────────────────────────────────────
 var tabGridEndpoints = {
@@ -35,6 +36,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     attachButtonEventListeners();
+
+    if (autoOpenAddProjectYear) {
+        openAddProjectYearModal(projectId, autoOpenProjectYear);
+    }
 });
 
 // ── Utility ────────────────────────────────────────────────────────
@@ -45,6 +50,17 @@ function removeFilterRows(container) {
 function getAntiForgeryToken() {
     var el = document.querySelector('input[name="__RequestVerificationToken"]');
     return el ? el.value : '';
+}
+
+function hasProjectYearInGrid() {
+    return document.querySelectorAll('#userTableBody .project-year-row').length > 0;
+}
+
+function ensureProjectYearExistsForAdd() {
+    if (hasProjectYearInGrid()) return true;
+
+    showAlertMessage('Please add a project year before adding staff, tests, animals or additional costs.', AlertType.ERROR);
+    return false;
 }
 
 function attachButtonEventListeners() {
@@ -184,16 +200,20 @@ function deletetblProjectYear(btn) {
     });
 }
 
-function addProjectYear(pid) {
-    var years = Array.from(document.querySelectorAll('.project-year-row')).map(function (r) { return parseInt(r.getAttribute('data-year'), 10); });
-    var nextYear = years.length > 0 ? Math.max.apply(null, years) + 1 : new Date().getFullYear();
-    fetch(yearlyDetailsUrls.addProjectYear + '?projectId=' + encodeURIComponent(pid) + '&year=' + nextYear + '&programme=' + encodeURIComponent(programme))
+function openAddProjectYearModal(pid, year) {
+    fetch(yearlyDetailsUrls.addProjectYear + '?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&programme=' + encodeURIComponent(programme))
         .then(function (r) { return r.text(); })
         .then(function (html) {
             document.getElementById('project1ModalContent').innerHTML = html;
             openModal();
-            bindAddYearForm(pid, nextYear);
+            bindAddYearForm(pid, year);
         });
+}
+
+function addProjectYear(pid) {
+    var years = Array.from(document.querySelectorAll('.project-year-row')).map(function (r) { return parseInt(r.getAttribute('data-year'), 10); });
+    var nextYear = years.length > 0 ? Math.max.apply(null, years) + 1 : new Date().getFullYear();
+    openAddProjectYearModal(pid, nextYear);
 }
 
 function bindAddYearForm(pid, year) {
@@ -353,6 +373,8 @@ var _staffIsAddingNew = true;
 var _staffCurrentIdentity = null;
 
 function openAddStaffModal(pid, year) {
+    if (!ensureProjectYearExistsForAdd()) return;
+
     fetch(yearlyDetailsUrls.createStaff + '?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=' + isDefra)
         .then(function (r) { return r.text(); })
         .then(function (html) {
@@ -436,6 +458,8 @@ var _testIsAddingNew = true;
 var _testCurrentCode = null;
 
 function openAddTestModal(pid, year) {
+    if (!ensureProjectYearExistsForAdd()) return;
+
     fetch(yearlyDetailsUrls.createTest + '?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=' + isDefra)
         .then(function (r) { return r.text(); })
         .then(function (html) {
@@ -512,6 +536,8 @@ var _animalIsAddingNew = true;
 var _animalCurrentIdentity = null;
 
 function openAddAnimalModal(pid, year) {
+    if (!ensureProjectYearExistsForAdd()) return;
+
     fetch(yearlyDetailsUrls.createAnimal + '?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=' + isDefra)
         .then(function (r) { return r.text(); })
         .then(function (html) {
@@ -590,6 +616,8 @@ var _additionalCostIsAddingNew = true;
 var _additionalCostCurrentIdentity = null;
 
 function openAddAdditionalCostModal(pid, year) {
+    if (!ensureProjectYearExistsForAdd()) return;
+
     fetch(yearlyDetailsUrls.createAdditionalCost + '?projectId=' + encodeURIComponent(pid) + '&year=' + year)
         .then(function (r) { return r.text(); })
         .then(function (html) {
@@ -1466,14 +1494,13 @@ var _accountCatRows = createLazyDropdownRows({
     dataId: 'accountCatPanelData',
     bodyId: 'accountCatDropdownBody',
     panelId: 'accountCatDropdownPanel',
-    searchKey: function (o) { return (o.v || '') + '\u0000' + (o.uid || ''); },
+    searchKey: function (o) { return o.v || ''; },
     buildRow: function (o) {
         var cell = ' style="padding:6px 8px; border-bottom:1px solid #f3f2f1;"';
         return '<tr data-value="' + escapeWgGradeHtml(o.v) + '"' +
                    ' data-useinflation="' + escapeWgGradeHtml(o.ui) + '"' +
                    ' style="cursor:pointer;">' +
                    '<td' + cell + '>' + escapeWgGradeHtml(o.v) + '</td>' +
-                   '<td' + cell + '>' + escapeWgGradeHtml(o.uid) + '</td>' +
                '</tr>';
     }
 });
