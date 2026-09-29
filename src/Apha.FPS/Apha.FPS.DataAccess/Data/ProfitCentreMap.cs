@@ -8,7 +8,7 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<ProfitCentre> entity)
         {
-            entity.HasKey(e => e.ProfitCentreId).HasName("pk__tblkpprofitcentr__1db06a4f");
+            entity.HasKey(e => new { e.ProfitCentreId, e.FpsYear }).HasName("pk__tblkpprofitcentr__1db06a4f");
 
             entity.ToTable("tblkpprofitcentre", "fps");
 
