@@ -16,7 +16,7 @@ let selectedTestCodeDropdownValue = null;
 function toggleSavePortfolioButton() {
     var parentProject = $('#hdnParentProject').val();
     var btn = $('#btnSavePortfolio');
-    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+    if (typeof isFPSYearStatusClosed !== 'undefined' && isFPSYearStatusClosed) {
         btn.prop('disabled', true);
     } else if (parentProject && selectedPortfolio) {
         btn.prop('disabled', false);
@@ -407,7 +407,7 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
 function enablePortfolioTimeCodeActiveCheckboxes() {
     var $cells = $('#gridContainer_portfolioTimeCodeGrid td.checkbox-cell[data-property="Active"]');
 
-    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+    if (typeof isFPSYearStatusClosed !== 'undefined' && isFPSYearStatusClosed) {
         $cells.find('.govuk-checkboxes__item').css('pointer-events', 'none');
         $cells.find('input[type="checkbox"]').prop('disabled', true);
         return;

@@ -48,6 +48,16 @@ namespace Apha.FPSApps.Web.TagHelpers
             "LoadTestPlanGrid"
         };
 
+        // PACT area controllers whose buttons should remain enabled during Planning (disabled only when Closed).
+        private const string PactArea = "PACT";
+        public static readonly string[] PlannedYearsSupportedPactControllers =
+        {
+            "TestCapability",
+            "TestorProduct",
+            "ProjectMaintenance",
+            "PortfolioMaintenance"
+        };
+
         private readonly IFpsYearContext _fy;
 
         public FPSReadOnlyTagHelper(IFpsYearContext fy)
@@ -145,6 +155,31 @@ namespace Apha.FPSApps.Web.TagHelpers
             return false;
         }
 
+        private bool IsPlannedYearsSupportedForPactController()
+        {
+            var area = ViewContext?.RouteData.Values["area"]?.ToString();
+            if (!string.Equals(area, PactArea, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            if (controller is null)
+            {
+                return false;
+            }
+
+            foreach (var name in PlannedYearsSupportedPactControllers)
+            {
+                if (string.Equals(controller, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool ShouldDisableForCurrentPage()
         {
             if (IsUserPermissionPage())
@@ -153,7 +188,8 @@ namespace Apha.FPSApps.Web.TagHelpers
             }
 
             if (IsProjectPlanningPage() || IsProjectPlanningGroupController() ||
-                IsBulkRatesGroupController() || IsProjectTestPlanActualPlanningAction())
+                IsBulkRatesGroupController() || IsProjectTestPlanActualPlanningAction() ||
+                                IsPlannedYearsSupportedForPactController())
             {
                 return string.Equals(_fy.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
             }
