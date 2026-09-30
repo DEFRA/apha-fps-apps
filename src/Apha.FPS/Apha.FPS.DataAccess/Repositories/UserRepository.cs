@@ -289,7 +289,6 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<string>> GetAllProfitCentreOptionsAsync()
         {
             return await _dbContext.ProfitCentres
-                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Select(p => p.ProfitCentreId)
                 .Distinct()
@@ -300,7 +299,6 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<string>> GetAllProgramOptionsAsync()
         {
             return await _dbContext.Programs
-                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Select(p => p.ProgramNo)
                 .Distinct()
@@ -311,7 +309,6 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<string>> GetAllCategoryOptionsAsync()
         {
             return await _dbContext.Categories
-                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Select(x => x.CategoryName)
                 .Distinct()
@@ -322,9 +319,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<string>> GetAllTestOwnerOptionsAsync()
         {
             return await _dbContext.UserTestOwners
-                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(t => t.TestOwner)
                 .Distinct()
                 .OrderBy(t => t)
@@ -334,8 +329,8 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<List<string>> GetAllProjectGroupOptionsAsync()
         {
             return await _dbContext.ProjectGroups
-                .IgnoreQueryFilters()
                 .AsNoTracking()
+                .Where(p => p.FpsYear == _requestContext.FpsYear)
                 .Select(x => x.ProjectGroupName)
                 .Distinct()
                 .OrderBy(pg => pg)
