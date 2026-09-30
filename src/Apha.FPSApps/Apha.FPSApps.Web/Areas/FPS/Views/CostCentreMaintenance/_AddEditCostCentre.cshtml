@@ -7,7 +7,7 @@
     var saveLabel = isEditMode ? "Update" : "Save";
     var saveAction = isEditMode ? "updateCostCentre()" : "saveCostCentre()";
 
-    var profitCentreItems = ViewBag.ProfitCentreList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+    var profitCentreItems = Model?.ProfitCentreList
                             ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
