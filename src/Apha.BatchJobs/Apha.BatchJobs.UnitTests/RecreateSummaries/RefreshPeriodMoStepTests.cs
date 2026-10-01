@@ -39,8 +39,8 @@ public sealed class RefreshPeriodMoStepTests
                 ('{project}', 'Project MO', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
                  'Contract', 0, {costCentre}, 'OPC1', 'SAC1', 'IA1', {harness.FpsYear});
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{harness.Id("PC1")}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{harness.Id("PC1")}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear});
 
             INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
             VALUES ({costCentre}, '{harness.Id("PC1")}', {harness.FpsYear});
@@ -115,9 +115,9 @@ public sealed class RefreshPeriodMoStepTests
                 ('{priorProject}', 'Project MO Prior', '{priorProgram}', 'Cust', 0::money, 0::money, 'Active', 'General',
                  'Contract', 0, {priorCostCentre}, 'OPC-OLD', 'SAC-OLD', 'IA-OLD', {harness.FpsYear - 1});
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{harness.Id("PC2")}', 'Profit Centre Current', (SELECT divname FROM fps.tlkpdivision LIMIT 1)),
-                   ('{harness.Id("PC3")}', 'Profit Centre Prior', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{harness.Id("PC2")}', 'Profit Centre Current', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear}),
+                   ('{harness.Id("PC3")}', 'Profit Centre Prior', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear - 1});
 
             INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
             VALUES ({currentCostCentre}, '{harness.Id("PC2")}', {harness.FpsYear}),
@@ -185,8 +185,9 @@ public sealed class RefreshPeriodMoStepTests
                 ('{project}', 'Project MO Source Scope', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
                  'Contract', 0, {currentCostCentre}, 'OPC-SRC', 'SAC-SRC', 'IA-SRC', {harness.FpsYear});
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{harness.Id("PC4")}', 'Profit Centre Source', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{harness.Id("PC4")}', 'Profit Centre Source', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear}),
+                   ('{harness.Id("PC4")}', 'Profit Centre Source', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear - 1});
 
             INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
             VALUES ({currentCostCentre}, '{harness.Id("PC4")}', {harness.FpsYear});

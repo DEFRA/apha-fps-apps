@@ -130,6 +130,7 @@ internal sealed class RsTblkpProfitCentreTable
 {
     public required string ProfitCentre { get; set; }
     public string? Division { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsProfitCentreGradeTable

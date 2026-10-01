@@ -51,8 +51,8 @@ public sealed class CreateFpsTotalsStepTests
             INSERT INTO fps.tblanimalreq (jobcode, animaltype, numberofdays, numberofanimals, indcounter, fpsyear)
             VALUES ('{project}', '{animalType}', 1, 2, 990001, {harness.FpsYear});
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear});
 
             INSERT INTO fps.profitcentregrade
                 (pcgrade, divisiongrade, gradecode, profitcentre, chargerate, payrate, defrachargerate, fpsyear)

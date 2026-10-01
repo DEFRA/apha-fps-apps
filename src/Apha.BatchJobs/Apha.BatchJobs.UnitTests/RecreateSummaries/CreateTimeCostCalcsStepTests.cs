@@ -56,8 +56,8 @@ public sealed class CreateTimeCostCalcsStepTests
             WHERE p.fpsyear = {harness.FpsYear}
             LIMIT 1;
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear});
 
             INSERT INTO fps.profitcentregrade
                 (pcgrade, divisiongrade, gradecode, profitcentre, chargerate, payrate, npr, ohr, defrachargerate, fpsyear)
@@ -120,6 +120,100 @@ public sealed class CreateTimeCostCalcsStepTests
         Assert.Equal(8m * 5m, row.Pay);
         Assert.Equal(8m * 2m, row.NonPay);
         Assert.Equal(8m * 1m, row.Overhead);
+        Assert.Equal(harness.FpsYear, row.FpsYear);
+    }
+
+    [SkippableFact]
+    public async Task ExecuteCoreAsync_WhenProfitCentreExistsInSeveralYears_UsesOnlyTheRunYearsProfitCentre()
+    {
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+        var currentDivision = await harness.ScalarStringAsync("SELECT divname::text FROM fps.tlkpdivision ORDER BY divname LIMIT 1");
+        var priorDivision = await harness.ScalarStringAsync("SELECT divname::text FROM fps.tlkpdivision ORDER BY divname OFFSET 1 LIMIT 1");
+        Skip.If(currentDivision is null || priorDivision is null, "Needs at least two fps.tlkpdivision rows.");
+
+        var project = harness.Id("P1");
+        var program = $"P{harness.Prefix[2..6]}B";
+        var workGroup = harness.Id("WG");
+        var jobCode = harness.Id("JC1");
+        var pactId = harness.Id("S1");
+        var spNumber = harness.Id("SP1");
+        var wgGrade = harness.Id("WG1");
+        var pcGrade = harness.Id("PCG1");
+        var profitCentre = harness.Id("PC1");
+
+        await harness.ExecuteSqlAsync($@"
+            INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
+            VALUES ('{program}', {harness.FpsYear}, 'Charge');
+
+            INSERT INTO fps.tlkpproject
+                (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
+                 contract, isdefraproject, incomeaccountcode, fpsyear)
+            SELECT
+                '{project}',
+                'Project',
+                '{program}',
+                p.customer,
+                0::money,
+                0::money,
+                p.projectstatus,
+                p.disease,
+                p.contract,
+                0,
+                p.incomeaccountcode,
+                {harness.FpsYear}
+            FROM fps.tlkpproject p
+            WHERE p.fpsyear = {harness.FpsYear}
+            LIMIT 1;
+
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{profitCentre}', 'Profit Centre Current', '{currentDivision}', {harness.FpsYear}),
+                   ('{profitCentre}', 'Profit Centre Prior', '{priorDivision}', {harness.FpsYear - 1});
+
+            INSERT INTO fps.profitcentregrade
+                (pcgrade, divisiongrade, gradecode, profitcentre, chargerate, payrate, npr, ohr, defrachargerate, fpsyear)
+            VALUES
+                ('{pcGrade}', 'D1', 'GC1', '{profitCentre}', 10::money, 5::money, 2::money, 1::money, 12::money, {harness.FpsYear});
+
+            INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
+            VALUES ('{workGroup}', '{profitCentre}', 0, {harness.FpsYear});
+
+            INSERT INTO fps.workgroupgrade
+                (wggrade, profitcentregrade, gradecode, workgroup, fpsyear)
+            VALUES
+                ('{wgGrade}', '{pcGrade}', 'GC1', '{workGroup}', {harness.FpsYear});
+
+            INSERT INTO fps.tblemployee (spnumber, firstname, lastname, fpsyear)
+            VALUES ('{spNumber}', 'Staff', 'One', {harness.FpsYear});
+
+            INSERT INTO fps.tblwgemployee
+                (pactid, spnumber, workgroupgrade, personstatus, personclass, hrspaid, leave, sickspecial, hrsavail,
+                 makeavailable, timerecorder, fpsyear)
+            VALUES
+                ('{pactId}', '{spNumber}', '{wgGrade}', 'A', 'P', 37, 0, 0, 37, 1, 0, {harness.FpsYear});
+
+            INSERT INTO fps.monthlytime
+                (pactstaffid, timecode, month, parentproject, workgroup, hours, fpsyear)
+            VALUES
+                ('{pactId}', '{jobCode}', 1, '{project}', '{workGroup}', 8, {harness.FpsYear});
+
+            INSERT INTO fps.timecodevalid (timecode, workgroup, parentproject, active, fpsyear)
+            VALUES ('{jobCode}', '{workGroup}', '{project}', true, {harness.FpsYear});
+        ");
+
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), harness.FpsYear);
+        var deleteStep = new DeleteTimeCostCalcsStep();
+        var deleteResult = await deleteStep.ExecuteAsync(context, CancellationToken.None);
+        Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);
+
+        var step = new CreateTimeCostCalcsStep();
+        var result = await step.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.True(result.Status == StepStatus.Success, result.ErrorMessage);
+
+        var row = await db.RsTimeCostCalcs.AsNoTracking()
+            .SingleAsync(x => x.Project == project && x.JobCode == jobCode && x.StaffId == pactId);
+        Assert.Equal(currentDivision, row.Division);
         Assert.Equal(harness.FpsYear, row.FpsYear);
     }
 }
