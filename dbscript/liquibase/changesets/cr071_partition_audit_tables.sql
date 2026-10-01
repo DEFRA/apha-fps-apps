@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR071 labels:ddl context:all splitStatements:false
+--validCheckSum: ANY
 
 BEGIN;
 
@@ -178,7 +179,7 @@ BEGIN
     FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
-            'CREATE TABLE fps.rate_change_history_p_y%s
+            'CREATE TABLE fps.rate_change_history_y%s
              PARTITION OF fps.rate_change_history_p
              FOR VALUES IN (%s)',
             y,
@@ -192,7 +193,7 @@ $$;
 
 
 -- Safety partition for any FPS year not explicitly provisioned.
-CREATE TABLE fps.rate_change_history_p_default
+CREATE TABLE fps.rate_change_history_default
     PARTITION OF fps.rate_change_history_p
     DEFAULT;
 
@@ -375,7 +376,7 @@ BEGIN
     FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
-            'CREATE TABLE fps.notification_run_summary_p_y%s
+            'CREATE TABLE fps.notification_run_summary_y%s
              PARTITION OF fps.notification_run_summary_p
              FOR VALUES IN (%s)',
             y,
@@ -388,7 +389,7 @@ END
 $$;
 
 
-CREATE TABLE fps.notification_run_summary_p_default
+CREATE TABLE fps.notification_run_summary_default
     PARTITION OF fps.notification_run_summary_p
     DEFAULT;
 

@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset Arihant:CR085 labels:ddl context:all splitStatements:false
+--validCheckSum: ANY
 
 BEGIN;
 
@@ -120,7 +121,7 @@ BEGIN
     FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
-            'CREATE TABLE fps.projectmonthcasework_p_y%s
+            'CREATE TABLE fps.projectmonthcasework_y%s
              PARTITION OF fps.projectmonthcasework_p
              FOR VALUES IN (%s)',
             y,
@@ -133,7 +134,7 @@ END
 $$;
 
 
-CREATE TABLE fps.projectmonthcasework_p_default
+CREATE TABLE fps.projectmonthcasework_default
     PARTITION OF fps.projectmonthcasework_p
     DEFAULT;
 

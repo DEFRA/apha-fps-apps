@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR077 labels:ddl context:all splitStatements:false
+--validCheckSum: ANY
 
 BEGIN;
 
@@ -66,14 +67,14 @@ DECLARE y integer;
 BEGIN
     FOR y IN 2016..2026 LOOP
         EXECUTE format(
-            'CREATE TABLE fps.job_queue_log_p_y%s PARTITION OF fps.job_queue_log_p FOR VALUES IN (%s)',
+            'CREATE TABLE fps.job_queue_log_y%s PARTITION OF fps.job_queue_log_p FOR VALUES IN (%s)',
             y, y
         );
     END LOOP;
 END
 $$;
 
-CREATE TABLE fps.job_queue_log_p_default
+CREATE TABLE fps.job_queue_log_default
     PARTITION OF fps.job_queue_log_p DEFAULT;
 
 INSERT INTO fps.job_queue_log_p

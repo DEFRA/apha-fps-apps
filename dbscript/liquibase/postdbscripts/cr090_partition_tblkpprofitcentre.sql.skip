@@ -234,7 +234,7 @@ DECLARE
 BEGIN
 	FOR y IN 2016..2026 LOOP
 		EXECUTE format(
-			'CREATE TABLE fps.tblkpprofitcentre_p_y%s
+			'CREATE TABLE fps.tblkpprofitcentre_y%s
 			 PARTITION OF fps.tblkpprofitcentre_p
 			 FOR VALUES IN (%s)',
 			y, y
@@ -243,7 +243,7 @@ BEGIN
 END
 $$;
 
-CREATE TABLE fps.tblkpprofitcentre_p_default
+CREATE TABLE fps.tblkpprofitcentre_default
 	PARTITION OF fps.tblkpprofitcentre_p
 	DEFAULT;
 

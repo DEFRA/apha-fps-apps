@@ -39,14 +39,18 @@ BEGIN
          -- Generate safe partition name
          v_part_name := r.table_name || '_y' || p_value;
              
-         -- Skip if partition already exists in the specific schema
+         -- Skip if a partition already covers this value (regardless of its name)
          IF EXISTS (
-             SELECT 1 FROM pg_class c
-             JOIN pg_namespace n ON n.oid = c.relnamespace
-             WHERE c.relname = v_part_name 
+             SELECT 1
+             FROM pg_inherits i
+             JOIN pg_class child  ON child.oid  = i.inhrelid
+             JOIN pg_class parent ON parent.oid = i.inhparent
+             JOIN pg_namespace n  ON n.oid = parent.relnamespace
+             WHERE parent.relname = r.table_name
                AND n.nspname = r.schema_name
+               AND pg_get_expr(child.relpartbound, child.oid) ~ ('(^|[^0-9])' || p_value || '([^0-9]|$)')
          ) THEN
-             RAISE NOTICE 'Partition %.% already exists, skipping.', r.schema_name, v_part_name;
+             RAISE NOTICE 'A partition for %.% value % already exists, skipping.', r.schema_name, r.table_name, p_value;
          ELSE   
              -- Create partition
              EXECUTE format(
