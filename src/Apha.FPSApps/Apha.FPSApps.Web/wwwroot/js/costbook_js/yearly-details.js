@@ -360,6 +360,173 @@ function gridDeleteAdditionalCost(btn) { deleteAdditionalCost(projectId, selecte
 
 function gridEditMarkupAndProfit(btn) { openEditMarkupAndProfitModal(projectId, btn.getAttribute('data-id')); }
 
+function getBulkSelectionIds(selection) {
+    return (selection && selection.ids ? selection.ids : [])
+        .map(function (id) { return String(id || '').trim(); })
+        .filter(function (id) { return id.length > 0; });
+}
+
+function hasGridDataRows(gridId) {
+    if (!gridId) return false;
+    return document.querySelectorAll('#tbl_' + gridId + ' tbody tr[data-id]').length > 0;
+}
+
+function deleteSelectedRows(ids, deleteUrlBuilder) {
+    var token = getAntiForgeryToken();
+    return ids.reduce(function (chain, id) {
+        return chain.then(function () {
+            return fetch(deleteUrlBuilder(id), {
+                method: 'DELETE',
+                headers: { 'RequestVerificationToken': token }
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d.success) {
+                        throw new Error(d.message || 'Delete failed.');
+                    }
+                });
+        });
+    }, Promise.resolve());
+}
+
+function deleteAllRows(deleteAllUrl) {
+    var token = getAntiForgeryToken();
+    var url = deleteAllUrl
+        + '?projectId=' + encodeURIComponent(projectId)
+        + '&year=' + selectedYear;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': token }
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.success) {
+                throw new Error(d.message || 'Delete failed.');
+            }
+            return d;
+        });
+}
+
+function executeBulkDelete(selection, config) {
+    if (!hasGridDataRows(config.gridId)) {
+        showAlertMessage(config.noRecordsMessage || 'No records to delete.', AlertType.INFO);
+        return;
+    }
+
+    var validIds = getBulkSelectionIds(selection);
+    if (validIds.length === 0) {
+        showAlertMessage(config.noSelectionMessage, AlertType.INFO);
+        return;
+    }
+
+    var confirmMessage = selection.isAll
+        ? config.deleteAllConfirmMessage
+        : 'Delete ' + validIds.length + ' selected ' + config.itemLabel + '(s)?';
+
+    showGovukConfirm(confirmMessage).then(function (confirmed) {
+        if (!confirmed) return;
+
+        var successMessage = selection.isAll
+            ? config.deleteAllSuccessMessage
+            : validIds.length + ' ' + config.itemLabel + '(s) deleted successfully.';
+
+        showLoader();
+
+        var operation = selection.isAll
+            ? deleteAllRows(config.deleteAllUrl)
+            : deleteSelectedRows(validIds, config.deleteSingleUrlBuilder);
+
+        operation
+            .then(function () {
+                hideLoader();
+                showAlertMessage(successMessage, AlertType.SUCCESS).then(function () {
+                    config.reload();
+                });
+            })
+            .catch(function (err) {
+                hideLoader();
+                showAlertMessage(err && err.message ? err.message : 'An error occurred while deleting.', AlertType.ERROR);
+            });
+    });
+}
+
+function deleteBulkStaff(selection) {
+    executeBulkDelete(selection, {
+        gridId: 'staffGrid',
+        itemLabel: 'staff entry',
+        noRecordsMessage: 'No records to delete.',
+        noSelectionMessage: 'Select the top checkbox to delete all staff entries, or select individual rows to delete specific staff entries.',
+        deleteAllConfirmMessage: 'Delete ALL staff entries for this year?',
+        deleteAllSuccessMessage: 'All staff entries deleted successfully.',
+        deleteAllUrl: yearlyDetailsUrls.deleteAllStaff,
+        deleteSingleUrlBuilder: function (id) {
+            return yearlyDetailsUrls.deleteStaff
+                + '?projectId=' + encodeURIComponent(projectId)
+                + '&year=' + selectedYear
+                + '&srIdentity=' + encodeURIComponent(id);
+        },
+        reload: loadStaffGrid
+    });
+}
+
+function deleteBulkTest(selection) {
+    executeBulkDelete(selection, {
+        gridId: 'testGrid',
+        itemLabel: 'test entry',
+        noRecordsMessage: 'No records to delete.',
+        noSelectionMessage: 'Select the top checkbox to delete all test entries, or select individual rows to delete specific test entries.',
+        deleteAllConfirmMessage: 'Delete ALL test entries for this year?',
+        deleteAllSuccessMessage: 'All test entries deleted successfully.',
+        deleteAllUrl: yearlyDetailsUrls.deleteAllTests,
+        deleteSingleUrlBuilder: function (id) {
+            return yearlyDetailsUrls.deleteTest
+                + '?projectId=' + encodeURIComponent(projectId)
+                + '&year=' + selectedYear
+                + '&testCode=' + encodeURIComponent(id);
+        },
+        reload: loadTestGrid
+    });
+}
+
+function deleteBulkAnimal(selection) {
+    executeBulkDelete(selection, {
+        gridId: 'animalGrid',
+        itemLabel: 'animal entry',
+        noRecordsMessage: 'No records to delete.',
+        noSelectionMessage: 'Select the top checkbox to delete all animal entries, or select individual rows to delete specific animal entries.',
+        deleteAllConfirmMessage: 'Delete ALL animal entries for this year?',
+        deleteAllSuccessMessage: 'All animal entries deleted successfully.',
+        deleteAllUrl: yearlyDetailsUrls.deleteAllAnimals,
+        deleteSingleUrlBuilder: function (id) {
+            return yearlyDetailsUrls.deleteAnimal
+                + '?projectId=' + encodeURIComponent(projectId)
+                + '&year=' + selectedYear
+                + '&arIdentity=' + encodeURIComponent(id);
+        },
+        reload: loadAnimalGrid
+    });
+}
+
+function deleteBulkAdditionalCost(selection) {
+    executeBulkDelete(selection, {
+        gridId: 'additionalCostGrid',
+        itemLabel: 'additional cost entry',
+        noRecordsMessage: 'No records to delete.',
+        noSelectionMessage: 'Select the top checkbox to delete all additional cost entries, or select individual rows to delete specific additional cost entries.',
+        deleteAllConfirmMessage: 'Delete ALL additional cost entries for this year?',
+        deleteAllSuccessMessage: 'All additional cost entries deleted successfully.',
+        deleteAllUrl: yearlyDetailsUrls.deleteAllAdditionalCosts,
+        deleteSingleUrlBuilder: function (id) {
+            return yearlyDetailsUrls.deleteAdditionalCost
+                + '?projectId=' + encodeURIComponent(projectId)
+                + '&year=' + selectedYear
+                + '&acIdentity=' + encodeURIComponent(id);
+        },
+        reload: loadAdditionalCostGrid
+    });
+}
+
 // ── Legacy edit/delete handlers (kept for compatibility) ───────────
 function handleEdit(id) { openEditStaffModal(projectId, selectedYear, id); }
 function handleDelete(id) { deleteStaff(projectId, selectedYear, id); }

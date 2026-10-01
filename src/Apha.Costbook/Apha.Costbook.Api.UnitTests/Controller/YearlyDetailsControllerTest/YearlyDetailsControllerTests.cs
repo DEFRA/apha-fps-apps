@@ -588,6 +588,20 @@ public class YearlyDetailsControllerTests
         Assert.NotNull(okResult.Value);
     }
 
+    [Fact]
+    public async Task GetAdditionalCostinflamation_ReturnsOk_WithValue()
+    {
+        _service.GetAdditionalCostinflamationAsync("2024/001", 2024).Returns("1.23");
+
+        var result = await _controller.GetAdditionalCostinflamation("2024/001", 2024);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var apiResponse = Assert.IsType<ApiResponse<string>>(okResult.Value);
+        Assert.True(apiResponse.Success);
+        Assert.Equal("1.23", apiResponse.Data);
+        await _service.Received(1).GetAdditionalCostinflamationAsync("2024/001", 2024);
+    }
+
     #endregion
 
     #region DeleteProjectYear
@@ -1585,6 +1599,10 @@ public class YearlyDetailsControllerTests
     [Fact]
     public void CostBookApiEndpoints_GetAllAnimals_HasCorrectValue()
         => Assert.Equal("api/v1/yearlydetails/lookups/animals", CostBookApiEndpoints.GetAllAnimals);
+
+    [Fact]
+    public void CostBookApiEndpoints_GetAdditionalCostinflamation_HasCorrectValue()
+        => Assert.Equal("api/v1/yearlydetails/additionalcostinflamation", CostBookApiEndpoints.GetAdditionalCostinflamation);
 
     // Formatted URL spot-checks
     [Fact]

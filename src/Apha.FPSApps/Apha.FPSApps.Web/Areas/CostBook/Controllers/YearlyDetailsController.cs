@@ -352,6 +352,31 @@ public class YearlyDetailsController : Controller
         return Json(new { success = true, message = "Staff Record Deleted Successfully" });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> DeleteAllStaff(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetStaffRequirementsAsync(decodedProjectId, year, allQuery);
+
+        if (!listResponse.Success)
+            return Json(new { success = false, message = "Failed to load Staff entries for deletion." });
+
+        var staffRows = listResponse.Data?.data ?? new List<StaffRequirementDto>();
+
+        foreach (var staff in staffRows)
+        {
+            var deleteResponse = await _service.DeleteStaffRequirementAsync(decodedProjectId, year, staff.SrIdentity);
+            if (!deleteResponse.Success || !deleteResponse.Data)
+            {
+                var message = deleteResponse.Errors?.FirstOrDefault()?.Message ?? "Failed to delete all Staff entries.";
+                return Json(new { success = false, message });
+            }
+        }
+
+        return Json(new { success = true, message = "All Staff entries deleted successfully." });
+    }
+
     // ── TEST CRUD ─────────────────────────────────────────────────────────
 
     [HttpGet]
@@ -414,6 +439,34 @@ public class YearlyDetailsController : Controller
         if (!response.Success || !response.Data)
             return Json(new { success = false, message = "Failed to delete Test entry." });
         return Json(new { success = true, message = "Test Record Deleted Successfully" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAllTests(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetTestRequirementsAsync(decodedProjectId, year, allQuery);
+
+        if (!listResponse.Success)
+            return Json(new { success = false, message = "Failed to load Test entries for deletion." });
+
+        var testRows = listResponse.Data?.data ?? new List<TestRequirementDto>();
+
+        foreach (var test in testRows)
+        {
+            if (string.IsNullOrWhiteSpace(test.TestCode))
+                continue;
+
+            var deleteResponse = await _service.DeleteTestRequirementAsync(decodedProjectId, year, test.TestCode);
+            if (!deleteResponse.Success || !deleteResponse.Data)
+            {
+                var message = deleteResponse.Errors?.FirstOrDefault()?.Message ?? "Failed to delete all Test entries.";
+                return Json(new { success = false, message });
+            }
+        }
+
+        return Json(new { success = true, message = "All Test entries deleted successfully." });
     }
 
     // ── ANIMAL CRUD ───────────────────────────────────────────────────────
@@ -482,6 +535,31 @@ public class YearlyDetailsController : Controller
         return Json(new { success = true, message = "Animal Record Deleted Successfully" });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> DeleteAllAnimals(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetAnimalRequirementsAsync(decodedProjectId, year, allQuery);
+
+        if (!listResponse.Success)
+            return Json(new { success = false, message = "Failed to load Animal entries for deletion." });
+
+        var animalRows = listResponse.Data?.data ?? new List<AnimalRequirementDto>();
+
+        foreach (var animal in animalRows)
+        {
+            var deleteResponse = await _service.DeleteAnimalRequirementAsync(decodedProjectId, year, animal.ArIdentity);
+            if (!deleteResponse.Success || !deleteResponse.Data)
+            {
+                var message = deleteResponse.Errors?.FirstOrDefault()?.Message ?? "Failed to delete all Animal entries.";
+                return Json(new { success = false, message });
+            }
+        }
+
+        return Json(new { success = true, message = "All Animal entries deleted successfully." });
+    }
+
     // ── ADDITIONAL COST CRUD ──────────────────────────────────────────────
 
     [HttpGet]
@@ -544,6 +622,31 @@ public class YearlyDetailsController : Controller
             return Json(new { success = false, message = "Failed to delete Additional Cost entry." });
         return Json(new { success = true, message = "Additional Cost Record Deleted Successfully" });
       
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAllAdditionalCosts(string projectId, int year)
+    {
+        var decodedProjectId = HttpUtility.UrlDecode(projectId);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetAdditionalCostsAsync(decodedProjectId, year, allQuery);
+
+        if (!listResponse.Success)
+            return Json(new { success = false, message = "Failed to load Additional Cost entries for deletion." });
+
+        var additionalCostRows = listResponse.Data?.data ?? new List<AdditionalCostDto>();
+
+        foreach (var additionalCost in additionalCostRows)
+        {
+            var deleteResponse = await _service.DeleteAdditionalCostAsync(decodedProjectId, year, additionalCost.AcIdentity);
+            if (!deleteResponse.Success || !deleteResponse.Data)
+            {
+                var message = deleteResponse.Errors?.FirstOrDefault()?.Message ?? "Failed to delete all Additional Cost entries.";
+                return Json(new { success = false, message });
+            }
+        }
+
+        return Json(new { success = true, message = "All Additional Cost entries deleted successfully." });
     }
 
     // ── MARKUP/PROFIT UPDATE ──────────────────────────────────────────────
@@ -641,9 +744,11 @@ public class YearlyDetailsController : Controller
             Title = "Staff",
             Data = data,
             KeyProperty = nameof(StaffRequirementItem.SrIdentity),
+            ShowCheckboxColumn = true,
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -657,6 +762,7 @@ public class YearlyDetailsController : Controller
             AddFunction = "gridAddStaff",
             EditFunction = "gridEditStaff",
             DeleteFunction = "gridDeleteStaff",
+            BulkDeleteFunction = "deleteBulkStaff",
             ExtraFilterMethod= "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
@@ -680,9 +786,11 @@ public class YearlyDetailsController : Controller
             Title = "Tests",
             Data = data,
             KeyProperty = nameof(TestRequirementItem.TestCode),
+            ShowCheckboxColumn = true,
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -696,6 +804,7 @@ public class YearlyDetailsController : Controller
             AddFunction = "gridAddTest",
             EditFunction = "gridEditTest",
             DeleteFunction = "gridDeleteTest",
+            BulkDeleteFunction = "deleteBulkTest",
             ExtraFilterMethod = "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadTestGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null)
@@ -721,9 +830,11 @@ public class YearlyDetailsController : Controller
             Title = "Animals",
             Data = data,
             KeyProperty = nameof(AnimalRequirementItem.ArIdentity),
+            ShowCheckboxColumn = true,
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -737,6 +848,7 @@ public class YearlyDetailsController : Controller
             AddFunction = "gridAddAnimal",
             EditFunction = "gridEditAnimal",
             DeleteFunction = "gridDeleteAnimal",
+            BulkDeleteFunction = "deleteBulkAnimal",
             ExtraFilterMethod = "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadAnimalGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<AnimalRequirementItem>(null)
@@ -762,9 +874,11 @@ public class YearlyDetailsController : Controller
             Title = "Additional Costs",
             Data = data,
             KeyProperty = nameof(AdditionalCostItem.AcIdentity),
+            ShowCheckboxColumn = true,
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -778,6 +892,7 @@ public class YearlyDetailsController : Controller
             AddFunction = "gridAddAdditionalCost",
             EditFunction = "gridEditAdditionalCost",
             DeleteFunction = "gridDeleteAdditionalCost",
+            BulkDeleteFunction = "deleteBulkAdditionalCost",
             ExtraFilterMethod = "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadAdditionalCostGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<AdditionalCostItem>(null)
