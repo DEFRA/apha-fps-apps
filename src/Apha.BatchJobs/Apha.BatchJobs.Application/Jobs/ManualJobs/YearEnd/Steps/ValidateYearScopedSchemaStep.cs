@@ -80,7 +80,7 @@ public sealed class ValidateYearScopedSchemaStep : IYearEndDataSetupStep
     }
 
     /// <summary>
-    /// One matrix entry's schema contract, checked uniformly for all 43 entries with no exceptions:
+    /// One matrix entry's schema contract, checked uniformly for all 44 entries with no exceptions:
     /// the table and its fpsyear column must exist (needed by the generic copy mechanism, every
     /// dedicated step, and FinalValidationStep's row-count checks alike), plus every column a declared
     /// reset override targets.
