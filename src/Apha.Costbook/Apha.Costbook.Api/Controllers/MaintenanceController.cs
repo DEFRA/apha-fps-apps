@@ -89,7 +89,7 @@ namespace Apha.Costbook.Api.Controllers
 
             accShortName = WebUtility.UrlDecode(accShortName);
 
-            var updated = await _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group);
+            var updated = await _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group, req.AccountDescription);
             return Ok(_mapper.Map<AccountCategoryMaintenanceRes>(updated));
         }
 

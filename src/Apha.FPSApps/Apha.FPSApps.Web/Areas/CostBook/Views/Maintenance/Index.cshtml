@@ -526,9 +526,13 @@
         }
 
         var accShortName = $('#hdnAccShortName').val();
-        var csg7Group    = $('#modal-acccat-csg7group').val();
+        var accountDescription = $('#modal-acccat-description').val();
+        var csg7Group = $('#modal-acccat-csg7group').val();
 
-        var dto = { csg7Group: csg7Group };
+        var dto = {
+        accountDescription: accountDescription,
+        csg7Group: csg7Group
+        };
 
         var url = '@Url.Action("EditAccountCategory", "Maintenance", new { area = "CostBook" })?accShortName=' + encodeURIComponent(accShortName);
 
