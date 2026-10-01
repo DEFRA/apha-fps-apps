@@ -17,7 +17,7 @@ BEGIN;
 --   - Convert to PARTITION BY LIST (fpsyear).
 --   - Partition key remains part of the primary key.
 --   - Existing data is preserved.
---   - Explicit partitions: 2016..2027 + DEFAULT.
+--   - Explicit partitions: 2016..2026 + DEFAULT.
 --   - Original table is used temporarily as *_old during migration and
 --     dropped after all validation succeeds.
 -- ============================================================================
@@ -111,13 +111,13 @@ ALTER TABLE fps.projectmonthcasework_p
         );
 
 
--- Create yearly partitions 2016..2027.
+-- Create yearly partitions 2016..2026.
 DO $$
 DECLARE
     y integer;
 BEGIN
 
-    FOR y IN 2016..2027 LOOP
+    FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
             'CREATE TABLE fps.projectmonthcasework_p_y%s
@@ -242,17 +242,17 @@ BEGIN
 
     END IF;
 
-    -- 12 yearly partitions (2016..2027) + DEFAULT = 13.
+    -- 11 yearly partitions (2016..2026) + DEFAULT = 12.
     SELECT COUNT(*)
     INTO v_partition_count
     FROM pg_inherits
     WHERE inhparent =
           'fps.projectmonthcasework'::regclass;
 
-    IF v_partition_count <> 13 THEN
+    IF v_partition_count <> 12 THEN
 
         RAISE EXCEPTION
-            'CR085 postcondition failed: expected 13 projectmonthcasework partitions, found %.',
+            'CR085 postcondition failed: expected 12 projectmonthcasework partitions, found %.',
             v_partition_count;
 
     END IF;

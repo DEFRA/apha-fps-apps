@@ -227,12 +227,12 @@ ALTER TABLE fps.tblkpprofitcentre_p
 	ADD CONSTRAINT pk_tblkpprofitcentre_p
 		PRIMARY KEY (profitcentre, fpsyear);
 
--- Yearly partitions 2016..2027 + DEFAULT (same convention as CR082-CR085).
+-- Yearly partitions 2016..2026 + DEFAULT (same convention as CR082-CR085).
 DO $$
 DECLARE
 	y integer;
 BEGIN
-	FOR y IN 2016..2027 LOOP
+	FOR y IN 2016..2026 LOOP
 		EXECUTE format(
 			'CREATE TABLE fps.tblkpprofitcentre_p_y%s
 			 PARTITION OF fps.tblkpprofitcentre_p
@@ -333,14 +333,14 @@ BEGIN
 			'CR090 postcondition failed: composite primary key is missing after the swap.';
 	END IF;
 
-	-- 12 yearly partitions (2016..2027) + DEFAULT = 13.
+	-- 11 yearly partitions (2016..2026) + DEFAULT = 12.
 	SELECT COUNT(*) INTO v_partition_count
 	FROM pg_inherits
 	WHERE inhparent = 'fps.tblkpprofitcentre'::regclass;
 
-	IF v_partition_count <> 13 THEN
+	IF v_partition_count <> 12 THEN
 		RAISE EXCEPTION
-			'CR090 postcondition failed: expected 13 partitions, found %.',
+			'CR090 postcondition failed: expected 12 partitions, found %.',
 			v_partition_count;
 	END IF;
 END

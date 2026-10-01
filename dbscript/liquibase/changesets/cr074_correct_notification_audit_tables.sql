@@ -140,9 +140,9 @@ ALTER TABLE fps.notification_run_summary
 
 -- The old bigint sequence is no longer required.
 -- CR071 provides:
---   12 yearly partitions (2016..2027)
+--   11 yearly partitions (2016..2026)
 --   + 1 DEFAULT partition
---   = 13 partitions.
+--   = 12 partitions.
 DROP SEQUENCE IF EXISTS
     fps.notification_run_summary_notificationrunsummaryid_seq
 CASCADE;
@@ -354,12 +354,12 @@ CREATE TABLE fps.notification_delivery
 PARTITION BY LIST (fpsyear);
 
 
--- Create yearly partitions 2016..2027.
+-- Create yearly partitions 2016..2026.
 DO $$
 DECLARE
     y integer;
 BEGIN
-    FOR y IN 2016..2027 LOOP
+    FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
             'CREATE TABLE fps.notification_delivery_y%s
@@ -445,7 +445,7 @@ DO $$
 DECLARE
     y integer;
 BEGIN
-    FOR y IN 2016..2027 LOOP
+    FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
             'CREATE TABLE fps.notification_delivery_project_y%s
@@ -548,7 +548,7 @@ BEGIN
 
 
     -- Each newly created delivery table should have:
-    -- 12 yearly partitions + DEFAULT = 13.
+    -- 11 yearly partitions + DEFAULT = 12.
     SELECT COUNT(*)
     INTO v_delivery_partition_count
     FROM pg_inherits
@@ -556,9 +556,9 @@ BEGIN
           'fps.notification_delivery'::regclass;
 
 
-    IF v_delivery_partition_count <> 13 THEN
+    IF v_delivery_partition_count <> 12 THEN
         RAISE EXCEPTION
-            'CR074 postcondition failed: expected 13 notification_delivery partitions, found %.',
+            'CR074 postcondition failed: expected 12 notification_delivery partitions, found %.',
             v_delivery_partition_count;
     END IF;
 
@@ -570,9 +570,9 @@ BEGIN
           'fps.notification_delivery_project'::regclass;
 
 
-    IF v_project_partition_count <> 13 THEN
+    IF v_project_partition_count <> 12 THEN
         RAISE EXCEPTION
-            'CR074 postcondition failed: expected 13 notification_delivery_project partitions, found %.',
+            'CR074 postcondition failed: expected 12 notification_delivery_project partitions, found %.',
             v_project_partition_count;
     END IF;
 

@@ -18,7 +18,7 @@ BEGIN;
 --   - fps.job_queue remains UNPARTITIONED.
 --   - FKs to fps.job_queue therefore remain on jobqueueid only.
 --   - Existing data is preserved.
---   - Explicit partitions: 2016..2027 + DEFAULT.
+--   - Explicit partitions: 2016..2026 + DEFAULT.
 --   - Original tables are retained as *_old after successful migration.
 --
 -- CR074 depends on this CR having completed successfully.
@@ -169,13 +169,13 @@ ALTER TABLE fps.rate_change_history_p
         REFERENCES fps.job_master (jobid);
 
 
--- Create yearly partitions 2016..2027.
+-- Create yearly partitions 2016..2026.
 DO $$
 DECLARE
     y integer;
 BEGIN
 
-    FOR y IN 2016..2027 LOOP
+    FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
             'CREATE TABLE fps.rate_change_history_p_y%s
@@ -366,13 +366,13 @@ ALTER TABLE fps.notification_run_summary_p
         );
 
 
--- Create yearly partitions 2016..2027.
+-- Create yearly partitions 2016..2026.
 DO $$
 DECLARE
     y integer;
 BEGIN
 
-    FOR y IN 2016..2027 LOOP
+    FOR y IN 2016..2026 LOOP
 
         EXECUTE format(
             'CREATE TABLE fps.notification_run_summary_p_y%s
@@ -556,7 +556,7 @@ BEGIN
 
 
     -- Validate partition count:
-    -- 12 yearly partitions (2016..2027) + DEFAULT = 13.
+    -- 11 yearly partitions (2016..2026) + DEFAULT = 12.
 
     SELECT COUNT(*)
     INTO v_rate_partition_count
@@ -565,10 +565,10 @@ BEGIN
           'fps.rate_change_history'::regclass;
 
 
-    IF v_rate_partition_count <> 13 THEN
+    IF v_rate_partition_count <> 12 THEN
 
         RAISE EXCEPTION
-            'CR071 postcondition failed: expected 13 rate_change_history partitions, found %.',
+            'CR071 postcondition failed: expected 12 rate_change_history partitions, found %.',
             v_rate_partition_count;
 
     END IF;
@@ -581,10 +581,10 @@ BEGIN
           'fps.notification_run_summary'::regclass;
 
 
-    IF v_summary_partition_count <> 13 THEN
+    IF v_summary_partition_count <> 12 THEN
 
         RAISE EXCEPTION
-            'CR071 postcondition failed: expected 13 notification_run_summary partitions, found %.',
+            'CR071 postcondition failed: expected 12 notification_run_summary partitions, found %.',
             v_summary_partition_count;
 
     END IF;

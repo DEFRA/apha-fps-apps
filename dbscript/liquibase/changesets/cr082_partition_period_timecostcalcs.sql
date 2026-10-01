@@ -22,7 +22,7 @@ BEGIN;
 --   - Convert to PARTITION BY LIST (fpsyear).
 --   - Partition key becomes part of the primary key.
 --   - Existing data is preserved.
---   - Explicit partitions: 2016..2027 + DEFAULT.
+--   - Explicit partitions: 2016..2026 + DEFAULT.
 --   - Original table is retained as *_old after successful migration.
 --
 -- NOTE:
@@ -137,13 +137,13 @@ ALTER TABLE fps.period_timecostcalcs_p
 		);
 
 
--- Create yearly partitions 2016..2027.
+-- Create yearly partitions 2016..2026.
 DO $$
 DECLARE
 	y integer;
 BEGIN
 
-	FOR y IN 2016..2027 LOOP
+	FOR y IN 2016..2026 LOOP
 
 		EXECUTE format(
 			'CREATE TABLE fps.period_timecostcalcs_p_y%s
@@ -300,17 +300,17 @@ BEGIN
 
 	END IF;
 
-	-- 12 yearly partitions (2016..2027) + DEFAULT = 13.
+	-- 11 yearly partitions (2016..2026) + DEFAULT = 12.
 	SELECT COUNT(*)
 	INTO v_partition_count
 	FROM pg_inherits
 	WHERE inhparent =
 		  'fps.period_timecostcalcs'::regclass;
 
-	IF v_partition_count <> 13 THEN
+	IF v_partition_count <> 12 THEN
 
 		RAISE EXCEPTION
-			'CR082 postcondition failed: expected 13 period_timecostcalcs partitions, found %.',
+			'CR082 postcondition failed: expected 12 period_timecostcalcs partitions, found %.',
 			v_partition_count;
 
 	END IF;

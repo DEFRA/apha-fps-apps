@@ -64,7 +64,7 @@ ALTER TABLE fps.job_queue_log_p
 DO $$
 DECLARE y integer;
 BEGIN
-    FOR y IN 2016..2027 LOOP
+    FOR y IN 2016..2026 LOOP
         EXECUTE format(
             'CREATE TABLE fps.job_queue_log_p_y%s PARTITION OF fps.job_queue_log_p FOR VALUES IN (%s)',
             y, y

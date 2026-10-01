@@ -26,7 +26,7 @@ BEGIN;
 --     (period, subcontcounter, fpsyear). There is NO surrogate id column
 --     and NO owning sequence.
 --   - Existing data is preserved.
---   - Explicit partitions: 2016..2027 + DEFAULT.
+--   - Explicit partitions: 2016..2026 + DEFAULT.
 --   - Original table is retained as *_old after successful migration.
 --
 -- NOTE:
@@ -138,13 +138,13 @@ ALTER TABLE fps.period_proj_subcontract_p
 		);
 
 
--- Create yearly partitions 2016..2027.
+-- Create yearly partitions 2016..2026.
 DO $$
 DECLARE
 	y integer;
 BEGIN
 
-	FOR y IN 2016..2027 LOOP
+	FOR y IN 2016..2026 LOOP
 
 		EXECUTE format(
 			'CREATE TABLE fps.period_proj_subcontract_p_y%s
@@ -256,17 +256,17 @@ BEGIN
 
 	END IF;
 
-	-- 12 yearly partitions (2016..2027) + DEFAULT = 13.
+	-- 11 yearly partitions (2016..2026) + DEFAULT = 12.
 	SELECT COUNT(*)
 	INTO v_partition_count
 	FROM pg_inherits
 	WHERE inhparent =
 		  'fps.period_proj_subcontract'::regclass;
 
-	IF v_partition_count <> 13 THEN
+	IF v_partition_count <> 12 THEN
 
 		RAISE EXCEPTION
-			'CR083 postcondition failed: expected 13 period_proj_subcontract partitions, found %.',
+			'CR083 postcondition failed: expected 12 period_proj_subcontract partitions, found %.',
 			v_partition_count;
 
 	END IF;
