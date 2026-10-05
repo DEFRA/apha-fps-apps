@@ -168,6 +168,10 @@
                 });
                 tbody.appendChild(tr);
             });
+
+            // Layer accessible names onto the newly rendered rows without
+            // touching the markup/behaviour above (see enhanceAnimalTypeDropdownAccessibility).
+            enhanceAnimalTypeDropdownAccessibility(items);
         }
 
         function selectAnimalType(value, label) {
@@ -199,7 +203,7 @@
             });
             renderAnimalTypeDropdownRows(filtered);
         });
-        
+
         document.getElementById('animal-type-input').addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -233,6 +237,28 @@
                 document.getElementById('animal-type-panel').style.display = 'none';
             }
         });
+
+        // ── Accessibility enhancement ──
+        // The dropdown rows already use role="option" and native focus/keyboard
+        // handling above; the only gap is that screen readers read raw cell text
+        // without the column headings, so a row announces just "Cattle 12.50"
+        // instead of identifying which value is which. This adds an aria-label
+        // per row combining both column names with their values, e.g.
+        // "Animal Type Cattle, Daily Rate 12.50", called from
+        // renderAnimalTypeDropdownRows without changing any existing function.
+
+        function enhanceAnimalTypeDropdownAccessibility(items) {
+            const tbody = document.getElementById('animal-type-body');
+            if (!tbody) return;
+
+            var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+            rows.forEach(function (row, idx) {
+                var item = items[idx];
+                if (!item) return;
+                row.setAttribute('aria-label',
+                    'Animal Type ' + (item.label || '') + ', Daily Rate ' + (item.dailyRate || ''));
+            });
+        }
 
         // ── Export the currently selected animal type's cost records to Excel ──
 

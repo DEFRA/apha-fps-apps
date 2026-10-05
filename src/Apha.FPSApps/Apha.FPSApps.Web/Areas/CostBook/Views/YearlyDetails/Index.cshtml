@@ -46,9 +46,9 @@
                                 <div class="summary-row project-summary-row">
                                     <div class="summary-item d-flex">
                                         <label class="text-AlignRight govuk-label" for="summary-code">Code:</label>
-                                        <input asp-for="ProjectHeaderDto.ProjectId" id="summary-code" type="text" readonly tabindex="-1" class="govuk-input">
+                                        <input asp-for="ProjectHeaderDto.ProjectId" id="summary-code" type="text" readonly tabindex="0" class="govuk-input">
                                     </div>
-                                    <div class="summary-item d-flex">
+                                    <div class="summary-item d-flex" tabindex="0" aria-label="@("Year Type: " + (Model.ProjectHeaderDto.FinancialYears == -1 ? "Financial Years" : "Project Years"))">
                                         <label class="text-AlignRight govuk-label" asp-for="ProjectHeaderDto.FinancialYears" for="summary-year-type">Year Type:</label>
                                         <select asp-for="ProjectHeaderDto.FinancialYears" id="summary-year-type" class="govuk-select" disabled>
                                             <option value="-1">Financial Years</option>
@@ -57,12 +57,13 @@
                                     </div>
                                     <div class="summary-item d-flex">
                                         <label class="govuk-label text-AlignRight" for="summary-start-date">Start Date:</label>
-                                        <input value="@Model.ProjectHeaderDto.StartDate?.ToString("dd/MM/yyyy")" id="summary-start-date" type="text" readonly tabindex="-1" class="govuk-input">
+                                        <input value="@Model.ProjectHeaderDto.StartDate?.ToString("dd/MM/yyyy")" id="summary-start-date" type="text" readonly tabindex="0" class="govuk-input">
                                     </div>
                                     <div class="summary-item d-flex ms-3">
                                         <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
                                             <div class="govuk-checkboxes__item">
-                                                <input id="summary-inflation" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.ProjectHeaderDto.Inflation == -1 ? "checked" : null)>
+                                                <input id="summary-inflation" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.ProjectHeaderDto.Inflation == -1 ? "checked" : null)
+                                                tabindex="0" aria-checked="@(Model.ProjectHeaderDto.Inflation == -1 ? "true" : "false")" aria-label="@("Inflation: " + (Model.ProjectHeaderDto.Inflation == -1 ? "checked" : "unchecked"))">
                                                 <label class="govuk-label govuk-checkboxes__label" for="summary-inflation">Inflation?</label>
                                             </div>
                                         </div>
@@ -70,7 +71,8 @@
                                     <div class="summary-item d-flex project-summary-flag">
                                         <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
                                             <div class="govuk-checkboxes__item">
-                                                <input id="summary-defra" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.ProjectHeaderDto.IsDefraProject == -1 ? "checked" : null)>
+                                                <input id="summary-defra" type="checkbox" class="govuk-checkboxes__input" disabled @(Model.ProjectHeaderDto.IsDefraProject == -1 ? "checked" : null)
+                                                tabindex="0" aria-checked="@(Model.ProjectHeaderDto.IsDefraProject == -1 ? "true" : "false")" aria-label="@("Defra: " + (Model.ProjectHeaderDto.IsDefraProject == -1 ? "Checked" : "Unchecked"))">
                                                 <label class="govuk-label govuk-checkboxes__label" for="summary-defra">Defra?</label>
                                             </div>
                                         </div>
@@ -79,15 +81,15 @@
                                 <div class="summary-row project-summary-row">
                                     <div class="summary-item d-flex">
                                         <label class="text-AlignRight govuk-label" for="summary-title">Title:</label>
-                                        <input asp-for="ProjectHeaderDto.ProjectTitle" id="summary-title" type="text" readonly tabindex="-1" class="govuk-input">
+                                        <input asp-for="ProjectHeaderDto.ProjectTitle" id="summary-title" type="text" readonly tabindex="" class="govuk-input">
                                     </div>
                                     <div class="summary-item d-flex">
                                         <label class="govuk-label text-AlignRight" for="summary-year">Year:</label>
-                                        <input value="@Model.ProjectHeaderDto.StartFYear" id="summary-year" type="text" readonly tabindex="-1" class="govuk-input">
+                                        <input value="@Model.ProjectHeaderDto.StartFYear" id="summary-year" type="text" readonly tabindex="0" class="govuk-input">
                                     </div>
                                     <div class="summary-item d-flex">
                                                 <label class="govuk-label text-AlignRight" for="summary-rate-used">Rate Used (&pound;):</label>
-                                        <input asp-for="ProjectHeaderDto.EuroConvRate" id="summary-rate-used" type="text" readonly tabindex="-1" class="govuk-input">
+                                        <input asp-for="ProjectHeaderDto.EuroConvRate" id="summary-rate-used" type="text" readonly tabindex="0" class="govuk-input">
                                     </div>
                                 </div>
                             </footer>

@@ -201,14 +201,14 @@
                                     </thead>
                                     <tbody class="govuk-table__body tab-font-size">
                                         <tr class="govuk-table__row">
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-staff-costs">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-test-costs">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-exceptional-costs">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-animal-costs">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-total-costs">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-cust-income">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-total-income">£0.00</td>
-                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-budget-vla">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-staff-costs" tabindex="0" data-fps-label="Staff Costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-test-costs" tabindex="0" data-fps-label="Test Costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-exceptional-costs" tabindex="0" data-fps-label="Exceptional Costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-animal-costs" tabindex="0" data-fps-label="Animal Costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-total-costs" tabindex="0" data-fps-label="Total Cost">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-cust-income" tabindex="0" data-fps-label="Cust Income">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-total-income" tabindex="0" data-fps-label="Total Income">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-budget-vla" tabindex="0" data-fps-label="Budget VLA" >£0.00</td>
                                         </tr>
                                         <tr class="govuk-table__row govuk-!-font-weight-bold">
                                             <td colspan="7" class="govuk-table__cell govuk-!-text-align-right" style="vertical-align: middle;">
@@ -764,7 +764,24 @@
                 document.getElementById('fps-total-income').textContent     = data.totalIncome;
                 document.getElementById('fps-budget-vla').textContent       = data.budgetVla;
                 document.getElementById('fps-total-cost-pct').value         = data.totalCostPct;
+                updateFpsPlannedCostAriaLabels();
             });
+    }
+
+    // ── Announce each FPS Planned Cost total cell as "label: value" ─────────
+    // Mirrors updateMonthlyPactTotalsAriaLabels above: these cells rely on
+    // visible column headers for sighted users, but a focused cell with
+    // tabindex="0" is otherwise announced by NVDA with just its bare value
+    // (e.g. "£0.00") and no indication of which column it belongs to. Each
+    // cell carries its own data-fps-label attribute (set in the markup) so
+    // the accessible name can be rebuilt here after every value update.
+    function updateFpsPlannedCostAriaLabels() {
+        var cells = document.querySelectorAll('[data-fps-label]');
+        cells.forEach(function (cell) {
+            var label = cell.getAttribute('data-fps-label');
+            var value = (cell.tagName === 'INPUT' ? cell.value : cell.textContent).trim();
+            cell.setAttribute('aria-label', value ? (label + ': ' + value) : label);
+        });
     }
 
     function refreshPlanVsActualsTotals() {

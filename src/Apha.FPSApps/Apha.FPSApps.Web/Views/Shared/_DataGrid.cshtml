@@ -258,7 +258,8 @@
                                     <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 " data-module="govuk-checkboxes">
                                         <div class="govuk-checkboxes__item sup_chk_margin">
                                             <input type="checkbox" name="chk-box-_@rowIndex"
-                                                   id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox govuk-checkboxes__input govuk-!-font-size-16" />
+                                                   id="@($"chk_{Model.GridId}_{rowIndex}")" class="row-checkbox govuk-checkboxes__input govuk-!-font-size-16"
+                                                   aria-label="@($"Select row {(rowIndex + 1)}")" />
                                             <label class="govuk-label govuk-checkboxes__label sup_label_auto_width sup_p_0 sup_w_h_0" for="@($"chk_{Model.GridId}_{rowIndex}")">
                                                 <span class="govuk-visually-hidden">Select row @((rowIndex + 1))</span>
                                             </label>
@@ -279,6 +280,8 @@
                                                 <div class="govuk-checkboxes__item sup_chk_margin" style="pointer-events:none; padding-bottom: 13px;">
                                                     <input type="checkbox" name="@column.PropertyName"
                                                            id="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")" class="govuk-checkboxes__input govuk-!-font-size-16 @GridHelpers.GetTypeCssClass(column)"
+                                                           aria-label="@($"{column.DisplayName}: {(Convert.ToBoolean(value) ? "Yes" : "No")}")"
+                                                           aria-checked="@(Convert.ToBoolean(value) ? "true" : "false")"
                                                            @(Convert.ToBoolean(value) ? "checked" : "") />
                                                     <label class="govuk-label govuk-checkboxes__label sup_label_auto_width sup_p_0 sup_w_h_0" for="@($"{Model.GridId}_{column.PropertyName}_{rowIndex}")">
                                                         <span class="govuk-visually-hidden">@column.DisplayName</span>
