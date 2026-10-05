@@ -65,7 +65,54 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
         var dbContext = new BatchJobsDbContext(options);
         await dbContext.Database.UseTransactionAsync(transaction);
 
-        return new RecreateSummariesPostgresTestHarness(connectionString, dbContext, connection, transaction);
+        var harness = new RecreateSummariesPostgresTestHarness(connectionString, dbContext, connection, transaction);
+        await harness.SeedReferenceDataAsync();
+        return harness;
+    }
+
+    // Lookup values the step fixtures hard-code; seeded only where missing and rolled back with the test.
+    private async Task SeedReferenceDataAsync()
+    {
+        var years = $"(VALUES ({FpsYear}), ({FpsYear - 1})) AS y(fpsyear)";
+
+        await ExecuteSqlAsync($@"
+            INSERT INTO fps.tblstatus (status)
+            SELECT 'Active' WHERE NOT EXISTS (SELECT 1 FROM fps.tblstatus WHERE status = 'Active');
+
+            INSERT INTO fps.tbldisease (disease)
+            SELECT 'General' WHERE NOT EXISTS (SELECT 1 FROM fps.tbldisease WHERE disease = 'General');
+
+            INSERT INTO fps.tlkpcustomer (customer)
+            SELECT 'Cust' WHERE NOT EXISTS (SELECT 1 FROM fps.tlkpcustomer WHERE customer = 'Cust');
+
+            INSERT INTO fps.tlkpaccountcode (code, description)
+            SELECT v.code, 'Test' FROM (VALUES ('IA1'), ('IA2'), ('IA-CUR'), ('IA-OLD'), ('IA-SRC')) AS v(code)
+            WHERE NOT EXISTS (SELECT 1 FROM fps.tlkpaccountcode a WHERE a.code = v.code);
+
+            INSERT INTO fps.tlkpsubaccount (subaccountcode)
+            SELECT v.code FROM (VALUES ('SAC1'), ('SAC2'), ('SAC-CUR'), ('SAC-OLD'), ('SAC-SRC')) AS v(code)
+            WHERE NOT EXISTS (SELECT 1 FROM fps.tlkpsubaccount s WHERE s.subaccountcode = v.code);
+
+            INSERT INTO fps.tblcontract (contractno, category, customer, fpsyear)
+            SELECT 'Contract', (SELECT category FROM fps.tblcategory ORDER BY category LIMIT 1), 'Cust', y.fpsyear
+            FROM {years}
+            WHERE EXISTS (SELECT 1 FROM fps.tblyearmaster m WHERE m.fpsyear = y.fpsyear)
+              AND NOT EXISTS (SELECT 1 FROM fps.tblcontract c WHERE c.contractno = 'Contract' AND c.fpsyear = y.fpsyear);
+
+            INSERT INTO fps.tblkpaccountcategory (accshortname, accounttype, fpsyear)
+            SELECT 'A1', 'NPRC', y.fpsyear
+            FROM {years}
+            WHERE EXISTS (SELECT 1 FROM fps.tblyearmaster m WHERE m.fpsyear = y.fpsyear)
+              AND NOT EXISTS (SELECT 1 FROM fps.tblkpaccountcategory a WHERE a.accshortname = 'A1' AND a.fpsyear = y.fpsyear);
+
+            INSERT INTO fps.grade (gradecode, fpsyear)
+            SELECT 'GC1', {FpsYear}
+            WHERE NOT EXISTS (SELECT 1 FROM fps.grade WHERE gradecode = 'GC1' AND fpsyear = {FpsYear});
+
+            INSERT INTO fps.divisiongrade (divisiongrade, gradecode, division, fpsyear)
+            SELECT 'D1', 'GC1', (SELECT divname FROM fps.tlkpdivision ORDER BY divname LIMIT 1), {FpsYear}
+            WHERE NOT EXISTS (SELECT 1 FROM fps.divisiongrade WHERE divisiongrade = 'D1' AND fpsyear = {FpsYear});
+        ");
     }
 
     private static string ResolveConnectionString()

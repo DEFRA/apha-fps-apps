@@ -48,8 +48,14 @@ public sealed class RefreshPeriodMoStepTests
             INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
             VALUES ('{workGroup}', '{harness.Id("PC1")}', {costCentre}, {harness.FpsYear});
 
+            INSERT INTO fps.testorproduct (itemcode, owner, jobstatus, defraunitprice, fpsyear)
+            VALUES ('{testCode}', 'PA', 'AC', 1::money, {harness.FpsYear});
+
             INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, active, fpsyear)
             VALUES ('{testCode}', '{project}', 10::money, 1, '{project}', 1, {harness.FpsYear});
+
+            INSERT INTO fps.tlkptestcapability (testcode, workgroup, planportfolio, fpsyear)
+            VALUES ('{testCode}', '{workGroup}', '{project}', {harness.FpsYear});
 
             INSERT INTO fps.monthlyoutput (buyer, workgroup, testcode, month, volume, fpsyear)
             VALUES ('{project}', '{workGroup}', '{testCode}', 1, 5, {harness.FpsYear});
@@ -127,9 +133,17 @@ public sealed class RefreshPeriodMoStepTests
                  VALUES ('{currentWorkGroup}', '{harness.Id("PC2")}', {currentCostCentre}, {harness.FpsYear}),
                      ('{priorWorkGroup}', '{harness.Id("PC3")}', {priorCostCentre}, {harness.FpsYear - 1});
 
+            INSERT INTO fps.testorproduct (itemcode, owner, jobstatus, defraunitprice, fpsyear)
+            VALUES ('{currentTestCode}', 'PA', 'AC', 1::money, {harness.FpsYear}),
+                   ('{priorTestCode}', 'PA', 'AC', 1::money, {harness.FpsYear - 1});
+
             INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, active, fpsyear)
                  VALUES ('{currentTestCode}', '{currentProject}', 10::money, 1, '{currentProject}', 1, {harness.FpsYear}),
                      ('{priorTestCode}', '{priorProject}', 10::money, 1, '{priorProject}', 1, {harness.FpsYear - 1});
+
+            INSERT INTO fps.tlkptestcapability (testcode, workgroup, planportfolio, fpsyear)
+            VALUES ('{currentTestCode}', '{currentWorkGroup}', '{currentProject}', {harness.FpsYear}),
+                   ('{priorTestCode}', '{priorWorkGroup}', '{priorProject}', {harness.FpsYear - 1});
 
             INSERT INTO fps.monthlyoutput (buyer, workgroup, testcode, month, volume, fpsyear)
                  VALUES ('{currentProject}', '{currentWorkGroup}', '{currentTestCode}', 1, 5, {harness.FpsYear}),
@@ -176,29 +190,41 @@ public sealed class RefreshPeriodMoStepTests
 
         await harness.ExecuteSqlAsync($@"
             INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
-            VALUES ('{program}', {harness.FpsYear}, 'charge');
+            VALUES ('{program}', {harness.FpsYear}, 'charge'),
+                   ('{program}', {harness.FpsYear - 1}, 'charge');
 
             INSERT INTO fps.tlkpproject
                 (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
                  contract, isdefraproject, costcentre, oracleprojectcode, subaccountcode, incomeaccountcode, fpsyear)
             VALUES
                 ('{project}', 'Project MO Source Scope', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
-                 'Contract', 0, {currentCostCentre}, 'OPC-SRC', 'SAC-SRC', 'IA-SRC', {harness.FpsYear});
+                 'Contract', 0, {currentCostCentre}, 'OPC-SRC', 'SAC-SRC', 'IA-SRC', {harness.FpsYear}),
+                ('{project}', 'Project MO Source Scope', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
+                 'Contract', 0, {currentCostCentre}, 'OPC-SRC', 'SAC-SRC', 'IA-SRC', {harness.FpsYear - 1});
 
             INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
             VALUES ('{harness.Id("PC4")}', 'Profit Centre Source', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear}),
                    ('{harness.Id("PC4")}', 'Profit Centre Source', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear - 1});
 
             INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
-            VALUES ({currentCostCentre}, '{harness.Id("PC4")}', {harness.FpsYear});
+            VALUES ({currentCostCentre}, '{harness.Id("PC4")}', {harness.FpsYear}),
+                   ({currentCostCentre}, '{harness.Id("PC4")}', {harness.FpsYear - 1});
 
             INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
             VALUES ('{workGroupCurrent}', '{harness.Id("PC4")}', {currentCostCentre}, {harness.FpsYear}),
                    ('{workGroupPrior}', '{harness.Id("PC4")}', {currentCostCentre}, {harness.FpsYear - 1});
 
+            INSERT INTO fps.testorproduct (itemcode, owner, jobstatus, defraunitprice, fpsyear)
+            VALUES ('{testCode}', 'PA', 'AC', 1::money, {harness.FpsYear}),
+                   ('{testCode}', 'PA', 'AC', 1::money, {harness.FpsYear - 1});
+
             INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, active, fpsyear)
             VALUES ('{testCode}', '{project}', 12::money, 1, '{project}', 1, {harness.FpsYear}),
                    ('{testCode}', '{project}', 33::money, 1, '{project}', 1, {harness.FpsYear - 1});
+
+            INSERT INTO fps.tlkptestcapability (testcode, workgroup, planportfolio, fpsyear)
+            VALUES ('{testCode}', '{workGroupCurrent}', '{project}', {harness.FpsYear}),
+                   ('{testCode}', '{workGroupPrior}', '{project}', {harness.FpsYear - 1});
 
             INSERT INTO fps.monthlyoutput (buyer, workgroup, testcode, month, volume, fpsyear)
             VALUES ('{project}', '{workGroupCurrent}', '{testCode}', 1, 4, {harness.FpsYear}),

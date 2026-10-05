@@ -31,6 +31,7 @@ public sealed class CreateTimeCostCalcsStepTests
         var wgGrade = harness.Id("WG1");
         var pcGrade = harness.Id("PCG1");
         var profitCentre = harness.Id("PC1");
+        var costCentre = Random.Shared.Next(700001, 799999);
 
         await harness.ExecuteSqlAsync($@"
             INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
@@ -64,8 +65,11 @@ public sealed class CreateTimeCostCalcsStepTests
             VALUES
                 ('{pcGrade}', 'D1', 'GC1', '{profitCentre}', 10::money, 5::money, 2::money, 1::money, 12::money, {harness.FpsYear});
 
+            INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
+            VALUES ({costCentre}, '{profitCentre}', {harness.FpsYear});
+
             INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
-            VALUES ('{workGroup}', '{profitCentre}', 0, {harness.FpsYear});
+            VALUES ('{workGroup}', '{profitCentre}', {costCentre}, {harness.FpsYear});
 
             INSERT INTO fps.workgroupgrade
                 (wggrade, profitcentregrade, gradecode, workgroup, fpsyear)
@@ -81,13 +85,13 @@ public sealed class CreateTimeCostCalcsStepTests
             VALUES
                 ('{pactId}', '{spNumber}', '{wgGrade}', 'A', 'P', 37, 0, 0, 37, 1, 0, {harness.FpsYear});
 
+            INSERT INTO fps.timecodevalid (timecode, workgroup, parentproject, active, fpsyear)
+            VALUES ('{jobCode}', '{workGroup}', '{project}', true, {harness.FpsYear});
+
             INSERT INTO fps.monthlytime
                 (pactstaffid, timecode, month, parentproject, workgroup, hours, fpsyear)
             VALUES
                 ('{pactId}', '{jobCode}', 1, '{project}', '{workGroup}', 8, {harness.FpsYear});
-
-            INSERT INTO fps.timecodevalid (timecode, workgroup, parentproject, active, fpsyear)
-            VALUES ('{jobCode}', '{workGroup}', '{project}', true, {harness.FpsYear});
         ");
 
         var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
@@ -141,6 +145,7 @@ public sealed class CreateTimeCostCalcsStepTests
         var wgGrade = harness.Id("WG1");
         var pcGrade = harness.Id("PCG1");
         var profitCentre = harness.Id("PC1");
+        var costCentre = Random.Shared.Next(700001, 799999);
 
         await harness.ExecuteSqlAsync($@"
             INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
@@ -175,8 +180,11 @@ public sealed class CreateTimeCostCalcsStepTests
             VALUES
                 ('{pcGrade}', 'D1', 'GC1', '{profitCentre}', 10::money, 5::money, 2::money, 1::money, 12::money, {harness.FpsYear});
 
+            INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
+            VALUES ({costCentre}, '{profitCentre}', {harness.FpsYear});
+
             INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
-            VALUES ('{workGroup}', '{profitCentre}', 0, {harness.FpsYear});
+            VALUES ('{workGroup}', '{profitCentre}', {costCentre}, {harness.FpsYear});
 
             INSERT INTO fps.workgroupgrade
                 (wggrade, profitcentregrade, gradecode, workgroup, fpsyear)
@@ -192,13 +200,13 @@ public sealed class CreateTimeCostCalcsStepTests
             VALUES
                 ('{pactId}', '{spNumber}', '{wgGrade}', 'A', 'P', 37, 0, 0, 37, 1, 0, {harness.FpsYear});
 
+            INSERT INTO fps.timecodevalid (timecode, workgroup, parentproject, active, fpsyear)
+            VALUES ('{jobCode}', '{workGroup}', '{project}', true, {harness.FpsYear});
+
             INSERT INTO fps.monthlytime
                 (pactstaffid, timecode, month, parentproject, workgroup, hours, fpsyear)
             VALUES
                 ('{pactId}', '{jobCode}', 1, '{project}', '{workGroup}', 8, {harness.FpsYear});
-
-            INSERT INTO fps.timecodevalid (timecode, workgroup, parentproject, active, fpsyear)
-            VALUES ('{jobCode}', '{workGroup}', '{project}', true, {harness.FpsYear});
         ");
 
         var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), harness.FpsYear);
