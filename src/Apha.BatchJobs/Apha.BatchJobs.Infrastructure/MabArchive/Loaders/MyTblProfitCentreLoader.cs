@@ -15,6 +15,7 @@ internal sealed class MyTblProfitCentreLoader : MabArchiveExecutionLoaderBase
     {
         var rows = await context.MaSrcTblkpProfitCentre
             .AsNoTracking()
+            .Where(p => p.FpsYear == year)
             .Select(p => new MaDstMyTblProfitCentre
             {
                 Year = year,

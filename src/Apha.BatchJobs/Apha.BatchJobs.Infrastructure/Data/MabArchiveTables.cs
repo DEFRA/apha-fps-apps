@@ -560,6 +560,7 @@ internal sealed class MaDstMyProfitCentreGrade
 
 internal sealed class MaSrcTblkpProfitCentre
 {
+    public int FpsYear { get; set; }
     public required string ProfitCentre { get; set; }
     public string? ProfitCentreName { get; set; }
     public string? Division { get; set; }
