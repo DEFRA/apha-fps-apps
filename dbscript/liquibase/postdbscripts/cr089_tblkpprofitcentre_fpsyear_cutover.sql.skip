@@ -748,6 +748,93 @@ JOIN fps.vtlkpproject_bygroup p
     ON tr.buyer::text = p.parentproject::text
    AND tr.fpsyear = p.fpsyear;
 
+-- View: fps.vtestreqbreakdown (originally modified by CR040)
+-- Lookups previously took the latest year's row per key; they are now matched
+-- on the requirement's own fpsyear.
+CREATE OR REPLACE VIEW fps.vtestreqbreakdown AS
+WITH
+default_workgroup AS (
+    SELECT tc.testcode,
+           tc.fpsyear,
+           MIN(tc.workgroup::text) AS wg
+    FROM   fps.tlkptestcapability tc
+    GROUP  BY tc.testcode, tc.fpsyear
+),
+project_lookup AS (
+    SELECT DISTINCT ON (pr.parentproject, pr.fpsyear)
+           pr.parentproject,
+           pr.program,
+           pr.fpsyear
+    FROM   fps.tlkpproject pr
+    ORDER  BY pr.parentproject, pr.fpsyear
+),
+test_description_lookup AS (
+    SELECT DISTINCT ON (tp.itemcode, tp.fpsyear)
+           tp.itemcode,
+           tp.shortdescription,
+           tp.fpsyear
+    FROM   fps.testorproduct tp
+    ORDER  BY tp.itemcode, tp.fpsyear
+),
+testrccost_lookup AS (
+    SELECT DISTINCT ON (rc.testcode, rc.profitcentre, rc.fpsyear)
+           rc.testcode,
+           rc.profitcentre,
+           rc.price,
+           rc.fpsyear
+    FROM   fps.tbltestrccost rc
+    ORDER  BY rc.testcode, rc.profitcentre, rc.fpsyear
+),
+workgroup_lookup AS (
+    SELECT DISTINCT ON (w.workgroup, w.fpsyear)
+           w.workgroup,
+           w.profitcentre,
+           w.fpsyear
+    FROM   fps.workgroup w
+    ORDER  BY w.workgroup, w.fpsyear
+),
+qry_test_req_breakdown AS (
+    SELECT tr.testcode,
+           td.shortdescription,
+           p.program,
+           tr.buyer                                                   AS jobcode,
+           COALESCE(trwg.workgroup, dw.wg::character varying)         AS workg,
+           trc.profitcentre,
+           COALESCE(trc.price, tr.unitprice)                          AS wgprice,
+           COALESCE(trwg.amount::double precision, tr.norequired)     AS noreq,
+           tr.fpsyear
+    FROM   fps.tlkptestreqmt tr
+    JOIN   project_lookup p
+           ON  p.parentproject::text = tr.buyer::text
+           AND p.fpsyear             = tr.fpsyear
+    JOIN   default_workgroup dw
+           ON  dw.testcode::text     = tr.testcode::text
+           AND dw.fpsyear            = tr.fpsyear
+    LEFT JOIN fps.tbltestreqwg trwg
+           ON  trwg.testcode::text   = tr.testcode::text
+           AND trwg.buyer::text      = tr.buyer::text
+           AND trwg.fpsyear          = tr.fpsyear
+    LEFT JOIN testrccost_lookup trc
+           ON  trc.testcode::text    = tr.testcode::text
+           AND trc.fpsyear           = tr.fpsyear
+    JOIN   test_description_lookup td
+           ON  td.itemcode::text     = tr.testcode::text
+           AND td.fpsyear            = tr.fpsyear
+)
+SELECT q.testcode,
+       q.shortdescription,
+       q.program,
+       q.jobcode                                       AS project,
+       COALESCE(q.profitcentre, wg.profitcentre)       AS pc,
+       q.workg,
+       q.wgprice,
+       q.noreq::numeric * q.wgprice::numeric           AS totalcost,
+       q.fpsyear
+FROM   qry_test_req_breakdown q
+LEFT JOIN workgroup_lookup wg
+       ON  wg.workgroup::text = q.workg::text
+       AND wg.fpsyear         = q.fpsyear;
+
 -- fps.vworkgroup (CR025) already matches on w.fpsyear = vpc.fpsyear and
 -- requires no change now that vtblkpprofitcentre is fixed above.
 
