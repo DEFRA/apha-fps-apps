@@ -12,5 +12,6 @@ namespace Apha.FPS.Application.Dtos
         public int? Timesheet { get; set; }
         public int? Outputsheet { get; set; }
         public short? TimesheetLayout { get; set; }
+        public int FpsYear { get; set; }
     }
 }
