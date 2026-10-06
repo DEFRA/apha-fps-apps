@@ -579,6 +579,175 @@ GROUP BY pc.conttarget,
     u.dt2username,
     u.useremail;
 
+-- View: fps.vtblcontract
+-- Both fps.tblcontract and fps.tbluser_category are partitioned by fpsyear,
+-- so the category join must also match fpsyear to avoid associating a
+-- contract with user-category assignments from other FPS years.
+CREATE OR REPLACE VIEW fps.vtblcontract AS
+SELECT DISTINCT
+    c.contractno,
+    c.category,
+    c.manager,
+    c.customer,
+    c.title,
+    c.registereddate,
+    c.startdate,
+    c.enddate,
+    c.contractdoc,
+    c.duration,
+    c.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+FROM fps.tblcontract c
+JOIN fps.tbluser_category uc
+    ON c.category::text = uc.category::text
+   AND c.fpsyear = uc.fpsyear
+JOIN fps.tblusers u
+    ON uc.user_id = u.user_id;
+
+-- View: fps.vtblstaff
+-- fps.tblemployee is partitioned by fpsyear, so the spnumber join must also
+-- match fpsyear; otherwise a staff member surfaces once per FPS year the
+-- employee row exists in.
+CREATE OR REPLACE VIEW fps.vtblstaff AS
+SELECT
+    tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text || COALESCE(tblemployee.firstname, ''::character varying)::text) AS name,
+    tblwgemployee.workgroupgrade,
+    tblemployee.title,
+    tblwgemployee.personstatus,
+    tblwgemployee.personclass,
+    tblwgemployee.hrspaid,
+    tblwgemployee.leave,
+    tblwgemployee.sickspecial,
+    tblwgemployee.hrsavail,
+    tblwgemployee.makeavailable,
+    tblwgemployee.fpsyear,
+    wgg.user_id,
+    wgg.dt2username,
+    wgg.useremail
+FROM fps.tblwgemployee
+JOIN fps.tblemployee
+    ON tblemployee.spnumber::text = tblwgemployee.spnumber::text
+   AND tblemployee.fpsyear = tblwgemployee.fpsyear
+JOIN fps.vworkgroupgrade wgg
+    ON wgg.wggrade::text = tblwgemployee.workgroupgrade::text
+   AND wgg.fpsyear = tblwgemployee.fpsyear;
+
+-- View: fps.vtblstaff_general
+-- fps.tblemployee is partitioned by fpsyear, so the spnumber match must also
+-- match fpsyear; otherwise a staff member surfaces once per FPS year the
+-- employee row exists in.
+CREATE OR REPLACE VIEW fps.vtblstaff_general AS
+SELECT
+    tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text || COALESCE(tblemployee.firstname, ''::character varying)::text) AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+FROM fps.tblwgemployee
+JOIN fps.tblemployee
+    ON tblwgemployee.spnumber::text = tblemployee.spnumber::text
+   AND tblwgemployee.fpsyear = tblemployee.fpsyear;
+
+-- View: fps.vtblstaff_pick
+-- fps.tblemployee is partitioned by fpsyear, so the spnumber match must also
+-- match fpsyear; otherwise a staff member surfaces once per FPS year the
+-- employee row exists in.
+CREATE OR REPLACE VIEW fps.vtblstaff_pick AS
+SELECT
+    tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text || COALESCE(tblemployee.firstname, ''::character varying)::text) AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+FROM fps.tblwgemployee
+JOIN fps.tblemployee
+    ON tblwgemployee.spnumber::text = tblemployee.spnumber::text
+   AND tblwgemployee.fpsyear = tblemployee.fpsyear
+WHERE tblwgemployee.makeavailable = '-1'::integer;
+
+-- View: fps.vtlkpprojectgroup
+-- Both tables are partitioned by fpsyear; without the year match a user
+-- assigned to a group in any year was granted that group in every year.
+CREATE OR REPLACE VIEW fps.vtlkpprojectgroup AS
+SELECT DISTINCT
+    pg.projectgroup,
+    u.user_id,
+    u.dt2username,
+    u.useremail,
+    pg.fpsyear
+FROM fps.tlkpprojectgroup pg
+JOIN fps.tbluser_projectgroup upg
+    ON pg.projectgroup::text = upg.projectgroup::text
+   AND pg.fpsyear = upg.fpsyear
+JOIN fps.tblusers u
+    ON upg.user_id = u.user_id;
+
+-- View: fps.vtlkpproject_bygroup
+CREATE OR REPLACE VIEW fps.vtlkpproject_bygroup AS
+SELECT DISTINCT
+    p.parentproject,
+    p.projecttitle,
+    p.program,
+    p.customer,
+    p.manager,
+    p.transferincome,
+    p.custincome,
+    p.wip_eoy,
+    p.wip_limit,
+    p.wip_current,
+    p.projectstatus,
+    p.costbookno,
+    p.datecreated,
+    p.feccost,
+    p.profit,
+    p.budget_cvl,
+    p.datecosted,
+    p.disease,
+    p.contract,
+    p.projectparent,
+    p.shorttitle,
+    p.caseworksub,
+    p.pvsincome,
+    p.plancaseworkdebit,
+    p.finished,
+    p.owningrc,
+    p.comments,
+    p.carryover,
+    p.carryoverseed,
+    p.isdefraproject,
+    p.costcentre,
+    p.oracleprojectcode,
+    p.subaccountcode,
+    p.projectgroup,
+    p.incomeaccountcode,
+    p.fpsyear,
+    vpg.user_id,
+    vpg.dt2username,
+    vpg.useremail
+FROM fps.tlkpproject p
+JOIN fps.vtlkpprojectgroup vpg
+    ON p.projectgroup::text = vpg.projectgroup::text
+   AND p.fpsyear = vpg.fpsyear;
+
+-- View: fps.vtbltestrequ_bygroup
+CREATE OR REPLACE VIEW fps.vtbltestrequ_bygroup AS
+SELECT DISTINCT
+    tr.buyer AS jobcode,
+    tr.testcode,
+    tr.norequired AS notests,
+    tr.unitprice AS testprice,
+    tr.datecreated,
+    tr.projectbuyercode,
+    tr.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+FROM fps.tlkptestreqmt tr
+JOIN fps.vtlkpproject_bygroup p
+    ON tr.buyer::text = p.parentproject::text
+   AND tr.fpsyear = p.fpsyear;
+
 -- fps.vworkgroup (CR025) already matches on w.fpsyear = vpc.fpsyear and
 -- requires no change now that vtblkpprofitcentre is fixed above.
 
