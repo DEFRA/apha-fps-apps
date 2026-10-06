@@ -9,8 +9,8 @@ BEGIN;
 -- CR089_cutover
 --
 -- Purpose:
---   Complete the FPS-year scoping of fps.tblkpprofitcentre started by
---   changesets/cr089_add_fpsyear_to_tblkpprofitcentre.sql. That changeset
+--   Complete the FPS-year scoping of fps.tblkpprofitcentre started by the
+--   CR089 DDL script (cr089_add_fpsyear_to_tblkpprofitcentre.sql). That script
 --   already added the composite primary key (profitcentre, fpsyear) and
 --   dropped the five old inbound foreign keys, using a -1 sentinel value so
 --   the primary key could be created immediately (no interim/temporary
