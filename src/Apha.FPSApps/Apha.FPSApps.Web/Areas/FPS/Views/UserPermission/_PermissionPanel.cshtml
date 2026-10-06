@@ -19,7 +19,7 @@
             <span class="mup-select-action" style="visibility:hidden;">Select all</span>
         }
         <button type="button" class="govuk-link mup-select-action" onclick="clearAll('@panelId')">Clear</button>
-        <span id="@(panelId)Count" class="govuk-hint govuk-!-margin-bottom-0">0 selected</span>
+        <span id="@(panelId)Count" class="govuk-hint govuk-!-margin-bottom-0" tabindex="0">0 selected</span>
     </div>
     <fieldset id="panel_@panelId" class="fps-mup-checkbox-list sup_border" aria-label="@panelTitle" data-roving-checkboxes="true">
         @if (options.Count == 0 && !allowFreeText)
