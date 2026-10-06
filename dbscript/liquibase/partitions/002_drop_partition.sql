@@ -48,7 +48,7 @@ BEGIN
     
     -- If no partitions were found, log a warning
     IF v_count = 0 THEN
-        RAISE WARNING 'No partition tables found matching pattern %%_y%% for year %', p_value;
+        RAISE WARNING 'No partition tables found for year % in schema %', p_value, p_schema;
     END IF;
 END $$;
 
