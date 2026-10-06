@@ -55,7 +55,8 @@ namespace Apha.FPSApps.Web.TagHelpers
             "TestCapability",
             "TestorProduct",
             "ProjectMaintenance",
-            "PortfolioMaintenance"
+            "PortfolioMaintenance",
+            "PortfolioTimeCodes"
         };
 
         private readonly IFpsYearContext _fy;
