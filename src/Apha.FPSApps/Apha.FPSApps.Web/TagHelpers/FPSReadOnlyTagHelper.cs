@@ -62,6 +62,17 @@ namespace Apha.FPSApps.Web.TagHelpers
             "LoadTestPlanGrid"
         };
 
+        // PACT area controllers whose buttons should remain enabled during Planning (disabled only when Closed).
+        private const string PactArea = "PACT";
+        public static readonly string[] PlannedYearsSupportedPactControllers =
+        {
+            "TestCapability",
+            "TestorProduct",
+            "ProjectMaintenance",
+            "PortfolioMaintenance",
+            "PortfolioTimeCodes"
+        };
+
         private readonly IFpsYearContext _fy;
 
         public FPSReadOnlyTagHelper(IFpsYearContext fy)
@@ -159,8 +170,31 @@ namespace Apha.FPSApps.Web.TagHelpers
             return false;
         }
 
+        private bool IsPlannedYearsSupportedForPactController()
+        {
+            var controller = ViewContext?.RouteData.Values["controller"]?.ToString();
+            if (controller is null)
+            {
+                return false;
+            }
+
+            return Array.Exists(PlannedYearsSupportedPactControllers,
+                name => string.Equals(controller, name, StringComparison.OrdinalIgnoreCase));
+        }
+
         private bool ShouldDisableForCurrentPage()
         {
+            var area = ViewContext?.RouteData.Values["area"]?.ToString();
+            if (string.Equals(area, PactArea, StringComparison.OrdinalIgnoreCase))
+            {
+                if(IsPlannedYearsSupportedForPactController())
+                {
+                    return string.Equals(_fy.YearStatus?.Trim(), "Closed", StringComparison.OrdinalIgnoreCase);
+                }
+                // default for all other pages
+                return true;
+            }            
+
             if (IsUserPermissionPage())
             {
                 return false;
