@@ -21,13 +21,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
 
-        // Correct chain: Controller → ICostCentreService → IFpsApiClient → IFpsCostCentreApiClient → HTTP
         private readonly ICostCentreService _costCentreService;
+        private readonly IProfitCentreService _profitCentreService;
 
-        public CostCentreMaintenanceController(IMapper mapper, ICostCentreService costCentreService)
+        public CostCentreMaintenanceController(IMapper mapper, ICostCentreService costCentreService, IProfitCentreService profitCentreService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _costCentreService = costCentreService ?? throw new ArgumentNullException(nameof(costCentreService));
+            _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
         }
 
         // ── Index ─────────────────────────────────────────────────────────────
@@ -35,12 +36,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> Index()
         {
             var viewModel = new CostCentreMaintenanceViewModel();
-
-            // an empty grid with default Add button regardless of JS-derived operations profile.
-            // AllowAdd:true from JS showAddButton:true; AllowEdit+AllowDelete:true from JS
-            // actions column containing both edit and delete buttons (costcenter_maintenance.js).
-            // Build the initial grid with no default sort applied.
-            // Sorting is only applied after the user explicitly clicks a column header.
+            
             var defaultRequest = new PaginationFilter<string>
             {
                 Filter = "{}"
@@ -52,43 +48,26 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return View(viewModel);
         }
 
-        // ── Dropdown Population ───────────────────────────────────────────────
-
-        // (returns CostCentreWorkgroupDto), NOT the CRUD paged method; keeps CRUD vs lookup separation.
-        // Populates the Index ViewModel's ProfitCentreList property (used by Index view).
         private async Task PopulateDropdownsAsync(CostCentreMaintenanceViewModel model)
         {
-            var lookupResult = await _costCentreService.GetAllCostCentresAsync();
-            if (lookupResult.Success && lookupResult.Data != null)
-            {
-                // CostCentreWorkgroupDto.ProfitCentre → SelectListItem.Value and .Text
-                model.ProfitCentreList = lookupResult.Data
-                    .Where(item => !string.IsNullOrWhiteSpace(item.ProfitCentre))
-                    .Select(item => item.ProfitCentre!)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(p => p)
-                    .Select(p => new SelectListItem { Value = p, Text = p })
-                    .ToList();
-            }
+            model.ProfitCentreList = await GetProfitCentreListAsync();
         }
 
-        // directly so that Create GET and Edit GET return the _AddEditCostCentre partial with a populated
-        // ProfitCentre dropdown.  Without this call the dropdown was always empty in both Add and Edit modes.
-        private async Task PopulatePartialDropdownsAsync()
+        private async Task<List<SelectListItem>> GetProfitCentreListAsync()
         {
-            var lookupResult = await _costCentreService.GetAllCostCentresAsync();
-            var items = new List<SelectListItem>();
-            if (lookupResult.Success && lookupResult.Data != null)
+            var lookupResult = await _profitCentreService.GetAllProfitCentresAsync();
+            if (!lookupResult.Success || lookupResult.Data == null)
             {
-                items = lookupResult.Data
-                    .Where(item => !string.IsNullOrWhiteSpace(item.ProfitCentre))
-                    .Select(item => item.ProfitCentre!)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(p => p)
-                    .Select(p => new SelectListItem { Value = p, Text = p })
-                    .ToList();
+                return new List<SelectListItem>();
             }
-            ViewBag.ProfitCentreList = items;
+
+            return lookupResult.Data
+                .Where(item => !string.IsNullOrWhiteSpace(item.ProfitCentreId))
+                .Select(item => item.ProfitCentreId!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(p => p)
+                .Select(p => new SelectListItem { Value = p, Text = p })
+                .ToList();
         }
 
         // ── DataGrid AJAX Reload ──────────────────────────────────────────────
@@ -155,13 +134,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── CRUD — Create ─────────────────────────────────────────────────────
 
-        // Phase 14 fix: await PopulatePartialDropdownsAsync() so ViewBag.ProfitCentreList is set
-        // before the partial is rendered; previously the ProfitCentre dropdown was always empty.
+        // Create GET returns the _AddEditCostCentre partial with a populated ProfitCentre dropdown
+        // sourced from the strongly-typed model (CostCentreItem.ProfitCentreList).
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            await PopulatePartialDropdownsAsync();
-            return PartialView("_AddEditCostCentre", new CostCentreItem());
+            var model = new CostCentreItem
+            {
+                ProfitCentreList = await GetProfitCentreListAsync()
+            };
+            return PartialView("_AddEditCostCentre", model);
         }
 
         // No [ValidateAntiForgeryToken] — endpoint receives JSON body, not form post
@@ -212,8 +194,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // ── CRUD — Edit ───────────────────────────────────────────────────────
 
         // id supplied as query string; culture-invariant parse prevents decimal separator issues
-        // Phase 14 fix: await PopulatePartialDropdownsAsync() so ViewBag.ProfitCentreList is set
-        // before the partial is rendered; previously the ProfitCentre dropdown was always empty.
+        // Edit GET returns the _AddEditCostCentre partial with a populated ProfitCentre dropdown
+        // sourced from the strongly-typed model (CostCentreItem.ProfitCentreList).
         [HttpGet]
         public async Task<IActionResult> Edit(string id)
         {
@@ -231,8 +213,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (result.Success && result.Data != null)
             {
-                await PopulatePartialDropdownsAsync();
                 var item = _mapper.Map<CostCentreItem>(result.Data);
+                item.ProfitCentreList = await GetProfitCentreListAsync();
                 return PartialView("_AddEditCostCentre", item);
             }
 

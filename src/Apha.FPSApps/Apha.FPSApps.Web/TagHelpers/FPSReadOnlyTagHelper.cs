@@ -24,7 +24,21 @@ namespace Apha.FPSApps.Web.TagHelpers
             "AdditionalCostJob",
             "Project",
             "ProgrammeSelect",
-            "ProjectGroupSelection"
+            "ProjectGroupSelection",
+            "DivisionMaintenance",
+            "ResourceCentreMaintenance",
+            "WorkgroupMaintenance",
+            "GradeMaintenance",
+            "TotalBusinessOverheadsMaintenance",
+            "DivisionGradeMaintenance",
+            "ProfitCentreGradeMaint",
+            "WorkGroupGradeMaintenance",
+            "WorkGroupStaffMaintenance",
+            "StaffMaintenance",
+            "ProgramMaintenance",
+            "CostCentreMaintenance",
+            "AccountCategoryMaintenance",
+            "AnimalMaintenance"
         };
 
         // BulkRates supports FEC (Open-year), Staff and Animal (Planned-year) requests, so its buttons

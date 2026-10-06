@@ -17,13 +17,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
     {
         private readonly IMapper _mapper;
         private readonly ICostCentreService _costCentreService;
+        private readonly IProfitCentreService _profitCentreService;
         private readonly CostCentreMaintenanceController _controller;
 
         public CostCentreMaintenanceControllerTests()
         {
-            _mapper             = Substitute.For<IMapper>();
-            _costCentreService  = Substitute.For<ICostCentreService>();
-            _controller         = new CostCentreMaintenanceController(_mapper, _costCentreService);
+            _mapper              = Substitute.For<IMapper>();
+            _costCentreService   = Substitute.For<ICostCentreService>();
+            _profitCentreService = Substitute.For<IProfitCentreService>();
+            _controller          = new CostCentreMaintenanceController(_mapper, _costCentreService, _profitCentreService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
@@ -39,9 +41,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
                     .ToList(),
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = count });
 
-        private static ApiResponseDto<List<CostCentreWorkgroupDto>> BuildWorkgroupSuccess() =>
-            ApiResponseDto<List<CostCentreWorkgroupDto>>.SuccessResponse(
-                new List<CostCentreWorkgroupDto> { new() { ProfitCentre = "PC01" } });
+        private static ApiResponseDto<IEnumerable<ProfitCentreDto>> BuildProfitCentreSuccess() =>
+            ApiResponseDto<IEnumerable<ProfitCentreDto>>.SuccessResponse(
+                new List<ProfitCentreDto> { new() { ProfitCentreId = "PC01", ProfitCentreName = "PC Name 01" } });
 
         #region Constructor Tests
 
@@ -49,14 +51,21 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new CostCentreMaintenanceController(null!, _costCentreService));
+                new CostCentreMaintenanceController(null!, _costCentreService, _profitCentreService));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenCostCentreServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new CostCentreMaintenanceController(_mapper, null!));
+                new CostCentreMaintenanceController(_mapper, null!, _profitCentreService));
+        }
+
+        [Fact]
+        public void Constructor_ThrowsArgumentNullException_WhenProfitCentreServiceIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                new CostCentreMaintenanceController(_mapper, _costCentreService, null!));
         }
 
         #endregion
@@ -68,10 +77,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
         {
             // Arrange
             var pagedResponse     = BuildPagedSuccess();
-            var workgroupResponse = BuildWorkgroupSuccess();
 
             _costCentreService.GetAllCostCentresPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(pagedResponse);
-            _costCentreService.GetAllCostCentresAsync().Returns(workgroupResponse);
+            _profitCentreService.GetAllProfitCentresAsync().Returns(BuildProfitCentreSuccess());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
             _mapper.Map<List<CostCentreItem>>(Arg.Any<List<CostCentreDto>>()).Returns(new List<CostCentreItem>());
@@ -85,12 +93,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
         }
 
         [Fact]
-        public async Task Index_CallsGetAllCostCentresAsync_ForDropdowns()
+        public async Task Index_CallsGetAllProfitCentresAsync_ForDropdowns()
         {
             // Arrange
             _costCentreService.GetAllCostCentresPagedAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(BuildPagedSuccess());
-            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            _profitCentreService.GetAllProfitCentresAsync().Returns(BuildProfitCentreSuccess());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
             _mapper.Map<List<CostCentreItem>>(Arg.Any<List<CostCentreDto>>()).Returns(new List<CostCentreItem>());
@@ -100,7 +108,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             await _controller.Index();
 
             // Assert
-            await _costCentreService.Received(1).GetAllCostCentresAsync();
+            await _profitCentreService.Received(1).GetAllProfitCentresAsync();
         }
 
         [Fact]
@@ -109,7 +117,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             // Arrange
             _costCentreService.GetAllCostCentresPagedAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(BuildPagedSuccess());
-            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            _profitCentreService.GetAllProfitCentresAsync().Returns(BuildProfitCentreSuccess());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
             _mapper.Map<List<CostCentreItem>>(Arg.Any<List<CostCentreDto>>())
@@ -132,7 +140,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             // Arrange
             _costCentreService.GetAllCostCentresPagedAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(BuildPagedSuccess());
-            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            _profitCentreService.GetAllProfitCentresAsync().Returns(BuildProfitCentreSuccess());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
             _mapper.Map<List<CostCentreItem>>(Arg.Any<List<CostCentreDto>>())
@@ -217,12 +225,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
 
         #region Create GET Tests
 
-        // because PopulatePartialDropdownsAsync() is called before returning the partial view
+        // because the ProfitCentre dropdown is populated on the model before returning the partial view
         [Fact]
         public async Task Create_Get_ReturnsPartialViewWithEmptyCostCentreItem()
         {
             // Arrange
-            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            _profitCentreService.GetAllProfitCentresAsync().Returns(BuildProfitCentreSuccess());
 
             // Act
             var result = await _controller.Create();
@@ -230,7 +238,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditCostCentre", partialView.ViewName);
-            Assert.IsType<CostCentreItem>(partialView.Model);
+            var model = Assert.IsType<CostCentreItem>(partialView.Model);
+            Assert.NotEmpty(model.ProfitCentreList);
         }
 
         #endregion
@@ -356,8 +365,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
 
             _costCentreService.GetCostCentreByIdAsync(100.0).Returns(apiResponse);
             _mapper.Map<CostCentreItem>(dto).Returns(item);
-            // PopulatePartialDropdownsAsync() is now called inside Edit GET before returning partial
-            _costCentreService.GetAllCostCentresAsync().Returns(BuildWorkgroupSuccess());
+            // ProfitCentre dropdown is now populated on the model inside Edit GET before returning partial
+            _profitCentreService.GetAllProfitCentresAsync().Returns(BuildProfitCentreSuccess());
 
             // Act
             var result = await _controller.Edit("100");
@@ -367,6 +376,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.CostCentreMaintenanceContro
             Assert.Equal("_AddEditCostCentre", partialView.ViewName);
             var model = Assert.IsType<CostCentreItem>(partialView.Model);
             Assert.Equal(100.0, model.CostCentreNo);
+            Assert.NotEmpty(model.ProfitCentreList);
         }
 
         [Fact]
