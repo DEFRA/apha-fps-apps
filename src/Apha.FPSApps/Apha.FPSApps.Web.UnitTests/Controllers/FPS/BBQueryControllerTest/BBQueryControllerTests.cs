@@ -284,12 +284,23 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BBQueryControllerTest
             var result = await _controller.LoadGrid("PC1");
 
             var grid = Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(Assert.IsType<PartialViewResult>(result).Model);
-            var a1 = Assert.Single(grid.Data);
+
+            // All configured accounts are listed, even A2 which has no bid data (mirrors legacy Access report).
+            Assert.Equal(2, grid.Data.Count);
+            var a1 = grid.Data[0];
+            Assert.Equal("A1", a1["AccShortName"]);
 
             // An explicit 0 bid still renders as "0"; only a missing bid renders blank.
             Assert.Equal("0", a1["WG1"]);
             Assert.Equal("12", a1["WG2"]);
             Assert.Equal("12", a1["RowSummary"]);
+
+            // A2 has no bids at all: it still appears as a row with blank workgroup cells and a zero summary.
+            var a2 = grid.Data[1];
+            Assert.Equal("A2", a2["AccShortName"]);
+            Assert.Null(a2["WG1"]);
+            Assert.Null(a2["WG2"]);
+            Assert.Equal("0", a2["RowSummary"]);
         }
 
         private void ArrangeSortableGrid()
