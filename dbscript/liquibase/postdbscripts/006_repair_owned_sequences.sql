@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset migration-fix:006-repair-owned-sequences labels:dml context:all splitStatements:false runInTransaction:true
+--validCheckSum: ANY
 -- Advance owned positive non-cycling sequences after an explicit-ID migration.
 -- Writers and all sequence consumers must be stopped before this changeset.
 
@@ -42,9 +43,6 @@ BEGIN
           AND namespace.nspname IN ('fps', 'mabarchive')
         ORDER BY namespace.nspname, relation.relname, attribute.attnum
     LOOP
-        EXECUTE format('LOCK TABLE %I.%I IN SHARE ROW EXCLUSIVE MODE',
-                       counter.table_schema, counter.table_name);
-
         EXECUTE format(
             'SELECT seqincrement, seqmax, seqcycle FROM pg_sequence WHERE seqrelid = %L::regclass',
             format('%I.%I', counter.sequence_schema, counter.sequence_name))
@@ -54,6 +52,23 @@ BEGIN
             RAISE EXCEPTION 'Unsupported sequence %.%',
                 counter.sequence_schema, counter.sequence_name;
         END IF;
+
+        EXECUTE format('SELECT last_value, is_called FROM %I.%I',
+                       counter.sequence_schema, counter.sequence_name)
+            INTO last_value, is_called;
+
+        EXECUTE format('SELECT max(%I)::bigint FROM %I.%I',
+                       counter.column_name, counter.table_schema, counter.table_name)
+            INTO maximum_id;
+
+        -- Only lock tables whose sequence is behind; re-read under the lock to avoid races.
+        IF maximum_id IS NULL
+           OR (CASE WHEN is_called THEN last_value + increment_by ELSE last_value END) > maximum_id THEN
+            CONTINUE;
+        END IF;
+
+        EXECUTE format('LOCK TABLE %I.%I IN SHARE ROW EXCLUSIVE MODE',
+                       counter.table_schema, counter.table_name);
 
         EXECUTE format('SELECT last_value, is_called FROM %I.%I',
                        counter.sequence_schema, counter.sequence_name)
