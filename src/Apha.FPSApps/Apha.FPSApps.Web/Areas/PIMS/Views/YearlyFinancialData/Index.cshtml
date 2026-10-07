@@ -214,12 +214,88 @@
                     ? getSelectedYfdProjectValue()
                     : navigationProject);
             }
+
+            wireYfdAllowExportDownload();
+        });
+
+        document.addEventListener('gridReloaded', function (e) {
+            if (e && e.detail && e.detail.gridId === 'costCenterListGrid') {
+                wireYfdAllowExportDownload();
+            }
         });
 
         function getYearlyFinancialDataExtraFilters() {
             return {
                 project: getSelectedYfdProjectValue()
             };
+        }
+
+        function getExportedYearlyFinancialFileName(projectName) {
+            var now = new Date();
+            var yyyy = now.getFullYear();
+            var mm = String(now.getMonth() + 1).padStart(2, '0');
+            var dd = String(now.getDate()).padStart(2, '0');
+            var hh = String(now.getHours()).padStart(2, '0');
+            var min = String(now.getMinutes()).padStart(2, '0');
+            var ss = String(now.getSeconds()).padStart(2, '0');
+
+            var safeProject = String(projectName || 'Project')
+                .replace(/[\\/:*?"<>|]/g, '')
+                .replace(/\s+/g, '');
+
+            if (!safeProject) {
+                safeProject = 'Project';
+            }
+
+            return `YearlyFinancialData_${safeProject}_${yyyy}${mm}${dd}_${hh}${min}${ss}.xlsx`;
+        }
+
+        function wireYfdAllowExportDownload() {
+            var $exportButton = $('#costCenterListGrid_exportBtn');
+            if (!$exportButton.length) {
+                return;
+            }
+
+            $exportButton.off('click').on('click', function (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                var project = getSelectedYfdProjectValue();
+                if (!project) {
+                    showAlertMessage('Please select a project first.', AlertType.ERROR);
+                    return;
+                }
+
+                var exportUrl = $(this).data('export-url');
+                if (!exportUrl || typeof window.downloadFile !== 'function') {
+                    showAlertMessage('Export is currently unavailable.', AlertType.ERROR);
+                    return;
+                }
+
+                var gm = window['gridManager_costCenterListGrid'];
+                var filterModel = gm && typeof gm.getFilterModel === 'function'
+                    ? gm.getFilterModel()
+                    : {};
+
+                var params = {
+                    project: project,
+                    filter: JSON.stringify(filterModel)
+                };
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+
+                var url = exportUrl + (exportUrl.indexOf('?') >= 0 ? '&' : '?') + query;
+                window.downloadFile(url, getExportedYearlyFinancialFileName(project), { method: 'GET' })
+                    .finally(function () {
+                        if (typeof window.hideLoader === 'function') {
+                            window.hideLoader();
+                            setTimeout(window.hideLoader, 250);
+                            setTimeout(window.hideLoader, 900);
+                        }
+                    });
+            });
         }
 
         // ── Grid reload ──────────────────────────────────────────────────────────────────
