@@ -18,11 +18,17 @@
     function sideNavBuildQueryString() {
         var rc  = (typeof window.sideNavState !== 'undefined' && window.sideNavState.resourceCentre) || '';
         var wg  = (typeof window.sideNavState !== 'undefined' && window.sideNavState.workGroup)      || '';
-        var yr  = (typeof window.sideNavState !== 'undefined' && window.sideNavState.fpsYear)        || '';
+        // Carry the currently selected financial year across screens. Prefer the global context
+        // year (always set by fps-year-script) and fall back to any sideNavState value. The query
+        // parameter must be named 'fpsContextYear' so the FpsYearMiddleware picks it up; otherwise
+        // the year reverts to the default Open year when navigating between the side nav screens.
+        var yr  = (typeof window.FPS_CONTEXT_YEAR !== 'undefined' && window.FPS_CONTEXT_YEAR)
+                  || (typeof window.sideNavState !== 'undefined' && window.sideNavState.fpsYear)
+                  || '';
         var qs  = '';
         if (rc)  qs += (qs ? '&' : '?') + 'resourceCentre=' + encodeURIComponent(rc);
         if (wg)  qs += (qs ? '&' : '?') + 'workGroup='      + encodeURIComponent(wg);
-        if (yr)  qs += (qs ? '&' : '?') + 'fpsYear='        + encodeURIComponent(yr);
+        if (yr)  qs += (qs ? '&' : '?') + 'fpsContextYear='  + encodeURIComponent(yr);
         return qs;
     }
 
