@@ -39,8 +39,8 @@ public sealed class CreateProjectMonthSingleStepTests
                 ('{project}', 'Project PMS', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
                  'Contract', 0, 'IA1', {harness.FpsYear});
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear});
 
             INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
             VALUES ({costCentre}, '{profitCentre}', {harness.FpsYear});

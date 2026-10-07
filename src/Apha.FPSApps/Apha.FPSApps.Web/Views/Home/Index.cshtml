@@ -49,7 +49,16 @@
 
         </div>
         <div class="link-wrapper">
-
+            <div class="tile @(hasCostbookAccess ? "" : "tile-disabled")">
+                @if (hasCostbookAccess)
+                {
+                    <a asp-area="Costbook" asp-controller="Projects" asp-action="Index" class="govuk-link govuk-link--inverse">COSTBOOK</a>
+                }
+                else
+                {
+                    <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">COSTBOOK</span>
+                }
+            </div>
             <div class="tile @(hasFpsAccess ? "" : "tile-disabled")">  
                 @if (hasFpsAccess)
                 {
@@ -91,16 +100,7 @@
                     <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">PIMS</span>
                 }
             </div>
-            <div class="tile @(hasCostbookAccess ? "" : "tile-disabled")">  
-                @if (hasCostbookAccess)
-                {
-                    <a asp-area="Costbook" asp-controller="Projects" asp-action="Index" class="govuk-link govuk-link--inverse">COSTBOOK</a>
-                }
-                else
-                {
-                    <span class="govuk-link govuk-link--inverse" style="cursor: not-allowed; opacity: 0.5;">COSTBOOK</span>
-                }
-            </div>
+ 
         </div>
     </div>
     <div class="footerline"></div>

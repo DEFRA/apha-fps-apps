@@ -42,8 +42,8 @@ public sealed class RefreshPeriodTccStepTests
                 ('{project}', 'Project TCC', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
                  'Contract', 0, {costCentre}, 'OPC1', 'SAC1', 'IA1', {harness.FpsYear});
 
-            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
-            VALUES ('{harness.Id("PC1")}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear)
+            VALUES ('{harness.Id("PC1")}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1), {harness.FpsYear});
 
             INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
             VALUES ({costCentre}, '{harness.Id("PC1")}', {harness.FpsYear});

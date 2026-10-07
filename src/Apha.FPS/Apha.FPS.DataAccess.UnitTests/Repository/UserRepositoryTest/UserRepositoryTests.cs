@@ -997,9 +997,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
 
             var data = new List<ProjectGroup>
             {
-                new() { ProjectGroupName = "GroupC" },
-                new() { ProjectGroupName = "GroupA" },
-                new() { ProjectGroupName = "GroupB" }
+                new() { ProjectGroupName = "GroupC", FpsYear = DefaultFpsYear },
+                new() { ProjectGroupName = "GroupA", FpsYear = DefaultFpsYear },
+                new() { ProjectGroupName = "GroupB", FpsYear = DefaultFpsYear }
             };
             var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
             RepositoryTestHelper.SetupDbSetOperations(mockSet);

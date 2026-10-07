@@ -144,11 +144,13 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
+            modelBuilder.Entity<PactProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WorkGroupViewMap());
             modelBuilder.Entity<WorkGroupView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+            modelBuilder.Entity<ProfitCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new UserMap());
 
