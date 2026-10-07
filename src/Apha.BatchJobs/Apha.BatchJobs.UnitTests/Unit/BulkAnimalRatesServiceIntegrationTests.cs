@@ -26,8 +26,6 @@ namespace Apha.BatchJobs.UnitTests;
 [Trait("Category", "Integration")]
 public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
 {
-    private const string DefaultConnectionString =
-        "Host=fps-development.c7kkusgy4aqn.eu-west-2.rds.amazonaws.com;Port=5432;Database=batchjob_testing;Username=fpsdev;Password=CLOUD_DB_PASSWORD;SSL Mode=Require;Trust Server Certificate=true";
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -35,7 +33,7 @@ public sealed class BulkAnimalRatesServiceIntegrationTests : IAsyncLifetime
     {
         _connectionString =
             Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+            ?? string.Empty;
     }
 
     public async Task InitializeAsync()
