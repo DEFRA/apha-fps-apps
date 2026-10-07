@@ -207,6 +207,8 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectGroupMap());
 
             modelBuilder.ApplyConfiguration(new ProjectGroupViewMap());
+            modelBuilder.Entity<ProjectGroupView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
 
             modelBuilder.ApplyConfiguration(new ContractViewMap());
             modelBuilder.Entity<ContractView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

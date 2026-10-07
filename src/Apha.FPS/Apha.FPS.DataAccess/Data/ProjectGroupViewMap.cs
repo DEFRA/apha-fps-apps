@@ -22,6 +22,8 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(255)
                 .UseCollation("latin1_general_ci_as")
                 .HasColumnName("useremail");
+
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }
