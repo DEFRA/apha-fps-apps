@@ -206,6 +206,8 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
         var loader = new TlkpYearLoader(ctx);
 
         await loader.LoadAsync(targetYear, CancellationToken.None);
+        // MabArchiveYearRepository clears the change tracker between loader calls; mirror that here.
+        ctx.ChangeTracker.Clear();
         var secondCallRows = await loader.LoadAsync(targetYear, CancellationToken.None);
 
         var count = await ctx.MaDstTlkpYear.CountAsync(x => x.Year == targetYear);

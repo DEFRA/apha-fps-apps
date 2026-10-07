@@ -73,16 +73,39 @@ public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
         var project = $"W3{Guid.NewGuid():N}"[..8].ToUpperInvariant();
 
         await context.Database.ExecuteSqlAsync($@"
+            -- Parent rows required by tlkpproject's foreign keys; seeded only where missing.
+            INSERT INTO fps.tblyearmaster (fpsyear, fpsyearcode, yearstatus, active, createdby)
+            VALUES ({targetYear}, {targetYear.ToString()}, 'Closed', true, 'integration-test')
+            ON CONFLICT (fpsyear) DO NOTHING;
+
+            INSERT INTO fps.tblstatus (status)
+            SELECT 'Active' WHERE NOT EXISTS (SELECT 1 FROM fps.tblstatus WHERE status = 'Active');
+
+            INSERT INTO fps.tbldisease (disease)
+            SELECT 'General' WHERE NOT EXISTS (SELECT 1 FROM fps.tbldisease WHERE disease = 'General');
+
+            INSERT INTO fps.tlkpcustomer (customer)
+            SELECT 'Wave3 Customer' WHERE NOT EXISTS (SELECT 1 FROM fps.tlkpcustomer WHERE customer = 'Wave3 Customer');
+
+            INSERT INTO fps.tlkpaccountcode (code, description)
+            SELECT 'IA-W3', 'Test' WHERE NOT EXISTS (SELECT 1 FROM fps.tlkpaccountcode WHERE code = 'IA-W3');
+
+            INSERT INTO fps.tlkpsubaccount (subaccountcode)
+            SELECT 'SA-W3' WHERE NOT EXISTS (SELECT 1 FROM fps.tlkpsubaccount WHERE subaccountcode = 'SA-W3');
+
+            INSERT INTO fps.tblcontract (contractno, category, customer, fpsyear)
+            SELECT 'CTR-W3', (SELECT category FROM fps.tblcategory ORDER BY category LIMIT 1), 'Wave3 Customer', {targetYear};
+
             INSERT INTO fps.tlkpprogram (programno, sector_name, fpsyear)
             VALUES ('PRG-W3', 'Wave3 Sector', {targetYear});
 
             INSERT INTO fps.tlkpproject
                 (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
-                 isdefraproject, costcentre, oracleprojectcode, subaccountcode, incomeaccountcode, fpsyear,
+                 contract, isdefraproject, costcentre, oracleprojectcode, subaccountcode, incomeaccountcode, fpsyear,
                  profit, budget_cvl, manager, pvsincome, plancaseworkdebit)
             VALUES
                 ('{project}', 'Wave3 Project', 'PRG-W3', 'Wave3 Customer', 10, 20, 'Active', 'General',
-                 0, 10, 'OP-W3', 'SA-W3', 'IA-W3', {targetYear},
+                 'CTR-W3', 0, 10, 'OP-W3', 'SA-W3', 'IA-W3', {targetYear},
                  3, 5, 'Wave3 Manager', 7, 2);
         ");
 

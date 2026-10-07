@@ -21,9 +21,11 @@ public sealed class MyTlkpTestReqmtLoaderTests
         var buyer1 = harness.Id("B1");
         var buyer2 = harness.Id("B2");
 
+        // The job deletes the whole year's archive rows before loading (DeleteYearDataAsync); mirror that
+        // inside the harness transaction so existing archived rows cannot collide with the reload.
         await harness.ExecuteSqlAsync($@"
             DELETE FROM mabarchive.my_tlkptestreqmt
-            WHERE year = {year} AND testcode = '{testCode}';
+            WHERE year = {year};
 
             -- Parent row required by fk_tlkptestreqmt_testcode (testcode, fpsyear) -> fps.testorproduct.
             INSERT INTO fps.testorproduct (itemcode, owner, fpsyear)
