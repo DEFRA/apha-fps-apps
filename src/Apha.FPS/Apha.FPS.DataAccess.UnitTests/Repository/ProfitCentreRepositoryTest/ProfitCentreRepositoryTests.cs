@@ -1046,6 +1046,52 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         }
 
         [Fact]
+        public async Task DeleteProfitCentreAsync_RollsBackAndRethrows_WhenSaveChangesFails()
+        {
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(2024);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var profitCentre = BuildEntity("PC01");
+            profitCentre.FpsYear = 2024;
+            var pcSet = RepositoryTestHelper.CreateMockDbSet(new List<ProfitCentre> { profitCentre });
+            RepositoryTestHelper.SetupDbSetOperations(pcSet);
+            mockContext.Setup(x => x.ProfitCentres).Returns(pcSet.Object);
+
+            var upcSet = RepositoryTestHelper.CreateMockDbSet(new List<UserProfitcentre>
+            {
+                new() { ProfitCentre = "PC01", UserId = 10, FpsYear = 2024 }
+            });
+            RepositoryTestHelper.SetupDbSetOperations(upcSet);
+            mockContext.Setup(x => x.UserProfitcentres).Returns(upcSet.Object);
+
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("db failure"));
+
+            var repo = new ProfitCentreRepository(mockContext.Object, requestContext);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.DeleteProfitCentreAsync("PC01"));
+        }
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_RemovesMatchingUserLinks_WhenLinksExistForSameYear()
+        {
+            var profitCentre = BuildEntity("PC01");
+            profitCentre.FpsYear = 2024;
+            var matchingLink = new UserProfitcentre { ProfitCentre = "pc01", UserId = 10, FpsYear = 2024 };
+            var otherYearLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 11, FpsYear = 2023 };
+            var repo = CreateRepository(
+                profitCentres: [profitCentre],
+                profitCentreGrades: [],
+                workgroups: [],
+                userProfitCentres: [matchingLink, otherYearLink]);
+
+            var result = await repo.DeleteProfitCentreAsync("PC01");
+
+            Assert.True(result);
+        }
+
+        [Fact]
         public async Task DeleteProfitCentreAsync_ReturnsTrue_WhenUserLinksExistOnlyForOtherYearOrProfitCentre()
         {
             var otherYearLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 10, FpsYear = 2023 };
