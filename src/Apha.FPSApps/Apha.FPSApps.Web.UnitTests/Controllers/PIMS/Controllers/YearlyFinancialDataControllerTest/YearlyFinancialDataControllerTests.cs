@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -22,6 +23,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         private readonly IYearlyFinancialDataService _service;
         private readonly IProjectListService         _projectListService;
         private readonly IProjectDetailsService      _projectDetailsService;
+        private readonly IExcelExportService         _excelExportService;
         private readonly YearlyFinancialDataController _controller;
 
         public YearlyFinancialDataControllerTests()
@@ -30,12 +32,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
             _service               = Substitute.For<IYearlyFinancialDataService>();
             _projectListService    = Substitute.For<IProjectListService>();
             _projectDetailsService = Substitute.For<IProjectDetailsService>();
+            _excelExportService    = Substitute.For<IExcelExportService>();
 
             _controller = new YearlyFinancialDataController(
                 _mapper,
                 _service,
                 _projectListService,
-                _projectDetailsService);
+                _projectDetailsService,
+                _excelExportService);
 
             _controller.TempData = new TempDataDictionary(
                 new DefaultHttpContext(),
@@ -116,7 +120,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.YearlyFinancia
         public void Constructor_WithValidDependencies_InitializesController()
         {
             var controller = new YearlyFinancialDataController(
-                _mapper, _service, _projectListService, _projectDetailsService);
+                _mapper, _service, _projectListService, _projectDetailsService, _excelExportService);
             Assert.NotNull(controller);
         }
 

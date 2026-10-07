@@ -204,11 +204,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
         }
 
         [Fact]
-        public async Task Index_YearColumnsAreCappedAtTen()
+        public async Task Index_YearColumnsAreCappedAtTwenty()
         {
             // Arrange
             const string projectId = "P001";
-            var pivot = BuildPivot(rowCount: 1, yearCount: 15); // 15 years, but max is 10
+            var pivot = BuildPivot(rowCount: 1, yearCount: 25); // 25 years, but max is 20
             SetupHeaderSuccess(projectId);
             SetupPivotSuccess(projectId, pivot);
 
@@ -220,7 +220,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectCostsController
                 Assert.IsType<ViewResult>(result).Model!);
 
             var yearColumns = model.Grid.Columns.Where(c => c.PropertyName.StartsWith('Y') && c.PropertyName != "Total").ToList();
-            Assert.Equal(10, yearColumns.Count);
+            Assert.Equal(20, yearColumns.Count);
         }
 
         // ── LoadGrid ──────────────────────────────────────────────────────────
