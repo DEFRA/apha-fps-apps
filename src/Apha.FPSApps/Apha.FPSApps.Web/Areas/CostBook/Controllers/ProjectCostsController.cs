@@ -72,8 +72,8 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             var filterDict = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(request?.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
 
-            // Cap the number of year columns/values to a sensible maximum (10)
-            var yearCount = Math.Min(pivot.Years.Count, 10);
+            // Cap the number of year columns/values to a sensible maximum (20)
+            var yearCount = Math.Min(pivot.Years.Count, 20);
 
             var rows = pivot.Rows.Select(r =>
             {
