@@ -63,7 +63,7 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
         var loaderSource = System.IO.File.ReadAllText(
             System.IO.Path.Combine(
                 AppContext.BaseDirectory,
-                $"../../../../Apha.BatchJobs.Infrastructure/Repositories/MabArchive/Loaders/TlkpYearLoader.cs"));
+                $"../../../../Apha.BatchJobs.Infrastructure/MabArchive/Loaders/TlkpYearLoader.cs"));
 
         var codeOnly = string.Join(
             '\n',
