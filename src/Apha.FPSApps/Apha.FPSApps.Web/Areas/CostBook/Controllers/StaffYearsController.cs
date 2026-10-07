@@ -76,32 +76,18 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
             var rows = pivot.Rows.Select(r =>
             {
-                var row = new StaffYearsPivotRow
-                {
-                    Project = r.Project,
-                    Grade   = r.Grade,
-                    Total   = Math.Round((decimal)r.Total, 2)
-                };
+                var row = StaffYearsPivotRow.Create(pivot.Years.Count);
+                row.Project = r.Project;
+                row.Grade   = r.Grade;
+                row.Total   = Math.Round((decimal)r.Total, 2);
 
-                for (int i = 0; i < pivot.Years.Count && i < 10; i++)
+                for (int i = 0; i < pivot.Years.Count && i < 20; i++)
                 {
                     int year = pivot.Years[i];
                     decimal? value = r.YearlyAmounts.TryGetValue(year, out double v)
                         ? Math.Round((decimal)v, 2)
                         : null;
-                    switch (i)
-                    {
-                        case 0: row.Y1  = value; break;
-                        case 1: row.Y2  = value; break;
-                        case 2: row.Y3  = value; break;
-                        case 3: row.Y4  = value; break;
-                        case 4: row.Y5  = value; break;
-                        case 5: row.Y6  = value; break;
-                        case 6: row.Y7  = value; break;
-                        case 7: row.Y8  = value; break;
-                        case 8: row.Y9  = value; break;
-                        case 9: row.Y10 = value; break;
-                    }
+                    row.SetYearValue(i + 1, value);
                 }
 
                 return row;
@@ -110,7 +96,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             if (!string.IsNullOrWhiteSpace(query.SortBy)
                 && query.SortBy.StartsWith("Y", StringComparison.OrdinalIgnoreCase)
                 && int.TryParse(query.SortBy[1..], out var yearIndex)
-                && yearIndex >= 1 && yearIndex <= 10)
+                && yearIndex >= 1 && yearIndex <= 20)
             {
                 rows = query.Descending
                     ? rows.OrderBy(r => GetYearValue(r, yearIndex).HasValue ? 0 : 1)
@@ -131,7 +117,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 new() { PropertyName = "Total",   DisplayName = "Total",   ColumnType = GridColumnType.DecimalNumber, IsFilterable = false, Width = 90  }
             };
 
-            for (int i = 0; i < pivot.Years.Count && i < 10; i++)
+            for (int i = 0; i < pivot.Years.Count && i < 20; i++)
             {
                 columns.Add(new DataGridColumn
                 {
@@ -167,19 +153,13 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         }
 
         private static decimal? GetYearValue(StaffYearsPivotRow row, int yearIndex)
-            => yearIndex switch
-            {
-                1 => row.Y1,
-                2 => row.Y2,
-                3 => row.Y3,
-                4 => row.Y4,
-                5 => row.Y5,
-                6 => row.Y6,
-                7 => row.Y7,
-                8 => row.Y8,
-                9 => row.Y9,
-                10 => row.Y10,
-                _ => null
-            };
+        {
+            if (yearIndex < 1 || yearIndex > 20)
+                return null;
+
+            var propName = $"Y{yearIndex}";
+            var prop = row.GetType().GetProperty(propName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.IgnoreCase);
+            return (decimal?)prop?.GetValue(row);
+        }
     }
 }
