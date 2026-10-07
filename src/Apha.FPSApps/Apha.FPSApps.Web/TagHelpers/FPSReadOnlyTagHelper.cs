@@ -38,7 +38,8 @@ namespace Apha.FPSApps.Web.TagHelpers
             "ProgramMaintenance",
             "CostCentreMaintenance",
             "AccountCategoryMaintenance",
-            "AnimalMaintenance"
+            "AnimalMaintenance",
+            "MasterLookup"
         };
 
         // BulkRates supports FEC (Open-year), Staff and Animal (Planned-year) requests, so its buttons
