@@ -1,4 +1,5 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
@@ -30,5 +31,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         //   Included for full AutoMapper round-trip with CostCentreDto.FpsYear.
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public int FpsYear { get; set; }
+
+        //   ProfitCentre dropdown options for the Add/Edit modal partial.
+        //   Populated by the controller; not part of the AutoMapper round-trip with CostCentreDto.
+        //   Hidden from the DataGrid (not a data column) to avoid rendering the list type as a cell value.
+        [GridColumn(IsVisible = false)]
+        public List<SelectListItem> ProfitCentreList { get; set; } = new();
     }
 }

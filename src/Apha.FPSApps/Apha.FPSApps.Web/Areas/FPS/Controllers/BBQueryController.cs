@@ -128,12 +128,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     ? categoriesResponse.Data.Select(a => a.AccShortName).OrderBy(a => a).ToList()
                     : allBids.Select(b => b.Account).Distinct().OrderBy(a => a).ToList();
 
-                // The Access crosstab only emits accounts/workgroups that actually have bid rows.
-                // Keep the same shape here so the grid does not show extra all-zero rows/columns.
-                accounts = accounts
-                    .Where(a => bidLookup.ContainsKey(NormaliseKey(a)))
-                    .ToList();
-
+                // Mirror the legacy MS Access report: list every configured account category,
+                // even when no bid data exists for it. Accounts without any bids still appear as
+                // a row with blank workgroup cells and a zero row summary, so users get a complete
+                // account listing and can easily spot accounts that currently have no values.
+                // Workgroup columns remain restricted to those with bid rows to avoid all-blank columns.
                 workgroups = workgroups
                     .Where(wg => bidLookup.Values.Any(wgBids => wgBids.ContainsKey(NormaliseKey(wg))))
                     .ToList();

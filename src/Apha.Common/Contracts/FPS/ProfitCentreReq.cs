@@ -13,5 +13,6 @@ namespace Apha.Common.Contracts.FPS
         public string? ProfitCentreHead { get; set; }
         public int? DivisionId { get; set; }
         public string? EmailRecipient { get; set; }
+        public int FpsYear { get; set; }
     }
 }

@@ -68,7 +68,7 @@ public static class YearEndTableRuleMatrix
     public static IReadOnlyList<YearEndTableRuleMatrixEntry> Entries { get; } =
     [
         // CopyOrder = FK-dependency layer (0-5), meaningful only for entries with no DedicatedStep.
-        new(Schema, "costcentre", YearEndPrimaryRole.CopyToTargetYear, ["costcentre", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "costcentre", YearEndPrimaryRole.CopyToTargetYear, ["costcentre", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
         new(Schema, "divisiongrade", YearEndPrimaryRole.CopyToTargetYear, ["divisiongrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
         new(Schema, "grade", YearEndPrimaryRole.CopyToTargetYear, ["gradecode", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "milestone", YearEndPrimaryRole.CopyToTargetYear, ["project", "milestoneref", "objectiveref", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
@@ -91,6 +91,7 @@ public static class YearEndTableRuleMatrix
         new(Schema, "tblcontract", YearEndPrimaryRole.CopyToTargetYear, ["contractno", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "tblemployee", YearEndPrimaryRole.CopyToTargetYear, ["spnumber", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "tblkpaccountcategory", YearEndPrimaryRole.CopyToTargetYear, ["accshortname", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tblkpprofitcentre", YearEndPrimaryRole.CopyToTargetYear, ["profitcentre", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         // Reset (FinalSummariesRun=0, PeriodLocked=0) happens inside PeriodSetupStep itself, not via Overrides.
         new(Schema, "tblperiod", YearEndPrimaryRole.CopyToTargetYear, ["periodname", "fpsyear"], YearEndFinalValidationRule.ExactTargetRowCount,
             DedicatedStep: nameof(PeriodSetupStep),
@@ -105,7 +106,7 @@ public static class YearEndTableRuleMatrix
         new(Schema, "tbltestreqwg", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "buyer", "workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "tbltotalbusinessoverheads", YearEndPrimaryRole.CopyToTargetYear, ["fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "tbluser_category", YearEndPrimaryRole.CopyToTargetYear, ["user_id", "category", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
-        new(Schema, "tbluser_profitcentre", YearEndPrimaryRole.CopyToTargetYear, ["profitcentre", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
+        new(Schema, "tbluser_profitcentre", YearEndPrimaryRole.CopyToTargetYear, ["profitcentre", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
         new(Schema, "tbluser_program", YearEndPrimaryRole.CopyToTargetYear, ["programno", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "tbluser_projectgroup", YearEndPrimaryRole.CopyToTargetYear, ["projectgroup", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
         new(Schema, "tbluser_testowner", YearEndPrimaryRole.CopyToTargetYear, ["test_owner", "user_id", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
@@ -135,12 +136,12 @@ public static class YearEndTableRuleMatrix
                 ["pvsincome"] = "NULL",
                 ["plancaseworkdebit"] = "NULL"
             }),
-        new(Schema, "tlkptestcapability", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
+        new(Schema, "tlkptestcapability", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 3),
         new(Schema, "tlkptestreqmt", YearEndPrimaryRole.CopyToTargetYear, ["testcode", "buyer", "fpsyear"], YearEndFinalValidationRule.MatchSource,
             CopyOrder: 1,
             ResetPhase: YearEndResetPhase.ConfiguredPlanningReset,
             Overrides: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["norequired"] = "0" }),
-        new(Schema, "workgroup", YearEndPrimaryRole.CopyToTargetYear, ["workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 1),
+        new(Schema, "workgroup", YearEndPrimaryRole.CopyToTargetYear, ["workgroup", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 2),
         new(Schema, "workgroupgrade", YearEndPrimaryRole.CopyToTargetYear, ["wggrade", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 3),
         new(Schema, "workgroupmonth", YearEndPrimaryRole.CopyToTargetYear, ["workgroup", "month", "fpsyear"], YearEndFinalValidationRule.MatchSource, CopyOrder: 0),
 
