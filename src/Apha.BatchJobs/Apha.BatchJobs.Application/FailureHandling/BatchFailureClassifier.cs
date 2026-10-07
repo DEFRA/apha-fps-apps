@@ -67,10 +67,10 @@ public sealed class BatchFailureClassifier
     {
         var marker = markerKey switch
         {
-            MarkerKey.Sql => _configuration["ExceptionTypes:Sql"] ?? "FPSBatchJobs.SQL_EXCEPTION",
-            MarkerKey.Concurrency => _configuration["ExceptionTypes:Concurrency"] ?? "FPSBatchJobs.CONCURRENCY_EXCEPTION",
-            MarkerKey.Validation => _configuration["ExceptionTypes:Validation"] ?? "FPSBatchJobs.VALIDATION_EXCEPTION",
-            _ => _configuration["ExceptionTypes:General"] ?? "FPSBatchJobs.GENERAL_EXCEPTION"
+            MarkerKey.Sql => _configuration["ExceptionTypes:Sql"] ?? BatchExceptionMarkers.Database,
+            MarkerKey.Concurrency => _configuration["ExceptionTypes:Concurrency"] ?? BatchExceptionMarkers.Concurrency,
+            MarkerKey.Validation => _configuration["ExceptionTypes:Validation"] ?? BatchExceptionMarkers.Validation,
+            _ => _configuration["ExceptionTypes:General"] ?? BatchExceptionMarkers.General
         };
 
         return new BatchFailureClassification(exitCode, category, marker);

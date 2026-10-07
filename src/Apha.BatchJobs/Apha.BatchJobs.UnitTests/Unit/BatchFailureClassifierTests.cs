@@ -36,7 +36,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.ConfigurationFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Configuration, result.Category);
-        Assert.Equal("FPSBatchJobs.VALIDATION_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.VALIDATION", result.ErrorType);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.ConfigurationFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Configuration, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Concurrency, result.Category);
-        Assert.Equal("FPSBatchJobs.CONCURRENCY_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.CONCURRENCY", result.ErrorType);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.LockLeaseLost, result.Category);
-        Assert.Equal("FPSBatchJobs.CONCURRENCY_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.CONCURRENCY", result.ErrorType);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.EmailFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Email, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Sql, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Sql, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.DependencyOutage, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.DependencyOutage, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Timeout, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.UnhandledFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Authorization, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.UnhandledFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Business, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Sql, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -176,5 +176,13 @@ public sealed class BatchFailureClassifierTests
         var result = classifier.Classify(new DbUpdateException("save failed"));
 
         Assert.Equal("Custom.SQL_MARKER", result.ErrorType);
+    }
+
+    [Fact]
+    public void AlarmedMarkers_MatchBatchJobsMetricFilterPatterns()
+    {
+        // The BatchJobs metric filters match these exact strings; changing either silently disables alerting.
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", BatchExceptionMarkers.General);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", BatchExceptionMarkers.Database);
     }
 }

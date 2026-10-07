@@ -17,7 +17,7 @@ var requestedJobName = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
 if (string.IsNullOrWhiteSpace(requestedJobName))
 {
     Console.Error.WriteLine(
-        "[FPSBatchJobs.GENERAL_EXCEPTION] BATCH_JOB_NAME is not set. Cannot determine which job to run. " +
+        $"[{BatchExceptionMarkers.General}] BATCH_JOB_NAME is not set. Cannot determine which job to run. " +
         "Verify the EventBridge input transformer maps $.detail.jobName → BATCH_JOB_NAME.");
     return BatchExitCodes.ConfigurationFailure;
 }
@@ -56,7 +56,7 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "[FPSBatchJobs.GENERAL_EXCEPTION] Batch worker failed during startup.");
+    Log.Fatal(ex, "[{ErrorType}] Batch worker failed during startup.", BatchExceptionMarkers.General);
 }
 finally
 {

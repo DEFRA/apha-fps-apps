@@ -58,7 +58,7 @@ public sealed class BatchRunSummaryWriterTests
     {
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
-        var classification = new BatchFailureClassification(20, BatchFailureCategory.Sql, "FPSBatchJobs.SQL_EXCEPTION");
+        var classification = new BatchFailureClassification(20, BatchFailureCategory.Sql, "FPSAPPS.EXCEPTION.BATCHJOBS.DB");
         var result = BatchExecutionResult.Failure(request: null, classification, new InvalidOperationException("db down"));
 
         writer.WriteSummary(result, TimeSpan.FromSeconds(2));
@@ -73,7 +73,7 @@ public sealed class BatchRunSummaryWriterTests
     {
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
-        var classification = new BatchFailureClassification(40, BatchFailureCategory.Configuration, "FPSBatchJobs.VALIDATION_EXCEPTION");
+        var classification = new BatchFailureClassification(40, BatchFailureCategory.Configuration, "FPSAPPS.EXCEPTION.BATCHJOBS.VALIDATION");
         var result = BatchExecutionResult.Failure(request: null, classification, new InvalidOperationException("bad config"));
 
         writer.WriteSummary(result, TimeSpan.FromMilliseconds(50));
@@ -89,7 +89,7 @@ public sealed class BatchRunSummaryWriterTests
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
         var exception = new InvalidOperationException("should not be re-logged here");
-        var classification = new BatchFailureClassification(99, BatchFailureCategory.Business, "FPSBatchJobs.GENERAL_EXCEPTION");
+        var classification = new BatchFailureClassification(99, BatchFailureCategory.Business, "FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL");
         var result = BatchExecutionResult.Failure(request: null, classification, exception);
 
         writer.WriteSummary(result, TimeSpan.FromSeconds(1));
