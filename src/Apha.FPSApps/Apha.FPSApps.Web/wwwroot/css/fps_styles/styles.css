@@ -5541,7 +5541,7 @@ input.govuk-input.ssr-total-input[readonly] {
     width: 42%;
 }
 .isSetUpStaffResources {
-    width: 63%;
+/*    width: 63%;*/
 }
 
 /* Stage 2 header: three label + select pairs share one table row. Without these
@@ -5759,9 +5759,8 @@ input.govuk-input.ssr-total-input[readonly] {
     border: 1px solid #b1b4b6 !important;
 }
 
-.content-wrapper:has(.isTestSupplierPage),
+.content-wrapper:has(.isTestSupplierPage)
 .content-wrapper:has(.isMiscReportPage) {
-    flex: 0 !important;
     margin-bottom: 0 !important;
 }
 
