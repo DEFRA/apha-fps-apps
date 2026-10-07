@@ -127,32 +127,32 @@
             }, 300);
         }
 
+        function getProgrammeSelectReturnUrl() {
+            var programNo = document.getElementById('programmeDropdown')?.value ?? '';
+            var projectName = document.getElementById('projectNameInput')?.value ?? '';
+
+            return '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
+                + '?programNo=' + encodeURIComponent(programNo)
+                + '&projectName=' + encodeURIComponent(projectName);
+        }
+
         function planProject(btn) {
             var projectCode = $(btn).data('id');
-            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
-            fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })' + '?projectCode=' + encodeURIComponent(projectCode));
+            var returnUrl = getProgrammeSelectReturnUrl();
+
+            fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })'
+                + '?projectCode=' + encodeURIComponent(projectCode)
+                + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
 
         function editProject(btn) {
             var parentProject = $(btn).data('id');
-            var programNo = document.getElementById('programmeDropdown')?.value ?? '';
-            var projectName = document.getElementById('projectNameInput')?.value ?? '';
+            var returnUrl = getProgrammeSelectReturnUrl();
 
-            var returnUrl = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
-                + '?programNo=' + encodeURIComponent(programNo)
-                + '&projectName=' + encodeURIComponent(projectName);
-
-            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
             fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
-                + '?parentProject=' + encodeURIComponent(parentProject));
+                + '?parentProject=' + encodeURIComponent(parentProject)
+                + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
-
-        window.addEventListener('pageshow', function () {
-            if (sessionStorage.getItem('fps_clearFiltersOnReturn') === '1') {
-                sessionStorage.removeItem('fps_clearFiltersOnReturn');
-                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })');
-            }
-        });
 
         document.addEventListener('DOMContentLoaded', function () {
             function applyButtonTitles() {
