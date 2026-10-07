@@ -37,6 +37,7 @@ namespace Apha.PACT.DataAccess.Data
                 .HasColumnName("profitcentrename");
             entity.Property(e => e.Timesheet).HasColumnName("timesheet");
             entity.Property(e => e.TimesheetLayout).HasColumnName("timesheetlayout");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

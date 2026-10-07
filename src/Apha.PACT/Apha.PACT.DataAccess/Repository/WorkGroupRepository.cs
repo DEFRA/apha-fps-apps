@@ -524,7 +524,8 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(wg => wg.FpsYear == fpsYear
                           && _context.ProfitCentres
                                 .Any(pc => pc.ProfitCentreId == profitCentre
-                                        && pc.ProfitCentreId == wg.ProfitCentre))
+                                        && pc.ProfitCentreId == wg.ProfitCentre
+                                        && pc.FpsYear == fpsYear))
                 .ExecuteUpdateAsync(s => s.SetProperty(w => w.SendEmail, flag));
             return affectedRows >= 0;
         }

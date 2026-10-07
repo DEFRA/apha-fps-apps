@@ -197,6 +197,8 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
         await Exec("DELETE FROM fps.job_queue WHERE jobqueueid = @jqid;", c => c.Parameters.AddWithValue("jqid", jobQueueId));
         await Exec("DELETE FROM fps.profitcentregrade WHERE fpsyear = @fpsyear AND pcgrade = ANY(@grades);",
             c => { c.Parameters.AddWithValue("fpsyear", fpsYear); c.Parameters.Add(new NpgsqlParameter("grades", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = pcGrades }); });
+        await Exec("DELETE FROM fps.tblkpprofitcentre WHERE profitcentre = 'ADMIN' AND fpsyear = @fpsyear;",
+            c => c.Parameters.AddWithValue("fpsyear", fpsYear));
         await Exec("DELETE FROM fps.divisiongrade WHERE divisiongrade = 'IT-TDVG' AND fpsyear = @fpsyear;",
             c => c.Parameters.AddWithValue("fpsyear", fpsYear));
         await Exec("DELETE FROM fps.grade WHERE gradecode = 'IT-TGRADE' AND fpsyear = @fpsyear;",
@@ -245,6 +247,20 @@ public sealed class BulkStaffRatesServiceIntegrationTests : IAsyncLifetime
             {
                 cmd.Parameters.Clear();
                 cmd.CommandText = "INSERT INTO fps.divisiongrade (divisiongrade, gradecode, division, fpsyear) VALUES ('IT-TDVG', 'IT-TGRADE', 'BSD', @year);";
+                cmd.Parameters.AddWithValue("year", fpsYear);
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        // fps.tblkpprofitcentre is partitioned and keyed by (profitcentre, fpsyear) - use SELECT-then-INSERT
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*)::int FROM fps.tblkpprofitcentre WHERE profitcentre = 'ADMIN' AND fpsyear = @year;";
+            cmd.Parameters.AddWithValue("year", fpsYear);
+            if ((int)(await cmd.ExecuteScalarAsync())! == 0)
+            {
+                cmd.Parameters.Clear();
+                cmd.CommandText = "INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division, fpsyear) VALUES ('ADMIN', 'ADMIN', 'BSD', @year);";
                 cmd.Parameters.AddWithValue("year", fpsYear);
                 await cmd.ExecuteNonQueryAsync();
             }

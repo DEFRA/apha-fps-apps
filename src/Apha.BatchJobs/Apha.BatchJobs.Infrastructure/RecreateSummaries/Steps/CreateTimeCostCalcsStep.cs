@@ -51,6 +51,7 @@ SELECT
 FROM fps.tblkpprofitcentre pc
 JOIN fps.profitcentregrade pcg
     ON pc.profitcentre = pcg.profitcentre
+    AND pcg.fpsyear = pc.fpsyear
 JOIN fps.workgroupgrade wgg
     ON pcg.pcgrade = wgg.profitcentregrade
     AND wgg.fpsyear = pcg.fpsyear

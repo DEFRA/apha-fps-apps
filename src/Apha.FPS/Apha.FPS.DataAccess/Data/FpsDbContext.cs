@@ -94,7 +94,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
-        
+
         public virtual DbSet<ProfitCentreView> ProfitCentreViews { get; set; }
         public virtual DbSet<ProfitCentreGradeView> ProfitCentreGradeViews { get; set; }
         public virtual DbSet<WorkGroupGradeView> WorkGroupGradeViews { get; set; }
@@ -128,7 +128,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
         public virtual DbSet<MonthHour> MonthHours { get; set; }
-                       
+
         public virtual DbSet<PeriodLookup> PeriodLookups { get; set; }
         public virtual DbSet<Period> Periods { get; set; }
         public virtual DbSet<FpsSettingStaging> TblStagingSettings { get; set; }
@@ -175,12 +175,14 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new TestsRequiredByRcViewMap());
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+            modelBuilder.Entity<ProfitCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
             modelBuilder.Entity<ProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
             modelBuilder.Entity<ProfitCentreGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());
-            modelBuilder.Entity<WorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);  
+            modelBuilder.Entity<WorkGroupGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new WorkGroupEmployeeViewMap());
             modelBuilder.Entity<WorkGroupEmployeeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -411,12 +413,10 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new FpsSettingStagingMap());
             modelBuilder.ApplyConfiguration(new MonthHourStagingMap());
-         
+
             modelBuilder.ApplyConfiguration(new PeriodMonthlyOutputMap());
             modelBuilder.Entity<PeriodMonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-
-
         }
-            }
-        }
+    }
+}
