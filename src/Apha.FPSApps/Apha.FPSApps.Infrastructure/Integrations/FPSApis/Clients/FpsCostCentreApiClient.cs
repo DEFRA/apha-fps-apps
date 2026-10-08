@@ -147,5 +147,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        //   profitCentre is URL-encoded as it is a free-text code placed in the URL path
+        public async Task<ApiResponseDto<List<CostCentreDto>>> GetAllCostCentresByProfitCentreAsync(string profitCentre)
+        {
+            try
+            {
+                var url = string.Format(FpsApiEndpoints.GetCostCentresByProfitCentre, Uri.EscapeDataString(profitCentre));
+                var response = await _http.GetAsync<List<CostCentreRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<CostCentreDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<CostCentreDto>>>(response);
+                return ApiResponseDto<List<CostCentreDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<CostCentreDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve cost centres by profit centre", Code = InternalCodeError } },
+                    new ApiMetaDto());
+            }
+        }
     }
 }
