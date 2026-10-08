@@ -106,6 +106,14 @@ namespace Apha.FPS.Application.Services
                         "PROFITCENTRE_REFERENCED_BY_WORKGROUP")
                 ]);
 
+            if (await _repository.HasLinkedCostCenterAsync(profitCentreId))
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        "Cannot delete profit centre: it is referenced by cost center records.",
+                        "PROFITCENTRE_REFERENCED_BY_COST_CENTER")
+                ]);
+
             return await _repository.DeleteProfitCentreAsync(profitCentreId);
         }
 

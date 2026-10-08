@@ -423,13 +423,27 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         }
 
         [Fact]
+        public async Task DeleteProfitCentreAsync_ThrowsBusinessValidationErrorException_WhenCostCenterExists()
+        {
+            _mockRepository.HasLinkedGradesAsync("PC01").Returns(false);
+            _mockRepository.HasLinkedWorkgroupsAsync("PC01").Returns(false);
+            _mockRepository.HasLinkedCostCenterAsync("PC01").Returns(true);
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+
+            exception.Errors.Should().ContainSingle(e => e.Message == "Cannot delete profit centre: it is referenced by cost center records." && e.Code == "PROFITCENTRE_REFERENCED_BY_COST_CENTER");
+            await _mockRepository.DidNotReceive().DeleteProfitCentreAsync(Arg.Any<string>());
+        }
+
+        [Fact]
         public async Task DeleteProfitCentreAsync_ReturnsTrue_WhenDeleted()
         {
             _mockRepository.HasLinkedGradesAsync("PC01").Returns(false);
             _mockRepository.HasLinkedWorkgroupsAsync("PC01").Returns(false);
+            _mockRepository.HasLinkedCostCenterAsync("PC01").Returns(false);
             _mockRepository.DeleteProfitCentreAsync("PC01").Returns(true);
             var result = await _sut.DeleteProfitCentreAsync("PC01");
             result.Should().BeTrue();
+            await _mockRepository.Received(1).HasLinkedCostCenterAsync("PC01");
             await _mockRepository.Received(1).DeleteProfitCentreAsync("PC01");
         }
 
