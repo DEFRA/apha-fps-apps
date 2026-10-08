@@ -18,13 +18,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             IEnumerable<UserProfitcentre>? userProfitCentres = null,
             IEnumerable<ProfitCentreGrade>? profitCentreGrades = null,
             IEnumerable<Workgroup>? workgroups = null,
-            IEnumerable<User>? users = null)
+            IEnumerable<User>? users = null,
+            IEnumerable<CostCentre>? costCentres = null)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
             requestContext.FpsYear.Returns(2024);
             requestContext.UserEmailId.Returns("test@example.com");
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var ccSet = RepositoryTestHelper.CreateMockDbSet(costCentres ?? []);
+            mockContext.Setup(x => x.CostCentres).Returns(ccSet.Object);
 
             if (profitCentreViews != null)
             {
@@ -616,6 +620,58 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
 
         #endregion
 
+        #region HasLinkedCostCenterAsync Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task HasLinkedCostCenterAsync_ThrowsArgumentException_WhenIdIsEmptyOrWhiteSpace(string id)
+        {
+            var repo = CreateRepository(profitCentres: []);
+            await Assert.ThrowsAnyAsync<ArgumentException>(() => repo.HasLinkedCostCenterAsync(id));
+        }
+
+        [Fact]
+        public async Task HasLinkedCostCenterAsync_ThrowsArgumentNullException_WhenIdIsNull()
+        {
+            var repo = CreateRepository(profitCentres: []);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => repo.HasLinkedCostCenterAsync(null!));
+        }
+
+        [Fact]
+        public async Task HasLinkedCostCenterAsync_ReturnsFalse_WhenNoCostCentresExist()
+        {
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], costCentres: []);
+            var result = await repo.HasLinkedCostCenterAsync("PC01");
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasLinkedCostCenterAsync_ReturnsFalse_WhenCostCentresLinkedToOtherProfitCentre()
+        {
+            var costCentres = new List<CostCentre>
+            {
+                new() { CostCentreNo = 1001, ProfitCentre = "PC02", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], costCentres: costCentres);
+            var result = await repo.HasLinkedCostCenterAsync("PC01");
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasLinkedCostCenterAsync_ReturnsTrue_WhenCostCentresExist()
+        {
+            var costCentres = new List<CostCentre>
+            {
+                new() { CostCentreNo = 1001, ProfitCentre = "PC01", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], costCentres: costCentres);
+            var result = await repo.HasLinkedCostCenterAsync("PC01");
+            Assert.True(result);
+        }
+
+        #endregion
+
         #region GetProfitCentresAsync Email Filter Tests
 
         [Fact]
@@ -983,6 +1039,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
                 profitCentreGrades: [],
                 workgroups: [],
                 userProfitCentres: [existingLink]);
+
+            var result = await repo.DeleteProfitCentreAsync("PC01");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_RollsBackAndRethrows_WhenSaveChangesFails()
+        {
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(2024);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var profitCentre = BuildEntity("PC01");
+            profitCentre.FpsYear = 2024;
+            var pcSet = RepositoryTestHelper.CreateMockDbSet(new List<ProfitCentre> { profitCentre });
+            RepositoryTestHelper.SetupDbSetOperations(pcSet);
+            mockContext.Setup(x => x.ProfitCentres).Returns(pcSet.Object);
+
+            var upcSet = RepositoryTestHelper.CreateMockDbSet(new List<UserProfitcentre>
+            {
+                new() { ProfitCentre = "PC01", UserId = 10, FpsYear = 2024 }
+            });
+            RepositoryTestHelper.SetupDbSetOperations(upcSet);
+            mockContext.Setup(x => x.UserProfitcentres).Returns(upcSet.Object);
+
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("db failure"));
+
+            var repo = new ProfitCentreRepository(mockContext.Object, requestContext);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.DeleteProfitCentreAsync("PC01"));
+        }
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_RemovesMatchingUserLinks_WhenLinksExistForSameYear()
+        {
+            var profitCentre = BuildEntity("PC01");
+            profitCentre.FpsYear = 2024;
+            var matchingLink = new UserProfitcentre { ProfitCentre = "pc01", UserId = 10, FpsYear = 2024 };
+            var otherYearLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 11, FpsYear = 2023 };
+            var repo = CreateRepository(
+                profitCentres: [profitCentre],
+                profitCentreGrades: [],
+                workgroups: [],
+                userProfitCentres: [matchingLink, otherYearLink]);
+
+            var result = await repo.DeleteProfitCentreAsync("PC01");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_ReturnsTrue_WhenUserLinksExistOnlyForOtherYearOrProfitCentre()
+        {
+            var otherYearLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 10, FpsYear = 2023 };
+            var otherPcLink = new UserProfitcentre { ProfitCentre = "PC02", UserId = 11, FpsYear = 2024 };
+            var repo = CreateRepository(
+                profitCentres: [BuildEntity("PC01")],
+                profitCentreGrades: [],
+                workgroups: [],
+                userProfitCentres: [otherYearLink, otherPcLink]);
 
             var result = await repo.DeleteProfitCentreAsync("PC01");
 
