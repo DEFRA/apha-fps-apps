@@ -5477,6 +5477,12 @@ input.govuk-input.ssr-total-input[readonly] {
     min-height: 190px !important;
     max-height: 190px !important;
 }
+#gridContainer_animalPlanGrid > .editable-grid-container > div > .grid-scroll-container,
+#gridContainer_additionalCostPlanGrid > .editable-grid-container > div > .grid-scroll-container,
+#gridContainer_staffBookedGrid > .editable-grid-container > div > .grid-scroll-container {
+    max-height: 410px;
+    height: 410px;
+}
 #gridContainer_yearEndMonthHoursGrid > .editable-grid-container > div  >.grid-scroll-container {
     min-height: 600px !important;
     max-height: 600px !important;
@@ -5720,6 +5726,7 @@ input.govuk-input.ssr-total-input[readonly] {
         overflow-y: auto;
     }
 }
+
 #gridContainer_@Model.AdditionalCostGrid.GridId .grid-scroll-container {
     height: 255px;
     max-height: 255px;
