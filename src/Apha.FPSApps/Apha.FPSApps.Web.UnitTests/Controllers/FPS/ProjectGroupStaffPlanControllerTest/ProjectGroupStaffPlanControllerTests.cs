@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupStaffPlanContro
                 new List<ApiErrorDto> { new() { Message = "Service error", Code = "SVC_ERR" } },
                 new ApiMetaDto());
 
-        private List<ProjectGroupStaffPlanViewItem> SampleViewItems(int count = 2) =>
+        private static List<ProjectGroupStaffPlanViewItem> SampleViewItems(int count = 2) =>
             Enumerable.Range(1, count)
                 .Select(i => new ProjectGroupStaffPlanViewItem
                 {
@@ -79,22 +79,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupStaffPlanContro
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.IsType<ProjectGroupStaffPlanViewModel>(viewResult.Model);
-        }
-
-        [Fact]
-        public async Task Index_ReadsProjectGroupFromSession()
-        {
-            // Arrange
-            _staffPlanService.GetPagedAsync(Arg.Any<QueryParameters<string>>())
-                .Returns(SuccessResponse());
-            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
-                .Returns(new QueryParameters<string>());
-            _mapper.Map<List<ProjectGroupStaffPlanViewItem>>(Arg.Any<List<ProjectGroupStaffPlanViewDto>>())
-                .Returns(SampleViewItems());
-
-            // Act
-            await _controller.Index();
-
         }
 
         [Fact]
