@@ -136,5 +136,17 @@ namespace Apha.FPS.Api.Controllers
 
             return Ok(true);
         }
+
+        /// <summary>
+        /// Returns all cost centres belonging to the given profit centre.
+        /// </summary>
+        /// <param name="profitCentre">Profit centre code.</param>
+        /// <returns>List of <see cref="CostCentreRes"/>.</returns>
+        [HttpGet("profitcentre/{profitCentre}")]
+        public async Task<ActionResult<IEnumerable<CostCentreRes>>> GetAllCostCentresByProfitCentreAsync(string profitCentre)
+        {
+            var dtos = await _costCentreService.GetAllCostCentresByProfitCentreAsync(profitCentre);
+            return Ok(_mapper.Map<IEnumerable<CostCentreRes>>(dtos));
+        }
     }
 }

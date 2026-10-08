@@ -304,5 +304,42 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.CostCentreServiceTest
         }
 
         #endregion
+
+        #region GetAllCostCentresByProfitCentreAsync Tests
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_DelegatesTo_ApiClient()
+        {
+            // Arrange
+            var apiResponse = ApiResponseDto<List<CostCentreDto>>.SuccessResponse(
+                new List<CostCentreDto> { BuildDto(100.0, "PC01") });
+            _mockCostCentreApiClient.GetAllCostCentresByProfitCentreAsync("PC01").Returns(apiResponse);
+
+            // Act
+            var result = await _sut.GetAllCostCentresByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _mockCostCentreApiClient.Received(1).GetAllCostCentresByProfitCentreAsync("PC01");
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_PropagatesFailureResponse()
+        {
+            // Arrange
+            var errors      = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
+            var apiResponse = ApiResponseDto<List<CostCentreDto>>.FailureResponse(errors, new ApiMetaDto());
+            _mockCostCentreApiClient.GetAllCostCentresByProfitCentreAsync("PC01").Returns(apiResponse);
+
+            // Act
+            var result = await _sut.GetAllCostCentresByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
     }
 }

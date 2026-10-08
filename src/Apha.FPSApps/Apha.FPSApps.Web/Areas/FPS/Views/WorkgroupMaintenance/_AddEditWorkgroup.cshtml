@@ -239,7 +239,9 @@
                         var opt = document.createElement('option');
                         opt.value = item.value;
                         opt.textContent = item.display;
-                        if (selectedValue !== '' && item.display === selectedValue) { opt.selected = true; }
+                        if ((selectedValue ?? '') !== '' && String(item.display).trim() === String(selectedValue).trim()) {
+                            opt.selected = true; 
+                        }
                         select.appendChild(opt);
                     });
                 }

@@ -142,6 +142,14 @@ namespace Apha.FPS.Application.Services
             }
         }
 
+        public async Task<IEnumerable<CostCentreDto>> GetAllCostCentresByProfitCentreAsync(string profitCentre)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
+
+            var entities = await _repository.GetAllByProfitCentreAsync(profitCentre);
+            return _mapper.Map<IEnumerable<CostCentreDto>>(entities);
+        }
+
         // Screen-specific handling for the Maintain Cost Centres workgroup foreign key constraint.
         // The violation surfaces as a PostgresException (SqlState 23503) usually wrapped inside a DbUpdateException.
         private static bool IsWorkgroupForeignKeyViolation(Exception? ex)
