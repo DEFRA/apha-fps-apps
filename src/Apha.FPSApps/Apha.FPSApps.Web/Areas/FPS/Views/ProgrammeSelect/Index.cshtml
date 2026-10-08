@@ -130,10 +130,17 @@
         function getProgrammeSelectReturnUrl() {
             var programNo = document.getElementById('programmeDropdown')?.value ?? '';
             var projectName = document.getElementById('projectNameInput')?.value ?? '';
+            var fpsYear = (typeof window.FPS_CONTEXT_YEAR !== 'undefined' && window.FPS_CONTEXT_YEAR) || '';
 
-            return '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
+            var returnUrl = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
                 + '?programNo=' + encodeURIComponent(programNo)
                 + '&projectName=' + encodeURIComponent(projectName);
+
+            if (fpsYear) {
+                returnUrl += '&fpsContextYear=' + encodeURIComponent(fpsYear);
+            }
+
+            return returnUrl;
         }
 
         function planProject(btn) {
