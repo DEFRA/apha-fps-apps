@@ -62,6 +62,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -89,11 +90,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // TRANSFORMENGINE: IWorkgroupMaintenanceService injected for ALL CRUD + lookup flows
         // This is the FPS WorkgroupMaintenance service (Phase 8), NOT the PACT IWorkGroupService
         private readonly IWorkgroupMaintenanceService _service;
+        private readonly ICostCentreService _costCentreService;
 
-        public WorkgroupMaintenanceController(IMapper mapper, IWorkgroupMaintenanceService service)
+
+        public WorkgroupMaintenanceController(IMapper mapper, IWorkgroupMaintenanceService service, ICostCentreService costCentreService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _service = service ?? throw new ArgumentNullException(nameof(service));
+            _costCentreService = costCentreService ?? throw new ArgumentNullException(nameof(costCentreService));
         }
 
         /// <summary>
@@ -401,13 +405,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             // TRANSFORMENGINE: GetCostCentresAsync maps to GET api/v1/workgroup/costcentres?profitCentre={pc}
             // profitCentre sourced from modal ProfitCentre select change event (confirmed page-sourced)
-            var result = await _service.GetCostCentresAsync(profitCentre);
+            var result = await _costCentreService.GetAllCostCentresByProfitCentreAsync(profitCentre);
 
             if (result.Success && result.Data != null)
             {
                 var costCentres = result.Data
-                    .Where(cc => cc.HasValue)
-                    .Select(cc => new { value = cc!.Value, display = cc.Value.ToString("F0") })
+                    .Select(cc => new { value = cc.CostCentreNo, display = cc.CostCentreNo })
                     .ToList();
 
                 return Json(new { success = true, data = costCentres });

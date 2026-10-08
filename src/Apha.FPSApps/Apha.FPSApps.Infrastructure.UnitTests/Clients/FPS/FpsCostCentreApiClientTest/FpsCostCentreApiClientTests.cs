@@ -534,5 +534,84 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsCostCentreApiClie
         }
 
         #endregion
+
+        #region GetAllCostCentresByProfitCentreAsync Tests
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_HttpReturnsSuccess_ReturnsMappedResponse()
+        {
+            // Arrange
+            var httpResponse = BuildPagedResponse(true);
+            var expectedDto  = ApiResponseDto<List<CostCentreDto>>.SuccessResponse(
+                new List<CostCentreDto> { new() { CostCentreNo = 100.0, ProfitCentre = "PC01", FpsYear = 2024 } });
+
+            _http.GetAsync<List<CostCentreRes>>(Arg.Is<string>(url => url.EndsWith("profitcentre/PC01")))
+                .Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<List<CostCentreDto>>>(httpResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllCostCentresByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            _mapper.Received(1).Map<ApiResponseDto<List<CostCentreDto>>>(httpResponse);
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var httpResponse = BuildPagedResponse(false);
+            var mappedDto    = new ApiResponseDto<List<CostCentreDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Code = "ERROR" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<CostCentreRes>>(Arg.Any<string>()).Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<List<CostCentreDto>>>(httpResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllCostCentresByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_HttpThrowsException_ReturnsFailureResponse()
+        {
+            // Arrange
+            _http.GetAsync<List<CostCentreRes>>(Arg.Any<string>())
+                .Throws(new Exception("GET failed"));
+
+            // Act
+            var result = await _client.GetAllCostCentresByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Contains(result.Errors, e => e.Code == "INTERNAL_ERROR");
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_EscapesProfitCentre_InUrl()
+        {
+            // Arrange
+            var httpResponse = BuildPagedResponse(true);
+            _http.GetAsync<List<CostCentreRes>>(Arg.Any<string>()).Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<List<CostCentreDto>>>(httpResponse)
+                .Returns(ApiResponseDto<List<CostCentreDto>>.SuccessResponse(new List<CostCentreDto>()));
+
+            // Act
+            await _client.GetAllCostCentresByProfitCentreAsync("PC 01/A");
+
+            // Assert
+            await _http.Received(1).GetAsync<List<CostCentreRes>>(Arg.Is<string>(url => url.EndsWith("profitcentre/PC%2001%2FA")));
+        }
+
+        #endregion
     }
 }
