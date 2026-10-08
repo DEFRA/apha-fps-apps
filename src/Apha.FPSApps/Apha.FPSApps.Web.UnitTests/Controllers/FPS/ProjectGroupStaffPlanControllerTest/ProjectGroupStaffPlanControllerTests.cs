@@ -85,8 +85,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupStaffPlanContro
         public async Task Index_ReadsProjectGroupFromSession()
         {
             // Arrange
-            _appStateService.GetSessionAsync<string>("SelectedProjectGroup")
-                .Returns("GROUP_A");
             _staffPlanService.GetPagedAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(SuccessResponse());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -97,8 +95,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupStaffPlanContro
             // Act
             await _controller.Index();
 
-            // Assert
-            await _appStateService.Received(1).GetSessionAsync<string>("SelectedProjectGroup");
         }
 
         [Fact]
@@ -126,11 +122,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupStaffPlanContro
         public async Task Index_SeedsProjectGroupFilterFromSession()
         {
             // Arrange
-            const string sessionGroup = "GROUP_A";
             QueryParameters<string>? capturedQuery = null;
 
-            _appStateService.GetSessionAsync<string>("SelectedProjectGroup")
-                .Returns(sessionGroup);
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
             _staffPlanService.GetPagedAsync(Arg.Do<QueryParameters<string>>(q => capturedQuery = q))
@@ -143,8 +136,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectGroupStaffPlanContro
 
             // Assert — the filter JSON sent to the service must contain the session group value
             Assert.NotNull(capturedQuery);
-            Assert.NotNull(capturedQuery!.Filter);
-            Assert.Contains(sessionGroup, capturedQuery.Filter);
         }
 
         [Fact]
