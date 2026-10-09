@@ -10,13 +10,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [GridColumn(Order = 1, Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Projectmanager { get; set; }
 
-        [Display(Name = "Manager’s Email")]
-        [GridColumn(Order = 2, Width = 220, Type = GridColumnType.Text, IsFilterable = true)]
-        public string? Email { get; set; }
-
         [Display(Name = "MNumber")]
-        [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 2, Width = 120, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Mnumber { get; set; }
+
+        [Display(Name = "Manager’s Email")]
+        [GridColumn(Order = 3, Width = 220, Type = GridColumnType.Text, IsFilterable = true)]
+        public string? Email { get; set; }     
 
         [Display(Name = "LoginEmail")]
         [EmailAddress(ErrorMessage = "Invalid email address")]

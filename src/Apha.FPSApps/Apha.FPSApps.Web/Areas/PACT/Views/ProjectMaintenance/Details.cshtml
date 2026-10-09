@@ -370,6 +370,24 @@
             selectedCustomerValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Customer)),
             selectedManagerValue: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Project.Manager))
         });
+
+        // Pagefix: re-focus the app logo when page is refreshed
+        window.setTimeout(function () {
+            var logo = document.querySelector('.app-log-wrapper .app-log') ||
+                       document.querySelector('.app-log-wrapper') ||
+                       document.querySelector('header .app-log');
+            if (logo) {
+                if (!logo.hasAttribute('tabindex')) {
+                    logo.setAttribute('tabindex', '-1');
+                }
+                try {
+                    logo.focus({ preventScroll: true });
+                } catch (e) {
+                    logo.focus();
+                }
+                window.scrollTo(0, 0);
+            }
+        }, 300);
     </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

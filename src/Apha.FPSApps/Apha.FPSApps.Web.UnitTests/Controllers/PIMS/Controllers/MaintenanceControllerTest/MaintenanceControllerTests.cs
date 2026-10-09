@@ -8,6 +8,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using NSubstitute;
 using System.Security.Claims;
 using System.Text.Json;
@@ -858,6 +859,31 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
         }
 
         [Fact]
+        public async Task GetAddEditRadTrackProgPartial_NoProgram_PopulatesProgramOptionsFromService()
+        {
+            // Arrange
+            _service.GetRadTrackProgProgramsAsync().Returns(SuccessResponse(new List<string> { "PROG1", "PROG2" }));
+
+            // Act
+            await _controller.GetAddEditRadTrackProgPartial(null);
+
+            // Assert
+            var options = Assert.IsAssignableFrom<List<SelectListItem>>(_controller.ViewData["ProgramOptions"]);
+            Assert.Collection(options,
+                option =>
+                {
+                    Assert.Equal("PROG1", option.Value);
+                    Assert.Equal("PROG1", option.Text);
+                },
+                option =>
+                {
+                    Assert.Equal("PROG2", option.Value);
+                    Assert.Equal("PROG2", option.Text);
+                });
+            await _service.Received(1).GetRadTrackProgProgramsAsync();
+        }
+
+        [Fact]
         public async Task GetAddEditRadTrackProgPartial_ValidProgram_ServiceReturnsData_ReturnsPopulatedModel()
         {
             // Arrange
@@ -874,6 +900,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
             var partial = Assert.IsType<PartialViewResult>(result);
             var model   = Assert.IsType<RadTrackProgItem>(partial.Model);
             Assert.Equal("PROG2", model.Program);
+        }
+
+        [Fact]
+        public async Task GetAddEditRadTrackProgPartial_ProgramsLookupFails_SetsEmptyProgramOptions()
+        {
+            // Arrange
+            _service.GetRadTrackProgProgramsAsync().Returns(FailureResponse<List<string>>());
+
+            // Act
+            await _controller.GetAddEditRadTrackProgPartial(null);
+
+            // Assert
+            var options = Assert.IsAssignableFrom<List<SelectListItem>>(_controller.ViewData["ProgramOptions"]);
+            Assert.Empty(options);
         }
 
         #endregion

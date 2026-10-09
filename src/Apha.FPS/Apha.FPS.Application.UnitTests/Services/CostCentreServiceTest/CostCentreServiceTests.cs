@@ -410,6 +410,53 @@ namespace Apha.FPS.Application.UnitTests.Services.CostCentreServiceTest
 
         #endregion
 
+        #region GetAllCostCentresByProfitCentreAsync Tests
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetAllCostCentresByProfitCentreAsync_ThrowsArgumentException_WhenProfitCentreIsNullOrWhiteSpace(string? profitCentre)
+        {
+            await Assert.ThrowsAnyAsync<ArgumentException>(() => _sut.GetAllCostCentresByProfitCentreAsync(profitCentre!));
+            await _mockRepository.DidNotReceive().GetAllByProfitCentreAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_ReturnsMappedDtos()
+        {
+            // Arrange
+            var entities = new List<CostCentre> { BuildEntity(100.0, "PC01"), BuildEntity(200.0, "PC01") };
+            var dtos     = new List<CostCentreDto> { BuildDto(100.0, "PC01"), BuildDto(200.0, "PC01") };
+
+            _mockRepository.GetAllByProfitCentreAsync("PC01").Returns(entities);
+            _mockMapper.Map<IEnumerable<CostCentreDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _sut.GetAllCostCentresByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.Equal(2, result.Count());
+            await _mockRepository.Received(1).GetAllByProfitCentreAsync("PC01");
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_ReturnsEmpty_WhenNoRecords()
+        {
+            // Arrange
+            var entities = new List<CostCentre>();
+            _mockRepository.GetAllByProfitCentreAsync("PC99").Returns(entities);
+            _mockMapper.Map<IEnumerable<CostCentreDto>>(entities).Returns(new List<CostCentreDto>());
+
+            // Act
+            var result = await _sut.GetAllCostCentresByProfitCentreAsync("PC99");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
+
         // Builds a PostgresException carrying a foreign-key violation (SqlState 23503) for the
         // given constraint name, mimicking how Npgsql surfaces DB FK violations.
         private static PostgresException BuildFkViolation(string constraintName) =>

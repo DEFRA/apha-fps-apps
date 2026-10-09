@@ -48,5 +48,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsCostCentre.DeleteCostCentreAsync(costCentreNo);
         }
+
+        public async Task<ApiResponseDto<List<CostCentreDto>>> GetAllCostCentresByProfitCentreAsync(string profitCentre)
+        {
+            return await _fpsClient.FpsCostCentre.GetAllCostCentresByProfitCentreAsync(profitCentre);
+        }
     }
 }

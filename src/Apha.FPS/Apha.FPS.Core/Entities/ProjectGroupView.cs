@@ -7,5 +7,7 @@ namespace Apha.FPS.Core.Entities
         public int? UserId { get; set; }
 
         public string? UserEmail { get; set; }
+
+        public int? FpsYear { get; set; }
     }
 }
