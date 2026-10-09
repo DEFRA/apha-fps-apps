@@ -3,6 +3,7 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -132,9 +133,43 @@ namespace Apha.PACT.DataAccess.Repository
                 releasePeriod.FinalSummariesRun = finalSummariesRunValue;
 
                 await _context.SaveChangesAsync();
+
+                await SetCurrentMonth();
             }
 
             return releasePeriod;
+        }
+
+        private async Task SetCurrentMonth()
+        {
+            const string keyName = "Month";
+
+            var maxEndPeriod = await _context.ReleasePeriods
+                .AsNoTracking()
+                .Where(p => p.FinalSummariesRun == -1)
+                .MaxAsync(p => (double?)p.EndPeriod);
+
+            var keyValue = maxEndPeriod.HasValue
+                ? maxEndPeriod.Value.ToString(CultureInfo.InvariantCulture)
+                : "0";
+
+            var releaseSummaryMonthClosure = await _context.ReleaseSummaryMonthClosures
+                .FirstOrDefaultAsync(v => v.Key == keyName);
+
+            if (releaseSummaryMonthClosure is null)
+            {
+                await _context.ReleaseSummaryMonthClosures.AddAsync(new ReleaseSummaryMonthClosure
+                {
+                    Key = keyName,
+                    Value = keyValue
+                });
+            }
+            else
+            {
+                releaseSummaryMonthClosure.Value = keyValue;
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }
