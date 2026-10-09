@@ -204,11 +204,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffEffortControllerT
         }
 
         [Fact]
-        public async Task Index_YearColumnsAreCappedAtTen()
+        public async Task Index_YearColumnsAreCappedAtTwenty()
         {
             // Arrange
             const string projectId = "P001";
-            var pivot = BuildPivot(rowCount: 1, yearCount: 15); // 15 years, but max is 10
+            var pivot = BuildPivot(rowCount: 1, yearCount: 15); // 15 years, but max is 20
             SetupHeaderSuccess(projectId);
             SetupPivotSuccess(projectId, pivot);
 
@@ -222,7 +222,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffEffortControllerT
             var yearColumns = model.Grid.Columns
                 .Where(c => c.PropertyName.StartsWith('Y') && c.PropertyName != "Total")
                 .ToList();
-            Assert.Equal(10, yearColumns.Count);
+            Assert.Equal(15, yearColumns.Count);
         }
 
         [Fact]
@@ -256,19 +256,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffEffortControllerT
         }
 
         [Fact]
-        public async Task Index_RowsWithEmptyWorkGroupAreExcluded()
+        public async Task Index_PreservesRowsWithEmptyWorkGroup()
         {
             // Arrange
             const string projectId = "P001";
             var pivot = new StaffEffortPivotDto
             {
                 Years      = [2022],
-                TotalCount = 2,
+                TotalCount = 3,
                 Rows       =
                 [
-                    new() { Project = "P001", WorkGroup = "",      GradeCode = "G1", Name = "Ghost",  Total = 1, YearlyAmounts = new() { [2022] = 1 } },
-                    new() { Project = "P001", WorkGroup = "  ",    GradeCode = "G1", Name = "Ghost2", Total = 1, YearlyAmounts = new() { [2022] = 1 } },
-                    new() { Project = "P001", WorkGroup = "ValidWG", GradeCode = "G1", Name = "Alice", Total = 5, YearlyAmounts = new() { [2022] = 5 } },
+                    new() { Project = "P001", WorkGroup = "",        GradeCode = "G1", Name = "Ghost",  Total = 1, YearlyAmounts = new() { [2022] = 1 } },
+                    new() { Project = "P001", WorkGroup = "  ",      GradeCode = "G1", Name = "Ghost2", Total = 1, YearlyAmounts = new() { [2022] = 1 } },
+                    new() { Project = "P001", WorkGroup = "ValidWG", GradeCode = "G1", Name = "Alice",  Total = 5, YearlyAmounts = new() { [2022] = 5 } },
                 ]
             };
             SetupHeaderSuccess(projectId);
@@ -281,8 +281,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffEffortControllerT
             var model = Assert.IsType<StaffEffortViewModel>(
                 Assert.IsType<ViewResult>(result).Model!);
 
-            Assert.Single(model.Grid.Data);
-            Assert.Equal("Alice", model.Grid.Data[0].Name);
+            Assert.Equal(3, model.Grid.Data.Count);
+            Assert.Equal(["Ghost", "Ghost2", "Alice"], model.Grid.Data.Select(r => r.Name).ToArray());
         }
 
         // ── LoadGrid ──────────────────────────────────────────────────────────

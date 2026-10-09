@@ -155,7 +155,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllGradeCodes);
+                var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllDivisionGrades);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<string>>>(response);
 

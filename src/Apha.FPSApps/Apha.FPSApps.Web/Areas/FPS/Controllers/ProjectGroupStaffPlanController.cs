@@ -37,9 +37,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         public async Task<IActionResult> Index()
         {
-            var projectGroup = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectGroup)
-                ?? string.Empty;
-
+            var projectGroup = string.Empty;
             var grid = await BuildGridAsync(new PaginationFilter<string>(), projectGroup);
 
             return View(new ProjectGroupStaffPlanViewModel { Grid = grid });
