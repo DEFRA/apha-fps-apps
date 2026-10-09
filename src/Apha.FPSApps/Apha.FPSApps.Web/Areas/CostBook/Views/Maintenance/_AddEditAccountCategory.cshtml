@@ -5,7 +5,7 @@
     var csg7GroupList = ViewBag.Csg7GroupList as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
-<div role="dialog" aria-labelledby="modal-acccat-title" aria-modal="true" tabindex="-1">
+<dialog open aria-labelledby="modal-acccat-title" aria-modal="true">
     <div class="modal-header">
         <h2 class="modal-title" id="modal-acccat-title">Edit Account Category</h2>
         <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close">&#x2715;</button>
@@ -84,7 +84,7 @@
         </div>
 
     </form>
-</div>
+</dialog>
     <div class="modal-footer">
     <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
             data-module="govuk-button" onclick="closeModal()">Cancel</button>
