@@ -92,4 +92,21 @@ public interface IJobExecutionRepository
     /// <param name="diagnosticSummary">Diagnostic-only note persisted to the job_queue_log entry for this transition.</param>
     /// <returns>True if the row was still non-terminal and was flipped to Failed; false if it did not exist or was already terminal.</returns>
     Task<bool> MarkFailedIfNonTerminalAsync(Guid jobQueueId, string errorMessage, string diagnosticSummary, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Marks Failed every row of <paramref name="jobName"/> still in <paramref name="pickupStatus"/>
+    /// longer than its time to live (job_master.timetolive minutes, never less than
+    /// <paramref name="minimumTimeToLiveMinutes"/>) since <paramref name="clock"/>, and holding no
+    /// job_lock. One conditional statement: a row a worker claims or locks in the meantime is
+    /// left untouched. Writes a job_queue_log entry per failed row.
+    /// </summary>
+    /// <returns>The rows that were marked Failed.</returns>
+    Task<IReadOnlyList<StaleDispatchedExecution>> FailStaleDispatchedExecutionsAsync(
+        string jobName,
+        JobStatus pickupStatus,
+        DispatchClock clock,
+        int minimumTimeToLiveMinutes,
+        string errorMessage,
+        string diagnosticSummary,
+        CancellationToken cancellationToken = default);
 }

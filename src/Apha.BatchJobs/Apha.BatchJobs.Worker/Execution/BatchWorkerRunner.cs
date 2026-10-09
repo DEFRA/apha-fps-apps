@@ -102,6 +102,21 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
             return reconciliationFailure.ExitCode;
         }
 
+        // Fails rows dispatched to the worker but never claimed within their time to live, so they
+        // stop blocking new requests. Unlike the lock sweep above this fails open: it is
+        // housekeeping, and must not stop the job this container was started for.
+        try
+        {
+            await using var sweepScope = _serviceProvider.CreateAsyncScope();
+            await sweepScope.ServiceProvider.GetRequiredService<IDispatchTimeoutSweepService>().SweepAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "[{ErrorType}] Dispatch-timeout sweep could not run — continuing to dispatch",
+                _failureClassifier.Classify(ex).ErrorType);
+        }
+
         // Created before any execution scope so every job below — including each job of a
         // fanned-out category trigger — shares one cancellation boundary for the invocation.
         using var cancellationContext = new ExecutionCancellationContext(_hostLifetime, _runtimeOptions.Value.WorkerOverallTimeoutSeconds);

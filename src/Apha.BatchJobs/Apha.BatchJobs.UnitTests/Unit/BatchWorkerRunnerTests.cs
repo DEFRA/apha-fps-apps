@@ -27,7 +27,8 @@ public sealed class BatchWorkerRunnerTests
     private static IServiceProvider BuildServiceProvider(
         IJobOrchestrator orchestrator,
         IBatchLockRepository? lockRepository = null,
-        IBatchLockReconciliationService? reconciliationService = null)
+        IBatchLockReconciliationService? reconciliationService = null,
+        IDispatchTimeoutSweepService? dispatchTimeoutSweep = null)
     {
         var services = new ServiceCollection();
         services.AddScoped(_ => orchestrator);
@@ -37,6 +38,7 @@ public sealed class BatchWorkerRunnerTests
         // Phase 3 — see BatchWorkerRunnerPhase3Tests for tests exercising this directly.
         services.AddScoped(_ => lockRepository ?? CreateNoOpLockRepository());
         services.AddScoped(_ => reconciliationService ?? Substitute.For<IBatchLockReconciliationService>());
+        services.AddScoped(_ => dispatchTimeoutSweep ?? Substitute.For<IDispatchTimeoutSweepService>());
         return services.BuildServiceProvider();
     }
 
@@ -103,6 +105,57 @@ public sealed class BatchWorkerRunnerTests
         Assert.Equal(1, summaryWriter.CallCount);
         Assert.Equal(BatchRunOutcome.Success, summaryWriter.LastResult!.Outcome);
     }
+
+    [Fact]
+    public async Task RunAsync_RunsDispatchTimeoutSweepBeforeDispatch()
+    {
+        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
+        var calls = new List<string>();
+        var sweep = Substitute.For<IDispatchTimeoutSweepService>();
+        sweep.SweepAsync(Arg.Any<CancellationToken>()).Returns(_ => { calls.Add("sweep"); return Task.CompletedTask; });
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                calls.Add("job");
+                return new JobExecutionResult(Guid.NewGuid(), "RecreateSummary", JobStatus.Completed, TimeSpan.FromSeconds(1), 1);
+            });
+        var runner = CreateRunnerWithSweep(orchestrator, new RecordingSummaryWriter(), sweep);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        Assert.Equal(["sweep", "job"], calls);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenDispatchTimeoutSweepThrows_StillDispatchesTheJob()
+    {
+        using var scope = new EnvScopeSet("RecreateSummary", "Manual", Guid.NewGuid().ToString("D"), "arihant");
+        var sweep = Substitute.For<IDispatchTimeoutSweepService>();
+        sweep.SweepAsync(Arg.Any<CancellationToken>()).Returns(Task.FromException(new InvalidOperationException("sweep broken")));
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        orchestrator.RunAsync(Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new JobExecutionResult(Guid.NewGuid(), "RecreateSummary", JobStatus.Completed, TimeSpan.FromSeconds(1), 1));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunnerWithSweep(orchestrator, summaryWriter, sweep);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        Assert.Equal(BatchRunOutcome.Success, summaryWriter.LastResult!.Outcome);
+    }
+
+    private static BatchWorkerRunner CreateRunnerWithSweep(
+        IJobOrchestrator orchestrator, RecordingSummaryWriter summaryWriter, IDispatchTimeoutSweepService sweep) =>
+        new(
+            new BatchExecutionRequestResolver(),
+            CreateLifetime(out _),
+            Options.Create(new BatchRuntimeOptions { WorkerOverallTimeoutSeconds = 3600 }),
+            BuildServiceProvider(orchestrator, dispatchTimeoutSweep: sweep),
+            new BatchFailureClassifier(new ConfigurationBuilder().Build()),
+            summaryWriter,
+            NullLogger<BatchWorkerRunner>.Instance);
 
     [Fact]
     public async Task RunAsync_WhenRequestResolutionFails_NeverCallsOrchestrator()
@@ -319,6 +372,7 @@ public sealed class BatchWorkerRunnerTests
         });
         services.AddScoped(_ => CreateNoOpLockRepository());
         services.AddScoped(_ => Substitute.For<IBatchLockReconciliationService>());
+        services.AddScoped(_ => Substitute.For<IDispatchTimeoutSweepService>());
 
         var runner = new BatchWorkerRunner(
             resolver,

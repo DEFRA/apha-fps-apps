@@ -22,6 +22,7 @@ public static class BatchApplicationServiceExtensions
 
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
         services.AddScoped<IBatchLockReconciliationService, BatchLockReconciliationService>();
+        services.AddScoped<IDispatchTimeoutSweepService, DispatchTimeoutSweepService>();
         services.AddScoped<IJobOrchestrator, JobOrchestrator>();
 
         return services;
