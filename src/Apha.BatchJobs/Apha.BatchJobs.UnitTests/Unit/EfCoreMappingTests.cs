@@ -353,14 +353,14 @@ public sealed class EfCoreMappingTests
     }
 
     [Fact]
-    public void TblCurrentMonth_IsKeyless_Table_In_Fps_Schema()
+    public void TblDbVariables_Maps_Name_And_Value_In_Fps_Schema()
     {
-        // fps.tblcurrentmonth is the authoritative source for latestmonthreleased in TlkpYearLoader.
-        var entity = GetEntityByTable(ctx, "tblcurrentmonth");
-        Assert.Equal("fps", entity.GetSchema());
-        Assert.Null(entity.FindPrimaryKey());
-        var storeObject = StoreObjectIdentifier.Table("tblcurrentmonth", "fps");
-        Assert.Equal("currentmonth", entity.FindProperty("CurrentMonth")!.GetColumnName(storeObject));
+        // Source of latestmonthreleased in TlkpYearLoader.
+        var entity = GetEntityByView(ctx, "tbldb_variables");
+        Assert.Equal("fps", entity.GetViewSchema());
+        var storeObject = StoreObjectIdentifier.View("tbldb_variables", "fps");
+        Assert.Equal("db_var_name", entity.FindProperty("DbVarName")!.GetColumnName(storeObject));
+        Assert.Equal("db_var_value", entity.FindProperty("DbVarValue")!.GetColumnName(storeObject));
     }
 
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
