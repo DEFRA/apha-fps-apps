@@ -145,6 +145,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(c => Math.Abs(c.CostCentreNo - costCentreNo) < CostCentreNoTolerance && c.FpsYear == fpsYear);
         }
 
+        public async Task<IEnumerable<CostCentre>> GetAllByProfitCentreAsync(string profitCentre)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
+
+            return await _dbContext.CostCentres
+                .AsNoTracking()
+                .Where(c => c.ProfitCentre == profitCentre)
+                .OrderBy(c => c.CostCentreNo)
+                .ToListAsync();
+        }
+
         private static IQueryable<CostCentre> ApplyCostCentreFilter(IQueryable<CostCentre> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))

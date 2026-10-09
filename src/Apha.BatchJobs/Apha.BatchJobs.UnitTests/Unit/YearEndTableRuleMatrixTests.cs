@@ -13,22 +13,27 @@ public sealed class YearEndTableRuleMatrixTests
     /// </summary>
     private static readonly (string Referencing, string Referenced)[] KnownFkEdges =
     [
+        ("costcentre", "tblkpprofitcentre"),
         ("divisiongrade", "grade"),
         ("milestone", "tlkpproject"),
         ("plancatwggrade", "workgroupgrade"),
         ("profitcentregrade", "divisiongrade"),
         ("profitcentregrade", "grade"),
+        ("profitcentregrade", "tblkpprofitcentre"),
         ("profitcentregrade_nondefra", "divisiongrade"),
         ("profitcentregrade_nondefra", "grade"),
+        ("profitcentregrade_nondefra", "tblkpprofitcentre"),
         ("tbladditionalcosts", "tblkpaccountcategory"),
         ("tbladditionalcosts", "tlkpproject"),
         ("tblanimalreq", "tblanimals"),
         ("tblanimalreq", "tlkpproject"),
         ("tblstaffjob", "tblwgemployee"),
         ("tblstaffjob", "tlkpproject"),
+        ("tbltestrccost", "tblkpprofitcentre"),
         ("tbltestrccost", "testorproduct"),
         ("tbltestrequirementrccost", "tbltestrccost"),
         ("tbltestrequirementrccost", "tlkptestreqmt"),
+        ("tbluser_profitcentre", "tblkpprofitcentre"),
         ("tblwgemployee", "tblemployee"),
         ("tblwgemployee", "workgroupgrade"),
         ("timecodevalid", "tlkpproject"),
@@ -41,6 +46,7 @@ public sealed class YearEndTableRuleMatrixTests
         ("tlkptestcapability", "workgroup"),
         ("tlkptestreqmt", "testorproduct"),
         ("workgroup", "costcentre"),
+        ("workgroup", "tblkpprofitcentre"),
         ("workgroupgrade", "grade"),
         ("workgroupgrade", "profitcentregrade"),
         ("workgroupgrade", "workgroup"),
@@ -51,8 +57,8 @@ public sealed class YearEndTableRuleMatrixTests
     {
         var entries = YearEndTableRuleMatrix.Entries;
 
-        Assert.Equal(43, entries.Count);
-        Assert.Equal(40, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear));
+        Assert.Equal(44, entries.Count);
+        Assert.Equal(41, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear));
         Assert.Equal(2, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.TargetYearConfiguration));
         Assert.Equal(1, entries.Count(e => e.PrimaryRole == YearEndPrimaryRole.CreateTargetYear));
     }
@@ -119,6 +125,19 @@ public sealed class YearEndTableRuleMatrixTests
     }
 
     [Fact]
+    public void TblKpProfitCentre_ShouldBeCopyToTargetYearAtCopyOrderZero()
+    {
+        var entry = YearEndTableRuleMatrix.Entries.Single(e => e.TableName == "tblkpprofitcentre");
+
+        Assert.Equal(YearEndPrimaryRole.CopyToTargetYear, entry.PrimaryRole);
+        Assert.Null(entry.DedicatedStep);
+        Assert.Equal(["profitcentre", "fpsyear"], entry.PrimaryKeyColumns);
+        Assert.Equal(0, entry.CopyOrder);
+        Assert.Equal(YearEndFinalValidationRule.MatchSource, entry.FinalValidation);
+        Assert.Null(entry.ResetPhase);
+    }
+
+    [Fact]
     public void TblYearMaster_ShouldBeCreateTargetYearWithExactlyOneExpectedRow()
     {
         var entry = YearEndTableRuleMatrix.Entries.Single(e => e.TableName == "tblyearmaster");
@@ -156,13 +175,13 @@ public sealed class YearEndTableRuleMatrixTests
     }
 
     [Fact]
-    public void GenericCopyToTargetYearEntries_ShouldNumberThirtyNineAndAllHaveCopyOrder()
+    public void GenericCopyToTargetYearEntries_ShouldNumberFortyAndAllHaveCopyOrder()
     {
         var copyEntries = YearEndTableRuleMatrix.Entries
             .Where(e => e.PrimaryRole == YearEndPrimaryRole.CopyToTargetYear && e.DedicatedStep is null)
             .ToList();
 
-        Assert.Equal(39, copyEntries.Count);
+        Assert.Equal(40, copyEntries.Count);
         Assert.All(copyEntries, e => Assert.NotNull(e.CopyOrder));
     }
 

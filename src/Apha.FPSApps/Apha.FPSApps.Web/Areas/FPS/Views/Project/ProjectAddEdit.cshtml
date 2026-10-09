@@ -25,7 +25,7 @@
                             </h1>
                              @if (isEditMode)
                         {
-                            <a href="javascript:history.back()" class="govuk-back-link isFloatRight">Back</a>
+                            <a href="@(Context.Request.Query.ContainsKey("returnUrl") ? Context.Request.Query["returnUrl"].ToString() : "javascript:history.back()")" class="govuk-back-link isFloatRight">Back</a>
                         }
                         </div>
                     </div>

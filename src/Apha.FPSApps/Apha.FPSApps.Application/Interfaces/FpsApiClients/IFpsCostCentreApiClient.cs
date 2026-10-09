@@ -17,5 +17,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<CostCentreDto>> UpdateCostCentreAsync(double costCentreNo, CostCentreDto costCentreDto);
 
         Task<ApiResponseDto<bool>> DeleteCostCentreAsync(double costCentreNo);
+        Task<ApiResponseDto<List<CostCentreDto>>> GetAllCostCentresByProfitCentreAsync(string profitCentre);
     }
 }

@@ -45,15 +45,16 @@
                     }
                     else
                     {
-                        <input class="govuk-input govuk-!-font-size-16 ra-select-full"
-                               asp-for="Program"
-                               id="progProgName"
-                               type="text"
-                               aria-required="true"
-                               aria-label="Programme"
-                               aria-describedby="progProgNameError"
-                               placeholder="Enter program name"
-                               required="required" />
+                        <select class="govuk-select govuk-!-font-size-16 ra-select-full"
+                                asp-for="Program"
+                                id="progProgName"
+                                aria-required="true"
+                                aria-label="Programme"
+                                aria-describedby="progProgNameError"
+                                asp-items="ViewBag.ProgramOptions"
+                                required="required">
+                            <option value="">-- Select Program --</option>
+                        </select>
                     }
                     <span asp-validation-for="Program" data-valmsg-for="Program" class="govuk-error-message" id="progProgNameError" style="display:none;"></span>
                 </div>

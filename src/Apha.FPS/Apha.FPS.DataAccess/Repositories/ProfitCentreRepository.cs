@@ -41,7 +41,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<IEnumerable<ProfitCentre>> GetAllProfitCentresAsync()
         {
-            return await _context.ProfitCentres
+            return await _dbContext.ProfitCentres
                 .AsNoTracking()
                 .OrderBy(p => p.ProfitCentreId)
                 .ToListAsync();
@@ -83,6 +83,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
+                    profitCentre.FpsYear = _requestContext.FpsYear;
                     _dbContext.ProfitCentres.Add(profitCentre);
                     await _dbContext.SaveChangesAsync();
 
@@ -164,7 +165,6 @@ namespace Apha.FPS.DataAccess.Repositories
                     var currentUserId = currentUser?.UserId ?? (int)SuperUser.SuperUserId;
 
                     var userAlreadyLinked = await _dbContext.UserProfitcentres
-                        .IgnoreQueryFilters()
                         .AnyAsync(upc => upc.ProfitCentre == originalProfitCentreId && upc.UserId == currentUserId);
 
                     if (!userAlreadyLinked)
@@ -205,13 +205,18 @@ namespace Apha.FPS.DataAccess.Repositories
                     if (profitCentre == null)
                         return false;
 
-                    // CASCADE: delete from tblUser_ProfitCentre
                     var userProfitCentres = await _dbContext.UserProfitcentres
                         .IgnoreQueryFilters()
-                        .Where(upc => upc.ProfitCentre == profitCentreId)
+                        .Where(upc => EF.Functions.ILike(upc.ProfitCentre, profitCentreId)
+                                   && upc.FpsYear == profitCentre.FpsYear)
                         .ToListAsync();
 
-                    _dbContext.UserProfitcentres.RemoveRange(userProfitCentres);
+                    if (userProfitCentres.Count > 0)
+                    {
+                        _dbContext.UserProfitcentres.RemoveRange(userProfitCentres);
+                        await _dbContext.SaveChangesAsync();
+                    }
+
                     _dbContext.ProfitCentres.Remove(profitCentre);
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -230,9 +235,8 @@ namespace Apha.FPS.DataAccess.Repositories
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             return await _dbContext.ProfitCentreGrades
-                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .AnyAsync(pcg => pcg.ProfitCentre == profitCentreId);
+                .AnyAsync(pcg => EF.Functions.ILike(pcg.ProfitCentre, profitCentreId));
         }
 
         public async Task<bool> HasLinkedWorkgroupsAsync(string profitCentreId)
@@ -240,9 +244,17 @@ namespace Apha.FPS.DataAccess.Repositories
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             return await _dbContext.Workgroups
-                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .AnyAsync(wg => wg.ProfitCentre == profitCentreId);
+                .AnyAsync(wg => EF.Functions.ILike(wg.ProfitCentre, profitCentreId));
+        }
+
+        public async Task<bool> HasLinkedCostCenterAsync(string profitCentreId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
+
+            return await _dbContext.CostCentres
+                .AsNoTracking()
+                .AnyAsync(cc => EF.Functions.ILike(cc.ProfitCentre, profitCentreId));
         }
 
         public async Task<bool> ProfitCentreExistsAsync(string profitCentreId)
@@ -257,8 +269,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout)
         {
-            var entities = await _context.ProfitCentres
-                .Where(p => p.ProfitCentreId == profitCentre)
+            var fpsYear = _dbContext.FilterFpsYear;
+            var entities = await _dbContext.ProfitCentres
+                .Where(p => p.ProfitCentreId == profitCentre && p.FpsYear == fpsYear)
                 .ToListAsync();
 
             foreach (var p in entities)
@@ -268,7 +281,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 p.TimesheetLayout = timesheetlayout;
             }
 
-            await _context.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync();
             return true;
         }
 
