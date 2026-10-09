@@ -443,6 +443,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     {
         var retryStartedAt = DateTime.UtcNow;
         var totalAttempts = _retryAttempts + 1;
+        // Shared across attempts so a retry's heartbeat starts from the last successful renewal,
+        // not from the original acquisition time.
+        var lease = new LeaseTracker { ExpiresAtUtc = startedAtUtc.AddSeconds(_lockTimeoutSeconds) };
 
         for (var attempt = 1; attempt <= totalAttempts; attempt++)
         {
@@ -484,7 +487,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 // even run. Starting the heartbeat first doesn't make a cancellation-ignoring job
                 // safe, but it does guarantee the lease-maintenance mechanism has begun (its own
                 // first await, Task.Delay, yields immediately) before handing control to job code.
-                heartbeatTask = RunHeartbeatLoopAsync(jobName, jobQueueId, startedAtUtc, attemptToken);
+                heartbeatTask = RunHeartbeatLoopAsync(jobName, jobQueueId, lease, attemptToken);
                 jobTask = job.ExecuteAsync(attemptToken);
 
                 // Capturing which task WhenAny actually woke up for, not just checking
@@ -638,7 +641,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         var basedelaySeconds = _retryDelaySeconds;
-        var jitterSeconds = new Random().Next(0, Math.Max(1, basedelaySeconds / 2));
+        var jitterSeconds = new Random().Next(0, RetryJitterUpperBoundExclusive(basedelaySeconds));
         var finalDelaySeconds = basedelaySeconds + jitterSeconds;
 
         _logger.LogWarning(ex,
@@ -866,13 +869,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// trusted," not only a genuine <see cref="BatchLockLeaseLostException"/>.
     /// </para>
     /// </summary>
-    /// <param name="lockAcquisitionUpperBoundUtc">
-    /// A timestamp guaranteed no later than the one <c>TryAcquireLockAsync</c> itself used to
-    /// compute the real <c>expires_at</c> — <c>RunAsync</c>'s own <c>startedAt</c>, captured
-    /// before that call and everything leading up to it. Used only to seed the locally-tracked
-    /// lease boundary conservatively; never read back from the database.
+    /// <param name="lease">
+    /// This run's locally-tracked lease boundary, shared across retry attempts and updated after
+    /// each successful renewal. Seeded from <c>RunAsync</c>'s own <c>startedAt</c>, captured
+    /// before <c>TryAcquireLockAsync</c>, so it is never later than the real <c>expires_at</c>;
+    /// never read back from the database.
     /// </param>
-    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, DateTime lockAcquisitionUpperBoundUtc, CancellationToken cancellationToken)
+    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, LeaseTracker lease, CancellationToken cancellationToken)
     {
         var lockName = ResolveLockName(jobName);
 
@@ -880,15 +883,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
         var lockRepository = heartbeatScope.LockRepository;
         var executionRepository = heartbeatScope.ExecutionRepository;
 
-        // Tracks this loop's own best estimate of when the current lease expires, purely to
-        // decide when a *thrown* renewal (as opposed to a clean `false`) has gone on long enough
-        // to treat as loss rather than a transient blip. Not re-read from the database — deliberately
-        // conservative instead: seeded from a timestamp guaranteed no later than the real
-        // acquisition time, so this local deadline can only be earlier than (or equal to) the
-        // actual database expires_at, never later. A too-early local deadline just means an
-        // occasional unnecessary lease-loss report; a too-late one would mean this worker could
-        // believe it still owns a lease that another worker has already legitimately reclaimed.
-        var leaseExpiresAtUtc = lockAcquisitionUpperBoundUtc.AddSeconds(_lockTimeoutSeconds);
+        // The lease boundary decides when a *thrown* renewal (as opposed to a clean `false`) has
+        // gone on long enough to treat as loss rather than a transient blip, and bounds each
+        // renewal call. It is deliberately conservative: never later than the actual database
+        // expires_at. A too-early local deadline just means an occasional unnecessary lease-loss
+        // report; a too-late one would mean this worker could believe it still owns a lease that
+        // another worker has already legitimately reclaimed.
+        var leaseExpiresAtUtc = lease.ExpiresAtUtc;
 
         while (true)
         {
@@ -906,9 +907,18 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // above and fix #2 from the Phase 4 review).
             var renewalStartedAtUtc = DateTime.UtcNow;
             bool renewed;
+            // Each call is bounded by the remaining lease: DB commands have no timeout by default,
+            // so a hung renewal would otherwise keep the job running after the lease has lapsed.
+            using var renewalCts = CreateLeaseBoundedTokenSource(leaseExpiresAtUtc, cancellationToken);
             try
             {
-                renewed = await lockRepository.TryRenewLockAsync(lockName, jobQueueId, _lockTimeoutSeconds, cancellationToken);
+                renewed = await lockRepository.TryRenewLockAsync(lockName, jobQueueId, _lockTimeoutSeconds, renewalCts.Token);
+            }
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new BatchLockLeaseLostException(
+                    $"Lock renewal for job '{jobName}' (lock '{lockName}') did not complete before the lease boundary ({leaseExpiresAtUtc:O}).",
+                    ex);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -941,13 +951,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
             }
 
             leaseExpiresAtUtc = renewalStartedAtUtc.AddSeconds(_lockTimeoutSeconds);
+            lease.ExpiresAtUtc = leaseExpiresAtUtc;
 
+            // Bounded too, so a hung touch cannot hold up the next renewal past the lease.
+            using var touchCts = CreateLeaseBoundedTokenSource(leaseExpiresAtUtc, cancellationToken);
             try
             {
                 // Secondary — the lock renewal above is what proves ownership; updated_at is
-                // observability, not correctness. A failure here (thrown, or a clean `false`)
-                // never escalates.
-                var touched = await executionRepository.TouchRunningExecutionAsync(jobQueueId, cancellationToken);
+                // observability, not correctness. A failure here (thrown, timed out, or a clean
+                // `false`) never escalates.
+                var touched = await executionRepository.TouchRunningExecutionAsync(jobQueueId, touchCts.Token);
                 if (!touched)
                 {
                     _logger.LogWarning(
@@ -955,13 +968,41 @@ public sealed class JobOrchestrator : IJobOrchestrator
                         jobName, jobQueueId);
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
                 _logger.LogWarning(ex,
                     "Heartbeat's TouchRunningExecutionAsync failed for job '{JobName}' — lock renewal already succeeded, ownership unaffected | JobQueueId={JobQueueId}",
                     jobName, jobQueueId);
             }
         }
+    }
+
+    /// <summary>
+    /// Token cancelled by <paramref name="cancellationToken"/> or when the lease runs out,
+    /// whichever comes first. Unbounded when leases are disabled (LockTimeoutSeconds = 0).
+    /// </summary>
+    private CancellationTokenSource CreateLeaseBoundedTokenSource(DateTime leaseExpiresAtUtc, CancellationToken cancellationToken)
+    {
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        if (_lockTimeoutSeconds > 0)
+        {
+            var remaining = leaseExpiresAtUtc - DateTime.UtcNow;
+            // CancelAfter(0) cancels asynchronously, so an already-lapsed lease is cancelled here.
+            if (remaining > TimeSpan.Zero)
+                cts.CancelAfter(remaining);
+            else
+                cts.Cancel();
+        }
+        return cts;
+    }
+
+    /// <summary>Exclusive upper bound of the random jitter added to each retry delay.</summary>
+    internal static int RetryJitterUpperBoundExclusive(int retryDelaySeconds) => Math.Max(1, retryDelaySeconds / 2);
+
+    /// <summary>Lease boundary for one run. Attempts run one at a time, so no locking is needed.</summary>
+    private sealed class LeaseTracker
+    {
+        public DateTime ExpiresAtUtc { get; set; }
     }
 
     // ─── Execution contract validation ──────────────────────────────────────────

@@ -43,8 +43,9 @@ public sealed class JobOrchestratorHeartbeatTests
 
         // Long enough to span at least one 1s heartbeat tick before completing, so this actually
         // proves the heartbeat was running and got stopped cleanly — not merely that it never had
-        // a chance to start.
-        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(1500));
+        // a chance to start. 2.5s rather than just over 1s, so a tick delayed by a loaded test run
+        // still lands before the job ends.
+        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(2500));
         var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 30 });
         var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings);
 
@@ -137,6 +138,103 @@ public sealed class JobOrchestratorHeartbeatTests
     }
 
     [Fact]
+    public async Task RunAsync_RenewalHangsPastLeaseBoundary_EscalatesToLeaseLoss()
+    {
+        var mainLockRepo = BuildHealthyMainLockRepo();
+        var mainExecRepo = BuildHealthyMainExecRepo();
+        var heartbeatLockRepo = Substitute.For<IBatchLockRepository>();
+        // Never completes on its own, like a renewal stuck on a half-open connection.
+        static async Task<bool> HangingRenew(CallInfo ci)
+        {
+            await Task.Delay(Timeout.Infinite, ci.ArgAt<CancellationToken>(3));
+            return true;
+        }
+        heartbeatLockRepo.TryRenewLockAsync(JobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(HangingRenew);
+        var heartbeatExecRepo = Substitute.For<IJobExecutionRepository>();
+
+        var job = new ControllableJob(JobName, Timeout.InfiniteTimeSpan); // cancelled once escalation fires
+        var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 2 });
+        var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings);
+
+        var ex = await Assert.ThrowsAsync<BatchLockLeaseLostException>(
+            () => orchestrator.RunAsync(JobName, RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        Assert.Contains("did not complete before the lease boundary", ex.Message);
+        Assert.IsAssignableFrom<OperationCanceledException>(ex.InnerException);
+    }
+
+    [Fact]
+    public async Task RunAsync_TouchHangsPastLeaseBoundary_WarningOnlyAndHeartbeatContinues()
+    {
+        var mainLockRepo = BuildHealthyMainLockRepo();
+        var mainExecRepo = BuildHealthyMainExecRepo();
+        var heartbeatLockRepo = Substitute.For<IBatchLockRepository>();
+        var renewAttempts = 0;
+        heartbeatLockRepo.TryRenewLockAsync(JobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                Interlocked.Increment(ref renewAttempts);
+                return true;
+            });
+        var heartbeatExecRepo = Substitute.For<IJobExecutionRepository>();
+        static async Task<bool> HangingTouch(CallInfo ci)
+        {
+            await Task.Delay(Timeout.Infinite, ci.ArgAt<CancellationToken>(1));
+            return true;
+        }
+        heartbeatExecRepo.TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(HangingTouch);
+
+        // Renewal at ~1s sets the lease to ~2s; the touch hangs until then, and the next renewal
+        // at ~3s proves the loop carried on. The job runs to 5s, leaving margin for a loaded run.
+        var job = new ControllableJob(JobName, TimeSpan.FromSeconds(5));
+        var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 1 });
+        var capturingLogger = new CapturingLogger<JobOrchestrator>();
+        var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings, capturingLogger);
+
+        var result = await orchestrator.RunAsync(JobName, RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+        Assert.Contains(capturingLogger.Entries, e => e.Level == LogLevel.Warning && e.Message.Contains("TouchRunningExecutionAsync", StringComparison.OrdinalIgnoreCase));
+        Assert.True(renewAttempts >= 2, $"Expected the heartbeat to renew again after the touch timed out, got {renewAttempts} renewal(s).");
+    }
+
+    [Fact]
+    public async Task RunAsync_RetryAttemptStartedAfterOriginalLeaseWindow_RenewsFromLastSuccessfulRenewal()
+    {
+        var mainLockRepo = BuildHealthyMainLockRepo();
+        var mainExecRepo = BuildHealthyMainExecRepo();
+        var heartbeatLockRepo = Substitute.For<IBatchLockRepository>();
+        var renewAttempts = 0;
+        // Honours the token like the real repository: a renewal whose deadline has already
+        // passed is cancelled instead of reaching the database.
+        heartbeatLockRepo.TryRenewLockAsync(JobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(ci =>
+            {
+                ci.ArgAt<CancellationToken>(3).ThrowIfCancellationRequested();
+                Interlocked.Increment(ref renewAttempts);
+                return true;
+            });
+        var heartbeatExecRepo = Substitute.For<IJobExecutionRepository>();
+        heartbeatExecRepo.TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
+
+        // Attempt 1 runs past the 3s lease taken at the start (renewing on the way), then fails
+        // transiently; attempt 2's first renewal must use the renewed boundary, not the original.
+        var job = new SequencedJob(JobName,
+            (TimeSpan.FromMilliseconds(3500), new TimeoutException("transient")),
+            (TimeSpan.FromMilliseconds(2500), null));
+        var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 3, RetryAttempts = 1, RetryDelaySeconds = 0 });
+        var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings);
+
+        var result = await orchestrator.RunAsync(JobName, RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+        Assert.Equal(2, job.Calls);
+        Assert.True(renewAttempts >= 4, $"Expected renewals in both attempts, got {renewAttempts}.");
+    }
+
+    [Fact]
     public async Task RunAsync_RuntimeTimeoutWithHealthyHeartbeat_StillSurfacesTimeoutException()
     {
         var mainLockRepo = BuildHealthyMainLockRepo();
@@ -216,7 +314,7 @@ public sealed class JobOrchestratorHeartbeatTests
         var heartbeatExecRepo = Substitute.For<IJobExecutionRepository>();
         heartbeatExecRepo.TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
 
-        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(1500));
+        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(2500));
         var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 30 });
         var capturingLogger = new CapturingLogger<JobOrchestrator>();
         var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings, capturingLogger);
@@ -242,7 +340,7 @@ public sealed class JobOrchestratorHeartbeatTests
         heartbeatExecRepo.TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(ThrowingTouch);
 
-        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(1500));
+        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(2500));
         var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 30 });
         var capturingLogger = new CapturingLogger<JobOrchestrator>();
         var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings, capturingLogger);
@@ -268,7 +366,7 @@ public sealed class JobOrchestratorHeartbeatTests
         heartbeatExecRepo.TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
         var heartbeatFactory = BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo);
 
-        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(1500));
+        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(2500));
         var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 30 });
         var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, heartbeatFactory, settings);
 
@@ -380,6 +478,34 @@ public sealed class JobOrchestratorHeartbeatTests
 
         public Task ExecuteAsync(CancellationToken cancellationToken = default) =>
             Task.Delay(_runFor, cancellationToken);
+    }
+
+    /// <summary>A job whose successive calls each run for a set duration, then throw or complete.</summary>
+    private sealed class SequencedJob : IBatchJob
+    {
+        private readonly (TimeSpan RunFor, Exception? Throw)[] _calls;
+        private int _callsMade;
+
+        public SequencedJob(string name, params (TimeSpan RunFor, Exception? Throw)[] calls)
+        {
+            Name = name;
+            _calls = calls;
+        }
+
+        public int Calls => _callsMade;
+        public string Name { get; }
+        public string IdempotencyStrategy => "heartbeat-test";
+        public string? ScheduleExpression => null;
+        public string? ScheduleDescription => null;
+        public int? MaxExecutionSeconds => null;
+
+        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            var (runFor, toThrow) = _calls[Interlocked.Increment(ref _callsMade) - 1];
+            await Task.Delay(runFor, cancellationToken);
+            if (toThrow is not null)
+                throw toThrow;
+        }
     }
 
     /// <summary>Minimal in-memory logger capturing level + rendered message, so tests can assert what was logged.</summary>
