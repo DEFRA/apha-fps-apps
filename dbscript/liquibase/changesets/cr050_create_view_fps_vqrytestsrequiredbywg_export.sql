@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR050 labels:ddl context:all runOnChange:true
+--changeset repo-admin:CR050 labels:ddl context:all runOnChange:false
 
 -- View: fps.vqrytestsrequiredbywg_export
 

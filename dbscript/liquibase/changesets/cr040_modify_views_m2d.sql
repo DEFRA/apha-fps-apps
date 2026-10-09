@@ -220,6 +220,30 @@ GROUP BY vtimerecordedrc.project,
     vplannedstaffcostssummary.sumofplannedhours,
     vplannedstaffcostssummary.sumofcost;
 -- -----------------------------------------------------------------------------
+-- View: fps.vwprojectstaffplandetails
+-- -----------------------------------------------------------------------------
+-- Recreate dependent view that was dropped with CASCADE (originally CR039)
+CREATE OR REPLACE VIEW fps.vwprojectstaffplandetails AS
+SELECT
+    vprojectstaffplan.profitcentre,
+    vprojectstaffplan.workgroup,
+    vprojectstaffplan.gradecode,
+    vprojectstaffplan.name,
+    vtlkpproject_general.manager,
+    vtlkpproject_general.program,
+    vtlkpproject_general.projectstatus,
+    vprojectstaffplan.plannedhours,
+    vprojectstaffplan.chargerate,
+    vprojectstaffplan.cost,
+    vprojectstaffplan.fpsyear
+FROM fps.vtlkpproject_general vtlkpproject_general
+INNER JOIN fps.vprojectstaffplan vprojectstaffplan
+    ON vtlkpproject_general.parentproject = vprojectstaffplan.parentproject
+   AND vtlkpproject_general.fpsyear = vprojectstaffplan.fpsyear;
+
+COMMENT ON VIEW fps.vwprojectstaffplandetails
+    IS 'view for Staff Plan Pivot Screen. ';
+-- -----------------------------------------------------------------------------
 -- View: fps.qryjobmonth_tctransfers
 -- -----------------------------------------------------------------------------
 -- Note: Base view for qryjobmonth_transferunion. Recreated before its dependents.
