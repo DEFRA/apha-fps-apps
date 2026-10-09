@@ -35,42 +35,46 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class YearEndMonthWorkingItem
     {
         [Display(Name = "Fps Year")]
-        [GridColumn(Order = 1, Width = 60, Type = GridColumnType.Text)]
+        [GridColumn(Order = 1, Width = 60, Type = GridColumnType.Text, CssClass = "d-none")]
         public int FpsYear { get; set; }
 
         [Display(Name = "Year")]
-        [GridColumn(Order = 2, Width = 60, Type = GridColumnType.Text)]
+        [GridColumn(Order = 2, Width = 60, Type = GridColumnType.Text, CssClass = "d-none")]
         public short Year { get; set; }
 
-        [Display(Name = "Month Name")]
+        [Display(Name = "Financial Year")]
         [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text)]
+        public string FinancialYear => (Fmonth == 0 ? $"{FpsYear - 1}-{FpsYear}" : $"{FpsYear}-{FpsYear + 1}");
+
+        [Display(Name = "Month Name")]
+        [GridColumn(Order = 4, Width = 120, Type = GridColumnType.Text)]
         public string MonthName { get; set; } = string.Empty;
 
         [Display(Name = "Month")]
-        [GridColumn(Order = 4, Width = 60, Type = GridColumnType.Text)]
+        [GridColumn(Order = 5, Width = 60, Type = GridColumnType.Text, CssClass = "d-none")]
         public short Month { get; set; }
 
-        [Display(Name = "Fmonth")]
-        [GridColumn(Order = 5, Width = 60, Type = GridColumnType.Text)]
+        [Display(Name = "Accounting Period")]
+        [GridColumn(Order = 6, Width = 60, Type = GridColumnType.Number)]
         public short? Fmonth { get; set; }
 
         [Display(Name = "Days")]
         [NonFinancialRange]
-        [GridColumn(Order = 6, Width = 80, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 7, Width = 80, Type = GridColumnType.DecimalNumber)]
         public decimal? Days { get; set; }
 
         [Display(Name = "CVL Hours")]
         [NonFinancialRange]
-        [GridColumn(Order = 7, Width = 100, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.DecimalNumber)]
         public decimal? CvlHours { get; set; }
 
         [Display(Name = "VID Hours")]
         [NonFinancialRange]
-        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.DecimalNumber)]
         public decimal? VidHours { get; set; }
 
         [Display(Name = "Exists For Planned Year")]
-        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.Text)]
+        [GridColumn(Order = 10, Width = 100, Type = GridColumnType.Text)]
         public string ExistsForPlannedYear { get; set; } = string.Empty;
     }
 

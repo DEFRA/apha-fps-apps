@@ -44,7 +44,7 @@ namespace Apha.FPS.DataAccess.Repositories
        // [ExcludeFromCodeCoverage]
         public async Task<FpsSetting> SaveAsync(FpsSetting setting)
         {
-            var existing = await _dbContext.TblSettings
+            var existing = await _dbContext.TblSettings.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(m =>
                     m.Id == setting.Id &&
                     m.FpsYear == setting.FpsYear);
@@ -103,7 +103,7 @@ namespace Apha.FPS.DataAccess.Repositories
             if (plannedYear is null)
             {
                 plannedYear = openYear + 1;
-                var openSettings = await _dbContext.TblSettings
+                var openSettings = await _dbContext.TblSettings.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(s => (s.FpsYear == openYear ) &&
                             settingIdsLower.Contains(s.Id.ToLower()))
@@ -129,7 +129,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
             else
             {
-                 settings = await _dbContext.TblSettings
+                 settings = await _dbContext.TblSettings.IgnoreQueryFilters()
                                .AsNoTracking()
                                .Where(s => ( s.FpsYear == plannedYear) &&
                                            settingIdsLower.Contains(s.Id.ToLower()))

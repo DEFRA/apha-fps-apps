@@ -48,19 +48,19 @@
                                 <section class="sup_border govuk-!-padding-3" aria-labelledby="process-rules-title">
                                     <h2 class="govuk-heading-s govuk-!-margin-bottom-2" id="process-rules-title" tabindex="0">Process Rules</h2>
                                     <ul class="govuk-list govuk-list--bullet govuk-!-font-size-16 govuk-!-margin-bottom-0" tabindex="0">
-                                        <li>Financial Year-End Process is a two-step process consisting of Data Setup Initiation &amp; Approval and Year Cutover.</li>
-                                        <li>Only FPS Admin can perform Financial Year-End process.</li>
+                                        <li>Financial Year Initiation Process is a two-step process consisting of Data Setup Initiation &amp; Approval and Year Cutover.</li>
+                                        <li>Only FPS Admin can perform Financial Year Initiation process.</li>
                                         <li>The initiator and approver for the Data Setup Initiation &amp; Approval and Year Cutover steps must be different users.</li>
                                         <li>On Failure or Rejection, new request needs to be submitted.</li>
                                     </ul>
                                 </section>
                             </div>
 
-                            @* Financial Year-End Process For + Config Values + Note *@
+                            @* Financial Year Initiation Process For + Config Values + Note *@
                             <div class="govuk-grid-column-full sup_p_0 govuk-!-margin-top-3 govuk-!-margin-left-3">
                                 <div class="govuk-form-group govuk-!-margin-bottom-4" style="display:flex; align-items:center; gap:10px;">
                                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="yearEndProcessYear">
-                                        Financial Year-End Process For
+                                        Financial Year Initiation Process For
                                     </label>
                                     <input class="govuk-input govuk-input--width-5" id="yearEndProcessYear"
                                            type="text" value="@Model.PlannedYear" autocomplete="off" disabled>
@@ -75,7 +75,7 @@
                                     <div class="govuk-grid-column-one-half">
                                         <p class="govuk-body govuk-!-margin-0 govuk-!-margin-top-6" tabindex="0">
                                             <strong>Note:</strong> Config value, Month Working Days, VID Hours and CVL Hours are default populated from previous year.
-                                            Please review and confirm these values for the Financial Year End.
+                                            Please review and confirm these values for the Financial Year.
                                         </p>
                                     </div>
                                 </div>

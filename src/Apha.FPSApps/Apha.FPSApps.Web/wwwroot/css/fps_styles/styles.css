@@ -5478,8 +5478,8 @@ input.govuk-input.ssr-total-input[readonly] {
     max-height: 190px !important;
 }
 #gridContainer_yearEndMonthHoursGrid > .editable-grid-container > div  >.grid-scroll-container {
-    min-height: 600px !important;
-    max-height: 600px !important;
+    min-height: 500px !important;
+    max-height: 500px !important;
 }
 #gridContainer_asuUsageList .grid-scroll-container {
     height: 340px;

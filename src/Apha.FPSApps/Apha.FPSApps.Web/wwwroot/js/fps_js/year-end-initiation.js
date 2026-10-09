@@ -265,7 +265,7 @@
             var fpsYearType = getCellValue(this, 'ExistsForPlannedYear').toLowerCase();
             var isPlanned = (fpsYearType === 'yes');
 
-            $(this).find('.edit-row-btn').prop('disabled', !isPlanned);
+            //$(this).find('.edit-row-btn').prop('disabled', !isPlanned); //Allow edit in both cases of Exists For Planned Year: Yes & No
             $(this).find('.delete-row-btn').prop('disabled', isPlanned);
         });
     }

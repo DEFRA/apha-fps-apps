@@ -2080,3 +2080,23 @@ html:has(.access-denied-page),
 body:has(.access-denied-page) {
     overflow: hidden;
 }
+
+/* Disabled navigation button styling */
+.main-nav .nav-button:disabled,
+.main-nav .nav-button[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.main-nav .nav-button:disabled .arrow img,
+.main-nav .nav-button[disabled] .arrow img {
+    opacity: 0.6;
+}
+
+.main-nav .nav-button:disabled:hover,
+.main-nav .nav-button[disabled]:hover {
+    background-color: transparent;
+    opacity:0.6;
+}
+
