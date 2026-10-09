@@ -56,6 +56,28 @@ public sealed class JobOrchestratorHeartbeatTests
     }
 
     [Fact]
+    public async Task RunAsync_JobFinishesFirst_HeartbeatStopLogsNoWarning()
+    {
+        var mainLockRepo = BuildHealthyMainLockRepo();
+        var mainExecRepo = BuildHealthyMainExecRepo();
+        var heartbeatLockRepo = Substitute.For<IBatchLockRepository>();
+        heartbeatLockRepo.TryRenewLockAsync(JobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(true);
+        var heartbeatExecRepo = Substitute.For<IJobExecutionRepository>();
+        heartbeatExecRepo.TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(true);
+
+        // Ends while the heartbeat is waiting for its next tick, as in production.
+        var job = new ControllableJob(JobName, TimeSpan.FromMilliseconds(2500));
+        var settings = Options.Create(new BatchJobSettings { HeartbeatIntervalSeconds = 1, LockTimeoutSeconds = 30 });
+        var capturingLogger = new CapturingLogger<JobOrchestrator>();
+        var orchestrator = BuildOrchestrator(job, mainLockRepo, mainExecRepo, BuildHeartbeatFactory(heartbeatLockRepo, heartbeatExecRepo), settings, capturingLogger);
+
+        var result = await orchestrator.RunAsync(JobName, RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        Assert.Equal(JobStatus.Completed, result.Status);
+        Assert.DoesNotContain(capturingLogger.Entries, e => e.Level >= LogLevel.Warning && e.Message.Contains("Heartbeat", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task RunAsync_RenewalReturnsFalse_JobCancelledAndLeaseLossSurfaced()
     {
         var mainLockRepo = BuildHealthyMainLockRepo();

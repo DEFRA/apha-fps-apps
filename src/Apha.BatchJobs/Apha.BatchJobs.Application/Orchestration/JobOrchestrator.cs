@@ -591,6 +591,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     {
                         await heartbeatTask;
                     }
+                    catch (OperationCanceledException) when (heartbeatTask.IsCanceled)
+                    {
+                        // Normal stop: attemptCts was cancelled above, ending the heartbeat's wait.
+                    }
                     catch (Exception heartbeatShutdownEx)
                     {
                         _logger.LogWarning(heartbeatShutdownEx,
