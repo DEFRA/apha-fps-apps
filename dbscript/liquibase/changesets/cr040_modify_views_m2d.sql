@@ -1,7 +1,46 @@
 ﻿--liquibase formatted sql
---changeset repo-admin:CR040 labels:ddl context:all runOnChange:true
+--changeset repo-admin:CR040 labels:ddl context:all runOnChange:true splitStatements:false
 --comment Recreate FPS and mabarchive views for money->numeric(19,4) migration. Non-money double precision expressions (hours, quantities) are intentionally unchanged; money-derived expressions are cast to numeric so they no longer widen to double precision.
 -- Source: pgAdmin schema diff output, adapted for Liquibase execution.
+-- -----------------------------------------------------------------------------
+-- Guard: stop if a CASCADE drop below would remove a view this script does not recreate.
+-- Keep known_views in step with every view this file recreates.
+-- -----------------------------------------------------------------------------
+DO $guard$
+DECLARE
+    known_views text[] := ARRAY[
+        'vprojectstaffplan', 'vplannedstaffcostspar1', 'vplannedstaffcostssummary', 'qrytotalstaffcosts',
+        'vtimerecordedrc_final', 'vwprojectstaffplandetails', 'qryjobmonth_tctransfers', 'qryjobmonth_transfers1',
+        'qryjobmonth_transfers2', 'qryjobmonth_transferunion', 'qryjobmonth_transferstotal', 'qrytestspcostplan_xtab',
+        'vpostmort1', 'vpostmortem1report_obsolete', 'vprojectanimalplan', 'qrytotalanimalcosts'];
+    unknown_views text;
+BEGIN
+    WITH RECURSIVE deps AS (
+        SELECT c.oid
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'fps'
+          AND c.relname IN ('vprojectstaffplan', 'qryjobmonth_tctransfers', 'qryjobmonth_transfers1',
+                            'qrytestspcostplan_xtab', 'vpostmort1', 'vprojectanimalplan')
+        UNION
+        SELECT r.ev_class
+        FROM deps
+        JOIN pg_depend d ON d.refobjid = deps.oid AND d.classid = 'pg_rewrite'::regclass
+        JOIN pg_rewrite r ON r.oid = d.objid
+        WHERE r.ev_class <> deps.oid
+    )
+    SELECT string_agg(DISTINCT n.nspname || '.' || c.relname, ', ')
+    INTO unknown_views
+    FROM deps
+    JOIN pg_class c ON c.oid = deps.oid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE NOT (n.nspname = 'fps' AND c.relname = ANY (known_views));
+
+    IF unknown_views IS NOT NULL THEN
+        RAISE EXCEPTION 'CR040 aborted: these views would be dropped by CASCADE and not recreated: %. Add them to CR040 first.', unknown_views;
+    END IF;
+END
+$guard$;
 -- -----------------------------------------------------------------------------
 -- View: fps.vtestssummary
 -- -----------------------------------------------------------------------------
