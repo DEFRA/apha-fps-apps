@@ -34,6 +34,16 @@ public sealed record BatchExecutionResult
         ExecutionId = jobResult.ExecutionId
     };
 
+    /// <summary>A Housekeeping invocation whose clean-up completed; it runs no job, so has no queue row.</summary>
+    public static BatchExecutionResult HousekeepingSuccess(BatchExecutionRequest request) => new()
+    {
+        Outcome = BatchRunOutcome.Success,
+        ExitCode = BatchExitCodes.Success,
+        JobName = request.JobName,
+        RunMode = request.RunMode,
+        JobExecutionId = request.JobExecutionId
+    };
+
     public static BatchExecutionResult Cancelled(BatchExecutionRequest? request, ExecutionCancellationReason reason) => new()
     {
         Outcome = BatchRunOutcome.Cancelled,

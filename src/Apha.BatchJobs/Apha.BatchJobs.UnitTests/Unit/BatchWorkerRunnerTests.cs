@@ -146,6 +146,51 @@ public sealed class BatchWorkerRunnerTests
         Assert.Equal(BatchRunOutcome.Success, summaryWriter.LastResult!.Outcome);
     }
 
+    [Fact]
+    public async Task RunAsync_Housekeeping_RunsBothSweepsAndNeverCallsTheOrchestrator()
+    {
+        using var scope = new EnvScopeSet(BatchJobNames.Housekeeping, "Manual", jobExecutionId: null, "support-test");
+        var lockRepository = CreateNoOpLockRepository();
+        var sweep = Substitute.For<IDispatchTimeoutSweepService>();
+        var orchestrator = Substitute.For<IJobOrchestrator>();
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = new BatchWorkerRunner(
+            new BatchExecutionRequestResolver(),
+            CreateLifetime(out _),
+            Options.Create(new BatchRuntimeOptions { WorkerOverallTimeoutSeconds = 3600 }),
+            BuildServiceProvider(orchestrator, lockRepository, dispatchTimeoutSweep: sweep),
+            new BatchFailureClassifier(new ConfigurationBuilder().Build()),
+            summaryWriter,
+            NullLogger<BatchWorkerRunner>.Instance);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.Equal(BatchExitCodes.Success, exitCode);
+        await lockRepository.Received(1).GetExpiredLocksAsync(Arg.Any<CancellationToken>());
+        await sweep.Received(1).SweepAsync(Arg.Any<CancellationToken>());
+        await orchestrator.DidNotReceive().RunAsync(
+            Arg.Any<string>(), Arg.Any<RunMode>(), Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<DateTime?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        Assert.Equal(1, summaryWriter.CallCount);
+        Assert.Equal(BatchRunOutcome.Success, summaryWriter.LastResult!.Outcome);
+        Assert.Equal(BatchJobNames.Housekeeping, summaryWriter.LastResult.JobName);
+    }
+
+    [Fact]
+    public async Task RunAsync_Housekeeping_WhenLockSweepFails_ReportsFailure()
+    {
+        using var scope = new EnvScopeSet(BatchJobNames.Housekeeping, "Manual", Guid.NewGuid().ToString("D"), "support-test");
+        var lockRepository = Substitute.For<IBatchLockRepository>();
+        lockRepository.GetExpiredLocksAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<IReadOnlyList<BatchLock>>(new InvalidOperationException("db down")));
+        var summaryWriter = new RecordingSummaryWriter();
+        var runner = CreateRunner(Substitute.For<IJobOrchestrator>(), summaryWriter, hostLifetime: null, overallTimeoutSeconds: 3600, lockRepository);
+
+        var exitCode = await runner.RunAsync();
+
+        Assert.NotEqual(BatchExitCodes.Success, exitCode);
+        Assert.Equal(BatchRunOutcome.Failure, summaryWriter.LastResult!.Outcome);
+    }
+
     private static BatchWorkerRunner CreateRunnerWithSweep(
         IJobOrchestrator orchestrator, RecordingSummaryWriter summaryWriter, IDispatchTimeoutSweepService sweep) =>
         new(
