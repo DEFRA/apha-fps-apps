@@ -240,7 +240,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not write execution start record — continuing without tracking");
+            // The claim is what makes this execution ours. Without it the row may already be
+            // Failed (e.g. swept as never picked up) or owned by another run, so the job must not
+            // run and the row must not be written. Only our lock is released.
+            await ReleaseLockSafelyAsync(lockName, jobName, jobQueueId);
+            if (ex is OperationCanceledException)
+                throw;
+            ThrowWithStructuredLog(ex, _failureClassifier.Classify(ex), jobName, jobQueueId, jobExecutionId);
         }
 
         // Step 3 — Execute the job
@@ -325,25 +331,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
             // Step 5 — Release lock (always), before failure notification runs. Notification is
             // best-effort and must not hold the lock open while it sends.
-            try
-            {
-                await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
-                _logger.LogInformation(
-                    "Lock released for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId}",
-                    lockName,
-                    jobName,
-                    jobQueueId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(
-                    ex,
-                    "Could not release lock for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
-                    lockName,
-                    jobName,
-                    jobQueueId,
-                    _lockTimeoutSeconds);
-            }
+            await ReleaseLockSafelyAsync(lockName, jobName, jobQueueId);
         }
 
         var finalDuration = DateTime.UtcNow - startedAt;
@@ -388,6 +376,29 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
+    }
+
+    private async Task ReleaseLockSafelyAsync(string lockName, string jobName, Guid jobQueueId)
+    {
+        try
+        {
+            await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
+            _logger.LogInformation(
+                "Lock released for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId}",
+                lockName,
+                jobName,
+                jobQueueId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Could not release lock for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
+                lockName,
+                jobName,
+                jobQueueId,
+                _lockTimeoutSeconds);
+        }
     }
 
     private static bool IsWorkerManagedScheduledRun(string jobName, RunMode runMode) =>

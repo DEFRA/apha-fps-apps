@@ -120,6 +120,48 @@ public sealed class JobOrchestratorTests
         Assert.Equal(42, result.ExecutionId);
     }
 
+    [Fact]
+    public async Task RunAsync_WhenClaimFails_DoesNotRunJobOrWriteStatus_AndReleasesLock()
+    {
+        // Simulates a row that is no longer Initiated when the worker claims it, e.g. already
+        // failed as never picked up.
+        SetupInitiatedExecution("ClaimConflictJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("ClaimConflictJob");
+        _factory.Create("ClaimConflictJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("ClaimConflictJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns<int>(_ => throw new InvalidOperationException("Expected status 'Initiated' but found 'Failed'."));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("ClaimConflictJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        Assert.Contains("found 'Failed'", ex.Message);
+        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
+        await _execRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("ClaimConflictJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenClaimCancelled_ReleasesLockAndPropagatesCancellation()
+    {
+        SetupInitiatedExecution("ClaimCancelledJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("ClaimCancelledJob");
+        _factory.Create("ClaimCancelledJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("ClaimCancelledJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns<int>(_ => throw new OperationCanceledException());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _orchestrator.RunAsync("ClaimCancelledJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("ClaimCancelledJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
     /// <summary>
     /// Pins the contract the Worker startup refactor relies on: <c>RunAsync</c> only ever
     /// <em>returns</em> when the job succeeded (<see cref="JobStatus.Completed"/>) — any failure
