@@ -4,6 +4,8 @@ using Apha.BatchJobs.Application.Orchestration;
 using Apha.BatchJobs.Application.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
 
@@ -15,6 +17,8 @@ public static class BatchApplicationServiceExtensions
         IConfiguration configuration)
     {
         services.Configure<BatchJobSettings>(configuration.GetSection("BatchJobs"));
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<BatchJobSettings>, BatchJobSettingsValidator>());
+        services.AddOptions<BatchJobSettings>().ValidateOnStart();
 
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
         services.AddScoped<IBatchLockReconciliationService, BatchLockReconciliationService>();
