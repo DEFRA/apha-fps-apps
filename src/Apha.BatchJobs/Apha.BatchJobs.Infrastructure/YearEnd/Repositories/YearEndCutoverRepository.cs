@@ -10,8 +10,8 @@ namespace Apha.BatchJobs.Infrastructure.YearEnd.Repositories;
 
 /// <summary>
 /// Executes the year-status transition for Year End Cutover inside a single transaction: closes the
-/// current year, activates the target year, and clears the four PACT-owned staging tables — all
-/// atomically. Every mutable precondition (target-Planned, current-Open, latest Data Setup Completed)
+/// current year, activates the target year, resets the released month in <c>fps.tbldb_variables</c>
+/// to 0, and clears the four PACT-owned staging tables — all atomically. Every mutable precondition (target-Planned, current-Open, latest Data Setup Completed)
 /// is revalidated from inside this same transaction rather than trusting a pre-transaction read, so
 /// the guarantee doesn't lean on the shared YearEnd lock as an implicit second mechanism.
 /// </summary>
@@ -112,6 +112,8 @@ public sealed class YearEndCutoverRepository : IYearEndCutoverRepository
 
                 await UpdateYearStatusAsync(connection, dbTransaction, currentYear, ClosedStatus, cancellationToken);
                 await UpdateYearStatusAsync(connection, dbTransaction, targetYear, OpenStatus, cancellationToken);
+
+                await ResetReleasedMonthAsync(connection, dbTransaction, cancellationToken);
 
                 await TruncateStagingTablesAsync(connection, dbTransaction, cancellationToken);
 
@@ -293,6 +295,31 @@ public sealed class YearEndCutoverRepository : IYearEndCutoverRepository
         {
             throw new InvalidOperationException(
                 $"Expected to update exactly one row for fpsyear {fpsYear}, but updated {updated}.");
+        }
+    }
+
+    /// <summary>
+    /// No months are released for the newly opened year. The name is matched case-insensitively
+    /// (stored as <c>Month</c>); exactly one row must match, otherwise the whole cutover rolls back.
+    /// </summary>
+    private static async Task ResetReleasedMonthAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = @"
+            UPDATE fps.tbldb_variables
+            SET db_var_value = '0'
+            WHERE LOWER(db_var_name) = 'month';";
+
+        var updated = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (updated != 1)
+        {
+            throw new InvalidOperationException(
+                "Year End Cutover expected to reset exactly one 'Month' row in fps.tbldb_variables, " +
+                $"but updated {updated}.");
         }
     }
 
