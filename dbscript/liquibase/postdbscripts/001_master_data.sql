@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset migration-fix:001-master-data labels:dml context:all
+--validCheckSum: 9:08fb2adefc7042bbe65af60ee5780cd8
 
 -- fps.tblkpprofitcentre is not yet fpsyear-scoped: CR089 (changesets/cr089_add_fpsyear_to_tblkpprofitcentre.sql)
 -- and its cutover/partition scripts are currently skipped, so the fpsyear column does not exist. Seed one row
