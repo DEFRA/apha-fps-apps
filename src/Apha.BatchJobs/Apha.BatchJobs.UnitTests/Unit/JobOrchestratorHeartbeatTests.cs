@@ -394,10 +394,13 @@ public sealed class JobOrchestratorHeartbeatTests
 
         await orchestrator.RunAsync(JobName, RunMode.Manual, Guid.NewGuid(), "test-user");
 
-        heartbeatFactory.Received(1).Create(); // synchronous member — no await
+        // One scope for the heartbeat, one for the final status write — both fresh contexts.
+        heartbeatFactory.Received(2).Create(); // synchronous member — no await
         await heartbeatLockRepo.Received().TryRenewLockAsync(JobName, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await mainLockRepo.DidNotReceive().TryRenewLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await mainExecRepo.DidNotReceive().TouchRunningExecutionAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await heartbeatExecRepo.Received(1).UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await mainExecRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
     }
 
     // ---------- Helpers ----------

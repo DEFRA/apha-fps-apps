@@ -48,6 +48,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// <summary>Default maximum retry duration in seconds.</summary>
     private const int DefaultMaxRetryDurationSeconds = 0;
 
+    private const int FinalStatusWriteAttempts = 3;
+
+    /// <summary>Pause between final status write attempts; settable by tests.</summary>
+    internal TimeSpan FinalStatusRetryDelay { get; init; } = TimeSpan.FromSeconds(2);
+
     public JobOrchestrator(
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
@@ -251,6 +256,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         // Step 3 — Execute the job
         Exception? jobException = null;
+        var finalStatusSaved = false;
         // Computed once, inside the finally block below, only for a genuine (non-cancellation)
         // failure — reused by ThrowWithStructuredLog afterward so the same exception is never
         // classified twice at two different points in this method.
@@ -327,11 +333,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     break;
             }
 
-            await MarkFailedSafelyAsync(record, finalStatus, jobException, jobQueueId);
+            finalStatusSaved = await SaveFinalStatusAsync(record, finalStatus, jobException, jobQueueId);
 
-            // Step 5 — Release lock (always), before failure notification runs. Notification is
-            // best-effort and must not hold the lock open while it sends.
-            await ReleaseLockSafelyAsync(lockName, jobName, jobQueueId);
+            // Step 5 — Release the lock only once the final status is saved, before notifications
+            // run. If it could not be saved the lock is kept: it expires, and the next worker's
+            // startup reconciliation marks the row Failed, so no later run starts while this
+            // run's outcome is unrecorded.
+            if (finalStatusSaved)
+                await ReleaseLockSafelyAsync(lockName, jobName, jobQueueId);
         }
 
         var finalDuration = DateTime.UtcNow - startedAt;
@@ -356,6 +365,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is OperationCanceledException cancelEx)
             throw cancelEx;
+
+        // The job itself succeeded, but its outcome is not recorded: the run must still exit as
+        // failed. Already logged with the DB marker by SaveFinalStatusAsync.
+        if (jobException is null && !finalStatusSaved)
+            throw new InvalidOperationException(
+                $"Job '{jobName}' completed but its final status could not be saved (JobQueueId={jobQueueId}).");
 
         if (jobException != null)
         {
@@ -680,31 +695,46 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Persists the final execution status. If that write itself fails, logs at Critical (so
-    /// CloudWatch alarms still fire) and swallows the error so the container still exits with
-    /// the original job's exit code.
+    /// Persists the final execution status through a fresh context, retrying briefly. Returns
+    /// false, after logging with the DB marker, if every attempt fails; never throws.
     /// </summary>
-    private async Task MarkFailedSafelyAsync(
+    private async Task<bool> SaveFinalStatusAsync(
         JobExecutionRecord record,
         JobStatus finalStatus,
         Exception? originalException,
         Guid jobQueueId)
     {
-        try
+        for (var attempt = 1; attempt <= FinalStatusWriteAttempts; attempt++)
         {
-            await _executionRepository.UpdateExecutionRecordAsync(record, CancellationToken.None);
-            _logger.LogInformation(
-                "Execution record updated | Status={Status} | Duration={DurationSeconds}s",
-                finalStatus, record.DurationSeconds);
+            try
+            {
+                // A fresh context every attempt: the job's own context may be left unusable by the
+                // job's failure (e.g. entities it could not save still being tracked).
+                await using var scope = _heartbeatRepositoryScopeFactory.Create();
+                await scope.ExecutionRepository.UpdateExecutionRecordAsync(record, CancellationToken.None);
+                _logger.LogInformation(
+                    "Execution record updated | Status={Status} | Duration={DurationSeconds}s",
+                    finalStatus, record.DurationSeconds);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (attempt < FinalStatusWriteAttempts)
+                {
+                    _logger.LogWarning(ex,
+                        "Final status write failed, retrying | Attempt={Attempt}/{TotalAttempts} | JobQueueId={JobQueueId}",
+                        attempt, FinalStatusWriteAttempts, jobQueueId);
+                    await Task.Delay(FinalStatusRetryDelay);
+                    continue;
+                }
+
+                _logger.LogCritical(ex,
+                    "[{ErrorType}] Final status could not be saved — lock kept so it expires and the row is reconciled | IntendedStatus={IntendedStatus} | OriginalExceptionType={OriginalExceptionType} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId}",
+                    BatchExceptionMarkers.Database, finalStatus, originalException?.GetType().Name ?? "None", jobQueueId, record.JobExecutionId);
+            }
         }
-        catch (Exception ex)
-        {
-            var originalType = originalException?.GetType().Name ?? "None";
-            var sqlType = _failureClassifier.Classify(ex).ErrorType;
-            _logger.LogCritical(ex,
-                "[{ErrorType}] Could not write execution completion record — job result may not be persisted | OriginalExceptionType={OriginalExceptionType} | JobQueueId={JobQueueId}",
-                sqlType, originalType, jobQueueId);
-        }
+
+        return false;
     }
 
     /// <summary>
