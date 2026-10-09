@@ -1103,9 +1103,11 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             AssertNoPoundCurrencyFormat(workbook, "TestPlan", 2, 4);
             AssertNoPoundCurrencyFormat(workbook, "TestPlan", 3, 4);
 
+            workbook.Worksheet("TestActuals").Cell(3, 5).GetString().Should().Be("Total");
+            workbook.Worksheet("TestActuals").Cell(3, 6).GetValue<double>().Should().Be(250d);
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 5);
             AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 6);
-            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 2, 7);
-            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 3, 7);
+            AssertNoPoundCurrencyFormat(workbook, "TestActuals", 3, 6);
 
             AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 2, 4);
             AssertNoPoundCurrencyFormat(workbook, "AnimalPlan", 2, 5);
@@ -1115,11 +1117,15 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectYearCostsServiceTest
             AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 2, 6);
             AssertNoPoundCurrencyFormat(workbook, "AnimalActuals", 3, 6);
 
-            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 2, 4);
-            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 3, 4);
+            workbook.Worksheet("AdditionalPlan").Cell(3, 2).GetString().Should().Be("Total");
+            workbook.Worksheet("AdditionalPlan").Cell(3, 3).GetValue<double>().Should().Be(300d);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 2, 3);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalPlan", 3, 3);
 
-            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 2, 5);
-            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 3, 5);
+            workbook.Worksheet("AdditionalActuals").Cell(3, 5).GetString().Should().Be("Total");
+            workbook.Worksheet("AdditionalActuals").Cell(3, 6).GetValue<double>().Should().Be(300d);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 2, 6);
+            AssertNoPoundCurrencyFormat(workbook, "AdditionalActuals", 3, 6);
 
             await _mockRepository.Received(1).GetMonthlyPactDataAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
             await _mockRepository.Received(1).GetStaffPlansAsync(TestProject, TestYear, Arg.Any<PaginationParameters<string>>());
