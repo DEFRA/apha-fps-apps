@@ -408,6 +408,8 @@
                                                        id="StartDatePicker"
                                                        value="@(Model.ProjectDetails?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        aria-label="Start Date picker"
+                                                       aria-hidden="true"
+                                                       tabindex="-1"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="onStartDateChanged('StartDatePicker', 'StartDateDisplay', 'StartDateBinding', 'StartDateError')">
                                             </div>
@@ -441,6 +443,8 @@
                                                        id="EndDatePicker"
                                                        value="@(Model.ProjectDetails?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        aria-label="End Date picker"
+                                                       aria-hidden="true"
+                                                       tabindex="-1"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="onEndDateChanged('EndDatePicker', 'EndDateDisplay', 'EndDateBinding', 'EndDateError')">
                                             </div>
@@ -511,6 +515,8 @@
                                                        id="RevisedEndDatePicker"
                                                        value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        aria-label="Revised End Date picker"
+                                                       aria-hidden="true"
+                                                       tabindex="-1"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="onRevisedEndDateChanged('RevisedEndDatePicker', 'RevisedEndDateDisplay', 'RevisedEndDateBinding', 'RevisedEndDateError')">
                                             </div>
@@ -543,6 +549,8 @@
                                                        id="ClosedDatePicker"
                                                        value="@(Model.ProjectDetails?.ClosedDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        aria-label="Closed Date picker"
+                                                       aria-hidden="true"
+                                                       tabindex="-1"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                        onchange="syncDateToText('ClosedDatePicker', 'ClosedDateDisplay', 'ClosedDateBinding', 'ClosedDateError')">
                                             </div>
