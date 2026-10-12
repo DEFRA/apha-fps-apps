@@ -179,7 +179,19 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
-    // ── Tests ─────────────────────────────────────────────────────────────────
+    public async Task<ApiResponseDto<bool>> DeleteBulkStaffRequirementsAsync(BulkDeleteStaffRequirementRequestDto request)
+    {
+        var response = await _http.PostAsync<BulkDeleteStaffRequirementRequestDto, bool>(
+            string.Format(CostBookApiEndpoints.DeleteBulkStaffRequirements, HttpUtility.UrlEncode(request.ProjectId), request.Year), request);
+
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    // ── Tests ────────────────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<TestRequirementDto>>> GetTestRequirementsAsync(
         string projectId, int year, QueryParameters<string> query)
@@ -234,6 +246,16 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
     {
         var response = await _http.DeleteAsync<bool>(
             string.Format(CostBookApiEndpoints.DeleteTestRequirement, HttpUtility.UrlEncode(projectId), year, HttpUtility.UrlEncode(testCode)));
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    public async Task<ApiResponseDto<bool>> DeleteBulkTestRequirementsAsync(BulkDeleteTestRequirementRequestDto request)
+    {
+        var response = await _http.PostAsync<BulkDeleteTestRequirementRequestDto, bool>(
+            string.Format(CostBookApiEndpoints.DeleteBulkTestRequirements, HttpUtility.UrlEncode(request.ProjectId), request.Year), request);
         if (response.Success)
             return ApiResponseDto<bool>.SuccessResponse(response.Data);
         var err = _mapper.Map<ApiResponseDto<bool>>(response);
@@ -301,6 +323,18 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
     }
 
+    public async Task<ApiResponseDto<bool>> DeleteBulkAnimalRequirementsAsync(BulkDeleteAnimalRequirementRequestDto request)
+    {
+        var response = await _http.PostAsync<BulkDeleteAnimalRequirementRequestDto, bool>(
+            string.Format(CostBookApiEndpoints.DeleteBulkAnimalRequirements, HttpUtility.UrlEncode(request.ProjectId), request.Year), request);
+
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
     // ── Additional Costs ──────────────────────────────────────────────────────
 
     public async Task<ApiResponseDto<PaginatedResult<AdditionalCostDto>>> GetAdditionalCostsAsync(
@@ -356,6 +390,16 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
     {
         var response = await _http.DeleteAsync<bool>(
             string.Format(CostBookApiEndpoints.DeleteAdditionalCost, HttpUtility.UrlEncode(projectId), year, acIdentity));
+        if (response.Success)
+            return ApiResponseDto<bool>.SuccessResponse(response.Data);
+        var err = _mapper.Map<ApiResponseDto<bool>>(response);
+        return ApiResponseDto<bool>.FailureResponse(err.Errors, err.Meta);
+    }
+
+    public async Task<ApiResponseDto<bool>> DeleteBulkAdditionalCostsAsync(BulkDeleteAdditionalCostRequestDto request)
+    {
+        var response = await _http.PostAsync<BulkDeleteAdditionalCostRequestDto, bool>(
+            string.Format(CostBookApiEndpoints.DeleteBulkAdditionalCosts, HttpUtility.UrlEncode(request.ProjectId), request.Year), request);
         if (response.Success)
             return ApiResponseDto<bool>.SuccessResponse(response.Data);
         var err = _mapper.Map<ApiResponseDto<bool>>(response);

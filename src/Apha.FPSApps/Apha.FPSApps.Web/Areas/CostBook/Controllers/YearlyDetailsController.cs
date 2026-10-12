@@ -352,6 +352,26 @@ public class YearlyDetailsController : Controller
         return Json(new { success = true, message = "Staff Record Deleted Successfully" });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> DeleteBulkStaff(string projectId, int year, [FromBody] BulkDeleteStaffRequirementRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return Json(new { success = false, message = "Please select at least one staff record to delete." });
+
+        request.ProjectId = HttpUtility.UrlDecode(projectId);
+        request.Year = year;
+        request.Items = request.Items
+            .Where(i => i.SrIdentity > 0)
+            .DistinctBy(i => i.SrIdentity)
+            .ToList();
+
+        var response = await _service.DeleteBulkStaffRequirementsAsync(request);
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete selected Staff records." });
+
+        return Json(new { success = true, message = "Staff Records Deleted Successfully" });
+    }
+
     // ── TEST CRUD ─────────────────────────────────────────────────────────
 
     [HttpGet]
@@ -414,6 +434,26 @@ public class YearlyDetailsController : Controller
         if (!response.Success || !response.Data)
             return Json(new { success = false, message = "Failed to delete Test entry." });
         return Json(new { success = true, message = "Test Record Deleted Successfully" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteBulkTest(string projectId, int year, [FromBody] BulkDeleteTestRequirementRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return Json(new { success = false, message = "Please select at least one test record to delete." });
+
+        request.ProjectId = HttpUtility.UrlDecode(projectId);
+        request.Year = year;
+        request.Items = request.Items
+            .Where(i => !string.IsNullOrWhiteSpace(i.TestCode))
+            .DistinctBy(i => i.TestCode)
+            .ToList();
+
+        var response = await _service.DeleteBulkTestRequirementsAsync(request);
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete selected test records." });
+
+        return Json(new { success = true, message = "Test Records Deleted Successfully" });
     }
 
     // ── ANIMAL CRUD ───────────────────────────────────────────────────────
@@ -482,6 +522,26 @@ public class YearlyDetailsController : Controller
         return Json(new { success = true, message = "Animal Record Deleted Successfully" });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> DeleteBulkAnimal(string projectId, int year, [FromBody] BulkDeleteAnimalRequirementRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return Json(new { success = false, message = "Please select at least one animal record to delete." });
+
+        request.ProjectId = HttpUtility.UrlDecode(projectId);
+        request.Year = year;
+        request.Items = request.Items
+            .Where(i => i.ArIdentity > 0)
+            .DistinctBy(i => i.ArIdentity)
+            .ToList();
+
+        var response = await _service.DeleteBulkAnimalRequirementsAsync(request);
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete selected animal records." });
+
+        return Json(new { success = true, message = "Animal Records Deleted Successfully" });
+    }
+
     // ── ADDITIONAL COST CRUD ──────────────────────────────────────────────
 
     [HttpGet]
@@ -543,7 +603,27 @@ public class YearlyDetailsController : Controller
         if (!response.Success || !response.Data)
             return Json(new { success = false, message = "Failed to delete Additional Cost entry." });
         return Json(new { success = true, message = "Additional Cost Record Deleted Successfully" });
-      
+
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteBulkAdditionalCost(string projectId, int year, [FromBody] BulkDeleteAdditionalCostRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return Json(new { success = false, message = "Please select at least one additional cost record to delete." });
+
+        request.ProjectId = HttpUtility.UrlDecode(projectId);
+        request.Year = year;
+        request.Items = request.Items
+            .Where(i => i.AcIdentity > 0)
+            .DistinctBy(i => i.AcIdentity)
+            .ToList();
+
+        var response = await _service.DeleteBulkAdditionalCostsAsync(request);
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete selected additional cost records." });
+
+        return Json(new { success = true, message = "Additional Cost Records Deleted Successfully" });
     }
 
     // ── MARKUP/PROFIT UPDATE ──────────────────────────────────────────────
@@ -644,6 +724,9 @@ public class YearlyDetailsController : Controller
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
+            ShowCheckboxColumn = true,
+            BulkDeleteFunction = "deleteBulkStaff",
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -683,6 +766,9 @@ public class YearlyDetailsController : Controller
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
+            ShowCheckboxColumn = true,
+            BulkDeleteFunction = "deleteBulkTest",
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -724,6 +810,9 @@ public class YearlyDetailsController : Controller
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
+            ShowCheckboxColumn = true,
+            BulkDeleteFunction = "deleteBulkAnimal",
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel
@@ -765,6 +854,9 @@ public class YearlyDetailsController : Controller
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AllowBulkDelete = true,
+            ShowCheckboxColumn = true,
+            BulkDeleteFunction = "deleteBulkAdditionalCost",
             AllowCopy = false,
             ShowPagination = false,
             Pagination = new PaginationModel

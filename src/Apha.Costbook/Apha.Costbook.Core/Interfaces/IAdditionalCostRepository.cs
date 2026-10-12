@@ -10,6 +10,7 @@ public interface IAdditionalCostRepository
     Task<AdditionalCost> AddAdditionalCostAsync(AdditionalCost additionalCost);
     Task<AdditionalCost> UpdateAdditionalCostAsync(AdditionalCost additionalCost);
     Task<bool> DeleteAdditionalCostAsync(int acIdentity);
+    Task<bool> DeleteBulkAdditionalCostsAsync(IEnumerable<int> acIdentities);
     Task<IEnumerable<AccountCategoryLookup>> GetProjectSpecificAccountCategoriesAsync();
 }
 

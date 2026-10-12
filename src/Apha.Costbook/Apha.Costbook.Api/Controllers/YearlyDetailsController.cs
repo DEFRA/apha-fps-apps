@@ -133,6 +133,16 @@ public class YearlyDetailsController : ControllerBase
         return Ok(BuildOk(deleted));
     }
 
+    [HttpPost("{projectId}/years/{year}/staff/bulk-delete")]
+    public async Task<IActionResult> DeleteBulkStaffRequirements(string projectId, int year, [FromBody] BulkDeleteStaffRequirementRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return BadRequest(BuildError<bool>("Please select at least one staff requirement to delete."));
+
+        var deleted = await _service.DeleteBulkStaffRequirementsAsync(request);
+        return Ok(BuildOk(deleted));
+    }
+
     // ── Test requirements ─────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/tests")]
@@ -169,6 +179,23 @@ public class YearlyDetailsController : ControllerBase
     public async Task<IActionResult> DeleteTestRequirement(string projectId, int year, string testCode)
     {
         var deleted = await _service.DeleteTestRequirementAsync(projectId, year, testCode);
+        return Ok(BuildOk(deleted));
+    }
+
+    [HttpPost("{projectId}/years/{year}/tests/bulk-delete")]
+    public async Task<IActionResult> DeleteBulkTestRequirements(string projectId, int year, [FromBody] BulkDeleteTestRequirementRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return BadRequest(BuildError<bool>("Please select at least one test requirement to delete."));
+
+        request.ProjectId = projectId;
+        request.Year = year;
+        request.Items = request.Items
+            .Where(i => !string.IsNullOrWhiteSpace(i.TestCode))
+            .DistinctBy(i => i.TestCode)
+            .ToList();
+
+        var deleted = await _service.DeleteBulkTestRequirementsAsync(request);
         return Ok(BuildOk(deleted));
     }
 
@@ -211,6 +238,16 @@ public class YearlyDetailsController : ControllerBase
         return Ok(BuildOk(deleted));
     }
 
+    [HttpPost("{projectId}/years/{year}/animals/bulk-delete")]
+    public async Task<IActionResult> DeleteBulkAnimalRequirements(string projectId, int year, [FromBody] BulkDeleteAnimalRequirementRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return BadRequest(BuildError<bool>("Please select at least one animal requirement to delete."));
+
+        var deleted = await _service.DeleteBulkAnimalRequirementsAsync(request);
+        return Ok(BuildOk(deleted));
+    }
+
     // ── Additional costs ──────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/additionalcosts")]
@@ -247,6 +284,23 @@ public class YearlyDetailsController : ControllerBase
     public async Task<IActionResult> DeleteAdditionalCost(string projectId, int year, int acIdentity)
     {
         var deleted = await _service.DeleteAdditionalCostAsync(acIdentity);
+        return Ok(BuildOk(deleted));
+    }
+
+    [HttpPost("{projectId}/years/{year}/additionalcosts/bulk-delete")]
+    public async Task<IActionResult> DeleteBulkAdditionalCosts(string projectId, int year, [FromBody] BulkDeleteAdditionalCostRequestDto request)
+    {
+        if (request?.Items is null || request.Items.Count == 0)
+            return BadRequest(BuildError<bool>("Please select at least one additional cost to delete."));
+
+        request.ProjectId = projectId;
+        request.Year = year;
+        request.Items = request.Items
+            .Where(i => i.AcIdentity > 0)
+            .DistinctBy(i => i.AcIdentity)
+            .ToList();
+
+        var deleted = await _service.DeleteBulkAdditionalCostsAsync(request);
         return Ok(BuildOk(deleted));
     }
 

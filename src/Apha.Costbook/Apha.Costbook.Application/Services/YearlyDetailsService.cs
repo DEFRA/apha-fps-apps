@@ -186,6 +186,12 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<bool> DeleteStaffRequirementAsync(int srIdentity)
         => await _staffRepo.DeleteStaffRequirementAsync(srIdentity);
 
+    public async Task<bool> DeleteBulkStaffRequirementsAsync(BulkDeleteStaffRequirementRequestDto request)
+    {
+        var ids = request?.Items?.Select(i => i.SrIdentity).ToList() ?? new List<int>();
+        return await _staffRepo.DeleteBulkStaffRequirementsAsync(ids);
+    }
+
     // ── Tests ────────────────────────────────────────────────────────────────
 
     public async Task<PaginatedResult<TestRequirementDto>> GetTestRequirementsAsync(
@@ -247,6 +253,12 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<bool> DeleteTestRequirementAsync(string projectId, int year, string testCode)
         => await _testRepo.DeleteTestRequirementAsync(projectId, year, testCode);
 
+    public async Task<bool> DeleteBulkTestRequirementsAsync(BulkDeleteTestRequirementRequestDto request)
+    {
+        var codes = request?.Items?.Select(i => i.TestCode).ToList() ?? [];
+        return await _testRepo.DeleteBulkTestRequirementsAsync(request?.ProjectId ?? string.Empty, request?.Year ?? 0, codes);
+    }
+
     // ── Animals ──────────────────────────────────────────────────────────────
 
     public async Task<PaginatedResult<AnimalRequirementDto>> GetAnimalRequirementsAsync(
@@ -289,6 +301,12 @@ public class YearlyDetailsService : IYearlyDetailsService
     public async Task<bool> DeleteAnimalRequirementAsync(int arIdentity)
         => await _animalRepo.DeleteAnimalRequirementAsync(arIdentity);
 
+    public async Task<bool> DeleteBulkAnimalRequirementsAsync(BulkDeleteAnimalRequirementRequestDto request)
+    {
+        var ids = request?.Items?.Select(i => i.ArIdentity).ToList() ?? new List<int>();
+        return await _animalRepo.DeleteBulkAnimalRequirementsAsync(ids);
+    }
+
     // ── Additional Costs ─────────────────────────────────────────────────────
 
     public async Task<PaginatedResult<AdditionalCostDto>> GetAdditionalCostsAsync(
@@ -330,6 +348,12 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<bool> DeleteAdditionalCostAsync(int acIdentity)
         => await _additionalCostRepo.DeleteAdditionalCostAsync(acIdentity);
+
+    public async Task<bool> DeleteBulkAdditionalCostsAsync(BulkDeleteAdditionalCostRequestDto request)
+    {
+        var ids = request?.Items?.Select(i => i.AcIdentity).ToList() ?? new List<int>();
+        return await _additionalCostRepo.DeleteBulkAdditionalCostsAsync(ids);
+    }
 
     // ── Lookups ──────────────────────────────────────────────────────────────
 
