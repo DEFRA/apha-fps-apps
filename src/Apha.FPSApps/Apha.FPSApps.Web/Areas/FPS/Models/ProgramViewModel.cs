@@ -30,6 +30,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Manager")]
         [GridColumn(IsFilterable = true)]
         public string? Manager { get; set; }
+        
+        
+        [GridColumn(IsVisible = false)]
+        public string? SectorName { get; set; }
        
       
         [StringLength(50, ErrorMessage = "Directorate cannot exceed 50 characters")]
