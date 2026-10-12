@@ -322,7 +322,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
         [Fact]
         public async Task UpdateAsync_UpdatesFieldsInPlace_WhenCodeIsUnchanged()
         {
-            var existing = BuildGrade("A", descLong: "Original Desc", avSalary: 50000m);
+            var existing = BuildGrade("A", descLong: "Original Desc", avSalary: 50000m,
+                avLeaveHrs: 8.0, avSickHrs: 4.0);
             var (repo, dbSet, context) = CreateRepositoryWithMocks([existing]);
 
             var updated = BuildGrade("A", descLong: "Updated Desc", avSalary: 60000m,
@@ -334,8 +335,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
             Assert.Equal("Updated Desc", result.DescLong);
             Assert.Equal(60000m, result.AvSalary);
             Assert.Equal("PC01", result.PactCode);
-            Assert.Equal(10.0, result.AvLeaveHrs);
-            Assert.Equal(5.0, result.AvSickHrs);
+            Assert.Equal(8.0, result.AvLeaveHrs);
+            Assert.Equal(4.0, result.AvSickHrs);
             Assert.Equal(2025, result.FpsYear);
             RepositoryTestHelper.VerifySaveChanges(context);
         }
