@@ -610,6 +610,82 @@ function copyBulkWorkGroup(selection) {
     }, true);
 })();
 
+// The listeners above lose the race against the shared #modalPopup focus trap
+// (global-dropdown-keyboard.js), because that script registers its own
+// document-level capture listeners earlier on page load, and same-node
+// capture listeners run in registration order. Registering an additional
+// pair of listeners on window - which is always visited before document in
+// the capture phase, regardless of script load order - lets this run first
+// and actively pulls focus back into the GOV.UK dialog whenever it is open,
+// without altering any of the existing code or markup above.
+(function () {
+    function getOpenGovukDialog() {
+        return document.querySelector('[data-govuk-modal="backdrop"] [role="dialog"]');
+    }
+
+    function getDialogFocusable(dialog) {
+        return Array.prototype.slice.call(
+            dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        ).filter(function (el) {
+            return !el.hasAttribute('disabled') && el.offsetParent !== null;
+        });
+    }
+
+    window.addEventListener('focusin', function (e) {
+        var dialog = getOpenGovukDialog();
+        if (!dialog) return;
+
+        e.stopImmediatePropagation();
+
+        if (dialog.contains(e.target)) return;
+
+        var focusable = getDialogFocusable(dialog);
+        if (focusable.length) {
+            focusable[0].focus();
+        } else {
+            dialog.focus();
+        }
+    }, true);
+
+    window.addEventListener('keydown', function (e) {
+        if (e.key !== 'Tab' && e.key !== 'Escape') return;
+
+        var dialog = getOpenGovukDialog();
+        if (!dialog) return;
+
+        e.stopImmediatePropagation();
+
+        // Escape is left to govuk-modal-dialog.js's own document-level
+        // handler to close the dialog - only Tab is handled here.
+        if (e.key !== 'Tab') return;
+
+        // Because stopImmediatePropagation() above also prevents
+        // govuk-modal-dialog.js's own Tab-wrap handler (on document) from
+        // running, that wrap-around logic has to be reproduced here as
+        // well - otherwise Tab from the last focusable element falls
+        // through to the browser's native tab order (e.g. the address bar)
+        // instead of cycling back to the first control in the dialog.
+        var focusable = getDialogFocusable(dialog);
+        if (!focusable.length) {
+            e.preventDefault();
+            dialog.focus();
+            return;
+        }
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        var active = document.activeElement;
+
+        if (e.shiftKey && (active === first || !dialog.contains(active))) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
+            e.preventDefault();
+            first.focus();
+        }
+    }, true);
+})();
+
 function executeCopyBulkWorkGroup() {
     var targetJobCode = $('#dpTargetJobcode').val();
     var sourceJobCode = $('#cwg_sourceJobCode').val();
