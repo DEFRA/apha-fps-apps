@@ -591,6 +591,25 @@ function copyBulkWorkGroup(selection) {
     });
 }
 
+
+// Focus must stay within the GOV.UK dialog's message/buttons at all times -
+(function () {
+    function isGovukDialogOpen() {
+        return !!document.querySelector('[data-govuk-modal="backdrop"] [role="dialog"]');
+    }
+
+    document.addEventListener('focusin', function (e) {
+        if (!isGovukDialogOpen()) return;
+        e.stopImmediatePropagation();
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Tab' && e.key !== 'Escape') return;
+        if (!isGovukDialogOpen()) return;
+        e.stopImmediatePropagation();
+    }, true);
+})();
+
 function executeCopyBulkWorkGroup() {
     var targetJobCode = $('#dpTargetJobcode').val();
     var sourceJobCode = $('#cwg_sourceJobCode').val();
