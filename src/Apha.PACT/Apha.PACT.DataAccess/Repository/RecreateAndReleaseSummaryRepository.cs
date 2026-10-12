@@ -154,7 +154,7 @@ namespace Apha.PACT.DataAccess.Repository
                 : "0";
 
             var releaseSummaryMonthClosure = await _context.ReleaseSummaryMonthClosures
-                .FirstOrDefaultAsync(v => v.Key == keyName);
+                .FirstOrDefaultAsync(v => v.Key.ToLower() == keyName.ToLower());
 
             if (releaseSummaryMonthClosure is null)
             {
