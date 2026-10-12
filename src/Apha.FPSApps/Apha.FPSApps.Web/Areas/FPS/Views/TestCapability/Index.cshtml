@@ -239,6 +239,10 @@
     <script>
         var currentPortfolio = '';
 
+        function getSelectedPortfolioFromQuery() {
+            return new URLSearchParams(window.location.search).get('portfolio') || '';
+        }
+
         // ── Filter ────────────────────────────────────────────────────────────
 
         function onPortfolioChange(portfolio, desc) {
@@ -247,7 +251,10 @@
             $('#portfolioPick').val(portfolio || '');
             $('#portfolioDescription').val(portfolio ? (desc || '') : '');
 
-            window['gridManager_testCapabilityGrid'].reloadGrid({ page: 1 });
+            var gridManager = window['gridManager_testCapabilityGrid'];
+            if (gridManager && typeof gridManager.reloadGrid === 'function') {
+                gridManager.reloadGrid({ page: 1 });
+            }
         }
 
         // ── Portfolio panel dropdown ──────────────────────────────────────────
@@ -291,12 +298,35 @@
             onPortfolioChange(portfolio, desc);
         }
 
+        function restoreSelectedPortfolioFromQuery() {
+            var portfolio = getSelectedPortfolioFromQuery();
+            if (!portfolio) return;
+
+            var rows = document.querySelectorAll('#PortfolioDropdownBody tr');
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                if (row.getAttribute('data-portfolio') === portfolio) {
+                    selectPortfolio(
+                        portfolio,
+                        row.getAttribute('data-code') || '',
+                        row.getAttribute('data-description') || '',
+                        row
+                    );
+                    break;
+                }
+            }
+        }
+
         // Close panel when clicking outside
         $(document).on('click', function (e) {
             if (!$(e.target).closest('#PortfolioDropdownPanel, #portfolioDisplay').length) {
                 var panel = document.getElementById('PortfolioDropdownPanel');
                 if (panel) panel.style.display = 'none';
             }
+        });
+
+        $(function () {
+            restoreSelectedPortfolioFromQuery();
         });
 
         function getTestCapabilityExtraFilters() {

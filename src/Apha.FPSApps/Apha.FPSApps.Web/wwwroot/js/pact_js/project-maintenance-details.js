@@ -282,7 +282,7 @@ function updateTimeCodeBulkActiveButtonsVisibility() {
     var hasData = $('#tbl_' + gridId + ' tbody tr[data-id]').length > 0;
     $('#timeCodeBulkActiveButtons').css('display', hasData ? 'flex' : 'none');
 
-    var yearClosed = typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed;
+    var yearClosed = typeof isFPSYearStatusClosed !== 'undefined' && isFPSYearStatusClosed;
     $('#timeCodeActivateAllBtn, #timeCodeDeactivateAllBtn').prop('disabled', yearClosed);
 }
 
@@ -323,7 +323,7 @@ function enableTimeCodeActiveCheckboxes() {
     var gridId = timeCodeGridId || 'timeCodeGrid';
     var $cells = $('#gridContainer_' + gridId + ' td.checkbox-cell[data-property="Active"]');
 
-    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+    if (typeof isFPSYearStatusClosed !== 'undefined' && isFPSYearStatusClosed) {
         $cells.find('.govuk-checkboxes__item').css('pointer-events', 'none');
         $cells.find('input[type="checkbox"]').prop('disabled', true);
         return;
@@ -758,7 +758,7 @@ function deactivateAllTimeCodes() {
 }
 
 function setActiveAllTimeCodes(isActive) {
-    if (typeof isFPSYearClosed !== 'undefined' && isFPSYearClosed) {
+    if (typeof isFPSYearStatusClosed !== 'undefined' && isFPSYearStatusClosed) {
         return;
     }
     if (!selectedJobCodeId) {

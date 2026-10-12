@@ -127,32 +127,39 @@
             }, 300);
         }
 
-        function planProject(btn) {
-            var projectCode = $(btn).data('id');
-            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
-            fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })' + '?projectCode=' + encodeURIComponent(projectCode));
-        }
-
-        function editProject(btn) {
-            var parentProject = $(btn).data('id');
+        function getProgrammeSelectReturnUrl() {
             var programNo = document.getElementById('programmeDropdown')?.value ?? '';
             var projectName = document.getElementById('projectNameInput')?.value ?? '';
+            var fpsYear = (typeof window.FPS_CONTEXT_YEAR !== 'undefined' && window.FPS_CONTEXT_YEAR) || '';
 
             var returnUrl = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
                 + '?programNo=' + encodeURIComponent(programNo)
                 + '&projectName=' + encodeURIComponent(projectName);
 
-            sessionStorage.setItem('fps_clearFiltersOnReturn', '1');
-            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
-                + '?parentProject=' + encodeURIComponent(parentProject));
+            if (fpsYear) {
+                returnUrl += '&fpsContextYear=' + encodeURIComponent(fpsYear);
+            }
+
+            return returnUrl;
         }
 
-        window.addEventListener('pageshow', function () {
-            if (sessionStorage.getItem('fps_clearFiltersOnReturn') === '1') {
-                sessionStorage.removeItem('fps_clearFiltersOnReturn');
-                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })');
-            }
-        });
+        function planProject(btn) {
+            var projectCode = $(btn).data('id');
+            var returnUrl = getProgrammeSelectReturnUrl();
+
+            fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })'
+                + '?projectCode=' + encodeURIComponent(projectCode)
+                + '&returnUrl=' + encodeURIComponent(returnUrl));
+        }
+
+        function editProject(btn) {
+            var parentProject = $(btn).data('id');
+            var returnUrl = getProgrammeSelectReturnUrl();
+
+            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
+                + '?parentProject=' + encodeURIComponent(parentProject)
+                + '&returnUrl=' + encodeURIComponent(returnUrl));
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
             function applyButtonTitles() {

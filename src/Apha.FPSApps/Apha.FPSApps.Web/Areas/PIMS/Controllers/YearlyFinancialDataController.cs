@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Pagination;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using MapsterMapper;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 using System.Globalization;
+using System.IO;
 
 namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 {
@@ -20,6 +22,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
     [AuthorizeForScopes(ScopeKeySection = "PIMSApiSettings:Scope")]
     public class YearlyFinancialDataController : Controller
     {
+        private const string ExcelContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
         private readonly IMapper _mapper;
 
        
@@ -28,17 +32,20 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         
         private readonly IProjectListService _projectListService;
         private readonly IProjectDetailsService _projectDetailsService;
+        private readonly IExcelExportService _excelExportService;
 
         public YearlyFinancialDataController(
             IMapper mapper,
             IYearlyFinancialDataService service,
             IProjectListService projectListService,
-            IProjectDetailsService projectDetailsService)
+            IProjectDetailsService projectDetailsService,
+            IExcelExportService excelExportService)
         {
             _mapper = mapper;
             _service = service;
             _projectListService = projectListService;
             _projectDetailsService = projectDetailsService;
+            _excelExportService = excelExportService;
         }
 
         // -- Index ---------------------------------------------------------
@@ -112,7 +119,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     DeleteFunction     = "deleteYearlyFinancialData",
                     AllowView          = false,
                     ViewFunction       = "viewYearlyFinancialData",
-                    AllowExport        = false,
+                    AllowExport        = true,
+                    ExportUrl          = "/PIMS/YearlyFinancialData/ExportYearlyFinancialData",
                     AllowExcelExport   = false,
                     ExtraFilterMethod  = "getYearlyFinancialDataExtraFilters",
                     BindGridUrl        = "/PIMS/YearlyFinancialData/LoadYearlyFinancialDataGrid",
@@ -221,6 +229,39 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportYearlyFinancialData(string? project, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(project))
+            {
+                return BadRequest("Project is required.");
+            }
+
+            ApiResponseDto<List<YearlyFinancialDataDto>> response =
+                await _service.GetAllAsync(project, new QueryParameters<string> { Page = -1, PageSize = int.MaxValue });
+
+            if (!response.Success || response.Data == null)
+            {
+                return NotFound();
+            }
+
+            List<YearlyFinancialDataExportItem> rows = _mapper.Map<List<YearlyFinancialDataExportItem>>(response.Data);
+
+            byte[] excelBytes = _excelExportService.ExportToExcel(rows, "YearlyFinancialData");
+            string safeProjectName = string.IsNullOrWhiteSpace(project)
+                ? "Project"
+                : string.Concat(project.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries)).Replace(" ", string.Empty);
+
+            if (string.IsNullOrWhiteSpace(safeProjectName))
+            {
+                safeProjectName = "Project";
+            }
+
+            string fileName = $"YearlyFinancialData_{safeProjectName}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            return File(excelBytes, ExcelContentType, fileName);
+        }
+
         private async Task<DataGridConfig<YearlyFinancialDataItem>> BuildYearlyFinancialDataGridAsync(
             PaginationFilter<string> request, string? project)
         {
@@ -263,7 +304,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 DeleteFunction     = "deleteYearlyFinancialData",
                 AllowView          = false,
                 ViewFunction       = "viewYearlyFinancialData",
-                AllowExport        = false,
+                AllowExport        = true,
+                ExportUrl          = "/PIMS/YearlyFinancialData/ExportYearlyFinancialData",
                 AllowExcelExport   = false,
                 ExtraFilterMethod  = "getYearlyFinancialDataExtraFilters",
                 BindGridUrl        = "/PIMS/YearlyFinancialData/LoadYearlyFinancialDataGrid",

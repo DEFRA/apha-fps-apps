@@ -234,5 +234,31 @@ namespace Apha.FPS.Api.UnitTests.Controller.CostCentreControllerTest
 
             await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteCostCentreAsync(costCentreNo));
         }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_HappyPath_ReturnsOk()
+        {
+            const string profitCentre = "PC1";
+            var dtos = new List<CostCentreDto> { new() { CostCentreNo = 100, ProfitCentre = profitCentre, FpsYear = 2024 } };
+            var res = new List<CostCentreRes> { new() { CostCentreNo = 100, ProfitCentre = profitCentre, FpsYear = 2024 } };
+
+            _costCentreServiceMock.GetAllCostCentresByProfitCentreAsync(profitCentre).Returns(dtos);
+            _mapperMock.Map<IEnumerable<CostCentreRes>>(dtos).Returns(res);
+
+            var result = await _controller.GetAllCostCentresByProfitCentreAsync(profitCentre);
+
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(res, okResult.Value);
+            await _costCentreServiceMock.Received(1).GetAllCostCentresByProfitCentreAsync(profitCentre);
+        }
+
+        [Fact]
+        public async Task GetAllCostCentresByProfitCentreAsync_ServiceThrows_PropagatesException()
+        {
+            _costCentreServiceMock.GetAllCostCentresByProfitCentreAsync(Arg.Any<string>())
+                .ThrowsAsync(new ArgumentException("profitCentre"));
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllCostCentresByProfitCentreAsync(" "));
+        }
     }
 }

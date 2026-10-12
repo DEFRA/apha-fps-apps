@@ -36,5 +36,10 @@ namespace Apha.FPS.Application.Interfaces
         /// Returns true if a row was deleted.
         /// </summary>
         Task<bool> DeleteCostCentreAsync(double costCentreNo, int fpsYear);
+
+        /// <summary>
+        /// Returns all CostCentre records belonging to the given ProfitCentre.
+        /// </summary>
+        Task<IEnumerable<CostCentreDto>> GetAllCostCentresByProfitCentreAsync(string profitCentre);
     }
 }

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
@@ -23,13 +24,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
 
         private readonly IMapper _mapper;
         private readonly IWorkgroupMaintenanceService _service;
+        private readonly ICostCentreService _costCentreService;
         private readonly WorkgroupMaintenanceController _controller;
 
         public WorkgroupMaintenanceControllerTests()
         {
             _mapper     = Substitute.For<IMapper>();
             _service    = Substitute.For<IWorkgroupMaintenanceService>();
-            _controller = new WorkgroupMaintenanceController(_mapper, _service);
+            _costCentreService = Substitute.For<ICostCentreService>();
+            _controller = new WorkgroupMaintenanceController(_mapper, _service, _costCentreService);
         }
 
         // Helper method to extract properties from JsonResult
@@ -625,12 +628,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         public async Task GetCostCentres_ValidProfitCentre_ServiceReturnsSuccess_ReturnsJsonWithData()
         {
             // Arrange
-            var response = new ApiResponseDto<List<double?>>
+            var response = new ApiResponseDto<List<CostCentreDto>>
             {
                 Success = true,
-                Data    = new List<double?> { 100.0, 200.0 }
+                Data    = new List<CostCentreDto>
+                {
+                    new() { CostCentreNo = 100.0, ProfitCentre = TestProfitCentre, FpsYear = 2024 },
+                    new() { CostCentreNo = 200.0, ProfitCentre = TestProfitCentre, FpsYear = 2024 }
+                }
             };
-            _service.GetCostCentresAsync(TestProfitCentre).Returns(response);
+            _costCentreService.GetAllCostCentresByProfitCentreAsync(TestProfitCentre).Returns(response);
 
             // Act
             var result = await _controller.GetCostCentres(TestProfitCentre);
@@ -640,6 +647,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
             var value = GetJsonResultValue<JsonResultSuccess>(jsonResult);
             Assert.NotNull(value);
             Assert.True(value.Success);
+            await _costCentreService.Received(1).GetAllCostCentresByProfitCentreAsync(TestProfitCentre);
         }
 
         [Fact]
@@ -659,12 +667,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkgroupMaintenanceControl
         public async Task GetCostCentres_ServiceReturnsFailure_ReturnsJsonError()
         {
             // Arrange
-            var response = new ApiResponseDto<List<double?>>
+            var response = new ApiResponseDto<List<CostCentreDto>>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "Failed to load cost centres" } }
             };
-            _service.GetCostCentresAsync(TestProfitCentre).Returns(response);
+            _costCentreService.GetAllCostCentresByProfitCentreAsync(TestProfitCentre).Returns(response);
 
             // Act
             var result = await _controller.GetCostCentres(TestProfitCentre);

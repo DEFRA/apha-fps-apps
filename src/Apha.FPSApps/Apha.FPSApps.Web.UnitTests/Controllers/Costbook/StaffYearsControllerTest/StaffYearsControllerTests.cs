@@ -202,11 +202,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
         }
 
         [Fact]
-        public async Task Index_YearColumnsAreCappedAtTen()
+        public async Task Index_YearColumnsAreCappedAtTwenty()
         {
             // Arrange
             const string projectId = "P001";
-            var pivot = BuildPivot(rowCount: 1, yearCount: 15); // 15 years, but max is 10
+            var pivot = BuildPivot(rowCount: 1, yearCount: 15); // 15 years, but max is 20
             SetupHeaderSuccess(projectId);
             SetupPivotSuccess(projectId, pivot);
 
@@ -220,7 +220,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
             var yearColumns = model.Grid.Columns
                 .Where(c => c.PropertyName.StartsWith('Y') && c.PropertyName != "Total")
                 .ToList();
-            Assert.Equal(10, yearColumns.Count);
+            Assert.Equal(15, yearColumns.Count);
         }
 
         [Fact]
@@ -249,7 +249,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
 
             var row = model.Grid.Data[0];
             Assert.Equal(1.23m, row.Total);
-            Assert.Equal(3.14m, row.Y1);
+            Assert.Equal(3.14m, (decimal?)row.GetType().GetProperty("Y1")?.GetValue(row));
         }
 
         [Fact]
@@ -453,7 +453,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
         }
 
         [Fact]
-        public async Task LoadGrid_YearColumnsAreCappedAtTen()
+        public async Task LoadGrid_YearColumnsAreCappedAtTwenty()
         {
             // Arrange
             const string projectId = "P001";
@@ -472,7 +472,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.StaffYearsControllerTe
             var yearColumns = grid.Columns
                 .Where(c => c.PropertyName.StartsWith('Y') && c.PropertyName != "Total")
                 .ToList();
-            Assert.Equal(10, yearColumns.Count);
+            Assert.Equal(15, yearColumns.Count);
         }
     }
 }

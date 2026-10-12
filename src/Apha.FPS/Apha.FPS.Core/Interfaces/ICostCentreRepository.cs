@@ -25,5 +25,8 @@ namespace Apha.FPS.Core.Interfaces
 
         /// <summary>Returns true if a CostCentre row with the given composite key already exists.</summary>
         Task<bool> ExistsAsync(double costCentreNo, int fpsYear);
+
+        /// <summary>Returns all CostCentre records belonging to the given ProfitCentre, ordered by CostCentreNo.</summary>
+        Task<IEnumerable<CostCentre>> GetAllByProfitCentreAsync(string profitCentre);
     }
 }

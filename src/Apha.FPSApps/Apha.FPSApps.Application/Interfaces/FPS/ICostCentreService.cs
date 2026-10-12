@@ -40,5 +40,10 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         /// Deletes the cost centre record identified by <paramref name="costCentreNo"/>.
         /// </summary>
         Task<ApiResponseDto<bool>> DeleteCostCentreAsync(double costCentreNo);
+
+        /// <summary>
+        /// Returns all cost centres belonging to the given <paramref name="profitCentre"/>.
+        /// </summary>
+        Task<ApiResponseDto<List<CostCentreDto>>> GetAllCostCentresByProfitCentreAsync(string profitCentre);
     }
 }

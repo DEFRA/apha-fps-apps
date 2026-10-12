@@ -49,10 +49,6 @@
                                 Plan This Portfolio
                             </button>
                             <button class="govuk-button sup_margin_0" type="button"
-                                    onclick="setupComponents()">
-                                Set Up Components
-                            </button>
-                            <button class="govuk-button sup_margin_0" type="button"
                                     onclick="saveAndReturn()">
                                 Save
                             </button>
@@ -296,11 +292,6 @@
         function planPortfolio() {
             var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
             window.location.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?projectCode=' + encodeURIComponent(parentProject);
-        }
-
-        function setupComponents() {
-            var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
-            window.location.href = '/FPS/TestCapability/Index?portfolio=' + encodeURIComponent(parentProject);
         }
 
         function saveAndReturn() {

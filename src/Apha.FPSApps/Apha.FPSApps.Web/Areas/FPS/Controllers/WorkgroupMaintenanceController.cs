@@ -1,67 +1,6 @@
-/*
- * TRANSFORMENGINE MIGRATION — WorkgroupMaintenanceController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 11 — ViewModels + MVC Controller (Steps 16-17)
- * Migrated : 2026-06-23
- * Phase 14 security : 2026-06-23 — PASS (see Security Review section in transform-review-checklist.md)
- *
- * CHANGED:
- *   - NEW FILE: MVC controller for WorkGroup Maintenance (frmMaintWorkGroup2)
- *   - Source form: frmMaintWorkGroup2 (RecordSource: WorkGroup_MAP -> fps.workgroup)
- *   - Index() builds full DataGridConfig<WorkgroupMaintenanceItem> — never left as new()
- *   - LoadWorkgroupGrid (POST) — DataGrid AJAX reload with pagination + filter support
- *   - Create (GET + POST) — Add modal + CRUD create via IWorkgroupMaintenanceService.CreateAsync()
- *   - Edit (GET + POST) — Edit modal pre-population via GetByWorkGroupNameAsync() + update via UpdateAsync()
- *   - Delete (HttpDelete) — delete confirm via DeleteAsync(); no modal partial (JS confirm() only)
- *   - GetProfitCentres (GET) — AJAX lookup for modal ResourceCentre <select>
- *   - GetOwners (GET) — AJAX lookup for modal Owner <select>
- *   - GetCostCentres (GET) — AJAX cascading lookup for modal CostCentre <select> filtered by profitCentre
- *   - No page-level filter dropdowns added — HTML prototype has no <select> outside the modal container;
- *     popup selects are served via dedicated [HttpGet] lookup actions, NOT via PopulateDropdownsAsync
- *   - AllowAdd=true, AllowEdit=true, AllowDelete=true (derived from JS showAddButton + actions column buttons)
- *   - KeyProperty = "WorkGroupName" (natural PK; visible grid column per JS columns[0])
- *   - Injects only IWorkgroupMaintenanceService — never IFpsWorkgroupApiClient or any repository directly
- *
- * PHASE 14 SECURITY REVIEW RESULTS:
- *   - [Authorize(Roles = "FPSAdmin")] at class level: PASS — protects all actions including
- *     AJAX endpoints (Create POST, Edit POST, Delete, LoadWorkgroupGrid, lookups)
- *   - [AuthorizeForScopes] present: PASS — Azure AD scope propagation to downstream API
- *   - CSRF/anti-forgery: PASS — LoadWorkgroupGrid and Create/Edit POST endpoints use
- *     application/json [FromBody] content-type; Azure AD bearer auth provides equivalent
- *     CSRF protection; pattern consistent with GradeMaintenanceController and DivisionMaintenanceController
- *     (both peer-reviewed in earlier phases)
- *   - @Html.AntiForgeryToken() in modal forms: PASS — confirmed present in _AddEditWorkgroup.cshtml
- *   - ModelState.IsValid checks: PASS — present in LoadWorkgroupGrid, Create (POST), and Edit (POST)
- *   - Input null/empty guards: PASS — Edit (GET), Delete, GetCostCentres all guard string params
- *   - originalWorkGroupName rename pattern: PASS — query-param sourced; FPSAdmin access is full;
- *     no per-record ownership bypass risk
- *   - Exception/error responses: PASS — JSON error objects expose only message and field codes;
- *     no stack traces or internal exception text surfaced to client
- *   - No hardcoded secrets or connection strings: PASS
- *   - AJAX URLs are relative paths only: PASS — no cross-origin or environment-specific endpoints
- *   - @Html.Raw() in _AddEditWorkgroup.cshtml: REVIEW NEEDED — used for JS variable init of
- *     ProfitCentre/Owner/CostCentre server values; acceptable if DB source is trusted internal data;
- *     see DEFERRED note below
- *
- * PRESERVED:
- *   - CRUD service binding matches IWorkgroupMaintenanceService (Phase 8) — distinct from PACT IWorkGroupService
- *   - Lookup actions (GetProfitCentres, GetOwners, GetCostCentres) kept separate from CRUD flow
- *   - Pattern consistent with WorkGroupGradeMaintenanceController and ResourceCentreMaintenanceController
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm [Authorize(Roles = "FPSAdmin")] matches target environment role names
- *   - TRANSFORMENGINE TODO: GetCostCentres returns List<double?> — if labelled projection (value+display) is
- *     needed, coordinate with backend to update the costcentres endpoint response type
- *   - TRANSFORMENGINE TODO: CostCentre is double? — verify modal binding handles double-to-string round-trip
- *     for the cascading dropdown (select value vs. display text)
- *   - TRANSFORMENGINE TODO: @Html.Raw() in _AddEditWorkgroup.cshtml for ProfitCentre, Owner, CostCentre JS init —
- *     verify these values originate only from trusted internal FPS data (fps.tblkpprofitcentre, qryManager)
- *     and cannot carry a script payload; if any value could come from user-supplied text, switch to
- *     JsonSerializer.Serialize() + JSON.parse() to safely pass the value to JavaScript
- */
-
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -89,11 +28,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // TRANSFORMENGINE: IWorkgroupMaintenanceService injected for ALL CRUD + lookup flows
         // This is the FPS WorkgroupMaintenance service (Phase 8), NOT the PACT IWorkGroupService
         private readonly IWorkgroupMaintenanceService _service;
+        private readonly ICostCentreService _costCentreService;
 
-        public WorkgroupMaintenanceController(IMapper mapper, IWorkgroupMaintenanceService service)
+
+        public WorkgroupMaintenanceController(IMapper mapper, IWorkgroupMaintenanceService service, ICostCentreService costCentreService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _service = service ?? throw new ArgumentNullException(nameof(service));
+            _costCentreService = costCentreService ?? throw new ArgumentNullException(nameof(costCentreService));
         }
 
         /// <summary>
@@ -401,13 +343,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             // TRANSFORMENGINE: GetCostCentresAsync maps to GET api/v1/workgroup/costcentres?profitCentre={pc}
             // profitCentre sourced from modal ProfitCentre select change event (confirmed page-sourced)
-            var result = await _service.GetCostCentresAsync(profitCentre);
+            var result = await _costCentreService.GetAllCostCentresByProfitCentreAsync(profitCentre);
 
             if (result.Success && result.Data != null)
             {
                 var costCentres = result.Data
-                    .Where(cc => cc.HasValue)
-                    .Select(cc => new { value = cc!.Value, display = cc.Value.ToString("F0") })
+                    .Select(cc => new { value = cc.CostCentreNo, display = cc.CostCentreNo })
                     .ToList();
 
                 return Json(new { success = true, data = costCentres });

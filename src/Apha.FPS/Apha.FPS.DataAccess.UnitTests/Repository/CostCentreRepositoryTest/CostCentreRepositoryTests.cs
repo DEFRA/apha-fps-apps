@@ -475,5 +475,47 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.CostCentreRepositoryTest
         }
 
         #endregion
+
+        #region GetAllByProfitCentreAsync Tests
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetAllByProfitCentreAsync_ThrowsArgumentException_WhenProfitCentreIsNullOrWhiteSpace(string? profitCentre)
+        {
+            var repo = CreateRepository();
+            await Assert.ThrowsAnyAsync<ArgumentException>(() => repo.GetAllByProfitCentreAsync(profitCentre!));
+        }
+
+        [Fact]
+        public async Task GetAllByProfitCentreAsync_ReturnsEmpty_WhenNoMatch()
+        {
+            var entities = new List<CostCentre> { BuildEntity(100.0, "PC01") };
+            var repo     = CreateRepository(entities);
+
+            var result = await repo.GetAllByProfitCentreAsync("PC99");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllByProfitCentreAsync_ReturnsOnlyMatchingRecords_OrderedByCostCentreNo()
+        {
+            var entities = new List<CostCentre>
+            {
+                BuildEntity(300.0, "PC01"), BuildEntity(200.0, "PC02"), BuildEntity(100.0, "PC01")
+            };
+            var repo = CreateRepository(entities);
+
+            var result = (await repo.GetAllByProfitCentreAsync("PC01")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, c => Assert.Equal("PC01", c.ProfitCentre));
+            Assert.Equal(100.0, result[0].CostCentreNo);
+            Assert.Equal(300.0, result[1].CostCentreNo);
+        }
+
+        #endregion
     }
 }

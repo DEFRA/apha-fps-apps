@@ -583,24 +583,28 @@ namespace Apha.Costbook.DataAccess.Repositories
 
             var staffRows = await _context.StaffRequirements
                 .AsNoTracking()
-                .Where(s => s.Project == decodedProjectId && s.Year.HasValue && s.Nodays.HasValue)
+                .Where(s => s.Project == decodedProjectId)
                 .ToListAsync();
 
             var wgLookup = await _context.WorkGroupGrades
                 .AsNoTracking()
                 .ToDictionaryAsync(w => w.WgGrade, w => w.WorkGroup);
 
-            var joined = staffRows.Select(s => new
-            {
-                Project = s.Project ?? decodedProjectId,
-                WorkGroup = wgLookup.TryGetValue(s.WgGrade, out var wg) ? wg : string.Empty,
-                GradeCode = s.WgGrade.StartsWith("GD5", StringComparison.OrdinalIgnoreCase)
-                    ? "GD5"
-                    : s.WgGrade.Length > 0 ? s.WgGrade[..1] : s.WgGrade,
-                Name = s.Name ?? string.Empty,
-                Year = s.Year!.Value,
-                NoDays = s.Nodays!.Value
-            }).ToList();
+            var joined = staffRows
+                .Where(s => s.Year.HasValue && s.Nodays.HasValue)
+                .Select(s => new
+                {
+                    Project = s.Project ?? decodedProjectId,
+                    WorkGroup = !string.IsNullOrEmpty(s.WgGrade) && wgLookup.TryGetValue(s.WgGrade, out var wg) ? wg : string.Empty,
+                    GradeCode = !string.IsNullOrEmpty(s.WgGrade)
+                        ? (s.WgGrade.StartsWith("GD5", StringComparison.OrdinalIgnoreCase)
+                            ? "GD5"
+                            : s.WgGrade.Length > 0 ? s.WgGrade[..1] : s.WgGrade)
+                        : string.Empty,
+                    Name = s.Name ?? string.Empty,
+                    Year = s.Year!.Value,
+                    NoDays = s.Nodays!.Value
+                }).ToList();
 
             var years = joined.Select(r => r.Year).Distinct().OrderBy(y => y).ToList();
 

@@ -279,6 +279,16 @@
             if (table.getAttribute('data-a11y-table') === 'true') return;
             // Skip grids handled by the shared DataGrid component.
             if (table.closest('.editable-grid-container')) return;
+            // Skip form-layout tables (used to arrange labels and
+            // inputs/selects/textareas/buttons rather than static data).
+            // These already have native, correctly ordered tab stops, so
+            // turning the table/cells into additional tab stops here would
+            // duplicate/break the natural tab order.
+            if (table.classList.contains('isProjectSeclectionGrid') ||
+                table.closest('#addNewProjectYearForm') ||
+                table.querySelector('select')) {
+                return;
+            }
             table.setAttribute('data-a11y-table', 'true');
 
             // Give every header cell an explicit scope so screen readers can

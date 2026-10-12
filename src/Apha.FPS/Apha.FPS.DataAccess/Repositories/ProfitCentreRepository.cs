@@ -206,10 +206,17 @@ namespace Apha.FPS.DataAccess.Repositories
                         return false;
 
                     var userProfitCentres = await _dbContext.UserProfitcentres
-                        .Where(upc => upc.ProfitCentre == profitCentreId)
+                        .IgnoreQueryFilters()
+                        .Where(upc => EF.Functions.ILike(upc.ProfitCentre, profitCentreId)
+                                   && upc.FpsYear == profitCentre.FpsYear)
                         .ToListAsync();
 
-                    _dbContext.UserProfitcentres.RemoveRange(userProfitCentres);
+                    if (userProfitCentres.Count > 0)
+                    {
+                        _dbContext.UserProfitcentres.RemoveRange(userProfitCentres);
+                        await _dbContext.SaveChangesAsync();
+                    }
+
                     _dbContext.ProfitCentres.Remove(profitCentre);
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -229,7 +236,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return await _dbContext.ProfitCentreGrades
                 .AsNoTracking()
-                .AnyAsync(pcg => pcg.ProfitCentre == profitCentreId);
+                .AnyAsync(pcg => EF.Functions.ILike(pcg.ProfitCentre, profitCentreId));
         }
 
         public async Task<bool> HasLinkedWorkgroupsAsync(string profitCentreId)
@@ -237,9 +244,17 @@ namespace Apha.FPS.DataAccess.Repositories
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             return await _dbContext.Workgroups
-                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .AnyAsync(wg => wg.ProfitCentre == profitCentreId);
+                .AnyAsync(wg => EF.Functions.ILike(wg.ProfitCentre, profitCentreId));
+        }
+
+        public async Task<bool> HasLinkedCostCenterAsync(string profitCentreId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
+
+            return await _dbContext.CostCentres
+                .AsNoTracking()
+                .AnyAsync(cc => EF.Functions.ILike(cc.ProfitCentre, profitCentreId));
         }
 
         public async Task<bool> ProfitCentreExistsAsync(string profitCentreId)
