@@ -314,6 +314,10 @@
             var returnUrl = isProjectGroupMode
                 ? '/FPS/ProgramProject?source=projectgroup'
                 : '/FPS/ProgramProject?programNo=' + encodeURIComponent(currentProgramNo);
+            var fpsYear = (typeof window.FPS_CONTEXT_YEAR !== 'undefined' && window.FPS_CONTEXT_YEAR) || '';
+            if (fpsYear) {
+                returnUrl += '&fpsContextYear=' + encodeURIComponent(fpsYear);
+            }
             window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(currentProjectCode) + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
 
