@@ -21,5 +21,11 @@ namespace Apha.FPS.Application.Services
             var entities = await _repository.GetTestsRequiredByRcAsync(profitCentre);
             return _mapper.Map<List<TestsRequiredByRcDto>>(entities);
         }
+
+        public async Task<List<TestsRequiredByRcDto>> GetTestsRequiredByRcByYearAsync(string? profitCentre, int fpsYear)
+        {
+            var entities = await _repository.GetTestsRequiredByRcByYearAsync(profitCentre, fpsYear);
+            return _mapper.Map<List<TestsRequiredByRcDto>>(entities);
+        }
     }
 }

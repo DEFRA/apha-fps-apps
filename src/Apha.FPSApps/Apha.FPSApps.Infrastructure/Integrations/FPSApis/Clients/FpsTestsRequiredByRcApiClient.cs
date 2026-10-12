@@ -32,5 +32,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var responseDto = _mapper.Map<ApiResponseDto<List<TestsRequiredByRcDto>>>(response);
             return ApiResponseDto<List<TestsRequiredByRcDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<TestsRequiredByRcDto>>> GetTestsRequiredByRcByYearAsync(string? profitCentre, int fpsYear)
+        {
+            var response = await _http.GetAsync<List<TestsRequiredByRcRes>>(
+                string.Format(FpsApiEndpoints.GetTestsRequiredByRcByYear, Uri.EscapeDataString(profitCentre ?? string.Empty), fpsYear));
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<TestsRequiredByRcDto>>>(response);
+            }
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<TestsRequiredByRcDto>>>(response);
+            return ApiResponseDto<List<TestsRequiredByRcDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
     }
 }

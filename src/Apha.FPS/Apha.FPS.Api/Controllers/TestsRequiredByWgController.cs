@@ -35,5 +35,16 @@ namespace Apha.FPS.Api.Controllers
             var result = await _service.GetTestsRequiredByWgAsync(profitCentre);
             return Ok(_mapper.Map<List<TestsRequiredByWgRes>>(result));
         }
+
+        /// <summary>
+        /// Returns the Tests Required By Work Group rows calculated for the supplied FPS year,
+        /// optionally filtered to a resource centre (profit centre).
+        /// </summary>
+        [HttpGet("byyear")]
+        public async Task<IActionResult> GetTestsRequiredByWgByYearAsync([FromQuery] string? profitCentre, [FromQuery] int fpsYear)
+        {
+            var result = await _service.GetTestsRequiredByWgByYearAsync(profitCentre, fpsYear);
+            return Ok(_mapper.Map<List<TestsRequiredByWgRes>>(result));
+        }
     }
 }

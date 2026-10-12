@@ -6,5 +6,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     public interface IFpsTestsRequiredByRcApiClient
     {
         Task<ApiResponseDto<List<TestsRequiredByRcDto>>> GetTestsRequiredByRcAsync(string? profitCentre);
+        Task<ApiResponseDto<List<TestsRequiredByRcDto>>> GetTestsRequiredByRcByYearAsync(string? profitCentre, int fpsYear);
     }
 }

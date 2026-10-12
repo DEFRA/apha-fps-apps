@@ -1,0 +1,281 @@
+using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Identity.Web;
+using System.Globalization;
+using System.Text.Json;
+
+namespace Apha.FPSApps.Web.Areas.FPS.Controllers
+{
+    /// <summary>
+    /// Misc Reports Test: same as Misc Reports but the Test Manager WG/RC pivots are
+    /// calculated for the FPS year selected in the year combo box.
+    /// </summary>
+    [Area("FPS")]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
+    public class MiscReportsTestController : Controller
+    {
+        private const string DefaultReport = "TestManagerWgPivot";
+        private const string RcPivotReport = "TestManagerRcPivot";
+        private const int DefaultPageSize = 10;
+
+        private readonly IProfitCentreService _profitCentreService;
+        private readonly ITestsRequiredByWgService _testsRequiredByWgService;
+        private readonly ITestsRequiredByRcService _testsRequiredByRcService;
+
+        public MiscReportsTestController(
+            IProfitCentreService profitCentreService,
+            ITestsRequiredByWgService testsRequiredByWgService,
+            ITestsRequiredByRcService testsRequiredByRcService)
+        {
+            _profitCentreService = profitCentreService;
+            _testsRequiredByWgService = testsRequiredByWgService;
+            _testsRequiredByRcService = testsRequiredByRcService;
+        }
+
+        public async Task<IActionResult> Index(string? report = null, string? profitCentre = null)
+        {
+            var profitCentreOptions = await GetProfitCentreSelectListAsync();
+            var year = GetSelectedFpsYear();
+
+            var selectedReport = string.IsNullOrWhiteSpace(report) ? DefaultReport : report;
+
+            var grid = await BuildGridAsync(profitCentre, selectedReport, year);
+
+            return View(new MiscReportsViewModel
+            {
+                Grid = grid,
+                ProfitCentreOptions = profitCentreOptions,
+                SelectedProfitCentre = profitCentre,
+                SelectedReport = selectedReport,
+                FpsYear = year
+            });
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? report = null, int? fpsYear = null, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
+        {
+            var year = fpsYear is > 0 ? fpsYear.Value : GetSelectedFpsYear();
+            var grid = await BuildGridAsync(profitCentre, string.IsNullOrWhiteSpace(report) ? DefaultReport : report, year, sortBy, descending, filter, page, pageSize);
+            return PartialView("_DataGrid", grid);
+        }
+
+        private static string GetReportTitle(string? report) =>
+            string.Equals(report, RcPivotReport, StringComparison.OrdinalIgnoreCase)
+                ? "Test Manager RC Pivot"
+                : "Test Manager WG Pivot";
+
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, int fpsYear, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
+        {
+            var rows = new List<Dictionary<string, string?>>();
+            var isRcReport = string.Equals(report, RcPivotReport, StringComparison.OrdinalIgnoreCase);
+
+            var columns = new List<DataGridColumn>
+            {
+                new() { PropertyName = "ProfitCentre", DisplayName = "Profit Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 }
+            };
+
+            if (!isRcReport)
+            {
+                columns.Add(new() { PropertyName = "WorkGroup", DisplayName = "Work Group", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 });
+            }
+
+            columns.Add(new() { PropertyName = "TestCode",        DisplayName = "Test Code",        ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 });
+            columns.Add(new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260, CssClass = "grid-column-wrap" });
+            columns.Add(new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total",  ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 });
+            columns.Add(new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",       ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 });
+
+            if (!string.IsNullOrWhiteSpace(report))
+            {
+                if (isRcReport)
+                {
+                    var rcResponse = await _testsRequiredByRcService.GetTestsRequiredByRcByYearAsync(profitCentre, fpsYear);
+                    if (rcResponse.Success && rcResponse.Data != null)
+                    {
+                        foreach (var item in rcResponse.Data)
+                        {
+                            rows.Add(new Dictionary<string, string?>
+                            {
+                                ["ProfitCentre"]    = item.ProfitCentre,
+                                ["TestCode"]        = item.TestCode,
+                                ["ItemDescription"] = item.ItemDescription,
+                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(CultureInfo.InvariantCulture),
+                                ["UnitPrice"]       = item.UnitPrice?.ToString(CultureInfo.InvariantCulture)
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    var response = await _testsRequiredByWgService.GetTestsRequiredByWgByYearAsync(profitCentre, fpsYear);
+                    if (response.Success && response.Data != null)
+                    {
+                        foreach (var item in response.Data)
+                        {
+                            rows.Add(new Dictionary<string, string?>
+                            {
+                                ["ProfitCentre"]    = item.ProfitCentre,
+                                ["WorkGroup"]       = item.WorkGroup,
+                                ["TestCode"]        = item.TestCode,
+                                ["ItemDescription"] = item.ItemDescription,
+                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(CultureInfo.InvariantCulture),
+                                ["UnitPrice"]       = item.UnitPrice?.ToString(CultureInfo.InvariantCulture)
+                            });
+                        }
+                    }
+                }
+            }
+
+            var filters = ParseFilters(filter);
+            rows = ApplyFilters(rows, filters);
+            rows = ApplySorting(rows, sortBy, descending);
+
+            var pageNumber = page > 0 ? page : 1;
+            var itemsPerPage = pageSize > 0 ? pageSize : DefaultPageSize;
+            var totalRecords = rows.Count;
+
+            var pagedRows = rows
+                .Skip((pageNumber - 1) * itemsPerPage)
+                .Take(itemsPerPage)
+                .ToList();
+
+            return new DataGridConfig<Dictionary<string, string?>>
+            {
+                GridId            = "miscReportsTestGrid",
+                Title             = GetReportTitle(report),
+                KeyProperty       = "TestCode",
+                AllowAdd          = false,
+                AllowEdit         = false,
+                AllowDelete       = false,
+                ShowPagination    = true,
+                ExtraFilterMethod = "getMiscReportsTestExtraFilters",
+                BindGridUrl       = "/FPS/MiscReportsTest/LoadGrid",
+                Columns           = columns,
+                Data              = pagedRows,
+                CurrentFilters    = filters,
+                Pagination        = new PaginationModel
+                {
+                    TotalRecords  = totalRecords,
+                    PageNumber    = pageNumber,
+                    PageSize      = itemsPerPage,
+                    SortColumn    = sortBy,
+                    SortDirection = descending
+                }
+            };
+        }
+
+        private static Dictionary<string, string>? ParseFilters(string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return null;
+
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<Dictionary<string, string>>(filter);
+                if (parsed == null || parsed.Count == 0)
+                    return null;
+
+                var cleaned = parsed
+                    .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Value))
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                return cleaned.Count > 0 ? cleaned : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private static List<Dictionary<string, string?>> ApplyFilters(List<Dictionary<string, string?>> rows, Dictionary<string, string>? filters)
+        {
+            if (filters == null || filters.Count == 0 || rows.Count == 0)
+                return rows;
+
+            return rows.Where(row => filters.All(f => RowMatchesFilter(row, f.Key, f.Value))).ToList();
+        }
+
+        private static bool RowMatchesFilter(Dictionary<string, string?> row, string column, string value)
+        {
+            var cellValue = row.TryGetValue(column, out var v) ? v : null;
+
+            return cellValue != null &&
+                   cellValue.Contains(value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static List<Dictionary<string, string?>> ApplySorting(List<Dictionary<string, string?>> rows, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy) || rows.Count == 0)
+                return rows;
+
+            Func<Dictionary<string, string?>, string?> cellSelector =
+                r => r.TryGetValue(sortBy, out var v) ? v : null;
+
+            if (IsNumericColumn(rows, cellSelector))
+            {
+                Func<Dictionary<string, string?>, decimal?> numericSelector =
+                    r => decimal.TryParse(cellSelector(r), NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
+                        ? d
+                        : (decimal?)null;
+
+                return descending
+                    ? rows.OrderByDescending(numericSelector).ToList()
+                    : rows.OrderBy(numericSelector).ToList();
+            }
+
+            return descending
+                ? rows.OrderByDescending(cellSelector, StringComparer.OrdinalIgnoreCase).ToList()
+                : rows.OrderBy(cellSelector, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        private static bool IsNumericColumn(
+            List<Dictionary<string, string?>> rows,
+            Func<Dictionary<string, string?>, string?> cellSelector)
+        {
+            var hasValue = false;
+            foreach (var row in rows)
+            {
+                var value = cellSelector(row);
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                hasValue = true;
+                if (!decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+                {
+                    return false;
+                }
+            }
+
+            return hasValue;
+        }
+
+        private int GetSelectedFpsYear()
+        {
+            if (HttpContext.Items.TryGetValue("SelectedFPSYear", out var yearObj) &&
+                yearObj != null &&
+                int.TryParse(yearObj.ToString(), out var year))
+            {
+                return year;
+            }
+
+            return DateTime.Now.Year;
+        }
+
+        private async Task<List<SelectListItem>> GetProfitCentreSelectListAsync()
+        {
+            var response = await _profitCentreService.GetProfitCentresAsync();
+            if (!response.Success || response.Data == null)
+                return new List<SelectListItem>();
+
+            return response.Data
+                .Where(pc => !string.IsNullOrWhiteSpace(pc.ProfitCentreId))
+                .Select(pc => new SelectListItem(pc.ProfitCentreId, pc.ProfitCentreId))
+                .ToList();
+        }
+    }
+}

@@ -35,5 +35,16 @@ namespace Apha.FPS.Api.Controllers
             var result = await _service.GetTestsRequiredByRcAsync(profitCentre);
             return Ok(_mapper.Map<List<TestsRequiredByRcRes>>(result));
         }
+
+        /// <summary>
+        /// Returns the Tests Required By Resource Centre rows calculated for the supplied FPS year,
+        /// optionally filtered to a resource centre (profit centre).
+        /// </summary>
+        [HttpGet("byyear")]
+        public async Task<IActionResult> GetTestsRequiredByRcByYearAsync([FromQuery] string? profitCentre, [FromQuery] int fpsYear)
+        {
+            var result = await _service.GetTestsRequiredByRcByYearAsync(profitCentre, fpsYear);
+            return Ok(_mapper.Map<List<TestsRequiredByRcRes>>(result));
+        }
     }
 }

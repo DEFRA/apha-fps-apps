@@ -5,5 +5,6 @@ namespace Apha.FPS.Application.Interfaces
     public interface ITestsRequiredByWgService
     {
         Task<List<TestsRequiredByWgDto>> GetTestsRequiredByWgAsync(string? profitCentre);
+        Task<List<TestsRequiredByWgDto>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear);
     }
 }

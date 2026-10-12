@@ -18,5 +18,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsTestsRequiredByWg.GetTestsRequiredByWgAsync(profitCentre);
         }
+
+        public async Task<ApiResponseDto<List<TestsRequiredByWgDto>>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear)
+        {
+            return await _fpsClient.FpsTestsRequiredByWg.GetTestsRequiredByWgByYearAsync(profitCentre, fpsYear);
+        }
     }
 }

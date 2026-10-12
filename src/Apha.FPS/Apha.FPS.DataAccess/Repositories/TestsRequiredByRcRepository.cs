@@ -28,5 +28,13 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ThenBy(x => x.TestCode)
                 .ToListAsync();
         }
+
+        public async Task<List<TestsRequiredByRcView>> GetTestsRequiredByRcByYearAsync(string? profitCentre, int fpsYear)
+        {
+            return await _context.TestsRequiredByRcViews
+                .FromSqlRaw(TestsRequiredByYearSql.ByResourceCentre, fpsYear, profitCentre?.Trim() ?? string.Empty)
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }
