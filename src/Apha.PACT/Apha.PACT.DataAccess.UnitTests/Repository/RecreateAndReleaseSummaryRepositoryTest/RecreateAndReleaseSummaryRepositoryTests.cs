@@ -1423,5 +1423,143 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         #endregion
+
+        #region SetCurrentMonth - invoked via SetFinalSummaryRunAsync (UpdateFinalSummaryRunAsync path)
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WhenMonthClosureMissing_InsertsMonthWithMaxEndPeriod()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "TestPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = 0,
+                EndPeriod = 5.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act - finalSummariesRun 1 is stored as -1, so this period qualifies as max
+            await repository.SetFinalSummaryRunAsync("TestPeriod", 1, null);
+
+            // Assert
+            context.ChangeTracker.Clear();
+            var monthClosure = await context.ReleaseSummaryMonthClosures.FirstOrDefaultAsync(v => v.Key == "Month");
+            Assert.NotNull(monthClosure);
+            Assert.Equal("5", monthClosure.Value);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WhenMonthClosureExists_UpdatesMonthWithMaxEndPeriod()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "TestPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = 0,
+                EndPeriod = 8.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.ReleaseSummaryMonthClosures.AddAsync(new ReleaseSummaryMonthClosure { Key = "Month", Value = "99" });
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            await repository.SetFinalSummaryRunAsync("TestPeriod", 1, null);
+
+            // Assert - existing record is updated, not duplicated
+            context.ChangeTracker.Clear();
+            var monthClosures = await context.ReleaseSummaryMonthClosures.Where(v => v.Key == "Month").ToListAsync();
+            Assert.Single(monthClosures);
+            Assert.Equal("8", monthClosures[0].Value);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WhenNoFinalSummariesRunPeriods_SetsMonthToZero()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "TestPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = -1,
+                EndPeriod = 4.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act - finalSummariesRun 0 clears the only qualifying period, so none qualify
+            await repository.SetFinalSummaryRunAsync("TestPeriod", 0, null);
+
+            // Assert
+            context.ChangeTracker.Clear();
+            var monthClosure = await context.ReleaseSummaryMonthClosures.FirstOrDefaultAsync(v => v.Key == "Month");
+            Assert.NotNull(monthClosure);
+            Assert.Equal("0", monthClosure.Value);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_SelectsMaxEndPeriodAmongFinalSummariesRunMinusOne()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var periods = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "P1", FpsYear = TestFpsYear, FinalSummariesRun = 1, EndPeriod = 20.0 },
+                new() { PeriodName = "P2", FpsYear = TestFpsYear, FinalSummariesRun = -1, EndPeriod = 7.0 },
+                new() { PeriodName = "P3", FpsYear = TestFpsYear, FinalSummariesRun = 0, EndPeriod = 10.0 }
+            };
+
+            await context.ReleasePeriods.AddRangeAsync(periods);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act - act on P3 with 0 so it stays excluded. Only periods with FinalSummariesRun == -1
+            // qualify, so P1 (value 1, EndPeriod 20) is excluded and the max is P2 = 7.
+            await repository.SetFinalSummaryRunAsync("P3", 0, null);
+
+            // Assert
+            context.ChangeTracker.Clear();
+            var monthClosure = await context.ReleaseSummaryMonthClosures.FirstOrDefaultAsync(v => v.Key == "Month");
+            Assert.NotNull(monthClosure);
+            Assert.Equal("7", monthClosure.Value);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WhenPeriodNotFound_DoesNotSetMonthClosure()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act - no matching period, so SetCurrentMonth is never invoked
+            var result = await repository.SetFinalSummaryRunAsync("NonExistentPeriod", 1, null);
+
+            // Assert
+            Assert.Null(result);
+            context.ChangeTracker.Clear();
+            var monthClosure = await context.ReleaseSummaryMonthClosures.FirstOrDefaultAsync(v => v.Key == "Month");
+            Assert.Null(monthClosure);
+        }
+
+        #endregion
     }
 }
