@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:001_re_seed_identity_sequences labels:ddl context:all runAlways:true splitStatements:false
+--validCheckSum: 9:31eb26a543cb67376579fa71002e070d
 
 DO $$ 
 DECLARE 

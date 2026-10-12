@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR074 labels:ddl context:all splitStatements:false
+--validCheckSum: 9:fbd285509cb8f7c9f6864a431e2f1f3f
 
 BEGIN;
 

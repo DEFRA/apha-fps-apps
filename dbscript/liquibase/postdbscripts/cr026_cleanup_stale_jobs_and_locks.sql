@@ -1,6 +1,7 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR026_cleanup labels:dml context:all
+--validCheckSum: 9:19169c632441fa69e12a5dc0cbe5ae3b
 --comment: DML extracted from changesets/cr026_modify_ddl_batchjobs.sql. Independent reconciliation cleanup, safe to run after all changesets.
 
 WITH stale_jobs AS (
