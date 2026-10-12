@@ -357,6 +357,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is null)
         {
+            // The job itself succeeded, but its outcome is not recorded and the row will be
+            // reconciled to Failed: send no success notification, and exit as failed. Already
+            // logged with the DB marker by SaveFinalStatusAsync.
+            if (!finalStatusSaved)
+                throw new InvalidOperationException(
+                    $"Job '{jobName}' completed but its final status could not be saved (JobQueueId={jobQueueId}).");
+
             var completionContext = new BatchJobCompletionContext(
                 jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, ErrorMessage: null);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
@@ -365,12 +372,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is OperationCanceledException cancelEx)
             throw cancelEx;
-
-        // The job itself succeeded, but its outcome is not recorded: the run must still exit as
-        // failed. Already logged with the DB marker by SaveFinalStatusAsync.
-        if (jobException is null && !finalStatusSaved)
-            throw new InvalidOperationException(
-                $"Job '{jobName}' completed but its final status could not be saved (JobQueueId={jobQueueId}).");
 
         if (jobException != null)
         {

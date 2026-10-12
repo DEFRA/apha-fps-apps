@@ -1755,10 +1755,11 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
-    public async Task RunAsync_WhenFinalStatusCannotBeSaved_KeepsLockAndFailsTheRun()
+    public async Task RunAsync_WhenFinalStatusCannotBeSaved_KeepsLockFailsTheRunAndSendsNoSuccessNotification()
     {
-        // The job's work finished, so its notifier still fires; but its outcome is unrecorded, so
-        // the lock must be kept (to expire and be reconciled) and the run must not report success.
+        // The job's work finished but its outcome is unrecorded and will be reconciled to Failed:
+        // the lock must be kept (to expire and be reconciled), the run must not report success,
+        // and no "completed" notification may go out.
         SetupInitiatedExecution("PersistFailJob");
         var notifier = Substitute.For<IPostCompletionNotifier>();
         var job = Substitute.For<IBatchJob>();
@@ -1779,9 +1780,8 @@ public sealed class JobOrchestratorTests
         Assert.Contains("final status could not be saved", ex.Message);
         await _execRepo.Received(3).UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
         await _lockRepo.DidNotReceive().ReleaseLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-        await notifier.Received(1).NotifyAsync(
-            Arg.Is<BatchJobCompletionContext>(c => c.JobName == "PersistFailJob"),
-            Arg.Any<CancellationToken>());
+        await notifier.DidNotReceiveWithAnyArgs().NotifyAsync(default!, default);
+        await _notificationService.DidNotReceiveWithAnyArgs().SendExecutionNotificationAsync(default!, default);
     }
 
     [Fact]
