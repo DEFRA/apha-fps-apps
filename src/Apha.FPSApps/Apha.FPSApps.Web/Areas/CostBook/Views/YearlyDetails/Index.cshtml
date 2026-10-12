@@ -48,7 +48,7 @@
                                         <label class="text-AlignRight govuk-label" for="summary-code">Code:</label>
                                         <input asp-for="ProjectHeaderDto.ProjectId" id="summary-code" type="text" readonly tabindex="0" class="govuk-input">
                                     </div>
-                                    <div class="summary-item d-flex" tabindex="0" role="textbox" aria-readonly="true" aria-label="@("Year Type: " + (Model.ProjectHeaderDto.FinancialYears == -1 ? "Financial Years" : "Project Years"))">
+                                    <div class="summary-item d-flex" tabindex="0"  aria-label="@("Year Type: " + (Model.ProjectHeaderDto.FinancialYears == -1 ? "Financial Years" : "Project Years"))">
                                         <label class="text-AlignRight govuk-label" asp-for="ProjectHeaderDto.FinancialYears" for="summary-year-type">Year Type:</label>
                                         <select asp-for="ProjectHeaderDto.FinancialYears" id="summary-year-type" class="govuk-select" disabled>
                                             <option value="-1">Financial Years</option>
