@@ -12,5 +12,8 @@ namespace Apha.Common.Contracts.PACT
         public string? Owner { get; set; }
         public string? Description { get; set; }
         public decimal? CentralOverhead { get; set; }
+        public short? SendEmail { get; set; }
+        public short? Cos90 { get; set; }
+        public string? EmailRecipient { get; set; }
     }
 }
