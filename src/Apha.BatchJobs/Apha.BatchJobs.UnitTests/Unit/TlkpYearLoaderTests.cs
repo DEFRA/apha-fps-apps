@@ -4,10 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.UnitTests;
 
-/// <summary>Tests for TlkpYearLoader covering source-table contract, boundary validation, and confirmed isolation from the legacy fps.tbldb_variables table. Behavioral tests require a live PostgreSQL connection and use SkippableFact.</summary>
+/// <summary>
+/// Tests for TlkpYearLoader reading latestmonthreleased from the fps.tbldb_variables 'Month' row.
+/// Behavioral tests require a live PostgreSQL connection and run inside a rolled-back transaction,
+/// so changes to the shared 'Month' row never persist.
+/// </summary>
 [Trait("Category", "Integration")]
 public sealed class TlkpYearLoaderTests : IAsyncLifetime
 {
+    private const int TargetYear = 1899;
+
     private readonly string _connectionString;
     private string? _skipReason;
 
@@ -23,10 +29,22 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
         try
         {
             await using var ctx = CreateDbContext();
-            var canConnect = await ctx.Database.CanConnectAsync();
-            if (!canConnect)
+            if (!await ctx.Database.CanConnectAsync())
             {
                 _skipReason = "Integration DB unavailable.";
+                return;
+            }
+
+            var monthRows = await ctx.Database
+                .SqlQuery<int>($@"
+                    SELECT COUNT(*)::int AS ""Value""
+                    FROM fps.tbldb_variables
+                    WHERE LOWER(db_var_name) = 'month'")
+                .SingleAsync();
+
+            if (monthRows != 1)
+            {
+                _skipReason = $"Expected exactly one 'Month' row in fps.tbldb_variables, found {monthRows}.";
             }
         }
         catch (Exception ex)
@@ -36,10 +54,6 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
-
-    // ─────────────────────────────────────────────────────────────
-    // Metadata / contract (no DB connection required)
-    // ─────────────────────────────────────────────────────────────
 
     [Fact]
     public void Loader_HasSequence16_AndName_tlkpyear()
@@ -53,145 +67,113 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
         Assert.Equal("tlkpyear", loader.Name);
     }
 
-    [Fact]
-    public void Loader_DoesNotReferenceObsoleteTblDbVariableSource()
-    {
-        // fps.tbldb_variables is an orphaned legacy config table with no active writer.
-        // TlkpYearLoader must use fps.tblcurrentmonth exclusively in its executable code.
-        // Comments may still mention the legacy table name for context (e.g. explaining
-        // why it must not be used) — only code lines are checked here, not comments.
-        var loaderSource = System.IO.File.ReadAllText(
-            System.IO.Path.Combine(
-                AppContext.BaseDirectory,
-                $"../../../../Apha.BatchJobs.Infrastructure/Repositories/MabArchive/Loaders/TlkpYearLoader.cs"));
-
-        var codeOnly = string.Join(
-            '\n',
-            loaderSource.Split('\n').Select(line =>
-            {
-                var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
-                return commentIndex >= 0 ? line[..commentIndex] : line;
-            }));
-
-        Assert.DoesNotContain("MaSrcTblDbVariable", codeOnly, StringComparison.Ordinal);
-        Assert.DoesNotContain("DbVarName", codeOnly, StringComparison.Ordinal);
-        Assert.DoesNotContain("DbVarValue", codeOnly, StringComparison.Ordinal);
-        Assert.DoesNotContain("tbldb_variables", codeOnly, StringComparison.OrdinalIgnoreCase);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Behavioral (PostgreSQL required)
-    // ─────────────────────────────────────────────────────────────
-
-    [SkippableFact]
-    public async Task LoadAsync_WhenTblCurrentMonthHasOneRow_InsertsRowWithCorrectYearAndMonth()
+    [SkippableTheory]
+    [InlineData("0", 0)]
+    [InlineData("5", 5)]
+    [InlineData("12", 12)]
+    [InlineData(" 4 ", 4)]
+    public async Task LoadAsync_WhenMonthIsValid_InsertsYearWithThatMonth(string storedValue, int expectedMonth)
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
         await using var ctx = CreateDbContext();
         await using var tx = await ctx.Database.BeginTransactionAsync();
 
-        const int targetYear = 1899;
+        await SetMonthValueAsync(ctx, storedValue);
 
-        // Capture the current value from the real source table.
-        var expectedMonth = await ctx.MaSrcTblCurrentMonth
-            .AsNoTracking()
-            .Select(x => x.CurrentMonth)
-            .SingleAsync();
-
-        var loader = new TlkpYearLoader(ctx);
-        var rowsAffected = await loader.LoadAsync(targetYear, CancellationToken.None);
-
-        var inserted = await ctx.MaDstTlkpYear
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Year == targetYear);
+        var rowsAffected = await new TlkpYearLoader(ctx).LoadAsync(TargetYear, CancellationToken.None);
+        var inserted = await ctx.MaDstTlkpYear.AsNoTracking().SingleOrDefaultAsync(x => x.Year == TargetYear);
 
         await tx.RollbackAsync();
 
         Assert.Equal(1, rowsAffected);
         Assert.NotNull(inserted);
-        Assert.Equal(targetYear, inserted.Year);
         Assert.Equal(expectedMonth, inserted.LatestMonthReleased);
     }
 
     [SkippableFact]
-    public async Task LoadAsync_WhenTblCurrentMonthIsEmpty_ThrowsInvalidOperationException()
+    public async Task LoadAsync_WhenMonthNameIsLowercase_StillReadsIt()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
         await using var ctx = CreateDbContext();
         await using var tx = await ctx.Database.BeginTransactionAsync();
 
-        await ctx.Database.ExecuteSqlRawAsync("DELETE FROM fps.tblcurrentmonth");
+        await ctx.Database.ExecuteSqlRawAsync(
+            "UPDATE fps.tbldb_variables SET db_var_name = 'month', db_var_value = '3' WHERE LOWER(db_var_name) = 'month'");
 
-        var loader = new TlkpYearLoader(ctx);
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => loader.LoadAsync(1899, CancellationToken.None));
+        await new TlkpYearLoader(ctx).LoadAsync(TargetYear, CancellationToken.None);
+        var inserted = await ctx.MaDstTlkpYear.AsNoTracking().SingleAsync(x => x.Year == TargetYear);
 
         await tx.RollbackAsync();
 
-        Assert.Contains("fps.tblcurrentmonth", ex.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("0", ex.Message, StringComparison.Ordinal);
+        Assert.Equal(3, inserted.LatestMonthReleased);
     }
 
     [SkippableFact]
-    public async Task LoadAsync_WhenTblCurrentMonthHasMultipleRows_ThrowsInvalidOperationException()
+    public async Task LoadAsync_WhenMonthRowIsMissing_Throws()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
         await using var ctx = CreateDbContext();
         await using var tx = await ctx.Database.BeginTransactionAsync();
 
-        // Insert a second row to violate the single-row contract.
-        await ctx.Database.ExecuteSqlRawAsync("INSERT INTO fps.tblcurrentmonth (currentmonth) VALUES (99)");
-
-        var loader = new TlkpYearLoader(ctx);
+        await ctx.Database.ExecuteSqlRawAsync("DELETE FROM fps.tbldb_variables WHERE LOWER(db_var_name) = 'month'");
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => loader.LoadAsync(1899, CancellationToken.None));
+            () => new TlkpYearLoader(ctx).LoadAsync(TargetYear, CancellationToken.None));
 
         await tx.RollbackAsync();
 
-        Assert.Contains("fps.tblcurrentmonth", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("fps.tbldb_variables", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("found 0", ex.Message, StringComparison.Ordinal);
     }
 
     [SkippableFact]
-    public async Task LoadAsync_TblDbVariablesValues_HaveNoEffectOnResult()
+    public async Task LoadAsync_WhenMonthRowIsDuplicatedAcrossCasing_Throws()
     {
-        // Documents the architectural decision: even with DB_Name=FPS2026 and Month=0,
-        // the loader must insert the value from fps.tblcurrentmonth, not fps.tbldb_variables.
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
 
         await using var ctx = CreateDbContext();
         await using var tx = await ctx.Database.BeginTransactionAsync();
 
-        const int targetYear = 1898;
+        // Differs from both 'Month' and 'month', so it never collides with the real row's PK.
+        await ctx.Database.ExecuteSqlRawAsync(
+            "INSERT INTO fps.tbldb_variables (db_var_name, db_var_value) VALUES ('MONTH', '5')");
 
-        var expectedMonth = await ctx.MaSrcTblCurrentMonth
-            .AsNoTracking()
-            .Select(x => x.CurrentMonth)
-            .SingleAsync();
-
-        // Confirm tbldb_variables is in the stale Planned-year state.
-        var dbNameValue = await ctx.MaSrcTblDbVariable
-            .AsNoTracking()
-            .Where(v => v.DbVarName == "DB_Name")
-            .Select(v => v.DbVarValue)
-            .FirstOrDefaultAsync();
-
-        var loader = new TlkpYearLoader(ctx);
-        await loader.LoadAsync(targetYear, CancellationToken.None);
-
-        var inserted = await ctx.MaDstTlkpYear
-            .AsNoTracking()
-            .SingleAsync(x => x.Year == targetYear);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new TlkpYearLoader(ctx).LoadAsync(TargetYear, CancellationToken.None));
 
         await tx.RollbackAsync();
 
-        // Result must reflect tblcurrentmonth, not tbldb_variables.Month (which is 0).
-        Assert.Equal(expectedMonth, inserted.LatestMonthReleased);
-        Assert.NotEqual(0, inserted.LatestMonthReleased);
+        Assert.Contains("fps.tbldb_variables", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("found 2", ex.Message, StringComparison.Ordinal);
+    }
+
+    [SkippableTheory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("abc")]
+    [InlineData("-1")]
+    [InlineData("13")]
+    [InlineData("4.5")]
+    public async Task LoadAsync_WhenMonthValueIsInvalid_Throws(string? storedValue)
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+
+        await using var ctx = CreateDbContext();
+        await using var tx = await ctx.Database.BeginTransactionAsync();
+
+        await SetMonthValueAsync(ctx, storedValue);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new TlkpYearLoader(ctx).LoadAsync(TargetYear, CancellationToken.None));
+        var inserted = await ctx.MaDstTlkpYear.AsNoTracking().AnyAsync(x => x.Year == TargetYear);
+
+        await tx.RollbackAsync();
+
+        Assert.Contains("Invalid 'Month' value", ex.Message, StringComparison.Ordinal);
+        Assert.False(inserted);
     }
 
     [SkippableFact]
@@ -202,19 +184,25 @@ public sealed class TlkpYearLoaderTests : IAsyncLifetime
         await using var ctx = CreateDbContext();
         await using var tx = await ctx.Database.BeginTransactionAsync();
 
-        const int targetYear = 1897;
+        await SetMonthValueAsync(ctx, "6");
         var loader = new TlkpYearLoader(ctx);
 
-        await loader.LoadAsync(targetYear, CancellationToken.None);
-        var secondCallRows = await loader.LoadAsync(targetYear, CancellationToken.None);
+        await loader.LoadAsync(TargetYear, CancellationToken.None);
+        // Mirrors MabArchiveYearRepository, which clears the tracker before each loader.
+        ctx.ChangeTracker.Clear();
+        var secondCallRows = await loader.LoadAsync(TargetYear, CancellationToken.None);
 
-        var count = await ctx.MaDstTlkpYear.CountAsync(x => x.Year == targetYear);
+        var count = await ctx.MaDstTlkpYear.CountAsync(x => x.Year == TargetYear);
 
         await tx.RollbackAsync();
 
         Assert.Equal(1, secondCallRows);
         Assert.Equal(1, count);
     }
+
+    private static Task SetMonthValueAsync(BatchJobsDbContext ctx, string? value) =>
+        ctx.Database.ExecuteSqlInterpolatedAsync($@"
+            UPDATE fps.tbldb_variables SET db_var_value = {value} WHERE LOWER(db_var_name) = 'month';");
 
     private BatchJobsDbContext CreateDbContext()
     {
