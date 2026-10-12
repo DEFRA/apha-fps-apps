@@ -189,6 +189,7 @@ namespace Apha.FPS.DataAccess.Repositories
         private static List<YearEndFpsSetting> GetSettingList(string[] settingIds, int openYear, int? plannedYear, List<FpsSetting> settings)
         {
             var result = new List<YearEndFpsSetting>();
+            var fpsYear = plannedYear ?? (openYear + 1);
 
             foreach (var id in settingIds)
             {
@@ -200,7 +201,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     result.Add(new YearEndFpsSetting
                     {
                         Id = setting.Id,
-                        FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
+                        FpsYear = fpsYear,
                         Setting = setting.Setting,
                         Notes = setting.Notes,
                         UpdatedBy = setting.UpdatedBy,
@@ -213,7 +214,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     result.Add(new YearEndFpsSetting
                     {
                         Id = id,
-                        FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
+                        FpsYear = fpsYear,
                         Setting = id.ToLower() == "capapprovalreceivedforreset" ? "No" : null,
                         Notes = null,
                         UpdatedBy = null,
