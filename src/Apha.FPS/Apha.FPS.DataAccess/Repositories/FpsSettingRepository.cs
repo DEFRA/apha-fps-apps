@@ -77,7 +77,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 return await SaveStagingAsync(setting);
             }
-            else 
+            else
             {
                 return await SaveAsync(setting);
             }
@@ -99,13 +99,13 @@ namespace Apha.FPS.DataAccess.Repositories
             int? plannedYear = await GetPlannedYear();
 
             var settingIdsLower = settingIds.Select(id => id.ToLowerInvariant()).ToArray();
-           
+
             if (plannedYear is null)
             {
                 plannedYear = openYear + 1;
                 var openSettings = await _dbContext.TblSettings.IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(s => (s.FpsYear == openYear ) &&
+                .Where(s => (s.FpsYear == openYear) &&
                             settingIdsLower.Contains(s.Id.ToLower()))
                 .ToListAsync();
 
@@ -120,22 +120,22 @@ namespace Apha.FPS.DataAccess.Repositories
                     Id = s.Id,
                     FpsYear = s.FpsYear,
                     Notes = s.Notes,
-                    Setting=s.Setting,
-                    UpdatedAt=s.UpdatedAt,
-                    UpdatedBy=s.UpdatedBy
+                    Setting = s.Setting,
+                    UpdatedAt = s.UpdatedAt,
+                    UpdatedBy = s.UpdatedBy
                 }).ToList();
 
                 settings = openSettings.Concat(plannedSettings).ToList();
             }
             else
             {
-                 settings = await _dbContext.TblSettings.IgnoreQueryFilters()
-                               .AsNoTracking()
-                               .Where(s => ( s.FpsYear == plannedYear) &&
-                                           settingIdsLower.Contains(s.Id.ToLower()))
-                               .ToListAsync();
+                settings = await _dbContext.TblSettings.IgnoreQueryFilters()
+                              .AsNoTracking()
+                              .Where(s => (s.FpsYear == plannedYear) &&
+                                          settingIdsLower.Contains(s.Id.ToLower()))
+                              .ToListAsync();
             }
-               
+
 
             //Remove duplicates based on Id and prioritize planned year over open year
             settings = settings
@@ -185,8 +185,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return setting;
         }
-        
-        private static List<YearEndFpsSetting> GetSettingList( string[] settingIds, int openYear, int? plannedYear, List<FpsSetting> settings)
+
+        private static List<YearEndFpsSetting> GetSettingList(string[] settingIds, int openYear, int? plannedYear, List<FpsSetting> settings)
         {
             var result = new List<YearEndFpsSetting>();
 
@@ -214,7 +214,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     {
                         Id = id,
                         FpsYear = plannedYear.HasValue ? plannedYear.Value : openYear + 1,
-                        Setting = id.ToLower() == "capapprovalreceivedforreset"? "No": null,
+                        Setting = id.ToLower() == "capapprovalreceivedforreset" ? "No" : null,
                         Notes = null,
                         UpdatedBy = null,
                         UpdatedAt = DateTime.MinValue,
