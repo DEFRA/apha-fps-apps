@@ -99,6 +99,9 @@ function getModalFocusableElements(modalElement) {
 }
 
 function trapModalFocus(event) {
+    // Fix for focus for GOV.UK dialog's message and its OK/Cancel buttons.
+    if (document.querySelector('[data-govuk-modal="backdrop"] [role="dialog"]')) return;
+
     var modal = document.getElementById('project1ModalContainer');
     if (!modal || modal.classList.contains('project-modal-hidden')) return;
 

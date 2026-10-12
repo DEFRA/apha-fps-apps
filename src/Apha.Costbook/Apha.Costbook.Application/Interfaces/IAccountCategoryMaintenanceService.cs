@@ -9,6 +9,6 @@ namespace Apha.Costbook.Application.Interfaces
 
         Task<PaginatedResult<AccountCategoryMaintenanceDto>> GetPaginatedAsync(QueryParameters<string> query);
 
-        Task<AccountCategoryMaintenanceDto> UpdateCsg7GroupAsync(string accShortName, string? csg7Group);
+        Task<AccountCategoryMaintenanceDto> UpdateCsg7GroupAsync(string accShortName, string? csg7Group, string? accountDescription);
     }
 }

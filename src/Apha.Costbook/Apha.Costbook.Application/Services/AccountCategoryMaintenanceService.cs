@@ -35,28 +35,23 @@ namespace Apha.Costbook.Application.Services
         }
 
         
-        public async Task<AccountCategoryMaintenanceDto> UpdateCsg7GroupAsync(string accShortName, string? csg7Group)
+        public async Task<AccountCategoryMaintenanceDto> UpdateCsg7GroupAsync(string accShortName, string? csg7Group, string? accountDescription)
         {
-           
             if (string.IsNullOrWhiteSpace(accShortName))
                 throw new ArgumentException("AccShortName must not be null or empty.", nameof(accShortName));
 
-            
             var existing = await _repository.GetByAccShortNameAsync(accShortName);
             if (existing is null)
                 throw new KeyNotFoundException($"Account category with AccShortName '{accShortName}' was not found.");
 
-            
-            var updated = await _repository.UpdateCsg7GroupAsync(accShortName, csg7Group);
-            if (!updated)
-                throw new InvalidOperationException($"Failed to update CSG7 group for account category '{accShortName}'.");
+            existing.Csg7Group = csg7Group;
+            existing.AccountDescription = accountDescription;
 
-            
-            var refreshed = await _repository.GetByAccShortNameAsync(accShortName);
-            if (refreshed is null)
-                throw new InvalidOperationException($"Failed to reload account category '{accShortName}' after update.");
+            var updated = await _repository.UpdateAsync(existing);
+            if (updated is null)
+                throw new InvalidOperationException($"Failed to update account category '{accShortName}'.");
 
-            return _mapper.Map<AccountCategoryMaintenanceDto>(refreshed);
+            return _mapper.Map<AccountCategoryMaintenanceDto>(updated);
         }
     }
 }

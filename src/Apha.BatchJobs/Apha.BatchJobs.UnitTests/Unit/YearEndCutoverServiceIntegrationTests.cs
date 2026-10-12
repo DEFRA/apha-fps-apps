@@ -76,6 +76,8 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         int? seededInvoiceStagingId = null;
         int? insertedInvoiceStagingId = null;
 
+        var originalMonth = await GetSingleMonthRowOrSkipAsync();
+
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
         await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
@@ -89,6 +91,8 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
         try
         {
+            await SetMonthValueAsync(originalMonth.Name, "7");
+
             var service = new YearEndCutoverService(
                 new YearEndCutoverRepository(CreateDbContextFactory()),
                 CreateExecutionRepository(),
@@ -107,6 +111,9 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
             Assert.Equal("Closed", currentStatus);
             Assert.Equal("Open", targetStatus);
+
+            var monthAfter = await GetMonthRowsAsync();
+            Assert.Equal("0", Assert.Single(monthAfter).Value);
 
             // Phase 6 hardening: staging tables must be empty after a successful cutover,
             // regardless of what (if anything) PACT import activity left in them beforehand — this
@@ -139,6 +146,57 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             await DeleteYearAsync(currentYear);
             await DeleteYearAsync(targetYear);
             await DeleteJobQueueRowAsync(dataSetupJobQueueId);
+            await SetMonthValueAsync(originalMonth.Name, originalMonth.Value);
+        }
+    }
+
+    [SkippableFact]
+    public async Task ExecuteCutoverAsync_WhenMonthRowIsDuplicatedAcrossCasing_ThrowsAndRollsBack()
+    {
+        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Skip.IfNot(
+            _yearEndDataSetupCompletedCatalogAvailable,
+            $"job_master/job_status seed for '{BatchJobNames.YearEndDataSetup}' + 'Completed' is not yet provisioned on this database.");
+
+        const int currentYear = 9819;
+        const int targetYear = 9820;
+        // Differs from both 'Month' and 'month', so it never collides with the real row's PK.
+        const string duplicateName = "MONTH";
+        var dataSetupJobQueueId = Guid.NewGuid();
+
+        var originalMonth = await GetSingleMonthRowOrSkipAsync();
+
+        await SeedYearAsync(currentYear, "Open", active: true);
+        await SeedYearAsync(targetYear, "Planned", active: true);
+        await SeedCompletedDataSetupExecutionAsync(currentYear, targetYear, dataSetupJobQueueId);
+
+        try
+        {
+            await SetMonthValueAsync(originalMonth.Name, "7");
+            await InsertMonthRowAsync(duplicateName, "7");
+
+            var repository = new YearEndCutoverRepository(CreateDbContextFactory());
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repository.ExecuteCutoverAsync(currentYear, targetYear));
+
+            Assert.Contains("fps.tbldb_variables", ex.Message, StringComparison.Ordinal);
+            Assert.Contains("updated 2", ex.Message, StringComparison.Ordinal);
+
+            var (currentStatus, _) = await GetYearStateAsync(currentYear);
+            var (targetStatus, _) = await GetYearStateAsync(targetYear);
+
+            Assert.Equal("Open", currentStatus);
+            Assert.Equal("Planned", targetStatus);
+            Assert.All(await GetMonthRowsAsync(), row => Assert.Equal("7", row.Value));
+        }
+        finally
+        {
+            await DeleteMonthRowAsync(duplicateName);
+            await DeleteYearAsync(currentYear);
+            await DeleteYearAsync(targetYear);
+            await DeleteJobQueueRowAsync(dataSetupJobQueueId);
+            await SetMonthValueAsync(originalMonth.Name, originalMonth.Value);
         }
     }
 
@@ -365,6 +423,8 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
         const int unrelatedOpenYear = 9813;
         var dataSetupJobQueueId = Guid.NewGuid();
 
+        var originalMonth = await GetSingleMonthRowOrSkipAsync();
+
         await SeedYearAsync(currentYear, "Open", active: true);
         await SeedYearAsync(targetYear, "Planned", active: true);
         await SeedYearAsync(unrelatedOpenYear, "Open", active: true);
@@ -372,6 +432,8 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
 
         try
         {
+            await SetMonthValueAsync(originalMonth.Name, "7");
+
             var repository = new YearEndCutoverRepository(CreateDbContextFactory());
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -388,6 +450,9 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             Assert.Equal("Open", currentStatus);
             Assert.Equal("Planned", targetStatus);
             Assert.Equal("Open", unrelatedStatus);
+
+            // The Month reset ran before the final check, so rollback must undo it too.
+            Assert.Equal("7", Assert.Single(await GetMonthRowsAsync()).Value);
         }
         finally
         {
@@ -395,6 +460,7 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             await DeleteYearAsync(targetYear);
             await DeleteYearAsync(unrelatedOpenYear);
             await DeleteJobQueueRowAsync(dataSetupJobQueueId);
+            await SetMonthValueAsync(originalMonth.Name, originalMonth.Value);
         }
     }
 
@@ -648,6 +714,49 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
             DELETE FROM fps.tblyearmaster WHERE fpsyear = {fpsYear};");
     }
 
+    /// <summary>
+    /// fps.tbldb_variables is a single global row on a shared database, so callers snapshot it here
+    /// and restore it in their finally block.
+    /// </summary>
+    private async Task<MonthRow> GetSingleMonthRowOrSkipAsync()
+    {
+        var rows = await GetMonthRowsAsync();
+        Skip.If(rows.Count != 1, $"Expected exactly one 'Month' row in fps.tbldb_variables, found {rows.Count}.");
+        return rows[0];
+    }
+
+    private async Task<List<MonthRow>> GetMonthRowsAsync()
+    {
+        await using var context = CreateDbContext();
+        return await context.Database
+            .SqlQuery<MonthRow>($@"
+                SELECT db_var_name AS ""Name"", db_var_value AS ""Value""
+                FROM fps.tbldb_variables
+                WHERE LOWER(db_var_name) = 'month'")
+            .ToListAsync();
+    }
+
+    private async Task SetMonthValueAsync(string name, string? value)
+    {
+        await using var context = CreateDbContext();
+        await context.Database.ExecuteSqlInterpolatedAsync($@"
+            UPDATE fps.tbldb_variables SET db_var_value = {value} WHERE db_var_name = {name};");
+    }
+
+    private async Task InsertMonthRowAsync(string name, string value)
+    {
+        await using var context = CreateDbContext();
+        await context.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO fps.tbldb_variables (db_var_name, db_var_value) VALUES ({name}, {value});");
+    }
+
+    private async Task DeleteMonthRowAsync(string name)
+    {
+        await using var context = CreateDbContext();
+        await context.Database.ExecuteSqlInterpolatedAsync($@"
+            DELETE FROM fps.tbldb_variables WHERE db_var_name = {name};");
+    }
+
     private BatchJobsDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<BatchJobsDbContext>()
@@ -675,6 +784,12 @@ public sealed class YearEndCutoverServiceIntegrationTests : IAsyncLifetime
     {
         public string YearStatus { get; set; } = string.Empty;
         public bool Active { get; set; }
+    }
+
+    private sealed class MonthRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Value { get; set; }
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<BatchJobsDbContext>

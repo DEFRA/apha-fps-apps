@@ -261,7 +261,11 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             if (model is null || string.IsNullOrWhiteSpace(accShortName))
                 return Json(new { success = false, message = "Invalid data." });
 
-            var dto = new AccountCategoryMaintenanceDto { Csg7Group = model.Csg7Group };
+            var dto = new AccountCategoryMaintenanceDto
+            {
+                Csg7Group = model.Csg7Group,
+                AccountDescription = model.AccountDescription
+            };
             var result = await _maintenanceService.UpdateAccountCategoryAsync(accShortName, dto);
             return result.Success
                 ? Json(new { success = true, message = "Account category updated successfully." })
