@@ -43,6 +43,24 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.RadTrackProgRepositoryTest
         }
 
         [Fact]
+        public async Task AddRadTrackProgAsync_WhenIncomingValueTrue_KeepsTrueAndCallsSave()
+        {
+            var (repo, radTrackProgsDbSet, context) = CreateRepositoryWithMocks();
+            var entity = new RadtrackProg
+            {
+                Program = "ABC",
+                Publicationprefix = "PX",
+                Radtrackprog = true
+            };
+
+            var result = await repo.AddRadTrackProgAsync(entity);
+
+            Assert.True(result.Radtrackprog);
+            radTrackProgsDbSet.Verify(x => x.Add(It.Is<RadtrackProg>(r => r.Program == "ABC" && r.Radtrackprog)), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(context, 1);
+        }
+
+        [Fact]
         public async Task UpdateRadTrackProgAsync_ExistingFalseRadtrackprog_RemainsFalse()
         {
             var existing = new RadtrackProg
@@ -114,6 +132,33 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.RadTrackProgRepositoryTest
             Assert.Contains("UNKNOWN", ex.Message);
             radTrackProgsDbSet.Verify(x => x.Update(It.IsAny<RadtrackProg>()), Times.Never);
             RepositoryTestHelper.VerifySaveChanges(context, 0);
+        }
+
+        [Fact]
+        public async Task UpdateRadTrackProgAsync_AllowsNullPublicationPrefix_WithoutChangingRadtrackprog()
+        {
+            var existing = new RadtrackProg
+            {
+                Program = "PVS",
+                Publicationprefix = "OLD",
+                Radtrackprog = true
+            };
+
+            var (repo, radTrackProgsDbSet, context) = CreateRepositoryWithMocks(new List<RadtrackProg> { existing });
+            var updateRequest = new RadtrackProg
+            {
+                Program = "PVS",
+                Publicationprefix = null,
+                Radtrackprog = false
+            };
+
+            var result = await repo.UpdateRadTrackProgAsync(updateRequest);
+
+            Assert.Null(result.Publicationprefix);
+            Assert.True(result.Radtrackprog);
+            Assert.True(existing.Radtrackprog);
+            radTrackProgsDbSet.Verify(x => x.Update(It.IsAny<RadtrackProg>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(context, 1);
         }
     }
 }
