@@ -80,6 +80,18 @@ public class AnimalRequirementRepository : RepositoryBase, IAnimalRequirementRep
         return deleted > 0;
     }
 
+    public async Task<bool> DeleteBulkAnimalRequirementsAsync(IEnumerable<int> arIdentities)
+    {
+        var ids = arIdentities?.Distinct().ToList() ?? new List<int>();
+        if (ids.Count == 0)
+            return false;
+
+        var deleted = await _context.AnimalRequirements
+            .Where(a => ids.Contains(a.ArIdentity))
+            .ExecuteDeleteAsync();
+        return deleted > 0;
+    }
+
     public async Task<IEnumerable<AnimalRateLookup>> GetAnimalRatesAsync(string projectId, int year, bool isDefra)
     {
         var decodedId = HttpUtility.UrlDecode(projectId);
