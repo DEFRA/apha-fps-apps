@@ -30,12 +30,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<TestsRequiredByWgView>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear)
+        public Task<List<TestsRequiredByWgView>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear)
         {
-            return await _context.TestsRequiredByWgViews
-                .FromSqlRaw(TestsRequiredByYearSql.ByWorkGroup, fpsYear, profitCentre?.Trim() ?? string.Empty)
-                .AsNoTracking()
-                .ToListAsync();
+            return TestsRequiredByYearQuery.GetByWorkGroupAsync(_context, profitCentre, fpsYear);
         }
     }
 }

@@ -112,6 +112,8 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<TestsRequiredByWgView> TestsRequiredByWgViews { get; set; }
         public virtual DbSet<TestsRequiredByRcView> TestsRequiredByRcViews { get; set; }
+        public virtual DbSet<ArchiveYear> ArchiveYears { get; set; }
+        public virtual DbSet<ArchiveMonthlyOutput> ArchiveMonthlyOutputs { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
         public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
         public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
@@ -173,6 +175,8 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new TestsRequiredByWgViewMap());
             modelBuilder.ApplyConfiguration(new TestsRequiredByRcViewMap());
+            modelBuilder.ApplyConfiguration(new ArchiveYearMap());
+            modelBuilder.ApplyConfiguration(new ArchiveMonthlyOutputMap());
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
             modelBuilder.Entity<ProfitCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
