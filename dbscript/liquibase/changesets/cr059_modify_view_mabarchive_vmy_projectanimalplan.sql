@@ -4,7 +4,7 @@
 
 -- View: mabarchive.vmy_projectanimalplan
 
-DROP VIEW IF EXISTS mabarchive.vmy_projectanimalplan;
+DROP VIEW IF EXISTS mabarchive.vmy_projectanimalplan RESTRICT;
 
 CREATE OR REPLACE VIEW mabarchive.vmy_projectanimalplan
  AS

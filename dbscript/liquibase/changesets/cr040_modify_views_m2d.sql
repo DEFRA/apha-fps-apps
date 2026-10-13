@@ -1,5 +1,6 @@
 ﻿--liquibase formatted sql
---changeset repo-admin:CR040 labels:ddl context:all runOnChange:true splitStatements:false
+--changeset repo-admin:CR040 labels:ddl context:all runOnChange:false splitStatements:false
+--validCheckSum: ANY
 --comment Recreate FPS and mabarchive views for money->numeric(19,4) migration. Non-money double precision expressions (hours, quantities) are intentionally unchanged; money-derived expressions are cast to numeric so they no longer widen to double precision.
 -- Source: pgAdmin schema diff output, adapted for Liquibase execution.
 -- -----------------------------------------------------------------------------
@@ -728,7 +729,7 @@ SELECT my_tlkpproject.year,
         WHEN my_tlkpproject.isdefraproject <> 0
         AND my_tlkpproject.year >= 2013 THEN my_tblanimals.defradailyrate
         ELSE my_tblanimals.dailyrate
-    END * my_tblanimalreq.numberofdays * my_tblanimalreq.numberofanimals AS cost
+    END * (my_tblanimalreq.numberofdays * my_tblanimalreq.numberofanimals)::numeric AS cost
 FROM mabarchive.my_tlkpproject
     JOIN mabarchive.my_tblanimalreq ON my_tlkpproject.year = my_tblanimalreq.year
     AND my_tlkpproject.parentproject::text = my_tblanimalreq.jobcode::text

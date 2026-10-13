@@ -5,6 +5,8 @@
 -- View: fps.vwprojectstaffplandetails
 -- Restores the view lost when CR040 dropped fps.vprojectstaffplan with CASCADE.
 
+DROP VIEW IF EXISTS fps.vwprojectstaffplandetails RESTRICT;
+
 CREATE OR REPLACE VIEW fps.vwprojectstaffplandetails AS
 SELECT
     vprojectstaffplan.profitcentre,

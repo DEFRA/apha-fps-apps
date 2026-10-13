@@ -4,7 +4,7 @@
 
 -- View: mabarchive.vmy_projectstaffplan
 
-DROP VIEW IF EXISTS mabarchive.vmy_projectstaffplan;
+DROP VIEW IF EXISTS mabarchive.vmy_projectstaffplan RESTRICT;
 
 CREATE OR REPLACE VIEW mabarchive.vmy_projectstaffplan
  AS
