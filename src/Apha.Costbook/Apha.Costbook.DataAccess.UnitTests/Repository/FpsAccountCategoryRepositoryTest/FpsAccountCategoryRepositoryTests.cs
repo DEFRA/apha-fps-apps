@@ -15,6 +15,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.FpsAccountCategoryReposi
         private static FpsAccountCategoryRepository CreateRepository(IEnumerable<FpsAccountCategory> items)
         {
             var mockFPSYearContext = new Mock<IFPSYearContext>();
+            mockFPSYearContext.Setup(x => x.FPSYear).Returns(2026);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
 
             var mockSet = RepositoryTestHelper.CreateMockDbSet(items);
@@ -23,7 +24,7 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.FpsAccountCategoryReposi
 
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            return new FpsAccountCategoryRepository(mockContext.Object);
+            return new FpsAccountCategoryRepository(mockContext.Object, mockFPSYearContext.Object);
         }
 
         #region GetAllForMaintenanceAsync Tests
@@ -203,13 +204,14 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.FpsAccountCategoryReposi
         {
             // Arrange
             var mockFPSYearContext = new Mock<IFPSYearContext>();
+            mockFPSYearContext.Setup(x => x.FPSYear).Returns(2026);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
             var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<FpsAccountCategory>());
             mockContext.Setup(x => x.Set<FpsAccountCategory>()).Returns(mockSet.Object);
             mockContext.Setup(x => x.FpsAccountCategories).Returns(mockSet.Object);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            var repo = new FpsAccountCategoryRepository(mockContext.Object);
+            var repo = new FpsAccountCategoryRepository(mockContext.Object, mockFPSYearContext.Object);
 
             var newItem = new FpsAccountCategory
             {
@@ -244,17 +246,19 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.FpsAccountCategoryReposi
                 ConstituentAccountCodes = "X",
                 Csg7Group = "G1",
                 ProjectSpecific = -1,
-                RcSpecific = 0
+                RcSpecific = 0,
+                FpsYear = 2026
             };
 
             var mockFPSYearContext = new Mock<IFPSYearContext>();
+            mockFPSYearContext.Setup(x => x.FPSYear).Returns(2026);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
             var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<FpsAccountCategory> { existing });
             mockContext.Setup(x => x.Set<FpsAccountCategory>()).Returns(mockSet.Object);
             mockContext.Setup(x => x.FpsAccountCategories).Returns(mockSet.Object);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            var repo = new FpsAccountCategoryRepository(mockContext.Object);
+            var repo = new FpsAccountCategoryRepository(mockContext.Object, mockFPSYearContext.Object);
 
             var updated = new FpsAccountCategory
             {
@@ -264,7 +268,8 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.FpsAccountCategoryReposi
                 ConstituentAccountCodes = "Y",
                 Csg7Group = "G2",
                 ProjectSpecific = -1,
-                RcSpecific = 1
+                RcSpecific = 1,
+                FpsYear = 2026
             };
 
             // Act
@@ -273,10 +278,10 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.FpsAccountCategoryReposi
             // Assert
             Assert.NotNull(result);
             Assert.Equal("NewDesc", result.AccountDescription);
-            Assert.Equal("B", result.AccountType);
-            Assert.Equal("Y", result.ConstituentAccountCodes);
+            Assert.Equal("A", result.AccountType);
+            Assert.Equal("X", result.ConstituentAccountCodes);
             Assert.Equal("G2", result.Csg7Group);
-            Assert.Equal(1, result.RcSpecific);
+            Assert.Equal(0, result.RcSpecific);
             mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once());
         }
 
