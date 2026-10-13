@@ -46,7 +46,10 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
 
     public Task<ApiResponseDto<bool>> DeleteStaffRequirementAsync(string projectId, int year, int srIdentity)
         => _client.YearlyDetails.DeleteStaffRequirementAsync(projectId, year, srIdentity);
-    
+
+    public Task<ApiResponseDto<bool>> DeleteBulkStaffRequirementsAsync(BulkDeleteStaffRequirementRequestDto request)
+        => _client.YearlyDetails.DeleteBulkStaffRequirementsAsync(request);
+
     public Task<ApiResponseDto<PaginatedResult<TestRequirementDto>>> GetTestRequirementsAsync(
        string projectId, int year, QueryParameters<string> query)
        => _client.YearlyDetails.GetTestRequirementsAsync(projectId, year, query);
@@ -59,6 +62,9 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
 
     public Task<ApiResponseDto<bool>> DeleteTestRequirementAsync(string projectId, int year, string testCode)
         => _client.YearlyDetails.DeleteTestRequirementAsync(projectId, year, testCode);
+
+    public Task<ApiResponseDto<bool>> DeleteBulkTestRequirementsAsync(BulkDeleteTestRequirementRequestDto request)
+        => _client.YearlyDetails.DeleteBulkTestRequirementsAsync(request);
 
     public Task<ApiResponseDto<PaginatedResult<AnimalRequirementDto>>> GetAnimalRequirementsAsync(
         string projectId, int year, QueryParameters<string> query)
@@ -73,6 +79,9 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
     public Task<ApiResponseDto<bool>> DeleteAnimalRequirementAsync(string projectId, int year, int arIdentity)
         => _client.YearlyDetails.DeleteAnimalRequirementAsync(projectId, year, arIdentity);
 
+    public Task<ApiResponseDto<bool>> DeleteBulkAnimalRequirementsAsync(BulkDeleteAnimalRequirementRequestDto request)
+        => _client.YearlyDetails.DeleteBulkAnimalRequirementsAsync(request);
+
     public Task<ApiResponseDto<PaginatedResult<AdditionalCostDto>>> GetAdditionalCostsAsync(
         string projectId, int year, QueryParameters<string> query)
         => _client.YearlyDetails.GetAdditionalCostsAsync(projectId, year, query);
@@ -85,6 +94,9 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
 
     public Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string projectId, int year, int acIdentity)
         => _client.YearlyDetails.DeleteAdditionalCostAsync(projectId, year, acIdentity);
+
+    public Task<ApiResponseDto<bool>> DeleteBulkAdditionalCostsAsync(BulkDeleteAdditionalCostRequestDto request)
+        => _client.YearlyDetails.DeleteBulkAdditionalCostsAsync(request);
 
     public Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(string projectId, int year,bool isDefra)
         => _client.YearlyDetails.GetPayRatesAsync(projectId, year, isDefra);

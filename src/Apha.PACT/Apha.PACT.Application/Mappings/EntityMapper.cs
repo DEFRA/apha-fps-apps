@@ -38,7 +38,9 @@ namespace Apha.PACT.Application.Mappings
             config.NewConfig<TestRequirement, TestRequirementtDto>().TwoWays();
             config.NewConfig<TestRequirementDetail, TestRequirementtDto>();
             config.NewConfig<TestSupplierView, TestSupplierViewDto>().TwoWays();
-            config.NewConfig<TestorProduct, TestorProductDto>().TwoWays();
+            config.NewConfig<TestorProduct, TestorProductDto>()
+                .Map(dest => dest.ShortDescription, src => src.ShortDescription == null ? null : src.ShortDescription.TrimEnd());
+            config.NewConfig<TestorProductDto, TestorProduct>();
             config.NewConfig<CalenderMonth, CalenderMonthDto>().TwoWays();
             config.NewConfig<ProjectMonth, ProjectMonthDto>().TwoWays();
             config.NewConfig<ProjectMonthFinal, ProjectMonthFinalDto>().TwoWays();

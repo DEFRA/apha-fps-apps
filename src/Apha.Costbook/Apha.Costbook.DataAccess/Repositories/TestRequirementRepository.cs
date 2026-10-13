@@ -100,6 +100,25 @@ public class TestRequirementRepository : RepositoryBase, ITestRequirementReposit
         return deleted > 0;
     }
 
+    public async Task<bool> DeleteBulkTestRequirementsAsync(string project, int year, IEnumerable<string> testCodes)
+    {
+        var decodedProject = HttpUtility.UrlDecode(project);
+        var codes = testCodes?
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Select(HttpUtility.UrlDecode)
+            .Distinct()
+            .ToList() ?? [];
+
+        if (codes.Count == 0)
+            return false;
+
+        var deleted = await _context.TestRequirements
+            .Where(t => t.Project == decodedProject && t.Year == year && codes.Contains(t.TestCode))
+            .ExecuteDeleteAsync();
+
+        return deleted > 0;
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private static IQueryable<TestRequirementDetailView> ApplySorting(

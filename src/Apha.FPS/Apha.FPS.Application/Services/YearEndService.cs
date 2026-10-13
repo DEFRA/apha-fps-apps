@@ -455,7 +455,7 @@ namespace Apha.FPS.Application.Services
                     To = _emailSettings.DataSetupApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
                     Subject = _emailSettings.DataSetupApprovalEmailSubject,
                     Body = _emailSettings.DataSetupApprovalEmailBody,
-                    IsBodyHtml = false,
+                    IsBodyHtml = true,
                 }, cancellationToken);
             }
 
@@ -466,7 +466,7 @@ namespace Apha.FPS.Application.Services
                     To = _emailSettings.DataSetupRejectionEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
                     Subject = _emailSettings.DataSetupRejectionEmailSubject,
                     Body = _emailSettings.DataSetupRejectionEmailBody,
-                    IsBodyHtml = false,
+                    IsBodyHtml = true,
                 }, cancellationToken);
             }
 
@@ -477,7 +477,7 @@ namespace Apha.FPS.Application.Services
                     To = _emailSettings.DataSetupInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
                     Subject = _emailSettings.DataSetupInitiatedEmailSubject,
                     Body = _emailSettings.DataSetupInitiatedEmailBody,
-                    IsBodyHtml = false,
+                    IsBodyHtml = true,
                 }, cancellationToken);
             }
         }
@@ -491,7 +491,7 @@ namespace Apha.FPS.Application.Services
                     To = _emailSettings.CutOverApprovalEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
                     Subject = _emailSettings.CutOverApprovalEmailSubject,
                     Body = _emailSettings.CutOverApprovalEmailBody,
-                    IsBodyHtml = false,
+                    IsBodyHtml = true,
                 }, cancellationToken);
             }
 
@@ -502,7 +502,7 @@ namespace Apha.FPS.Application.Services
                     To = _emailSettings.CutOverRejectionEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
                     Subject = _emailSettings.CutOverRejectionEmailSubject,
                     Body = _emailSettings.CutOverRejectionEmailBody,
-                    IsBodyHtml = false,
+                    IsBodyHtml = true,
                 }, cancellationToken);
             }
 
@@ -513,7 +513,7 @@ namespace Apha.FPS.Application.Services
                     To = _emailSettings.CutOverInitiatedEmailRecipient!.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),
                     Subject = _emailSettings.CutOverInitiatedEmailSubject,
                     Body = _emailSettings.CutOverInitiatedEmailBody,
-                    IsBodyHtml = false,
+                    IsBodyHtml = true,
                 }, cancellationToken);
             }
         }

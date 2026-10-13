@@ -9,5 +9,6 @@ public interface IStaffRequirementRepository
     Task<StaffRequirement> AddStaffRequirementAsync(StaffRequirement staffRequirement);
     Task<StaffRequirement> UpdateStaffRequirementAsync(StaffRequirement staffRequirement);
     Task<bool> DeleteStaffRequirementAsync(int srIdentity);
+    Task<bool> DeleteBulkStaffRequirementsAsync(IEnumerable<int> srIdentities);
     Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(string projectId, int year, bool isDefra);
 }

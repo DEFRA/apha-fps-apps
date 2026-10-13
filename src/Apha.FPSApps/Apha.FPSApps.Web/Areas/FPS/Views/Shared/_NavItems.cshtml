@@ -1,6 +1,10 @@
 @inject IConfiguration Configuration
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FpsYearContext
 @{
     var fpsPowerBiReportUrl = Configuration["PowerBiReports:FPS"];
+    var yearStatus = FpsYearContext.YearStatus?.Trim();
+    var isClosedOrPlanned = string.Equals(yearStatus, "Closed", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(yearStatus, "Planned", StringComparison.OrdinalIgnoreCase);
 }
 
 @* FPS navigation items — referenced by Views/Shared/Components/AppNav/Default.cshtml *@
@@ -211,12 +215,12 @@
 @if (User.IsInRole("FPSAdmin"))
 {
     <div class="nav-item dropdown">
-        <button class="nav-button dropdown-toggle" data-dropdown="YearEnd-Process" allow-edit="true">
+        <button class="nav-button dropdown-toggle" data-dropdown="YearEnd-Process" allow-edit="true" disabled="@(isClosedOrPlanned)">
             <div class="align-menu-text"><span>YearEnd Process</span></div>
             <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
         </button>
         <div class="dropdown-menu" id="YearEnd-Process">
-            <a class="dropdown-item" asp-area="FPS" asp-controller="YearEndInitiation" asp-action="Index">YearEnd Initiation</a>
+            <a class="dropdown-item" asp-area="FPS" asp-controller="YearEndInitiation" asp-action="Index">New Financial Year Initiation</a>
             <a class="dropdown-item" asp-area="FPS" asp-controller="YearEndCutOver" asp-action="Index">YearEnd Cut Over</a>
         </div>
     </div>

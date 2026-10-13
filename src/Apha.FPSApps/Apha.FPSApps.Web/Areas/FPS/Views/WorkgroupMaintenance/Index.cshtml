@@ -102,13 +102,18 @@
         function buildWorkgroupDto() {
             var costCentre = $('#CostCentre').val().trim();
             var centralOverhead = $('#CentralOverhead').val().trim();
+            var sendEmail = ($('#hdnSendEmail').val() || '').trim();
+            var cos90 = ($('#hdnCos90').val() || '').trim();
             return {
                 WorkGroupName: $('#WorkGroupName').val(),
                 ProfitCentre: $('#ProfitCentre').val() || null,
                 CostCentre: costCentre === '' ? null : costCentre,
                 Owner: $('#Owner').val() || null,
                 Description: $('#Description').val() || null,
-                CentralOverhead: centralOverhead === '' ? null : centralOverhead
+                CentralOverhead: centralOverhead === '' ? null : centralOverhead,
+                SendEmail: sendEmail === '' ? null : parseInt(sendEmail, 10),
+                Cos90: cos90 === '' ? null : parseInt(cos90, 10),
+                EmailRecipient: $('#hdnEmailRecipient').val() || null
             };
         }
 

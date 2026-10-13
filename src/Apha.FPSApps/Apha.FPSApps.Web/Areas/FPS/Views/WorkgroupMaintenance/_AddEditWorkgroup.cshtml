@@ -32,6 +32,9 @@
 
             <input type="hidden" id="hdnOriginalWorkGroupName" value="@(Model?.WorkGroupName ?? string.Empty)" />
             <input type="hidden" id="hdnIsEdit" value="@isEditMode.ToString().ToLower()" />
+            <input type="hidden" id="hdnSendEmail" value="@Model?.SendEmail" />
+            <input type="hidden" id="hdnCos90" value="@Model?.Cos90" />
+            <input type="hidden" id="hdnEmailRecipient" value="@Model?.EmailRecipient" />
 
             <div class="cc-modal-form-grid">
 
