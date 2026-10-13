@@ -31,7 +31,8 @@ public sealed record BulkRatesExecutionContext(
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty(propertyName, out var value))
+            if (doc.RootElement.ValueKind != JsonValueKind.Object ||
+                !doc.RootElement.TryGetProperty(propertyName, out var value))
                 return null;
 
             if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var n))

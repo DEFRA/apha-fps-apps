@@ -60,6 +60,19 @@ public sealed class BulkRatesExecutionContextTests
         Assert.Null(ctx.TriggerYear);
     }
 
+    [Theory]
+    [InlineData("\"year=2027\"")]
+    [InlineData("[]")]
+    [InlineData("2027")]
+    public void Create_WhenParametersJsonRootIsNotObject_ShouldHaveNullTriggerYear(string json)
+    {
+        using var paramScope = new EnvScope("BATCH_JOB_PARAMETERS_JSON", json);
+
+        var ctx = BulkRatesExecutionContext.Create(Guid.NewGuid().ToString("D"), BatchJobNames.BulkTestRatesUpdate);
+
+        Assert.Null(ctx.TriggerYear);
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private sealed class EnvScope : IDisposable
