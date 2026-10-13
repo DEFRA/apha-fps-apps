@@ -52,7 +52,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Concurrency, result.Category);
-        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.CONCURRENCY", result.ErrorType);
     }
 
     [Fact]
@@ -60,8 +60,8 @@ public sealed class BatchFailureClassifierTests
     {
         // BatchLockLeaseLostException inherits JobLockException, but has its own explicit case
         // ahead of the general JobLockException one — a lease lost mid-execution is a different
-        // failure from never acquiring the lock at all, so it gets its own category/message even
-        // though the exit code and CloudWatch marker stay the same.
+        // failure from never acquiring the lock at all, so it gets its own category and the
+        // alarmed General marker, while keeping the same exit code.
         var result = CreateClassifier().Classify(new BatchLockLeaseLostException("lease lost mid-execution"));
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
@@ -180,5 +180,13 @@ public sealed class BatchFailureClassifierTests
         // The BatchJobs metric filters match these exact strings; changing either silently disables alerting.
         Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", BatchExceptionMarkers.General);
         Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", BatchExceptionMarkers.Database);
+    }
+
+    [Fact]
+    public void LockBusyMarker_IsNotAnAlarmedMarker()
+    {
+        // Lock contention is normal and must not match the General or DB metric filters.
+        Assert.DoesNotContain(BatchExceptionMarkers.General, BatchExceptionMarkers.Concurrency);
+        Assert.DoesNotContain(BatchExceptionMarkers.Database, BatchExceptionMarkers.Concurrency);
     }
 }

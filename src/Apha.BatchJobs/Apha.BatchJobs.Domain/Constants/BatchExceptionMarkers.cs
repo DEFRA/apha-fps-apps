@@ -7,9 +7,12 @@ namespace Apha.BatchJobs.Domain.Constants;
 /// </summary>
 public static class BatchExceptionMarkers
 {
-    /// <summary>Unclassified, configuration, validation, lock, business, and startup failures.</summary>
+    /// <summary>Unclassified, configuration, validation, lease-lost, business, and startup failures.</summary>
     public const string General = "FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL";
 
     /// <summary>PostgreSQL / EF Core / connectivity failures.</summary>
     public const string Database = "FPSAPPS.EXCEPTION.BATCHJOBS.DB";
+
+    /// <summary>Lock already held by another run. No metric filter matches this marker, on purpose.</summary>
+    public const string Concurrency = "FPSAPPS.EXCEPTION.BATCHJOBS.CONCURRENCY";
 }
