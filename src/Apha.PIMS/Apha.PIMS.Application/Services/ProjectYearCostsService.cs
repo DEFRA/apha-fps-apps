@@ -400,7 +400,7 @@ namespace Apha.PIMS.Application.Services
         private static void BuildTestActualsSheet(XLWorkbook wb, List<(MonthlyOutput Output, TestReqmt Reqmt)> data)
         {
             var ws = wb.Worksheets.Add("TestActuals");
-            string[] headers = ["Month", "Test Code","Work Group", "Volume", "Unit Price", "Charge"];
+            string[] headers = ["Month", "Test Code", "Work Group", "Volume", "Unit Price", "Charge"];
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -415,7 +415,7 @@ namespace Apha.PIMS.Application.Services
                     ? r.Unitprice.Value * (decimal)o.Volume.Value
                     : 0m;
                 ws.Cell(row, 1).Value = o.Month;
-                ws.Cell(row, 2).Value = o.Testcode;               
+                ws.Cell(row, 2).Value = o.Testcode;
                 ws.Cell(row, 3).Value = o.Workgroup;
                 ws.Cell(row, 4).Value = o.Volume ?? 0d;
                 ws.Cell(row, 5).Value = (double)(r.Unitprice ?? 0m);
@@ -426,11 +426,11 @@ namespace Apha.PIMS.Application.Services
             decimal totalCharge = data.Sum(x =>
                 x.Output.Volume.HasValue && x.Reqmt.Unitprice.HasValue
                     ? x.Reqmt.Unitprice.Value * (decimal)x.Output.Volume.Value
-                    : 0m);
-            var totalLabelCell = ws.Cell(row, 6);
+                    : 0m);           
+            var totalLabelCell = ws.Cell(row, 5);
             totalLabelCell.Value = "Total";
-            ApplyTotalsRowStyle(totalLabelCell);
-            var totalValCell = ws.Cell(row, 7);
+            ApplyTotalsRowStyle(totalLabelCell);           
+            var totalValCell = ws.Cell(row, 6);
             totalValCell.Value = (double)totalCharge;
             ApplyTotalsRowStyle(totalValCell);
 
@@ -525,10 +525,10 @@ namespace Apha.PIMS.Application.Services
             }
 
             decimal totalCost = data.Sum(x => x.Itemcost);
-            var totalLabelCell = ws.Cell(row, 3);
+            var totalLabelCell = ws.Cell(row, 2);
             totalLabelCell.Value = "Total";
             ApplyTotalsRowStyle(totalLabelCell);
-            var totalValCell = ws.Cell(row, 4);
+            var totalValCell = ws.Cell(row, 3);
             totalValCell.Value = (double)totalCost;
             ApplyTotalsRowStyle(totalValCell);
 
@@ -560,10 +560,10 @@ namespace Apha.PIMS.Application.Services
             }
 
             decimal totalAmount = data.Sum(x => x.Amount ?? 0m);
-            var totalLabelCell = ws.Cell(row, 4);
+            var totalLabelCell = ws.Cell(row, 5);
             totalLabelCell.Value = "Total";
             ApplyTotalsRowStyle(totalLabelCell);
-            var totalValCell = ws.Cell(row, 5);
+            var totalValCell = ws.Cell(row, 6);
             totalValCell.Value = (double)totalAmount;
             ApplyTotalsRowStyle(totalValCell);
 

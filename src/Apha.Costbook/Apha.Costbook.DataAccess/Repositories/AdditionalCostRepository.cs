@@ -75,6 +75,18 @@ public class AdditionalCostRepository : RepositoryBase, IAdditionalCostRepositor
         return deleted > 0;
     }
 
+    public async Task<bool> DeleteBulkAdditionalCostsAsync(IEnumerable<int> acIdentities)
+    {
+        var ids = acIdentities?.Distinct().ToList() ?? new List<int>();
+        if (ids.Count == 0)
+            return false;
+
+        var deleted = await _context.AdditionalCosts
+            .Where(ac => ids.Contains(ac.AcIdentity))
+            .ExecuteDeleteAsync();
+        return deleted > 0;
+    }
+
     public async Task<IEnumerable<AccountCategoryLookup>> GetProjectSpecificAccountCategoriesAsync()
     {
         var results=(await _context.FpsAccountCategories

@@ -10,6 +10,7 @@ public interface ITestRequirementRepository
     Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement);
     Task<TestRequirement> UpdateTestRequirementAsync(TestRequirement testRequirement);
     Task<bool> DeleteTestRequirementAsync(string project, int year, string testCode);
+    Task<bool> DeleteBulkTestRequirementsAsync(string project, int year, IEnumerable<string> testCodes);
     Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra);
 }
 

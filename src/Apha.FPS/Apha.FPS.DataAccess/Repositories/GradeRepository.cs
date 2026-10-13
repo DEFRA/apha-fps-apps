@@ -105,8 +105,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 existing.DescLong   = grade.DescLong;
                 existing.AvSalary   = grade.AvSalary;
                 existing.PactCode   = grade.PactCode;
-                existing.AvLeaveHrs = grade.AvLeaveHrs;
-                existing.AvSickHrs  = grade.AvSickHrs;
 
                 await _context.SaveChangesAsync();
                 return existing;

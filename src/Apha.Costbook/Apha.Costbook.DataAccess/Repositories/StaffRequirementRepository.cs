@@ -103,6 +103,19 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
             .ExecuteDeleteAsync();
         return deleted > 0;
     }
+
+    public async Task<bool> DeleteBulkStaffRequirementsAsync(IEnumerable<int> srIdentities)
+    {        
+        var ids = srIdentities?.Distinct().ToList() ?? new List<int>();
+        if (ids.Count == 0)
+            return false;
+
+        var deleted = await _context.StaffRequirements
+            .Where(s => ids.Contains(s.SrIdentity))
+            .ExecuteDeleteAsync();
+        return deleted > 0;
+    }
+
     public async Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {
         var decodedId = HttpUtility.UrlDecode(projectId);
@@ -156,6 +169,12 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
             throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
         }
 
+        bool isDefraProject = (await _context.Projects
+            .AsNoTracking()
+            .Where(p => p.ProjectId == decodedId)
+            .Select(p => (int?)p.IsDefraProject)
+            .FirstOrDefaultAsync() ?? 0) != 0;
+
         // Retrieve pay rate data for the specific WgGrade
         var payRateRow = await _context.WorkGroupGrades
             .AsNoTracking()
@@ -181,11 +200,16 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
                 decimal nprDecimal = payRateRow.Npr.Value * (decimal)inflationFactor;
                 staffRequirement.Npr = (double?)nprDecimal;
             }
-            if (payRateRow.Ohr.HasValue)
-            {
-                decimal ohrDecimal = payRateRow.Ohr.Value * (decimal)inflationFactor;
-                staffRequirement.Ohr = (double?)ohrDecimal;
-            }
+        }
+
+        if (isDefraProject)
+        {
+            staffRequirement.Ohr = 0;
+        }
+        else if (payRateRow?.Ohr.HasValue == true)
+        {
+            decimal ohrDecimal = payRateRow.Ohr.Value * (decimal)inflationFactor;
+            staffRequirement.Ohr = (double?)ohrDecimal;
         }
     }
     // ── Private helpers ───────────────────────────────────────────────────────

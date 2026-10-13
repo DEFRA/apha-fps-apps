@@ -244,10 +244,10 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
         {
             // Arrange
             var accShortName = "ACC01";
-            var req = new AccountCategoryMaintenanceReq { Csg7Group = "CSG001" };
-            var updatedDto = new AccountCategoryMaintenanceDto { AccShortName = accShortName, Csg7Group = "CSG001" };
+            var req = new AccountCategoryMaintenanceReq { AccountDescription = "New description", Csg7Group = "CSG001" };
+            var updatedDto = new AccountCategoryMaintenanceDto { AccShortName = accShortName, AccountDescription = req.AccountDescription, Csg7Group = "CSG001" };
             var res = new AccountCategoryMaintenanceRes();
-            _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group).Returns(updatedDto);
+            _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group, req.AccountDescription).Returns(updatedDto);
             _mapper.Map<AccountCategoryMaintenanceRes>(updatedDto).Returns(res);
 
             // Act
@@ -256,7 +256,7 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Same(res, okResult.Value);
-            await _accountCategoryService.Received(1).UpdateCsg7GroupAsync(accShortName, req.Csg7Group);
+            await _accountCategoryService.Received(1).UpdateCsg7GroupAsync(accShortName, req.Csg7Group, req.AccountDescription);
         }
 
         [Fact]
@@ -264,10 +264,10 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
         {
             // Arrange
             var accShortName = "ACC01";
-            var req = new AccountCategoryMaintenanceReq { Csg7Group = null! };
-            var updatedDto = new AccountCategoryMaintenanceDto { AccShortName = accShortName, Csg7Group = null! };
+            var req = new AccountCategoryMaintenanceReq { AccountDescription = null, Csg7Group = null! };
+            var updatedDto = new AccountCategoryMaintenanceDto { AccShortName = accShortName, AccountDescription = null, Csg7Group = null! };
             var res = new AccountCategoryMaintenanceRes();
-            _accountCategoryService.UpdateCsg7GroupAsync(accShortName, null).Returns(updatedDto);
+            _accountCategoryService.UpdateCsg7GroupAsync(accShortName, null, null).Returns(updatedDto);
             _mapper.Map<AccountCategoryMaintenanceRes>(updatedDto).Returns(res);
 
             // Act
@@ -283,8 +283,8 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
         {
             // Arrange
             var accShortName = "NOTEXIST";
-            var req = new AccountCategoryMaintenanceReq { Csg7Group = "CSG001" };
-            _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group)
+            var req = new AccountCategoryMaintenanceReq { AccountDescription = "New description", Csg7Group = "CSG001" };
+            _accountCategoryService.UpdateCsg7GroupAsync(accShortName, req.Csg7Group, req.AccountDescription)
                 .Throws(new KeyNotFoundException($"Account category '{accShortName}' not found."));
 
             // Act & Assert
