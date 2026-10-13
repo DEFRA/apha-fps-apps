@@ -22,6 +22,8 @@ namespace Apha.BatchJobs.UnitTests;
 /// outcome mapping, and that the summary writer is always invoked exactly once. HealthCheck is
 /// intentionally not covered â€” <c>Program.cs</c> never lets it reach this runner.
 /// </summary>
+// Shares a collection with every class that mutates the process-wide BATCH_* env vars.
+[Collection("BatchEnvironmentVariables")]
 public sealed class BatchWorkerRunnerTests
 {
     private static IServiceProvider BuildServiceProvider(

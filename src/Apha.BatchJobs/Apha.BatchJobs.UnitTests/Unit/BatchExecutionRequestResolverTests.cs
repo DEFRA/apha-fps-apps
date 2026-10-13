@@ -9,6 +9,7 @@ namespace Apha.BatchJobs.UnitTests;
 /// Tests for <see cref="BatchExecutionRequestResolver"/>. HealthCheck is intentionally not
 /// covered here — it never reaches this resolver (Program.cs short-circuits earlier).
 /// </summary>
+[Collection("BatchEnvironmentVariables")]
 public sealed class BatchExecutionRequestResolverTests
 {
     [Fact]

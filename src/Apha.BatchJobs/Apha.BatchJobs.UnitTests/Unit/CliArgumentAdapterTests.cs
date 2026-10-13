@@ -2,6 +2,7 @@ using Apha.BatchJobs.Worker.Bootstrap;
 
 namespace Apha.BatchJobs.UnitTests.Unit;
 
+[Collection("BatchEnvironmentVariables")]
 public sealed class CliArgumentAdapterTests : IDisposable
 {
     private readonly string? _originalValue = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
