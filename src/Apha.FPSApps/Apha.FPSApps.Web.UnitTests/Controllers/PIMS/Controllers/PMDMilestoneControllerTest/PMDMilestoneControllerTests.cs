@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
         #region Index
 
         [Fact]
-        public async Task Index_WithoutParentProject_ReturnsViewWithFirstProject()
+        public async Task Index_WithoutParentProject_ReturnsViewWithNoSelectedProject()
         {
             // Arrange
             var managers = new List<ProjectYearManagerDto>
@@ -67,7 +67,32 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.PMDMilestoneCo
             var viewResult = result as ViewResult;
             Assert.IsType<PMDMilestoneViewModel>(viewResult!.Model);
             var model = viewResult.Model as PMDMilestoneViewModel;
-            Assert.Equal("PP001", model!.Parentproject);
+            Assert.Equal(string.Empty, model!.Parentproject);
+            Assert.Empty(model.MilestonesGrid.Data);
+        }
+
+        [Fact]
+        public async Task Index_WithUnknownParentProject_ClearsSelection()
+        {
+            // Arrange
+            const string unknownProject = "PP999";
+            var managers = new List<ProjectYearManagerDto>
+            {
+                new() { ParentProject = "PP001", Manager = "Manager1" },
+                new() { ParentProject = "PP002", Manager = "Manager2" }
+            };
+
+            var managersResponse = ApiResponseDto<List<ProjectYearManagerDto>>.SuccessResponse(managers);
+            _mockMilestoneService.GetProjectYearManagersAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(managersResponse);
+
+            // Act
+            var result = await _sut.Index(unknownProject);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<PMDMilestoneViewModel>(viewResult.Model);
+            Assert.Equal(string.Empty, model.Parentproject);
+            Assert.Empty(model.MilestonesGrid.Data);
         }
 
         [Fact]
