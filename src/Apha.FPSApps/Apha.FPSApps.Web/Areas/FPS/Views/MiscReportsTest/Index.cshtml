@@ -1,96 +1,12 @@
-@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.MiscReportsViewModel
 
 @{
     ViewData["Title"] = "Misc Reports Test";
+    ViewData["MiscReportsController"] = "MiscReportsTest";
 }
 
-<div class="govuk-grid-row sup_margin_left_right_0 isMiscReportPage">
-    <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-2">
-        <div class="govuk-grid-column-one-half isFloatLeft">
-            <h1 class="govuk-heading-s sup_margin_bottom_0 govuk-!-margin-top-3 govuk-!-margin-left-3">Misc Reports Test</h1>
-        </div>
-        <div class="govuk-grid-column-one-half isFloatRight isMiscReport">
-            <table class="govuk-table govuk-!-margin-bottom-2">
-                <tbody class="govuk-table__body">
-                    <tr class="govuk-table__row">
-                        <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
-                            <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="SelectedProfitCentre">
-                                Resource Centre:
-                            </label>
-                        </th>
-                        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
-                            <select class="govuk-select govuk-!-font-size-16"
-                                    id="SelectedProfitCentre"
-                                    name="SelectedProfitCentre">
-                                <option value="">--Select Resource Centre--</option>
-                                @foreach (var pc in Model.ProfitCentreOptions)
-                                {
-                                    if (Model.SelectedProfitCentre == pc.Value)
-                                    {
-                                        <option value="@pc.Value" selected>@pc.Text</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@pc.Value">@pc.Text</option>
-                                    }
-                                }
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
-    <div class="govuk-grid-column-full govuk-!-padding-left-0 govuk-!-padding-right-2">
-        <div class="cc-container-fluid">
-            <div class="cc-layout-row">
-
-                @await Html.PartialAsync("_MiscReportsTestSideNav", Model.SelectedReport)
-
-                <div class="cc-content-column">
-                    <div id="gridContainer_miscReportsTestGrid">
-                        @await Html.PartialAsync("_DataGrid", Model.Grid)
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+@await Html.PartialAsync("_MiscReportsContent", Model, ViewData)
 
 @section Scripts {
-    @* getMiscReportsTestExtraFilters must be global before the _DataGrid grid manager is used *@
-    <script>
-        $(function(){
-            $(".sortable-header").removeClass("grid-column-wrap");
-
-            $('#SelectedProfitCentre').on('change', function() {
-                setTimeout(function() {
-                    $('.sortable-header').removeClass('grid-column-wrap');
-                }, 0);
-            });
-        })
-        function getMiscReportsTestExtraFilters() {
-            return {
-                profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '',
-                report: '@Model.SelectedReport',
-                fpsYear: '@Model.FpsYear'
-            };
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            var pc = document.getElementById('SelectedProfitCentre');
-            if (!pc) return;
-
-            pc.addEventListener('change', function () {
-                var gm = window['gridManager_miscReportsTestGrid'];
-                if (gm) {
-                    gm.reloadGrid({ filter: '{}', sortBy: '', descending: false, page: 1 });
-                }
-            });
-        });
-    </script>
+    @await Html.PartialAsync("_MiscReportsScripts", Model)
 }
