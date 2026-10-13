@@ -73,7 +73,7 @@ public sealed class BatchRunSummaryWriterTests
     {
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
-        var classification = new BatchFailureClassification(40, BatchFailureCategory.Configuration, "FPSAPPS.EXCEPTION.BATCHJOBS.VALIDATION");
+        var classification = new BatchFailureClassification(40, BatchFailureCategory.Configuration, "FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL");
         var result = BatchExecutionResult.Failure(request: null, classification, new InvalidOperationException("bad config"));
 
         writer.WriteSummary(result, TimeSpan.FromMilliseconds(50));

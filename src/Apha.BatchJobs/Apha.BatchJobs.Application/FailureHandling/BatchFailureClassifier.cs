@@ -29,15 +29,15 @@ public sealed class BatchFailureClassifier
 
         return exception switch
         {
-            JobValidationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.Validation),
+            JobValidationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.General),
             MabArchiveYearConfigurationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.General),
             NotificationSettingsConfigurationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.General),
             // Checked before the general JobLockException case below — BatchLockLeaseLostException
             // is a subclass, and a lease lost mid-execution is a different failure from never
             // acquiring the lock at all, so it gets its own category/message even though it keeps
-            // the same exit code and CloudWatch marker (still "a lock problem" for alerting purposes).
-            BatchLockLeaseLostException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.LockLeaseLost, MarkerKey.Concurrency),
-            JobLockException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.Concurrency, MarkerKey.Concurrency),
+            // the same exit code and CloudWatch marker.
+            BatchLockLeaseLostException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.LockLeaseLost, MarkerKey.General),
+            JobLockException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.Concurrency, MarkerKey.General),
             BusinessEmailException => Build(BatchExitCodes.EmailFailure, BatchFailureCategory.Email, MarkerKey.General),
             _ => ClassifyByExceptionChain(exception)
         };
@@ -68,19 +68,16 @@ public sealed class BatchFailureClassifier
         var marker = markerKey switch
         {
             MarkerKey.Sql => _configuration["ExceptionTypes:Sql"] ?? BatchExceptionMarkers.Database,
-            MarkerKey.Concurrency => _configuration["ExceptionTypes:Concurrency"] ?? BatchExceptionMarkers.Concurrency,
-            MarkerKey.Validation => _configuration["ExceptionTypes:Validation"] ?? BatchExceptionMarkers.Validation,
             _ => _configuration["ExceptionTypes:General"] ?? BatchExceptionMarkers.General
         };
 
         return new BatchFailureClassification(exitCode, category, marker);
     }
 
+    // Only markers with a CloudWatch metric filter; anything else would not raise an alarm.
     private enum MarkerKey
     {
         General,
-        Sql,
-        Concurrency,
-        Validation
+        Sql
     }
 }
