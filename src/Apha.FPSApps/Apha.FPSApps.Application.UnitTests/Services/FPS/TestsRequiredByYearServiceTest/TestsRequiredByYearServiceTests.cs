@@ -31,7 +31,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestsRequiredByYearSer
 
             Assert.Same(expected, result);
             await _wgClient.Received(1).GetTestsRequiredByWgByYearAsync("ASU", 2025);
-            await _wgClient.DidNotReceive().GetTestsRequiredByWgAsync(Arg.Any<string?>());
         }
 
         [Fact]
@@ -58,7 +57,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestsRequiredByYearSer
 
             Assert.Same(expected, result);
             await _rcClient.Received(1).GetTestsRequiredByRcByYearAsync("ASU", 2025);
-            await _rcClient.DidNotReceive().GetTestsRequiredByRcAsync(Arg.Any<string?>());
         }
 
         [Fact]

@@ -14,11 +14,6 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient ?? throw new ArgumentNullException(nameof(fpsClient));
         }
 
-        public async Task<ApiResponseDto<List<TestsRequiredByWgDto>>> GetTestsRequiredByWgAsync(string? profitCentre)
-        {
-            return await _fpsClient.FpsTestsRequiredByWg.GetTestsRequiredByWgAsync(profitCentre);
-        }
-
         public async Task<ApiResponseDto<List<TestsRequiredByWgDto>>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear)
         {
             return await _fpsClient.FpsTestsRequiredByWg.GetTestsRequiredByWgByYearAsync(profitCentre, fpsYear);

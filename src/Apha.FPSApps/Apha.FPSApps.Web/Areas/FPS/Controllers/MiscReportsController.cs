@@ -5,10 +5,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
+    /// <summary>
+    /// Misc Reports: Test Manager WG/RC pivots calculated for the FPS year
+    /// selected in the year combo box.
+    /// </summary>
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
@@ -32,19 +37,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _testsRequiredByRcService = testsRequiredByRcService;
         }
 
-        /// <summary>
-        /// Displays the Misc Reports page. The grid stays empty until a Resource Centre is
-        /// selected, mirroring the Budget Bids Query page behaviour.
-        /// </summary>
         public async Task<IActionResult> Index(string? report = null, string? profitCentre = null)
         {
             var profitCentreOptions = await GetProfitCentreSelectListAsync();
             var year = GetSelectedFpsYear();
 
-            // The first side navigation item is selected and loaded by default.
             var selectedReport = string.IsNullOrWhiteSpace(report) ? DefaultReport : report;
 
-            var grid = await BuildGridAsync(profitCentre, selectedReport);
+            var grid = await BuildGridAsync(profitCentre, selectedReport, year);
 
             return View(new MiscReportsViewModel
             {
@@ -56,30 +56,28 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> LoadGrid(string? profitCentre, string? report = null, int? fpsYear = null, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
+        {
+            var year = fpsYear is > 0 ? fpsYear.Value : GetSelectedFpsYear();
+            var grid = await BuildGridAsync(profitCentre, string.IsNullOrWhiteSpace(report) ? DefaultReport : report, year, sortBy, descending, filter, page, pageSize);
+            return PartialView("_DataGrid", grid);
+        }
+
         private static string GetReportTitle(string? report) =>
             string.Equals(report, RcPivotReport, StringComparison.OrdinalIgnoreCase)
                 ? "Test Manager RC Pivot"
                 : "Test Manager WG Pivot";
 
-        /// <summary>
-        /// Reloads the Misc Reports grid partial for the selected Profit Centre.
-        /// </summary>
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> LoadGrid(string? profitCentre, string? report = null, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
-        {
-            var grid = await BuildGridAsync(profitCentre, string.IsNullOrWhiteSpace(report) ? DefaultReport : report, sortBy, descending, filter, page, pageSize);
-            return PartialView("_DataGrid", grid);
-        }
-
-        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
+        private async Task<DataGridConfig<Dictionary<string, string?>>> BuildGridAsync(string? profitCentre, string? report, int fpsYear, string? sortBy = null, bool descending = false, string? filter = null, int page = 1, int pageSize = DefaultPageSize)
         {
             var rows = new List<Dictionary<string, string?>>();
             var isRcReport = string.Equals(report, RcPivotReport, StringComparison.OrdinalIgnoreCase);
 
             var columns = new List<DataGridColumn>
             {
-                new() { PropertyName = "ProfitCentre",    DisplayName = "Profit Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 }
+                new() { PropertyName = "ProfitCentre", DisplayName = "Profit Centre", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 }
             };
 
             if (!isRcReport)
@@ -87,17 +85,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 columns.Add(new() { PropertyName = "WorkGroup", DisplayName = "Work Group", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 160 });
             }
 
-            columns.Add(new() { PropertyName = "TestCode",        DisplayName = "Test Code",       ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 });
+            columns.Add(new() { PropertyName = "TestCode",        DisplayName = "Test Code",        ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 120 });
             columns.Add(new() { PropertyName = "ItemDescription", DisplayName = "Item Description", ColumnType = GridColumnType.ReadOnly, IsFilterable = true, Width = 260, CssClass = "grid-column-wrap" });
-            columns.Add(new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total", ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 });
-            columns.Add(new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",      ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 });
+            columns.Add(new() { PropertyName = "ProjectedTotal",  DisplayName = "Projected Total",  ColumnType = GridColumnType.ReadOnly, IsFilterable = false, Width = 120 });
+            columns.Add(new() { PropertyName = "UnitPrice",       DisplayName = "Unit Price",       ColumnType = GridColumnType.RoundTwoDecimal, IsFilterable = false, Width = 120 });
 
-            // Only populate the grid once a report has been selected from the side navigation.
             if (!string.IsNullOrWhiteSpace(report))
             {
                 if (isRcReport)
                 {
-                    var rcResponse = await _testsRequiredByRcService.GetTestsRequiredByRcAsync(profitCentre);
+                    var rcResponse = await _testsRequiredByRcService.GetTestsRequiredByRcByYearAsync(profitCentre, fpsYear);
                     if (rcResponse.Success && rcResponse.Data != null)
                     {
                         foreach (var item in rcResponse.Data)
@@ -107,15 +104,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                                 ["ProfitCentre"]    = item.ProfitCentre,
                                 ["TestCode"]        = item.TestCode,
                                 ["ItemDescription"] = item.ItemDescription,
-                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                                ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(CultureInfo.InvariantCulture),
+                                ["UnitPrice"]       = item.UnitPrice?.ToString(CultureInfo.InvariantCulture)
                             });
                         }
                     }
                 }
                 else
                 {
-                    var response = await _testsRequiredByWgService.GetTestsRequiredByWgAsync(profitCentre);
+                    var response = await _testsRequiredByWgService.GetTestsRequiredByWgByYearAsync(profitCentre, fpsYear);
                     if (response.Success && response.Data != null)
                     {
                         foreach (var item in response.Data)
@@ -126,8 +123,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                                 ["WorkGroup"]       = item.WorkGroup,
                                 ["TestCode"]        = item.TestCode,
                                 ["ItemDescription"] = item.ItemDescription,
-                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                                ["UnitPrice"]       = item.UnitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                ["ProjectedTotal"]  = item.ProjectedTotal?.ToString(CultureInfo.InvariantCulture),
+                                ["UnitPrice"]       = item.UnitPrice?.ToString(CultureInfo.InvariantCulture)
                             });
                         }
                     }
@@ -172,10 +169,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
-        /// <summary>
-        /// Parses the JSON filter payload posted by the DataGrid into a column/value map.
-        /// Returns null when there is nothing to filter on.
-        /// </summary>
         private static Dictionary<string, string>? ParseFilters(string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
@@ -223,13 +216,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             Func<Dictionary<string, string?>, string?> cellSelector =
                 r => r.TryGetValue(sortBy, out var v) ? v : null;
 
-            // When every populated cell in the sorted column is numeric, order it as a
-            // number rather than text so values like 100 sort after 9 (not before).
             if (IsNumericColumn(rows, cellSelector))
             {
                 Func<Dictionary<string, string?>, decimal?> numericSelector =
-                    r => decimal.TryParse(cellSelector(r), System.Globalization.NumberStyles.Any,
-                             System.Globalization.CultureInfo.InvariantCulture, out var d)
+                    r => decimal.TryParse(cellSelector(r), NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
                         ? d
                         : (decimal?)null;
 
@@ -255,8 +245,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     continue;
 
                 hasValue = true;
-                if (!decimal.TryParse(value, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out _))
+                if (!decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
                 {
                     return false;
                 }

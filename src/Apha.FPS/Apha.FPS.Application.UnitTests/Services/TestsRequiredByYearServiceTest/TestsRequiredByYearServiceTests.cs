@@ -26,7 +26,6 @@ namespace Apha.FPS.Application.UnitTests.Services.TestsRequiredByYearServiceTest
 
             Assert.Same(dtos, result);
             await repository.Received(1).GetTestsRequiredByWgByYearAsync("ASU", 2025);
-            await repository.DidNotReceive().GetTestsRequiredByWgAsync(Arg.Any<string?>());
         }
 
         [Fact]
@@ -57,7 +56,6 @@ namespace Apha.FPS.Application.UnitTests.Services.TestsRequiredByYearServiceTest
 
             Assert.Same(dtos, result);
             await repository.Received(1).GetTestsRequiredByRcByYearAsync("ASU", 2025);
-            await repository.DidNotReceive().GetTestsRequiredByRcAsync(Arg.Any<string?>());
         }
 
         [Fact]

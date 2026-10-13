@@ -4,7 +4,6 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface ITestsRequiredByWgRepository
     {
-        Task<List<TestsRequiredByWgView>> GetTestsRequiredByWgAsync(string? profitCentre);
         Task<List<TestsRequiredByWgView>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear);
     }
 }

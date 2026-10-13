@@ -26,17 +26,6 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Returns the Tests Required By Resource Centre export rows. When a resource centre
-        /// (profit centre) is supplied, the results are filtered to that resource centre.
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetTestsRequiredByRcAsync([FromQuery] string? profitCentre)
-        {
-            var result = await _service.GetTestsRequiredByRcAsync(profitCentre);
-            return Ok(_mapper.Map<List<TestsRequiredByRcRes>>(result));
-        }
-
-        /// <summary>
         /// Returns the Tests Required By Resource Centre rows calculated for the supplied FPS year,
         /// optionally filtered to a resource centre (profit centre).
         /// </summary>

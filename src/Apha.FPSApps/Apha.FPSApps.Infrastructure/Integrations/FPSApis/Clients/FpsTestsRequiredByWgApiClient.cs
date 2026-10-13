@@ -19,20 +19,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<List<TestsRequiredByWgDto>>> GetTestsRequiredByWgAsync(string? profitCentre)
-        {
-            var response = await _http.GetAsync<List<TestsRequiredByWgRes>>(
-                string.Format(FpsApiEndpoints.GetTestsRequiredByWg, Uri.EscapeDataString(profitCentre ?? string.Empty)));
-
-            if (response.Success)
-            {
-                return _mapper.Map<ApiResponseDto<List<TestsRequiredByWgDto>>>(response);
-            }
-
-            var responseDto = _mapper.Map<ApiResponseDto<List<TestsRequiredByWgDto>>>(response);
-            return ApiResponseDto<List<TestsRequiredByWgDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-        }
-
         public async Task<ApiResponseDto<List<TestsRequiredByWgDto>>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear)
         {
             var response = await _http.GetAsync<List<TestsRequiredByWgRes>>(

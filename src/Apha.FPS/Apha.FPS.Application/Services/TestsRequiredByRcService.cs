@@ -16,12 +16,6 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<List<TestsRequiredByRcDto>> GetTestsRequiredByRcAsync(string? profitCentre)
-        {
-            var entities = await _repository.GetTestsRequiredByRcAsync(profitCentre);
-            return _mapper.Map<List<TestsRequiredByRcDto>>(entities);
-        }
-
         public async Task<List<TestsRequiredByRcDto>> GetTestsRequiredByRcByYearAsync(string? profitCentre, int fpsYear)
         {
             var entities = await _repository.GetTestsRequiredByRcByYearAsync(profitCentre, fpsYear);
