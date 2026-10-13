@@ -34,10 +34,10 @@ public sealed class BatchFailureClassifier
             NotificationSettingsConfigurationException => Build(BatchExitCodes.ConfigurationFailure, BatchFailureCategory.Configuration, MarkerKey.General),
             // Checked before the general JobLockException case below — BatchLockLeaseLostException
             // is a subclass, and a lease lost mid-execution is a different failure from never
-            // acquiring the lock at all, so it gets its own category, message and marker.
+            // acquiring the lock at all, so it gets its own category/message even though it keeps
+            // the same exit code and CloudWatch marker.
             BatchLockLeaseLostException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.LockLeaseLost, MarkerKey.General),
-            // Lock held by another run is normal contention, so it must not raise an alarm.
-            JobLockException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.Concurrency, MarkerKey.Concurrency),
+            JobLockException => Build(BatchExitCodes.LockFailure, BatchFailureCategory.Concurrency, MarkerKey.General),
             BusinessEmailException => Build(BatchExitCodes.EmailFailure, BatchFailureCategory.Email, MarkerKey.General),
             _ => ClassifyByExceptionChain(exception)
         };
@@ -68,18 +68,16 @@ public sealed class BatchFailureClassifier
         var marker = markerKey switch
         {
             MarkerKey.Sql => _configuration["ExceptionTypes:Sql"] ?? BatchExceptionMarkers.Database,
-            MarkerKey.Concurrency => _configuration["ExceptionTypes:Concurrency"] ?? BatchExceptionMarkers.Concurrency,
             _ => _configuration["ExceptionTypes:General"] ?? BatchExceptionMarkers.General
         };
 
         return new BatchFailureClassification(exitCode, category, marker);
     }
 
-    // General and Sql have CloudWatch metric filters; Concurrency deliberately has none.
+    // Only markers with a CloudWatch metric filter; anything else would not raise an alarm.
     private enum MarkerKey
     {
         General,
-        Sql,
-        Concurrency
+        Sql
     }
 }

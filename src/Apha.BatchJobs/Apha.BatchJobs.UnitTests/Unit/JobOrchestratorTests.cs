@@ -343,7 +343,7 @@ public sealed class JobOrchestratorTests
         _lockRepo.TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(false);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<JobLockException>(
             () => _orchestrator.RunAsync("RecreateSummary", RunMode.Manual, Guid.NewGuid(), "test-user"));
 
         await _reconciliationService.Received(1).ReconcileAsync(unexpiredLock, Arg.Any<CancellationToken>());
@@ -630,7 +630,7 @@ public sealed class JobOrchestratorTests
 
         // Act / Assert
         var jobExecutionId = Guid.NewGuid();
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<JobLockException>(
             () => _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, "test-user"));
 
         // Assert — job factory was never called
@@ -1289,7 +1289,7 @@ public sealed class JobOrchestratorTests
         {
             await Task.WhenAll(task1, task2);
         }
-        catch (InvalidOperationException)
+        catch (JobLockException)
         {
             // Expected: one concurrent call fails lock acquisition.
         }
@@ -1298,7 +1298,7 @@ public sealed class JobOrchestratorTests
         Assert.Equal(1, new[] { task1, task2 }.Count(t => t.Status == TaskStatus.RanToCompletion));
         Assert.Equal(1, new[] { task1, task2 }.Count(t => t.IsFaulted));
         Assert.Contains(new[] { task1, task2 }.First(t => t.IsFaulted).Exception!.Flatten().InnerExceptions,
-            ex => ex is InvalidOperationException);
+            ex => ex is JobLockException);
 
         // Assert — job executed exactly once
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());

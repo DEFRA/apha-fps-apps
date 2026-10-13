@@ -190,7 +190,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             _logger.LogError(
                 "Job '{JobName}' is already running (lock held by another process). Cannot start execution | JobExecutionId={JobExecutionId}",
                 jobName, jobExecutionId);
-            throw new InvalidOperationException(
+            throw new JobLockException(
                 $"Job '{jobName}' is already running and cannot accept another execution at this time.");
         }
         
