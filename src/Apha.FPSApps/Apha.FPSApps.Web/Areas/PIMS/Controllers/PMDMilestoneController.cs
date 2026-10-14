@@ -49,8 +49,16 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     .ToList()
                 : [];
 
-            viewModel.Parentproject = parentproject ?? viewModel.ProjectOptions.FirstOrDefault()?.Value ?? string.Empty;
-            if (managersResponse.Data == null || managersResponse.Data.Count == 0) viewModel.Parentproject = string.Empty;
+            string requestedProject = parentproject ?? string.Empty;
+            viewModel.Parentproject = !string.IsNullOrWhiteSpace(requestedProject)
+                && viewModel.ProjectOptions.Any(option => string.Equals(option.Value, requestedProject, StringComparison.OrdinalIgnoreCase))
+                    ? requestedProject
+                    : string.Empty;
+
+            if (managersResponse.Data == null || managersResponse.Data.Count == 0)
+            {
+                viewModel.Parentproject = string.Empty;
+            }
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(viewModel.Parentproject, defaultRequest);
