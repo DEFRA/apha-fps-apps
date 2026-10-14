@@ -265,8 +265,8 @@ namespace Apha.Common.Constants
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
 
         // Misc Reports — Tests Required By Work Group (Test Manager WG Pivot)
-        public const string GetTestsRequiredByWg = "api/v1/testsrequiredbywg?profitCentre={0}";
-        public const string GetTestsRequiredByRc = "api/v1/testsrequiredbyrc?profitCentre={0}";
+        public const string GetTestsRequiredByWgByYear = "api/v1/testsrequiredbywg/byyear?profitCentre={0}&fpsYear={1}";
+        public const string GetTestsRequiredByRcByYear = "api/v1/testsrequiredbyrc/byyear?profitCentre={0}&fpsYear={1}";
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
         public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows?sortBy={1}&descending={2}";

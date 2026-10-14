@@ -1,5 +1,9 @@
 @model string
 @* activeItem: identifier of the currently active Misc Report (e.g. "TestManagerWgPivot", "TestManagerRcPivot") *@
+@* ViewData["MiscReportsController"]: controller the links target (defaults to "MiscReports") *@
+@{
+    var reportsController = ViewData["MiscReportsController"] as string ?? "MiscReports";
+}
 <script>
     function toggleMiscReportsSidebar() {
         const sidebar = document.querySelector('#miscReportsSidenav');
@@ -30,15 +34,15 @@
     <ul>
         <li>
             <a class="dropdown-item@(Model == "TestManagerWgPivot" ? " sidenav-title" : "")"
-               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot", fpsContextYear = FyContext.Year })"
-               onclick="miscReportsNavigate(event, '@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerWgPivot" })')">
+               href="@Url.Action("Index", reportsController, new { area = "FPS", report = "TestManagerWgPivot", fpsContextYear = FyContext.Year })"
+               onclick="miscReportsNavigate(event, '@Url.Action("Index", reportsController, new { area = "FPS", report = "TestManagerWgPivot" })')">
                 Test Manager WG Pivot
             </a>
         </li>
         <li>
             <a class="dropdown-item@(Model == "TestManagerRcPivot" ? " sidenav-title" : "")"
-               href="@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot", fpsContextYear = FyContext.Year })"
-               onclick="miscReportsNavigate(event, '@Url.Action("Index", "MiscReports", new { area = "FPS", report = "TestManagerRcPivot" })')">
+               href="@Url.Action("Index", reportsController, new { area = "FPS", report = "TestManagerRcPivot", fpsContextYear = FyContext.Year })"
+               onclick="miscReportsNavigate(event, '@Url.Action("Index", reportsController, new { area = "FPS", report = "TestManagerRcPivot" })')">
                 Test Manager RC Pivot
             </a>
         </li>

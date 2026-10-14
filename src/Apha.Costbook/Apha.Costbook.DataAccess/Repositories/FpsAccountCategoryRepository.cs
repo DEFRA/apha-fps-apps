@@ -12,7 +12,12 @@ namespace Apha.Costbook.DataAccess.Repositories
     
     public class FpsAccountCategoryRepository : RepositoryBase, IFpsAccountCategoryRepository
     {
-        public FpsAccountCategoryRepository(CostbookDbContext context) : base(context) { }       
+        private readonly IFPSYearContext _fpsYearContext;
+
+        public FpsAccountCategoryRepository(CostbookDbContext context, IFPSYearContext fpsYearContext) : base(context)
+        {
+            _fpsYearContext = fpsYearContext;
+        }
 
         // matching VBA query: WHERE ProjectSpecific = True (Access -1 = boolean true)
         public async Task<List<FpsAccountCategory>> GetAllForMaintenanceAsync()
@@ -75,17 +80,15 @@ namespace Apha.Costbook.DataAccess.Repositories
         public async Task<FpsAccountCategory> UpdateAsync(FpsAccountCategory accountCategory)
         {
             var existing = await _context.FpsAccountCategories
-                .FirstOrDefaultAsync(a => a.AccShortName == accountCategory.AccShortName);
+                .FirstOrDefaultAsync(a =>
+                    a.AccShortName == accountCategory.AccShortName &&
+                    a.FpsYear == _fpsYearContext.FPSYear);
 
             if (existing == null)
                 throw new KeyNotFoundException($"FpsAccountCategory with AccShortName '{accountCategory.AccShortName}' not found.");
 
             existing.AccountDescription = accountCategory.AccountDescription;
-            existing.AccountType = accountCategory.AccountType;
-            existing.ConstituentAccountCodes = accountCategory.ConstituentAccountCodes;
             existing.Csg7Group = accountCategory.Csg7Group;
-            existing.ProjectSpecific = accountCategory.ProjectSpecific;
-            existing.RcSpecific = accountCategory.RcSpecific;
 
             await _context.SaveChangesAsync();
             return existing;

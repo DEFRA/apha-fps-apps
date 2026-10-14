@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\FPS\Views\MiscReportsTest\" />
     <Folder Include="Areas\FPS\Views\YearMaster\" />
     <Folder Include="Utilities\" />
   </ItemGroup>
