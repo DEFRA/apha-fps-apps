@@ -38,7 +38,8 @@ public sealed record YearEndExecutionContext(
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty(propertyName, out var value))
+            if (doc.RootElement.ValueKind != JsonValueKind.Object ||
+                !doc.RootElement.TryGetProperty(propertyName, out var value))
             {
                 return null;
             }

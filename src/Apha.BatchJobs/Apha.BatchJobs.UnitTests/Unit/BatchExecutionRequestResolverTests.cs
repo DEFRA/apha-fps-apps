@@ -9,8 +9,38 @@ namespace Apha.BatchJobs.UnitTests;
 /// Tests for <see cref="BatchExecutionRequestResolver"/>. HealthCheck is intentionally not
 /// covered here — it never reaches this resolver (Program.cs short-circuits earlier).
 /// </summary>
+[Collection("BatchEnvironmentVariables")]
 public sealed class BatchExecutionRequestResolverTests
 {
+    [Fact]
+    public void Resolve_HousekeepingWithoutExecutionId_GeneratesOne()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: BatchJobNames.Housekeeping,
+            runMode: "Manual",
+            jobExecutionId: null,
+            requestedBy: "support-test",
+            requestedAtUtc: null);
+
+        var request = new BatchExecutionRequestResolver().Resolve().Single();
+
+        Assert.Equal(BatchJobNames.Housekeeping, request.JobName);
+        Assert.NotEqual(Guid.Empty, request.JobExecutionId);
+    }
+
+    [Fact]
+    public void Resolve_ManualNonHousekeepingWithoutExecutionId_StillThrows()
+    {
+        using var scope = new EnvScopeSet(
+            jobName: "RecreateSummary",
+            runMode: "Manual",
+            jobExecutionId: null,
+            requestedBy: "support-test",
+            requestedAtUtc: null);
+
+        Assert.Throws<JobValidationException>(() => new BatchExecutionRequestResolver().Resolve());
+    }
+
     [Fact]
     public void Resolve_ValidManualRequest_ReturnsMatchingRequest()
     {

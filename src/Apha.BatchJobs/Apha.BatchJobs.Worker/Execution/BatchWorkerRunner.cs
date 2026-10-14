@@ -17,7 +17,7 @@ namespace Apha.BatchJobs.Worker.Execution;
 /// write one summary per job. Usually resolves to a single job; a shared category trigger (see
 /// <see cref="MonthlyScheduledNotificationJobs"/>) resolves to several, run in sequence within
 /// this one invocation. HealthCheck never reaches this type — <c>Program.cs</c> short-circuits
-/// before it.
+/// before it. Housekeeping runs the startup sweeps only and dispatches nothing.
 /// </summary>
 public sealed class BatchWorkerRunner : IBatchWorkerRunner
 {
@@ -100,6 +100,31 @@ public sealed class BatchWorkerRunner : IBatchWorkerRunner
             var reconciliationFailure = BatchExecutionResult.Failure(request: null, classification, ex);
             _summaryWriter.WriteSummary(reconciliationFailure, TimeSpan.Zero);
             return reconciliationFailure.ExitCode;
+        }
+
+        // Fails rows dispatched to the worker but never claimed within their time to live, so they
+        // stop blocking new requests. Unlike the lock sweep above this fails open: it is
+        // housekeeping, and must not stop the job this container was started for.
+        try
+        {
+            await using var sweepScope = _serviceProvider.CreateAsyncScope();
+            await sweepScope.ServiceProvider.GetRequiredService<IDispatchTimeoutSweepService>().SweepAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "[{ErrorType}] Dispatch-timeout sweep could not run — continuing to dispatch",
+                _failureClassifier.Classify(ex).ErrorType);
+        }
+
+        // Housekeeping exists only to run the two sweeps above, e.g. fired on demand through the
+        // manual rule when a request is reported stuck.
+        if (requests is [var housekeeping] &&
+            string.Equals(housekeeping.JobName, BatchJobNames.Housekeeping, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("Housekeeping completed | RequestedBy={RequestedBy}", housekeeping.RequestedBy);
+            _summaryWriter.WriteSummary(BatchExecutionResult.HousekeepingSuccess(housekeeping), TimeSpan.Zero);
+            return BatchExitCodes.Success;
         }
 
         // Created before any execution scope so every job below — including each job of a

@@ -48,6 +48,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// <summary>Default maximum retry duration in seconds.</summary>
     private const int DefaultMaxRetryDurationSeconds = 0;
 
+    private const int FinalStatusWriteAttempts = 3;
+
+    /// <summary>Pause between final status write attempts; settable by tests.</summary>
+    internal TimeSpan FinalStatusRetryDelay { get; init; } = TimeSpan.FromSeconds(2);
+
     public JobOrchestrator(
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
@@ -185,7 +190,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             _logger.LogError(
                 "Job '{JobName}' is already running (lock held by another process). Cannot start execution | JobExecutionId={JobExecutionId}",
                 jobName, jobExecutionId);
-            throw new InvalidOperationException(
+            throw new JobLockException(
                 $"Job '{jobName}' is already running and cannot accept another execution at this time.");
         }
         
@@ -240,11 +245,18 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not write execution start record — continuing without tracking");
+            // The claim is what makes this execution ours. Without it the row may already be
+            // Failed (e.g. swept as never picked up) or owned by another run, so the job must not
+            // run and the row must not be written. Only our lock is released.
+            await ReleaseLockSafelyAsync(lockName, jobName, jobQueueId);
+            if (ex is OperationCanceledException)
+                throw;
+            ThrowWithStructuredLog(ex, _failureClassifier.Classify(ex), jobName, jobQueueId, jobExecutionId);
         }
 
         // Step 3 — Execute the job
         Exception? jobException = null;
+        var finalStatusSaved = false;
         // Computed once, inside the finally block below, only for a genuine (non-cancellation)
         // failure — reused by ThrowWithStructuredLog afterward so the same exception is never
         // classified twice at two different points in this method.
@@ -321,29 +333,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     break;
             }
 
-            await MarkFailedSafelyAsync(record, finalStatus, jobException, jobQueueId);
+            finalStatusSaved = await SaveFinalStatusAsync(record, finalStatus, jobException, jobQueueId);
 
-            // Step 5 — Release lock (always), before failure notification runs. Notification is
-            // best-effort and must not hold the lock open while it sends.
-            try
-            {
-                await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
-                _logger.LogInformation(
-                    "Lock released for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId}",
-                    lockName,
-                    jobName,
-                    jobQueueId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(
-                    ex,
-                    "Could not release lock for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
-                    lockName,
-                    jobName,
-                    jobQueueId,
-                    _lockTimeoutSeconds);
-            }
+            // Step 5 — Release the lock only once the final status is saved, before notifications
+            // run. If it could not be saved the lock is kept: it expires, and the next worker's
+            // startup reconciliation marks the row Failed, so no later run starts while this
+            // run's outcome is unrecorded.
+            if (finalStatusSaved)
+                await ReleaseLockSafelyAsync(lockName, jobName, jobQueueId);
         }
 
         var finalDuration = DateTime.UtcNow - startedAt;
@@ -360,6 +357,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         if (jobException is null)
         {
+            // The job itself succeeded, but its outcome is not recorded and the row will be
+            // reconciled to Failed: send no success notification, and exit as failed. Already
+            // logged with the DB marker by SaveFinalStatusAsync.
+            if (!finalStatusSaved)
+                throw new InvalidOperationException(
+                    $"Job '{jobName}' completed but its final status could not be saved (JobQueueId={jobQueueId}).");
+
             var completionContext = new BatchJobCompletionContext(
                 jobQueueId, jobExecutionId, jobName, fpsYear, userId, status, ErrorMessage: null);
             await TryNotifyCompletionAsync(completionContext, cancellationToken);
@@ -388,6 +392,29 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
+    }
+
+    private async Task ReleaseLockSafelyAsync(string lockName, string jobName, Guid jobQueueId)
+    {
+        try
+        {
+            await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
+            _logger.LogInformation(
+                "Lock released for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId}",
+                lockName,
+                jobName,
+                jobQueueId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Could not release lock for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
+                lockName,
+                jobName,
+                jobQueueId,
+                _lockTimeoutSeconds);
+        }
     }
 
     private static bool IsWorkerManagedScheduledRun(string jobName, RunMode runMode) =>
@@ -443,6 +470,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
     {
         var retryStartedAt = DateTime.UtcNow;
         var totalAttempts = _retryAttempts + 1;
+        // Shared across attempts so a retry's heartbeat starts from the last successful renewal,
+        // not from the original acquisition time.
+        var lease = new LeaseTracker { ExpiresAtUtc = startedAtUtc.AddSeconds(_lockTimeoutSeconds) };
 
         for (var attempt = 1; attempt <= totalAttempts; attempt++)
         {
@@ -484,7 +514,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 // even run. Starting the heartbeat first doesn't make a cancellation-ignoring job
                 // safe, but it does guarantee the lease-maintenance mechanism has begun (its own
                 // first await, Task.Delay, yields immediately) before handing control to job code.
-                heartbeatTask = RunHeartbeatLoopAsync(jobName, jobQueueId, startedAtUtc, attemptToken);
+                heartbeatTask = RunHeartbeatLoopAsync(jobName, jobQueueId, lease, attemptToken);
                 jobTask = job.ExecuteAsync(attemptToken);
 
                 // Capturing which task WhenAny actually woke up for, not just checking
@@ -588,6 +618,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     {
                         await heartbeatTask;
                     }
+                    catch (OperationCanceledException) when (heartbeatTask.IsCanceled)
+                    {
+                        // Normal stop: attemptCts was cancelled above, ending the heartbeat's wait.
+                    }
                     catch (Exception heartbeatShutdownEx)
                     {
                         _logger.LogWarning(heartbeatShutdownEx,
@@ -638,7 +672,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         var basedelaySeconds = _retryDelaySeconds;
-        var jitterSeconds = new Random().Next(0, Math.Max(1, basedelaySeconds / 2));
+        var jitterSeconds = new Random().Next(0, RetryJitterUpperBoundExclusive(basedelaySeconds));
         var finalDelaySeconds = basedelaySeconds + jitterSeconds;
 
         _logger.LogWarning(ex,
@@ -662,31 +696,46 @@ public sealed class JobOrchestrator : IJobOrchestrator
     }
 
     /// <summary>
-    /// Persists the final execution status. If that write itself fails, logs at Critical (so
-    /// CloudWatch alarms still fire) and swallows the error so the container still exits with
-    /// the original job's exit code.
+    /// Persists the final execution status through a fresh context, retrying briefly. Returns
+    /// false, after logging with the DB marker, if every attempt fails; never throws.
     /// </summary>
-    private async Task MarkFailedSafelyAsync(
+    private async Task<bool> SaveFinalStatusAsync(
         JobExecutionRecord record,
         JobStatus finalStatus,
         Exception? originalException,
         Guid jobQueueId)
     {
-        try
+        for (var attempt = 1; attempt <= FinalStatusWriteAttempts; attempt++)
         {
-            await _executionRepository.UpdateExecutionRecordAsync(record, CancellationToken.None);
-            _logger.LogInformation(
-                "Execution record updated | Status={Status} | Duration={DurationSeconds}s",
-                finalStatus, record.DurationSeconds);
+            try
+            {
+                // A fresh context every attempt: the job's own context may be left unusable by the
+                // job's failure (e.g. entities it could not save still being tracked).
+                await using var scope = _heartbeatRepositoryScopeFactory.Create();
+                await scope.ExecutionRepository.UpdateExecutionRecordAsync(record, CancellationToken.None);
+                _logger.LogInformation(
+                    "Execution record updated | Status={Status} | Duration={DurationSeconds}s",
+                    finalStatus, record.DurationSeconds);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (attempt < FinalStatusWriteAttempts)
+                {
+                    _logger.LogWarning(ex,
+                        "Final status write failed, retrying | Attempt={Attempt}/{TotalAttempts} | JobQueueId={JobQueueId}",
+                        attempt, FinalStatusWriteAttempts, jobQueueId);
+                    await Task.Delay(FinalStatusRetryDelay);
+                    continue;
+                }
+
+                _logger.LogCritical(ex,
+                    "[{ErrorType}] Final status could not be saved — lock kept so it expires and the row is reconciled | IntendedStatus={IntendedStatus} | OriginalExceptionType={OriginalExceptionType} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId}",
+                    BatchExceptionMarkers.Database, finalStatus, originalException?.GetType().Name ?? "None", jobQueueId, record.JobExecutionId);
+            }
         }
-        catch (Exception ex)
-        {
-            var originalType = originalException?.GetType().Name ?? "None";
-            var sqlType = _failureClassifier.Classify(ex).ErrorType;
-            _logger.LogCritical(ex,
-                "[{ErrorType}] Could not write execution completion record — job result may not be persisted | OriginalExceptionType={OriginalExceptionType} | JobQueueId={JobQueueId}",
-                sqlType, originalType, jobQueueId);
-        }
+
+        return false;
     }
 
     /// <summary>
@@ -866,13 +915,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// trusted," not only a genuine <see cref="BatchLockLeaseLostException"/>.
     /// </para>
     /// </summary>
-    /// <param name="lockAcquisitionUpperBoundUtc">
-    /// A timestamp guaranteed no later than the one <c>TryAcquireLockAsync</c> itself used to
-    /// compute the real <c>expires_at</c> — <c>RunAsync</c>'s own <c>startedAt</c>, captured
-    /// before that call and everything leading up to it. Used only to seed the locally-tracked
-    /// lease boundary conservatively; never read back from the database.
+    /// <param name="lease">
+    /// This run's locally-tracked lease boundary, shared across retry attempts and updated after
+    /// each successful renewal. Seeded from <c>RunAsync</c>'s own <c>startedAt</c>, captured
+    /// before <c>TryAcquireLockAsync</c>, so it is never later than the real <c>expires_at</c>;
+    /// never read back from the database.
     /// </param>
-    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, DateTime lockAcquisitionUpperBoundUtc, CancellationToken cancellationToken)
+    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, LeaseTracker lease, CancellationToken cancellationToken)
     {
         var lockName = ResolveLockName(jobName);
 
@@ -880,15 +929,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
         var lockRepository = heartbeatScope.LockRepository;
         var executionRepository = heartbeatScope.ExecutionRepository;
 
-        // Tracks this loop's own best estimate of when the current lease expires, purely to
-        // decide when a *thrown* renewal (as opposed to a clean `false`) has gone on long enough
-        // to treat as loss rather than a transient blip. Not re-read from the database — deliberately
-        // conservative instead: seeded from a timestamp guaranteed no later than the real
-        // acquisition time, so this local deadline can only be earlier than (or equal to) the
-        // actual database expires_at, never later. A too-early local deadline just means an
-        // occasional unnecessary lease-loss report; a too-late one would mean this worker could
-        // believe it still owns a lease that another worker has already legitimately reclaimed.
-        var leaseExpiresAtUtc = lockAcquisitionUpperBoundUtc.AddSeconds(_lockTimeoutSeconds);
+        // The lease boundary decides when a *thrown* renewal (as opposed to a clean `false`) has
+        // gone on long enough to treat as loss rather than a transient blip, and bounds each
+        // renewal call. It is deliberately conservative: never later than the actual database
+        // expires_at. A too-early local deadline just means an occasional unnecessary lease-loss
+        // report; a too-late one would mean this worker could believe it still owns a lease that
+        // another worker has already legitimately reclaimed.
+        var leaseExpiresAtUtc = lease.ExpiresAtUtc;
 
         while (true)
         {
@@ -906,9 +953,18 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // above and fix #2 from the Phase 4 review).
             var renewalStartedAtUtc = DateTime.UtcNow;
             bool renewed;
+            // Each call is bounded by the remaining lease: DB commands have no timeout by default,
+            // so a hung renewal would otherwise keep the job running after the lease has lapsed.
+            using var renewalCts = CreateLeaseBoundedTokenSource(leaseExpiresAtUtc, cancellationToken);
             try
             {
-                renewed = await lockRepository.TryRenewLockAsync(lockName, jobQueueId, _lockTimeoutSeconds, cancellationToken);
+                renewed = await lockRepository.TryRenewLockAsync(lockName, jobQueueId, _lockTimeoutSeconds, renewalCts.Token);
+            }
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new BatchLockLeaseLostException(
+                    $"Lock renewal for job '{jobName}' (lock '{lockName}') did not complete before the lease boundary ({leaseExpiresAtUtc:O}).",
+                    ex);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -941,13 +997,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
             }
 
             leaseExpiresAtUtc = renewalStartedAtUtc.AddSeconds(_lockTimeoutSeconds);
+            lease.ExpiresAtUtc = leaseExpiresAtUtc;
 
+            // Bounded too, so a hung touch cannot hold up the next renewal past the lease.
+            using var touchCts = CreateLeaseBoundedTokenSource(leaseExpiresAtUtc, cancellationToken);
             try
             {
                 // Secondary — the lock renewal above is what proves ownership; updated_at is
-                // observability, not correctness. A failure here (thrown, or a clean `false`)
-                // never escalates.
-                var touched = await executionRepository.TouchRunningExecutionAsync(jobQueueId, cancellationToken);
+                // observability, not correctness. A failure here (thrown, timed out, or a clean
+                // `false`) never escalates.
+                var touched = await executionRepository.TouchRunningExecutionAsync(jobQueueId, touchCts.Token);
                 if (!touched)
                 {
                     _logger.LogWarning(
@@ -955,13 +1014,41 @@ public sealed class JobOrchestrator : IJobOrchestrator
                         jobName, jobQueueId);
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
                 _logger.LogWarning(ex,
                     "Heartbeat's TouchRunningExecutionAsync failed for job '{JobName}' — lock renewal already succeeded, ownership unaffected | JobQueueId={JobQueueId}",
                     jobName, jobQueueId);
             }
         }
+    }
+
+    /// <summary>
+    /// Token cancelled by <paramref name="cancellationToken"/> or when the lease runs out,
+    /// whichever comes first. Unbounded when leases are disabled (LockTimeoutSeconds = 0).
+    /// </summary>
+    private CancellationTokenSource CreateLeaseBoundedTokenSource(DateTime leaseExpiresAtUtc, CancellationToken cancellationToken)
+    {
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        if (_lockTimeoutSeconds > 0)
+        {
+            var remaining = leaseExpiresAtUtc - DateTime.UtcNow;
+            // CancelAfter(0) cancels asynchronously, so an already-lapsed lease is cancelled here.
+            if (remaining > TimeSpan.Zero)
+                cts.CancelAfter(remaining);
+            else
+                cts.Cancel();
+        }
+        return cts;
+    }
+
+    /// <summary>Exclusive upper bound of the random jitter added to each retry delay.</summary>
+    internal static int RetryJitterUpperBoundExclusive(int retryDelaySeconds) => Math.Max(1, retryDelaySeconds / 2);
+
+    /// <summary>Lease boundary for one run. Attempts run one at a time, so no locking is needed.</summary>
+    private sealed class LeaseTracker
+    {
+        public DateTime ExpiresAtUtc { get; set; }
     }
 
     // ─── Execution contract validation ──────────────────────────────────────────

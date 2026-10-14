@@ -130,6 +130,10 @@ public sealed class BatchExecutionRequestResolver
             return id;
         }
 
+        // Housekeeping writes no job_queue row, so an id is only needed for log correlation.
+        if (string.Equals(jobName, BatchJobNames.Housekeeping, StringComparison.OrdinalIgnoreCase))
+            return Guid.NewGuid();
+
         throw new JobValidationException("BATCH_JOB_EXECUTION_ID is required for non-worker-managed runs.");
     }
 

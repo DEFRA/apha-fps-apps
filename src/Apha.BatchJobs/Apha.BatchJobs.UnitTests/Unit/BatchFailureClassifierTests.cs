@@ -26,17 +26,13 @@ public sealed class BatchFailureClassifierTests
     }
 
     [Fact]
-    public void Classify_JobValidationException_MapsToConfigurationFailureWithValidationMarker()
+    public void Classify_JobValidationException_MapsToConfigurationFailureWithGeneralMarker()
     {
-        // Marker is "Validation" (not "General") to match JobOrchestrator.ThrowWithStructuredLog's
-        // existing behavior for JobValidationException thrown during job execution — centralizing
-        // classification must not silently change the marker for exceptions already flowing
-        // through the orchestrator today.
         var result = CreateClassifier().Classify(new JobValidationException("bad input"));
 
         Assert.Equal(BatchExitCodes.ConfigurationFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Configuration, result.Category);
-        Assert.Equal("FPSBatchJobs.VALIDATION_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -46,7 +42,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.ConfigurationFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Configuration, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -56,7 +52,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Concurrency, result.Category);
-        Assert.Equal("FPSBatchJobs.CONCURRENCY_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -65,12 +61,12 @@ public sealed class BatchFailureClassifierTests
         // BatchLockLeaseLostException inherits JobLockException, but has its own explicit case
         // ahead of the general JobLockException one — a lease lost mid-execution is a different
         // failure from never acquiring the lock at all, so it gets its own category/message even
-        // though the exit code and CloudWatch marker stay the same (still "a lock problem").
+        // though the exit code and CloudWatch marker stay the same.
         var result = CreateClassifier().Classify(new BatchLockLeaseLostException("lease lost mid-execution"));
 
         Assert.Equal(BatchExitCodes.LockFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.LockLeaseLost, result.Category);
-        Assert.Equal("FPSBatchJobs.CONCURRENCY_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -80,7 +76,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.EmailFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Email, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -92,7 +88,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Sql, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -102,7 +98,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Sql, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -112,7 +108,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.DependencyOutage, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -122,7 +118,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.DependencyOutage, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -132,7 +128,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Timeout, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -142,7 +138,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.UnhandledFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Authorization, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -152,7 +148,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.UnhandledFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Business, result.Category);
-        Assert.Equal("FPSBatchJobs.GENERAL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", result.ErrorType);
     }
 
     [Fact]
@@ -165,7 +161,7 @@ public sealed class BatchFailureClassifierTests
 
         Assert.Equal(BatchExitCodes.DatabaseFailure, result.ExitCode);
         Assert.Equal(BatchFailureCategory.Sql, result.Category);
-        Assert.Equal("FPSBatchJobs.SQL_EXCEPTION", result.ErrorType);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", result.ErrorType);
     }
 
     [Fact]
@@ -176,5 +172,13 @@ public sealed class BatchFailureClassifierTests
         var result = classifier.Classify(new DbUpdateException("save failed"));
 
         Assert.Equal("Custom.SQL_MARKER", result.ErrorType);
+    }
+
+    [Fact]
+    public void AlarmedMarkers_MatchBatchJobsMetricFilterPatterns()
+    {
+        // The BatchJobs metric filters match these exact strings; changing either silently disables alerting.
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL", BatchExceptionMarkers.General);
+        Assert.Equal("FPSAPPS.EXCEPTION.BATCHJOBS.DB", BatchExceptionMarkers.Database);
     }
 }
