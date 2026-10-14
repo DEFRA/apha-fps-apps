@@ -4,6 +4,6 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface ITestsRequiredByRcRepository
     {
-        Task<List<TestsRequiredByRcView>> GetTestsRequiredByRcAsync(string? profitCentre);
+        Task<List<TestsRequiredByRcView>> GetTestsRequiredByRcByYearAsync(string? profitCentre, int fpsYear);
     }
 }

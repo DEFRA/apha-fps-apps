@@ -17,26 +17,30 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.MiscReportsControllerTest
         private const string RcPivotReport = "TestManagerRcPivot";
 
         private readonly IProfitCentreService _profitCentreService;
-        private readonly ITestsRequiredByWgService _testsRequiredByWgService;
-        private readonly ITestsRequiredByRcService _testsRequiredByRcService;
+        private readonly ITestsRequiredByWgService _wgService;
+        private readonly ITestsRequiredByRcService _rcService;
+        private readonly DefaultHttpContext _httpContext;
         private readonly MiscReportsController _controller;
 
         public MiscReportsControllerTests()
         {
             _profitCentreService = Substitute.For<IProfitCentreService>();
-            _testsRequiredByWgService = Substitute.For<ITestsRequiredByWgService>();
-            _testsRequiredByRcService = Substitute.For<ITestsRequiredByRcService>();
+            _wgService = Substitute.For<ITestsRequiredByWgService>();
+            _rcService = Substitute.For<ITestsRequiredByRcService>();
 
             _profitCentreService.GetProfitCentresAsync()
                 .Returns(ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(new List<ProfitCentreDto>()));
-            _testsRequiredByWgService.GetTestsRequiredByWgAsync(Arg.Any<string?>())
+            _wgService.GetTestsRequiredByWgByYearAsync(Arg.Any<string?>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<TestsRequiredByWgDto>>.SuccessResponse(new List<TestsRequiredByWgDto>()));
-            _testsRequiredByRcService.GetTestsRequiredByRcAsync(Arg.Any<string?>())
+            _rcService.GetTestsRequiredByRcByYearAsync(Arg.Any<string?>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<TestsRequiredByRcDto>>.SuccessResponse(new List<TestsRequiredByRcDto>()));
 
-            _controller = new MiscReportsController(_profitCentreService, _testsRequiredByWgService, _testsRequiredByRcService)
+            _httpContext = new DefaultHttpContext();
+            _httpContext.Items["SelectedFPSYear"] = "2025";
+
+            _controller = new MiscReportsController(_profitCentreService, _wgService, _rcService)
             {
-                ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+                ControllerContext = new ControllerContext { HttpContext = _httpContext }
             };
         }
 
@@ -49,103 +53,73 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.MiscReportsControllerTest
         private static DataGridConfig<Dictionary<string, string?>> GridOf(IActionResult result)
         {
             var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
             return Assert.IsType<DataGridConfig<Dictionary<string, string?>>>(partial.Model);
         }
 
         private void SetWgRows(params TestsRequiredByWgDto[] rows) =>
-            _testsRequiredByWgService.GetTestsRequiredByWgAsync(Arg.Any<string?>())
+            _wgService.GetTestsRequiredByWgByYearAsync(Arg.Any<string?>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<TestsRequiredByWgDto>>.SuccessResponse(rows.ToList()));
 
         private void SetRcRows(params TestsRequiredByRcDto[] rows) =>
-            _testsRequiredByRcService.GetTestsRequiredByRcAsync(Arg.Any<string?>())
+            _rcService.GetTestsRequiredByRcByYearAsync(Arg.Any<string?>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<TestsRequiredByRcDto>>.SuccessResponse(rows.ToList()));
 
+        #region Index
+
         [Fact]
-        public async Task Index_SelectsWgPivotReport_ByDefault()
+        public async Task Index_ByDefault_LoadsWgPivotForSelectedYear()
         {
             var model = ModelOf(await _controller.Index());
 
             Assert.Equal(WgPivotReport, model.SelectedReport);
-            await _testsRequiredByWgService.Received(1).GetTestsRequiredByWgAsync(null);
-            await _testsRequiredByRcService.DidNotReceive().GetTestsRequiredByRcAsync(Arg.Any<string?>());
+            Assert.Equal(2025, model.FpsYear);
+            Assert.Null(model.SelectedProfitCentre);
+            Assert.Equal("miscReportsGrid", model.Grid.GridId);
+            Assert.Equal("/FPS/MiscReports/LoadGrid", model.Grid.BindGridUrl);
+            Assert.Equal("getMiscReportsExtraFilters", model.Grid.ExtraFilterMethod);
+            Assert.Equal("Test Manager WG Pivot", model.Grid.Title);
+            await _wgService.Received(1).GetTestsRequiredByWgByYearAsync(null, 2025);
+            await _rcService.DidNotReceive().GetTestsRequiredByRcByYearAsync(Arg.Any<string?>(), Arg.Any<int>());
         }
 
         [Fact]
-        public async Task Index_HonoursExplicitlySelectedRcReport()
+        public async Task Index_WithRcReport_LoadsRcPivotForSelectedYearAndProfitCentre()
         {
-            var model = ModelOf(await _controller.Index(RcPivotReport));
+            var model = ModelOf(await _controller.Index(RcPivotReport, "ASU"));
+
             Assert.Equal(RcPivotReport, model.SelectedReport);
-            await _testsRequiredByRcService.Received(1).GetTestsRequiredByRcAsync(null);
-            await _testsRequiredByWgService.DidNotReceive().GetTestsRequiredByWgAsync(Arg.Any<string?>());
+            Assert.Equal("ASU", model.SelectedProfitCentre);
+            Assert.Equal("Test Manager RC Pivot", model.Grid.Title);
+            Assert.DoesNotContain(model.Grid.Columns, c => c.PropertyName == "WorkGroup");
+            await _rcService.Received(1).GetTestsRequiredByRcByYearAsync("ASU", 2025);
+            await _wgService.DidNotReceive().GetTestsRequiredByWgByYearAsync(Arg.Any<string?>(), Arg.Any<int>());
         }
 
         [Fact]
-        public async Task Index_UsesProfitCentreColumnHeading()
-        {
-            var model = ModelOf(await _controller.Index());
-
-            var column = Assert.Single(model.Grid.Columns, c => c.PropertyName == "ProfitCentre");
-            Assert.Equal("Profit Centre", column.DisplayName);
-        }
-
-        [Fact]
-        public async Task Index_WgReport_IncludesWorkGroupColumn()
+        public async Task Index_WithWgReport_IncludesWorkGroupColumn()
         {
             var model = ModelOf(await _controller.Index(WgPivotReport));
 
             Assert.Contains(model.Grid.Columns, c => c.PropertyName == "WorkGroup");
+            Assert.Equal(6, model.Grid.Columns.Count);
         }
 
         [Fact]
-        public async Task Index_RcReport_ExcludesWorkGroupColumn()
+        public async Task Index_WhenNoYearInContext_FallsBackToCurrentYear()
         {
-            var model = ModelOf(await _controller.Index(RcPivotReport));
-
-            Assert.DoesNotContain(model.Grid.Columns, c => c.PropertyName == "WorkGroup");
-        }
-
-        [Fact]
-        public async Task Index_DefaultsPageSizeToTen()
-        {
-            SetWgRows(Enumerable.Range(1, 25)
-                .Select(i => new TestsRequiredByWgDto { ProfitCentre = "PC", TestCode = $"TC{i:D3}" })
-                .ToArray());
+            _httpContext.Items.Remove("SelectedFPSYear");
 
             var model = ModelOf(await _controller.Index());
 
-            Assert.Equal(10, model.Grid.Pagination.PageSize);
-            Assert.Equal(10, model.Grid.Data.Count());
-            Assert.Equal(25, model.Grid.Pagination.TotalRecords);
+            Assert.Equal(DateTime.Now.Year, model.FpsYear);
+            await _wgService.Received(1).GetTestsRequiredByWgByYearAsync(null, DateTime.Now.Year);
         }
 
         [Fact]
-        public async Task Index_PassesSelectedProfitCentreToService()
+        public async Task Index_WhenYearInContextIsNotNumeric_FallsBackToCurrentYear()
         {
-            var model = ModelOf(await _controller.Index(WgPivotReport, "ASU"));
-
-            Assert.Equal("ASU", model.SelectedProfitCentre);
-            await _testsRequiredByWgService.Received(1).GetTestsRequiredByWgAsync("ASU");
-        }
-
-        [Fact]
-        public async Task Index_UsesSelectedFpsYear_WhenPresent()
-        {
-            _controller.HttpContext.Items["SelectedFPSYear"] = "2024";
-
-            var model = ModelOf(await _controller.Index());
-
-            Assert.Equal(2024, model.FpsYear);
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("not-a-year")]
-        public async Task Index_FallsBackToCurrentYear_WhenSelectedFpsYearUnusable(string? value)
-        {
-            if (value != null)
-            {
-                _controller.HttpContext.Items["SelectedFPSYear"] = value;
-            }
+            _httpContext.Items["SelectedFPSYear"] = "abc";
 
             var model = ModelOf(await _controller.Index());
 
@@ -153,10 +127,37 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.MiscReportsControllerTest
         }
 
         [Fact]
-        public async Task Index_ReturnsEmptyProfitCentreOptions_WhenServiceFails()
+        public async Task Index_WhenYearInContextIsNull_FallsBackToCurrentYear()
         {
-            _profitCentreService.GetProfitCentresAsync()
-                .Returns(ApiResponseDto<List<ProfitCentreDto>>.FailureResponse(new List<ApiErrorDto>(), new ApiMetaDto()));
+            _httpContext.Items["SelectedFPSYear"] = null;
+
+            var model = ModelOf(await _controller.Index());
+
+            Assert.Equal(DateTime.Now.Year, model.FpsYear);
+        }
+
+        [Fact]
+        public async Task Index_PopulatesProfitCentreOptions_SkippingBlankIds()
+        {
+            _profitCentreService.GetProfitCentresAsync().Returns(
+                ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(new List<ProfitCentreDto>
+                {
+                    new() { ProfitCentreId = "ASU" },
+                    new() { ProfitCentreId = " " },
+                    new() { ProfitCentreId = null! },
+                    new() { ProfitCentreId = "Bact" }
+                }));
+
+            var model = ModelOf(await _controller.Index());
+
+            Assert.Equal(new[] { "ASU", "Bact" }, model.ProfitCentreOptions.Select(o => o.Value));
+        }
+
+        [Fact]
+        public async Task Index_WhenProfitCentreServiceFails_ReturnsEmptyOptions()
+        {
+            _profitCentreService.GetProfitCentresAsync().Returns(
+                ApiResponseDto<List<ProfitCentreDto>>.FailureResponse(new List<ApiErrorDto>(), new ApiMetaDto()));
 
             var model = ModelOf(await _controller.Index());
 
@@ -164,221 +165,283 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.MiscReportsControllerTest
         }
 
         [Fact]
-        public async Task Index_FiltersOutBlankProfitCentres()
-        {
-            _profitCentreService.GetProfitCentresAsync().Returns(
-                ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(new List<ProfitCentreDto>
-                {
-                    new() { ProfitCentreId = "PC1" },
-                    new() { ProfitCentreId = "   " }
-                }));
-
-            var model = ModelOf(await _controller.Index());
-
-            Assert.Single(model.ProfitCentreOptions);
-            Assert.Equal("PC1", model.ProfitCentreOptions[0].Value);
-        }
-
-        [Fact]
-        public async Task Index_MapsWgRowValues()
+        public async Task Index_MapsWgRowsToGridData()
         {
             SetWgRows(new TestsRequiredByWgDto
             {
-                ProfitCentre = "Bact",
-                WorkGroup = "BAC2",
-                TestCode = "TC0036",
-                ItemDescription = "Salmonella",
-                ProjectedTotal = 45,
-                UnitPrice = 116.30m
+                ProfitCentre = "ASU", WorkGroup = "WG1", TestCode = "TC1",
+                ItemDescription = "Desc", ProjectedTotal = 12, UnitPrice = 3.5m
             });
 
-            var model = ModelOf(await _controller.Index(WgPivotReport));
+            var model = ModelOf(await _controller.Index());
 
             var row = Assert.Single(model.Grid.Data);
-            Assert.Equal("Bact", row["ProfitCentre"]);
-            Assert.Equal("BAC2", row["WorkGroup"]);
-            Assert.Equal("TC0036", row["TestCode"]);
-            Assert.Equal("Salmonella", row["ItemDescription"]);
-            Assert.Equal("45", row["ProjectedTotal"]);
-            Assert.Equal("116.30", row["UnitPrice"]);
+            Assert.Equal("ASU", row["ProfitCentre"]);
+            Assert.Equal("WG1", row["WorkGroup"]);
+            Assert.Equal("TC1", row["TestCode"]);
+            Assert.Equal("Desc", row["ItemDescription"]);
+            Assert.Equal("12", row["ProjectedTotal"]);
+            Assert.Equal("3.5", row["UnitPrice"]);
         }
 
         [Fact]
-        public async Task Index_MapsRcRowValues()
+        public async Task Index_MapsRcRowsToGridData_WithNullNumbers()
         {
-            SetRcRows(new TestsRequiredByRcDto
-            {
-                ProfitCentre = "ASU",
-                TestCode = "PT0000",
-                ItemDescription = "Camelid TB",
-                ProjectedTotal = 24,
-                UnitPrice = 550m
-            });
+            SetRcRows(new TestsRequiredByRcDto { ProfitCentre = "ASU", TestCode = "TC1", ItemDescription = "Desc" });
 
             var model = ModelOf(await _controller.Index(RcPivotReport));
 
             var row = Assert.Single(model.Grid.Data);
             Assert.Equal("ASU", row["ProfitCentre"]);
-            Assert.Equal("PT0000", row["TestCode"]);
             Assert.False(row.ContainsKey("WorkGroup"));
+            Assert.Null(row["ProjectedTotal"]);
+            Assert.Null(row["UnitPrice"]);
         }
 
         [Fact]
-        public async Task Index_ReturnsNoRows_WhenReportServiceFails()
+        public async Task Index_MapsRcRowsWithValues()
         {
-            _testsRequiredByWgService.GetTestsRequiredByWgAsync(Arg.Any<string?>())
+            SetRcRows(new TestsRequiredByRcDto { ProfitCentre = "ASU", TestCode = "TC1", ProjectedTotal = 7, UnitPrice = 1.25m });
+
+            var model = ModelOf(await _controller.Index(RcPivotReport));
+
+            var row = Assert.Single(model.Grid.Data);
+            Assert.Equal("7", row["ProjectedTotal"]);
+            Assert.Equal("1.25", row["UnitPrice"]);
+        }
+
+        [Fact]
+        public async Task Index_WhenWgServiceFails_ReturnsEmptyGrid()
+        {
+            _wgService.GetTestsRequiredByWgByYearAsync(Arg.Any<string?>(), Arg.Any<int>())
                 .Returns(ApiResponseDto<List<TestsRequiredByWgDto>>.FailureResponse(new List<ApiErrorDto>(), new ApiMetaDto()));
 
             var model = ModelOf(await _controller.Index());
 
             Assert.Empty(model.Grid.Data);
+            Assert.Equal(0, model.Grid.Pagination.TotalRecords);
         }
 
         [Fact]
-        public async Task LoadGrid_DefaultsToWgPivotReport_WhenReportNotSupplied()
+        public async Task Index_WhenRcServiceFails_ReturnsEmptyGrid()
         {
-            var grid = GridOf(await _controller.LoadGrid(null));
+            _rcService.GetTestsRequiredByRcByYearAsync(Arg.Any<string?>(), Arg.Any<int>())
+                .Returns(ApiResponseDto<List<TestsRequiredByRcDto>>.FailureResponse(new List<ApiErrorDto>(), new ApiMetaDto()));
 
-            Assert.Equal(10, grid.Pagination.PageSize);
-            Assert.Contains(grid.Columns, c => c.PropertyName == "WorkGroup");
-            await _testsRequiredByWgService.Received(1).GetTestsRequiredByWgAsync(null);
+            var model = ModelOf(await _controller.Index(RcPivotReport));
+
+            Assert.Empty(model.Grid.Data);
+        }
+
+        #endregion
+
+        #region LoadGrid
+
+        [Fact]
+        public async Task LoadGrid_WithExplicitYear_UsesThatYear()
+        {
+            GridOf(await _controller.LoadGrid("ASU", WgPivotReport, fpsYear: 2024));
+
+            await _wgService.Received(1).GetTestsRequiredByWgByYearAsync("ASU", 2024);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task LoadGrid_WithoutValidYear_UsesYearFromContext(int? fpsYear)
+        {
+            GridOf(await _controller.LoadGrid(null, WgPivotReport, fpsYear));
+
+            await _wgService.Received(1).GetTestsRequiredByWgByYearAsync(null, 2025);
         }
 
         [Fact]
-        public async Task LoadGrid_UsesSuppliedReportAndProfitCentre()
+        public async Task LoadGrid_WithBlankReport_DefaultsToWgPivot()
         {
-            await _controller.LoadGrid("ASU", RcPivotReport);
+            var grid = GridOf(await _controller.LoadGrid("ASU", " ", 2025));
 
-            await _testsRequiredByRcService.Received(1).GetTestsRequiredByRcAsync("ASU");
+            Assert.Equal("Test Manager WG Pivot", grid.Title);
+            await _wgService.Received(1).GetTestsRequiredByWgByYearAsync("ASU", 2025);
         }
 
         [Fact]
-        public async Task LoadGrid_FallsBackToDefaultPageSize_WhenNonPositive()
+        public async Task LoadGrid_WithRcReport_LoadsRcRows()
         {
-            SetWgRows(Enumerable.Range(1, 15)
-                .Select(i => new TestsRequiredByWgDto { TestCode = $"TC{i:D3}" })
-                .ToArray());
+            SetRcRows(new TestsRequiredByRcDto { TestCode = "TC1" });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, pageSize: 0));
+            var grid = GridOf(await _controller.LoadGrid("ASU", RcPivotReport, 2025));
 
-            Assert.Equal(10, grid.Pagination.PageSize);
-            Assert.Equal(10, grid.Data.Count());
+            Assert.Single(grid.Data);
+            await _rcService.Received(1).GetTestsRequiredByRcByYearAsync("ASU", 2025);
         }
 
         [Fact]
-        public async Task LoadGrid_HonoursExplicitPageSizeAndPage()
+        public async Task LoadGrid_PaginatesRows()
         {
-            SetWgRows(Enumerable.Range(1, 12)
-                .Select(i => new TestsRequiredByWgDto { TestCode = $"TC{i:D3}" })
-                .ToArray());
+            SetWgRows(Enumerable.Range(1, 25).Select(i => new TestsRequiredByWgDto { TestCode = $"TC{i:D3}" }).ToArray());
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, page: 2, pageSize: 5));
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, page: 3, pageSize: 10));
 
-            Assert.Equal(5, grid.Pagination.PageSize);
-            Assert.Equal(2, grid.Pagination.PageNumber);
             Assert.Equal(5, grid.Data.Count());
-            Assert.Equal("TC006", grid.Data.First()["TestCode"]);
+            Assert.Equal("TC021", grid.Data.First()["TestCode"]);
+            Assert.Equal(25, grid.Pagination.TotalRecords);
+            Assert.Equal(3, grid.Pagination.PageNumber);
+            Assert.Equal(10, grid.Pagination.PageSize);
         }
 
         [Fact]
-        public async Task LoadGrid_FallsBackToFirstPage_WhenPageNonPositive()
+        public async Task LoadGrid_WithInvalidPageAndPageSize_UsesDefaults()
         {
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, page: 0));
+            SetWgRows(Enumerable.Range(1, 15).Select(i => new TestsRequiredByWgDto { TestCode = $"TC{i:D3}" }).ToArray());
 
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, page: 0, pageSize: 0));
+
+            Assert.Equal(10, grid.Data.Count());
             Assert.Equal(1, grid.Pagination.PageNumber);
+            Assert.Equal(10, grid.Pagination.PageSize);
         }
 
+        #endregion
+
+        #region Filtering
+
         [Fact]
-        public async Task LoadGrid_AppliesColumnFilter()
+        public async Task LoadGrid_WithFilter_ReturnsMatchingRowsCaseInsensitive()
         {
             SetWgRows(
                 new TestsRequiredByWgDto { TestCode = "TC001", ProfitCentre = "Bact" },
                 new TestsRequiredByWgDto { TestCode = "TC002", ProfitCentre = "ASU" });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, filter: "{\"ProfitCentre\":\"bac\"}"));
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, filter: "{\"ProfitCentre\":\"bac\"}"));
 
             var row = Assert.Single(grid.Data);
             Assert.Equal("TC001", row["TestCode"]);
+            Assert.NotNull(grid.CurrentFilters);
+        }
+
+        [Fact]
+        public async Task LoadGrid_WithFilterOnNullCell_ExcludesRow()
+        {
+            SetWgRows(
+                new TestsRequiredByWgDto { TestCode = "TC001", WorkGroup = null },
+                new TestsRequiredByWgDto { TestCode = "TC002", WorkGroup = "WG1" });
+
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, filter: "{\"WorkGroup\":\"WG\"}"));
+
+            Assert.Equal("TC002", Assert.Single(grid.Data)["TestCode"]);
+        }
+
+        [Fact]
+        public async Task LoadGrid_WithFilterOnUnknownColumn_ExcludesAllRows()
+        {
+            SetWgRows(new TestsRequiredByWgDto { TestCode = "TC001" });
+
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, filter: "{\"Unknown\":\"x\"}"));
+
+            Assert.Empty(grid.Data);
         }
 
         [Theory]
         [InlineData(null)]
         [InlineData("")]
-        [InlineData("not json")]
         [InlineData("{}")]
-        [InlineData("{\"ProfitCentre\":\"  \"}")]
-        public async Task LoadGrid_IgnoresUnusableFilterPayloads(string? filter)
+        [InlineData("{\"TestCode\":\"  \"}")]
+        [InlineData("not-json")]
+        [InlineData("null")]
+        public async Task LoadGrid_WithEmptyOrInvalidFilter_ReturnsAllRows(string? filter)
         {
-            SetWgRows(
-                new TestsRequiredByWgDto { TestCode = "TC001", ProfitCentre = "Bact" },
-                new TestsRequiredByWgDto { TestCode = "TC002", ProfitCentre = "ASU" });
+            SetWgRows(new TestsRequiredByWgDto { TestCode = "TC001" }, new TestsRequiredByWgDto { TestCode = "TC002" });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, filter: filter));
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, filter: filter));
 
             Assert.Equal(2, grid.Data.Count());
             Assert.Null(grid.CurrentFilters);
         }
 
         [Fact]
-        public async Task LoadGrid_SortsNumericColumnNumerically()
+        public async Task LoadGrid_WithFilterAndNoRows_ReturnsEmpty()
+        {
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, filter: "{\"TestCode\":\"TC\"}"));
+
+            Assert.Empty(grid.Data);
+        }
+
+        #endregion
+
+        #region Sorting
+
+        [Fact]
+        public async Task LoadGrid_SortByNumericColumn_SortsNumerically()
         {
             SetWgRows(
                 new TestsRequiredByWgDto { TestCode = "TC001", ProjectedTotal = 100 },
-                new TestsRequiredByWgDto { TestCode = "TC002", ProjectedTotal = 9 });
+                new TestsRequiredByWgDto { TestCode = "TC002", ProjectedTotal = 9 },
+                new TestsRequiredByWgDto { TestCode = "TC003", ProjectedTotal = null });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, sortBy: "ProjectedTotal"));
+            var asc = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "ProjectedTotal"));
+            var desc = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "ProjectedTotal", descending: true));
 
-            Assert.Equal("9", grid.Data.First()["ProjectedTotal"]);
+            Assert.Equal(new[] { "TC003", "TC002", "TC001" }, asc.Data.Select(r => r["TestCode"]));
+            Assert.Equal(new[] { "TC001", "TC002", "TC003" }, desc.Data.Select(r => r["TestCode"]));
         }
 
         [Fact]
-        public async Task LoadGrid_SortsTextColumnDescending()
+        public async Task LoadGrid_SortByTextColumn_SortsCaseInsensitive()
         {
             SetWgRows(
-                new TestsRequiredByWgDto { ProfitCentre = "ASU" },
-                new TestsRequiredByWgDto { ProfitCentre = "Bact" });
+                new TestsRequiredByWgDto { TestCode = "TC1", ProfitCentre = "bact" },
+                new TestsRequiredByWgDto { TestCode = "TC2", ProfitCentre = "ASU" });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, sortBy: "ProfitCentre", descending: true));
+            var asc = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "ProfitCentre"));
+            var desc = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "ProfitCentre", descending: true));
 
-            Assert.Equal("Bact", grid.Data.First()["ProfitCentre"]);
+            Assert.Equal(new[] { "ASU", "bact" }, asc.Data.Select(r => r["ProfitCentre"]));
+            Assert.Equal(new[] { "bact", "ASU" }, desc.Data.Select(r => r["ProfitCentre"]));
         }
 
         [Fact]
-        public async Task LoadGrid_SortsTextually_WhenColumnHasNonNumericValues()
+        public async Task LoadGrid_SortByMixedColumn_FallsBackToTextSort()
         {
             SetWgRows(
                 new TestsRequiredByWgDto { TestCode = "TC010" },
                 new TestsRequiredByWgDto { TestCode = "TC002" });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, sortBy: "TestCode"));
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "TestCode"));
 
-            Assert.Equal("TC002", grid.Data.First()["TestCode"]);
+            Assert.Equal(new[] { "TC002", "TC010" }, grid.Data.Select(r => r["TestCode"]));
         }
 
         [Fact]
-        public async Task LoadGrid_LeavesOrderUnchanged_WhenSortColumnIsBlank()
+        public async Task LoadGrid_SortByColumnWithOnlyEmptyValues_UsesTextSort()
         {
-            SetWgRows(
-                new TestsRequiredByWgDto { ProfitCentre = "Bact" },
-                new TestsRequiredByWgDto { ProfitCentre = "ASU" });
+            SetWgRows(new TestsRequiredByWgDto { TestCode = "B" }, new TestsRequiredByWgDto { TestCode = "A" });
 
-            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, sortBy: " "));
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "WorkGroup"));
 
-            Assert.Equal("Bact", grid.Data.First()["ProfitCentre"]);
+            Assert.Equal(2, grid.Data.Count());
+            Assert.Equal("WorkGroup", grid.Pagination.SortColumn);
         }
 
         [Fact]
-        public async Task LoadGrid_ExposesExpectedGridConfiguration()
+        public async Task LoadGrid_SortByUnknownColumn_KeepsRows()
         {
-            var grid = GridOf(await _controller.LoadGrid(null));
+            SetWgRows(new TestsRequiredByWgDto { TestCode = "B" }, new TestsRequiredByWgDto { TestCode = "A" });
 
-            Assert.Equal("miscReportsGrid", grid.GridId);
-            Assert.Equal("getMiscReportsExtraFilters", grid.ExtraFilterMethod);
-            Assert.Equal("/FPS/MiscReports/LoadGrid", grid.BindGridUrl);
-            Assert.False(grid.AllowAdd);
-            Assert.False(grid.AllowEdit);
-            Assert.False(grid.AllowDelete);
-            Assert.True(grid.ShowPagination);
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "Missing"));
+
+            Assert.Equal(2, grid.Data.Count());
         }
+
+        [Fact]
+        public async Task LoadGrid_SortWithNoRows_ReturnsEmpty()
+        {
+            var grid = GridOf(await _controller.LoadGrid(null, WgPivotReport, 2025, sortBy: "TestCode", descending: true));
+
+            Assert.Empty(grid.Data);
+            Assert.True(grid.Pagination.SortDirection);
+        }
+
+        #endregion
     }
 }
