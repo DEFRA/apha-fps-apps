@@ -11,23 +11,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
         }
 
-        public async Task<List<TestsRequiredByWgView>> GetTestsRequiredByWgAsync(string? profitCentre)
+        public Task<List<TestsRequiredByWgView>> GetTestsRequiredByWgByYearAsync(string? profitCentre, int fpsYear)
         {
-            var query = _context.TestsRequiredByWgViews
-                .AsNoTracking()
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(profitCentre))
-            {
-                var normalised = profitCentre.ToLower();
-                query = query.Where(x => x.ProfitCentre != null && x.ProfitCentre.ToLower() == normalised);
-            }
-
-            return await query
-                .OrderBy(x => x.ProfitCentre)
-                .ThenBy(x => x.WorkGroup)
-                .ThenBy(x => x.TestCode)
-                .ToListAsync();
+            return TestsRequiredByYearQuery.GetByWorkGroupAsync(_context, profitCentre, fpsYear);
         }
     }
 }

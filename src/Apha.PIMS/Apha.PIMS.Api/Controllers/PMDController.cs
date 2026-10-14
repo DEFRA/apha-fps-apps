@@ -30,9 +30,7 @@ namespace Apha.PIMS.Api.Controllers
 
         [HttpGet("projectyearmanagers/{year:int}")]
         public async Task<IActionResult> GetProjectYearManagers(int year, [FromQuery] string email, [FromQuery] bool isAdmin)
-        {
-            Console.WriteLine($"GetProjectYearManagers roles: API-PMDAdmin={User.IsInRole("API-PMDAdmin")}, API-PIMSProjectManager={User.IsInRole("API-PIMSProjectManager")}, isAdmin={isAdmin}");
-            Console.WriteLine($"GetProjectYearManagers email: {email}");
+        {         
 
             List<ProjectYearManagerDto> result = await _service.GetProjectYearManagersAsync(year, email, isAdmin);
             return Ok(_mapper.Map<List<ProjectYearManagerRes>>(result) ?? []);

@@ -48,8 +48,17 @@ namespace Apha.Costbook.DataAccess.Repositories
 
         public async Task<bool> ExistsAsync(string csg7Group)
         {
+            var normalizedCsg7Group = csg7Group
+                .Trim()
+                .Replace(" ", string.Empty)
+                .ToLower();
+
             return await _context.AccountGroups
-                .AnyAsync(a => a.Csg7group == csg7Group);
+                .AnyAsync(a => a.Csg7group != null
+                    && a.Csg7group
+                        .Trim()
+                        .Replace(" ", string.Empty)
+                        .ToLower() == normalizedCsg7Group);
         }
 
         public async Task<AccountGroup> AddAccountGroupAsync(AccountGroup accountGroup)

@@ -432,6 +432,49 @@
         return t ? t.value : '';
         }
 
+        function normalizeCostbookErrors(errors) {
+        if (!errors) return [];
+        if (Array.isArray(errors)) {
+        return errors.map(function (e) {
+        return {
+        field: (e && (e.field || e.Field)) || '',
+        message: (e && (e.message || e.Message)) || 'Validation error'
+        };
+        });
+        }
+
+        return Object.keys(errors).map(function (key) {
+        return { field: key, message: errors[key] };
+        });
+        }
+
+        function displayCostbookServerValidationErrors(errors, summaryMessage, container) {
+        var $c = (container instanceof jQuery) ? container : $(container || document);
+        var $summary = $c.find('.govuk-error-summary');
+        var $list = $summary.find('.govuk-error-summary__list').empty();
+
+        $summary.find('.govuk-error-summary__title').text('There is a problem');
+
+        var items = normalizeCostbookErrors(errors);
+        var hasSummaryErrors = false;
+        var seenMessages = {};
+
+        items.forEach(function (error) {
+        var message = error.message || 'Validation error';
+        if (!message || seenMessages[message]) return;
+        seenMessages[message] = true;
+
+        $list.append('<li><a href="#">' + message + '</a></li>');
+        hasSummaryErrors = true;
+        });
+
+        if (hasSummaryErrors) {
+        $summary.removeAttr('hidden').show().focus();
+        } else if ($summary.length) {
+        $summary.attr('hidden', 'hidden').hide();
+        }
+        }
+
         function showDbError(formId, message) {
         var errDiv = document.getElementById(formId + '-db-error');
         var errMsg = document.getElementById(formId + '-db-error-msg');
@@ -572,8 +615,11 @@
         message = response.message || response.title || response.detail || message;
         }
 
-        showAlertMessage(message, AlertType.ERROR);
-        displayServerValidationErrors(response ? response.errors : null, message, $modal);
+        var errors = (response && response.errors && response.errors.length)
+        ? response.errors
+        : [{ field: '', message: message }];
+
+        displayCostbookServerValidationErrors(errors, message, $modal);
         }
 
         function addCsg7Group() {
@@ -684,8 +730,11 @@
         message = response.message || response.title || response.detail || message;
         }
 
-        showAlertMessage(message, AlertType.ERROR);
-        displayServerValidationErrors(response ? response.errors : null, message, $modal);
+        var errors = (response && response.errors && response.errors.length)
+        ? response.errors
+        : [{ field: '', message: message }];
+
+        displayCostbookServerValidationErrors(errors, message, $modal);
         }
 
         function addCapsStaff() {

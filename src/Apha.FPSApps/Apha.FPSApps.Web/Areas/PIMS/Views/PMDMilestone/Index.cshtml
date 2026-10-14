@@ -22,13 +22,10 @@
                 <div class="govuk-grid-row sup_margin_left_right_10">
                     <div class="govuk-grid-column-full sup_p_0">
                         <div class="sup_border sup_p_8 sup_margin_bottom_10">
-                            <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold" for="dpprojectcode">Projects</label>
-                            <select asp-for="Parentproject"
-                                    asp-items="Model.ProjectOptions"
-                                    class="govuk-select govuk-!-font-size-16"
-                                    id="dpprojectcode"
-                                    onchange="onProjectChanged(this.value)">
-                            </select>
+                            <div class="sup_flex_align_center sup_flex_gap_10 govuk-!-margin-left-2">
+                                <label class="govuk-label font-size-16 sup_font_weight_700">Project</label>
+                                <div id="dpprojectSelectMultiDropdown" class="govuk-!-margin-right-3"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -94,10 +91,18 @@
 @Html.AntiForgeryToken()
 <script src="~/js/ajax-form-validation.js"></script>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
+
 @section Scripts {
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script>
         // ── Shared state ─────────────────────────────────────────────────────
-        var currentProject = '@Html.Raw(parentproject)';
+        const projectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectOptions));
+        const preselectedProject = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Parentproject ?? string.Empty));
+        var projectSelectDropdown = null;
+        var currentProject = preselectedProject || '';
 
         function onProjectChanged(project) {
             currentProject = project;
@@ -175,5 +180,36 @@
         function getMilestoneExtraFilters() {
             return { parentproject: currentProject };
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            projectSelectDropdown = new MultiColumnDropdownComponent({
+                dropdownId: 'dpprojectSelectMulti',
+                containerSelector: '#dpprojectSelectMultiDropdown',
+                placeholder: 'Select a Project',
+                searchPlaceholder: 'Search by project',
+                showSerialNumber: false,
+                columns: [
+                    { field: 'Text', header: 'Project', width: '320px' }
+                ],
+                data: projectOptionsListData || [],
+                displayField: 'Text',
+                valueField: 'Value',
+                clearButtonClearsSelection: false,
+                callbacks: {
+                    onSelect: function (selectedItem) {
+                        if (!selectedItem) return;
+                        onProjectChanged(selectedItem.Value || '');
+                    }
+                }
+            });
+
+            if (preselectedProject) {
+                currentProject = preselectedProject;
+                projectSelectDropdown.setValue(preselectedProject);
+            } else if (projectSelectDropdown && typeof projectSelectDropdown.clear === 'function') {
+                currentProject = '';
+                projectSelectDropdown.clear();
+            }
+        });
     </script>
 }

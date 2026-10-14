@@ -181,6 +181,40 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.AccountGroupRepositoryTe
             Assert.False(result);
         }
 
+        [Fact]
+        public async Task ExistsAsync_KeyWithDifferentCaseAndWhitespace_ReturnsTrue()
+        {
+            // Arrange
+            var accountGroups = new List<AccountGroup>
+            {
+                new AccountGroup { Csg7group = "LabTest", Useinflation = true }
+            };
+            var repo = CreateRepository(accountGroups);
+
+            // Act
+            var result = await repo.ExistsAsync("  labtest  ");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_KeyWithInternalSpacesAndDifferentCase_ReturnsTrue()
+        {
+            // Arrange
+            var accountGroups = new List<AccountGroup>
+            {
+                new AccountGroup { Csg7group = "LabTest", Useinflation = true }
+            };
+            var repo = CreateRepository(accountGroups);
+
+            // Act
+            var result = await repo.ExistsAsync("lab test");
+
+            // Assert
+            Assert.True(result);
+        }
+
         #endregion
 
         // ── AddAsync ──────────────────────────────────────────────────────────
