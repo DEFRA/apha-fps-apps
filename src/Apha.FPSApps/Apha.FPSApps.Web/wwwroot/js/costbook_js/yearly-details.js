@@ -893,6 +893,12 @@ function clearNonActiveGridContainers(activeTabId) {
 
         document.querySelectorAll('.project-year-row').forEach(function (row) {
             row.addEventListener('click', function () { onYearRowClick(row); });
+            row.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    onYearRowClick(row);
+                }
+            });
         });
     });
 })();
