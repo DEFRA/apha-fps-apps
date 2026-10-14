@@ -108,7 +108,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 plannedYear = openYear + 1;
 
-                var openmonthHours = await _context.MonthHours
+                var openmonthHours = await _context.MonthHours.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(m => m.FpsYear == openYear && m.Fmonth > 0).ToListAsync();
 
@@ -136,7 +136,7 @@ namespace Apha.FPS.DataAccess.Repositories
             }
             else
             {
-                monthHours = await _context.MonthHours
+                monthHours = await _context.MonthHours.IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(m => m.FpsYear == plannedYear).ToListAsync();
             }

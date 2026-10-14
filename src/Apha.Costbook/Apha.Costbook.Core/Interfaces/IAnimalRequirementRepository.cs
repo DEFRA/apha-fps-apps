@@ -9,6 +9,7 @@ public interface IAnimalRequirementRepository
     Task<AnimalRequirement> AddAnimalRequirementAsync(AnimalRequirement animalRequirement);
     Task<AnimalRequirement> UpdateAnimalRequirementAsync(AnimalRequirement animalRequirement);
     Task<bool> DeleteAnimalRequirementAsync(int arIdentity);
+    Task<bool> DeleteBulkAnimalRequirementsAsync(IEnumerable<int> arIdentities);
     Task<IEnumerable<AnimalRateLookup>> GetAnimalRatesAsync(string projectId, int year, bool isDefra);
     Task<IEnumerable<FpsAnimals>> GetAllAnimalsAsync();
 }

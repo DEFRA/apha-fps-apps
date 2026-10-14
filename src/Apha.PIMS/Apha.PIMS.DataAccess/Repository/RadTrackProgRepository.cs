@@ -73,15 +73,24 @@ namespace Apha.PIMS.DataAccess.Repository
         }
         public async Task<RadtrackProg> AddRadTrackProgAsync(RadtrackProg entity)
         {
+            entity.Radtrackprog = true;
             _dbContext.RadtrackProgs.Add(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
         public async Task<RadtrackProg> UpdateRadTrackProgAsync(RadtrackProg entity)
-        {
-            _dbContext.RadtrackProgs.Update(entity);
+        {            
+            var existing = await _dbContext.RadtrackProgs
+                .FirstOrDefaultAsync(r => EF.Functions.ILike(r.Program, entity.Program));
+
+            if (existing is null)
+            {
+                throw new InvalidOperationException($"RadTrackProg with Program '{entity.Program}' was not found.");
+            }
+
+            existing.Publicationprefix = entity.Publicationprefix;
             await _dbContext.SaveChangesAsync();
-            return entity;
+            return existing;
         }
         public async Task<bool> DeleteRadTrackProgAsync(string program)
         {

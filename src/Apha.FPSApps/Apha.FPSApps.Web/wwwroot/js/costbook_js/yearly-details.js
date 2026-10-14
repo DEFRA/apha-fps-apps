@@ -456,6 +456,51 @@ function deleteStaff(pid, year, srIdentity) {
     });
 }
 
+function deleteBulkStaff(selection) {
+    var ids = (selection && selection.ids)
+        ? selection.ids.filter(function (id) { return id !== undefined && id !== null && id !== ''; })
+        : [];
+
+    if (ids.length === 0) {
+        showAlertMessage('Select at least one staff record to delete.', AlertType.INFO);
+        return;
+    }
+
+    var confirmMessage = selection.isAll
+        ? 'Delete all staff records for the selected year?'
+        : 'Delete ' + ids.length + ' selected staff record(s)?';
+
+    showGovukConfirm(confirmMessage).then(function (result) {
+        if (!result) return;
+
+        var request = {
+            items: ids.map(function (id) {
+                return { srIdentity: parseInt(id, 10) };
+            })
+        };
+
+        showLoader();
+        fetch(yearlyDetailsUrls.deleteBulkStaff + '?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify(request)
+        })
+            .then(function (r) { hideLoader(); return r.json(); })
+            .then(function (d) {
+                if (d.success) {
+                    showAlertMessage(d.message || 'Staff records deleted successfully.', AlertType.SUCCESS)
+                        .then(function () { loadStaffGrid(); });
+                } else {
+                    showAlertMessage(d.message || 'Failed to delete selected staff records.', AlertType.ERROR);
+                }
+            })
+            .catch(function (err) { hideLoader(); console.error('Staff bulk delete error:', err); showAlertMessage('Failed to delete selected staff records.', AlertType.ERROR); });
+    });
+}
+
 // ── Tests ──────────────────────────────────────────────────────────
 var _testIsAddingNew = true;
 var _testCurrentCode = null;
@@ -531,6 +576,51 @@ function deleteTest(pid, year, testCode) {
                 else { showAlertMessage(d.message || 'Failed to delete Test entry.', AlertType.ERROR); }
             })
             .catch(function (err) { hideLoader(); console.error('Test delete error:', err); showAlertMessage('Failed to delete Test entry.', AlertType.ERROR); });
+    })
+}
+
+function deleteBulkTest(selection) {
+    var ids = (selection && selection.ids)
+        ? selection.ids.filter(function (id) { return id !== undefined && id !== null && id !== ''; })
+        : [];
+
+    if (ids.length === 0) {
+        showAlertMessage('Select at least one test record to delete.', AlertType.INFO);
+        return;
+    }
+
+    var confirmMessage = selection.isAll
+        ? 'Delete all test records for the selected year?'
+        : 'Delete ' + ids.length + ' selected test record(s)?';
+
+    showGovukConfirm(confirmMessage).then(function (result) {
+        if (!result) return;
+
+        showLoader();
+        fetch(yearlyDetailsUrls.deleteBulkTest + '?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({
+                items: ids.map(function (id) { return { testCode: id }; })
+            })
+        })
+            .then(function (r) { hideLoader(); return r.json(); })
+            .then(function (d) {
+                if (d.success) {
+                    showAlertMessage(d.message || 'Test records deleted successfully.', AlertType.SUCCESS)
+                        .then(function () { loadTestGrid(); });
+                } else {
+                    showAlertMessage(d.message || 'Failed to delete selected test records.', AlertType.ERROR);
+                }
+            })
+            .catch(function (err) {
+                hideLoader();
+                console.error('Test bulk delete error:', err);
+                showAlertMessage('Failed to delete selected test records.', AlertType.ERROR);
+            });
     })
 }
 
@@ -611,6 +701,51 @@ function deleteAnimal(pid, year, arIdentity) {
                 else { showAlertMessage(d.message || 'Failed to delete animal entry.', AlertType.ERROR); }
             })
             .catch(function (err) { hideLoader(); console.error('Animal delete error:', err); showAlertMessage('Failed to delete animal entry.', AlertType.ERROR); });
+    });
+}
+
+function deleteBulkAnimal(selection) {
+    var ids = (selection && selection.ids)
+        ? selection.ids.filter(function (id) { return id !== undefined && id !== null && id !== ''; })
+        : [];
+
+    if (ids.length === 0) {
+        showAlertMessage('Select at least one animal record to delete.', AlertType.INFO);
+        return;
+    }
+
+    var confirmMessage = selection.isAll
+        ? 'Delete all animal records for the selected year?'
+        : 'Delete ' + ids.length + ' selected animal record(s)?';
+
+    showGovukConfirm(confirmMessage).then(function (result) {
+        if (!result) return;
+
+        var request = {
+            items: ids.map(function (id) {
+                return { arIdentity: parseInt(id, 10) };
+            })
+        };
+
+        showLoader();
+        fetch(yearlyDetailsUrls.deleteBulkAnimal + '?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify(request)
+        })
+            .then(function (r) { hideLoader(); return r.json(); })
+            .then(function (d) {
+                if (d.success) {
+                    showAlertMessage(d.message || 'Animal records deleted successfully.', AlertType.SUCCESS)
+                        .then(function () { loadAnimalGrid(); });
+                } else {
+                    showAlertMessage(d.message || 'Failed to delete selected animal records.', AlertType.ERROR);
+                }
+            })
+            .catch(function (err) { hideLoader(); console.error('Animal bulk delete error:', err); showAlertMessage('Failed to delete selected animal records.', AlertType.ERROR); });
     });
 }
 
@@ -697,6 +832,51 @@ function deleteAdditionalCost(pid, year, acIdentity) {
                 else { showAlertMessage(d.message || 'Failed to delete Additional cost entry.', AlertType.ERROR); }
             })
             .catch(function (err) { hideLoader(); console.error('Additional cost delete error:', err); showAlertMessage('Failed to delete Additional cost entry.', AlertType.ERROR); });
+    });
+}
+
+function deleteBulkAdditionalCost(selection) {
+    var ids = (selection && selection.ids)
+        ? selection.ids.filter(function (id) { return id !== undefined && id !== null && id !== ''; })
+        : [];
+
+    if (ids.length === 0) {
+        showAlertMessage('Select at least one additional cost record to delete.', AlertType.INFO);
+        return;
+    }
+
+    var confirmMessage = selection.isAll
+        ? 'Delete all additional cost records for the selected year?'
+        : 'Delete ' + ids.length + ' selected additional cost record(s)?';
+
+    showGovukConfirm(confirmMessage).then(function (result) {
+        if (!result) return;
+
+        showLoader();
+        fetch(yearlyDetailsUrls.deleteBulkAdditionalCost + '?projectId=' + encodeURIComponent(projectId) + '&year=' + selectedYear, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({
+                items: ids.map(function (id) { return { acIdentity: id }; })
+            })
+        })
+            .then(function (r) { hideLoader(); return r.json(); })
+            .then(function (d) {
+                if (d.success) {
+                    showAlertMessage(d.message || 'Additional cost records deleted successfully.', AlertType.SUCCESS)
+                        .then(function () { loadAdditionalCostGrid(); });
+                } else {
+                    showAlertMessage(d.message || 'Failed to delete selected additional cost records.', AlertType.ERROR);
+                }
+            })
+            .catch(function (err) {
+                hideLoader();
+                console.error('Additional cost bulk delete error:', err);
+                showAlertMessage('Failed to delete selected additional cost records.', AlertType.ERROR);
+            });
     });
 }
 

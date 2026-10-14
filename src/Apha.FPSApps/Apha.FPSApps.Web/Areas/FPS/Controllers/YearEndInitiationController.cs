@@ -248,7 +248,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Fmonth = m.Fmonth,
                     FpsYear = m.FpsYear,
                     ExistsForPlannedYear = m.ExistsForPlannedYear
-                }).ToList();
+                })
+                .Where(m => m.Fmonth != 0) //Hide the month hours for the month 0 (which is not a valid for this financial year) from the grid.
+                .ToList();
             }
             return grid;
         }

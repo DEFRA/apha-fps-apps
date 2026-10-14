@@ -31,24 +31,28 @@ namespace Apha.Common.Constants
         public const string AddStaffRequirement = "api/v1/yearlydetails/{0}/years/{1}/staff";
         public const string UpdateStaffRequirement = "api/v1/yearlydetails/{0}/years/{1}/staff/{2}";
         public const string DeleteStaffRequirement = "api/v1/yearlydetails/{0}/years/{1}/staff/{2}";
+        public const string DeleteBulkStaffRequirements = "api/v1/yearlydetails/{0}/years/{1}/staff/bulk-delete";
 
         // Yearly Details – Tests
         public const string GetTestRequirements = "api/v1/yearlydetails/{0}/years/{1}/tests";
         public const string AddTestRequirement = "api/v1/yearlydetails/{0}/years/{1}/tests";
         public const string UpdateTestRequirement = "api/v1/yearlydetails/{0}/years/{1}/tests/{2}";
         public const string DeleteTestRequirement = "api/v1/yearlydetails/{0}/years/{1}/tests/{2}";
+        public const string DeleteBulkTestRequirements = "api/v1/yearlydetails/{0}/years/{1}/tests/bulk-delete";
 
         // Yearly Details – Animals
         public const string GetAnimalRequirements = "api/v1/yearlydetails/{0}/years/{1}/animals";
         public const string AddAnimalRequirement = "api/v1/yearlydetails/{0}/years/{1}/animals";
         public const string UpdateAnimalRequirement = "api/v1/yearlydetails/{0}/years/{1}/animals/{2}";
         public const string DeleteAnimalRequirement = "api/v1/yearlydetails/{0}/years/{1}/animals/{2}";
+        public const string DeleteBulkAnimalRequirements = "api/v1/yearlydetails/{0}/years/{1}/animals/bulk-delete";
 
         // Yearly Details – Additional Costs
         public const string GetAdditionalCosts = "api/v1/yearlydetails/{0}/years/{1}/additionalcosts";
         public const string AddAdditionalCost = "api/v1/yearlydetails/{0}/years/{1}/additionalcosts";
         public const string UpdateAdditionalCost = "api/v1/yearlydetails/{0}/years/{1}/additionalcosts/{2}";
         public const string DeleteAdditionalCost = "api/v1/yearlydetails/{0}/years/{1}/additionalcosts/{2}";
+        public const string DeleteBulkAdditionalCosts = "api/v1/yearlydetails/{0}/years/{1}/additionalcosts/bulk-delete";
 
         // Yearly Details – Lookups
         public const string GetPayRates = "api/v1/yearlydetails/lookups/payrates";
