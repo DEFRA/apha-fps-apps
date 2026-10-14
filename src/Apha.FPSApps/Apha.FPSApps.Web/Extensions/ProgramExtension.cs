@@ -105,7 +105,7 @@ namespace Apha.FPSApps.Web.Extensions
         /// Individually-loaded third-party libs (jQuery, jQuery-validation) remain unbundled
         /// because they are required at specific points in the page lifecycle.
         /// </summary>
-        private static void AddWebOptimizerBundles(this IServiceCollection services)
+        internal static void AddWebOptimizerBundles(this IServiceCollection services)
         {
             services.AddWebOptimizer(pipeline =>
             {
@@ -174,6 +174,12 @@ namespace Apha.FPSApps.Web.Extensions
                     "css/main_style.css",
                     "DataGrid/editable-grid.css",
                     "css/common/headernav/navstyle.css");
+            },
+            options =>
+            {
+                // The production container file system is read-only, so the default disk cache
+                // (ContentRoot/obj/WebOptimizerCache) cannot be written and causes HTTP 500 on first request.
+                options.EnableDiskCache = false;
             });
         }
 
