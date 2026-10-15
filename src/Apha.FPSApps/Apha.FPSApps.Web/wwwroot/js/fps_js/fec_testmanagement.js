@@ -176,10 +176,12 @@ var BulkRates = (function () {
         });
     }
 
-    // ── FEC Data (Staging) — Download Staging Data ──────────────────────────
-
+    // ── FEC / Staff / Animal Data (Staging) — Download Staging Data ─────────
+    // downloadFile, not location.href: a navigation that turns into a file
+    // download never unloads the page, so the global loader would never hide.
     function downloadStagingData(requestId) {
-        window.location.href = '/FPS/BulkRates/DownloadStagingData/' + requestId;
+        window.downloadFile('/FPS/BulkRates/DownloadStagingData/' + requestId,
+            'BulkRates_Staging_' + requestId + '.xlsx', { method: 'GET' });
     }
 
     // ── Bulk Rates queue grid ───────────────────────────────────────────────
