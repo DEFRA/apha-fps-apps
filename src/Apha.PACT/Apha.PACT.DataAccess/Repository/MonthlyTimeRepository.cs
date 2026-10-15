@@ -355,6 +355,7 @@ namespace Apha.PACT.DataAccess.Repository
             const string noLongerValidMessage = "This record is no longer valid. Needs re-validating";
 
             var passedRows = await _context.StagingMonthlyTimes
+                .AsNoTracking()
                 .Where(x => x.ImportedBy == importedBy && x.Passed == true)
                 .OrderBy(x => x.Id)
                 .ToListAsync();
@@ -366,27 +367,156 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsNoTracking()
                 .CountAsync(x => x.ImportedBy == importedBy && x.Passed == false);
 
-            var importedCount = 0;
-            foreach (var row in passedRows)
-            {
-                if (!IsValidForMakeLive(row))
-                {
-                    await MarkRowAsInvalidAsync(row.Id, noLongerValidMessage);
-                    failedCount++;
-                    continue;
-                }
+            var rowsToImport = await GetRowsToImportAsync(passedRows);
+            var rowsToFail = passedRows.Except(rowsToImport).ToList();
 
-                var imported = await TryImportRowToLiveAsync(row, noLongerValidMessage);
-                if (imported)
-                    importedCount++;
-                else
-                    failedCount++;
+            if (rowsToFail.Count > 0)
+            {
+                await MarkRowsAsInvalidAsync(rowsToFail.Select(x => x.Id).ToList(), noLongerValidMessage);
+                failedCount += rowsToFail.Count;
+            }
+
+            var importedCount = 0;
+            foreach (var chunk in rowsToImport.Chunk(MakeLiveChunkSize))
+            {
+                var (chunkImported, chunkFailed) = await ImportChunkToLiveAsync(chunk, noLongerValidMessage);
+                importedCount += chunkImported;
+                failedCount += chunkFailed;
             }
 
             if (failedCount == 0)
                 await DeleteAllStagingByUserAsync(importedBy);
 
             return (passedRows.Count, importedCount, failedCount);
+        }
+
+        private const int MakeLiveChunkSize = 1000;
+
+        /// <summary>
+        /// Returns the passed rows that can be imported: required fields present, key not already live
+        /// and key not duplicated within the batch (first occurrence wins).
+        /// Key matches the live table primary key: PactStaffId, TimeCode, Month, ParentProject, FpsYear.
+        /// </summary>
+        private async Task<List<StagingMonthlyTime>> GetRowsToImportAsync(List<StagingMonthlyTime> passedRows)
+        {
+            var fpsYear = _fpsRequestContext.FpsYear;
+            //var validRows = passedRows.Where(IsValidForMakeLive).ToList();
+            var validRows = passedRows.ToList();
+            if (validRows.Count == 0)
+                return validRows;
+
+            var pactIds = validRows.Select(x => x.PactId!).Distinct().ToList();
+
+            var existingLiveKeys = (await _context.MonthlyTimes
+                    .AsNoTracking()
+                    .Where(x => x.FpsYear == fpsYear && pactIds.Contains(x.PactStaffId))
+                    .Select(x => new { x.PactStaffId, x.TimeCode, x.Month, x.ParentProject })
+                    .ToListAsync())
+                .Select(x => BuildLiveKey(x.PactStaffId, x.TimeCode, x.Month, x.ParentProject))
+                .ToHashSet(StringComparer.Ordinal);
+
+            var rowsToImport = new List<StagingMonthlyTime>(validRows.Count);
+            foreach (var row in validRows)
+            {
+                var key = BuildLiveKey(row.PactId!, row.TimeCode!, row.Month!.Value, row.ParentProject!);
+                if (existingLiveKeys.Add(key))
+                    rowsToImport.Add(row);
+            }
+
+            return rowsToImport;
+        }
+
+        private static string BuildLiveKey(string pactStaffId, string timeCode, double month, string parentProject)
+            => $"{pactStaffId}|{timeCode}|{month.ToString(System.Globalization.CultureInfo.InvariantCulture)}|{parentProject}";
+
+        /// <summary>
+        /// Marks staging rows as failed in a single statement (ExecuteUpdateAsync on relational providers).
+        /// </summary>
+        private async Task MarkRowsAsInvalidAsync(List<int> rowIds, string failureMessage)
+        {
+            if (_context.Database.IsRelational())
+            {
+                await _context.StagingMonthlyTimes
+                    .Where(x => rowIds.Contains(x.Id))
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(x => x.Passed, false)
+                        .SetProperty(x => x.FailureComments, failureMessage));
+                return;
+            }
+
+            // Non-relational providers (e.g. InMemory in unit tests) do not support ExecuteUpdateAsync.
+            var rows = await _context.StagingMonthlyTimes.Where(x => rowIds.Contains(x.Id)).ToListAsync();
+            foreach (var row in rows)
+            {
+                row.Passed = false;
+                row.FailureComments = failureMessage;
+            }
+            await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+        }
+
+        /// <summary>
+        /// Imports a chunk in one transaction: AddRange live and log rows, one SaveChangesAsync,
+        /// then ExecuteDeleteAsync for the imported staging rows by Id.
+        /// If the chunk fails, the transaction is rolled back and the chunk falls back to the
+        /// existing per-row import so only the offending rows are marked failed.
+        /// </summary>
+        private async Task<(int Imported, int Failed)> ImportChunkToLiveAsync(StagingMonthlyTime[] chunk, string failureMessage)
+        {
+            try
+            {
+                if (_context.Database.IsRelational())
+                {
+                    var chunkIds = chunk.Select(x => x.Id).ToList();
+                    var strategy = _context.Database.CreateExecutionStrategy();
+
+                    await strategy.ExecuteAsync(async () =>
+                    {
+                        _context.ChangeTracker.Clear();
+                        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                        var liveRows = chunk.Select(CreateLiveRow).ToList();
+                        _context.MonthlyTimes.AddRange(liveRows);
+                        _context.MonthlyTimeLogs.AddRange(liveRows.Select(x => BuildLogEntry(x, "I")));
+                        await _context.SaveChangesAsync();
+
+                        await _context.StagingMonthlyTimes
+                            .Where(x => chunkIds.Contains(x.Id))
+                            .ExecuteDeleteAsync();
+
+                        await transaction.CommitAsync();
+                    });
+                }
+                else
+                {
+                    // Non-relational providers (e.g. InMemory in unit tests): no transactions or ExecuteDeleteAsync.
+                    var liveRows = chunk.Select(CreateLiveRow).ToList();
+                    _context.MonthlyTimes.AddRange(liveRows);
+                    _context.MonthlyTimeLogs.AddRange(liveRows.Select(x => BuildLogEntry(x, "I")));
+                    _context.StagingMonthlyTimes.RemoveRange(chunk);
+                    await _context.SaveChangesAsync();
+                }
+
+                _context.ChangeTracker.Clear();
+                return (chunk.Length, 0);
+            }
+            catch
+            {
+                // Transaction is rolled back on dispose without commit.
+                _context.ChangeTracker.Clear();
+            }
+
+            var imported = 0;
+            var failed = 0;
+            foreach (var row in chunk)
+            {
+                if (await TryImportRowToLiveAsync(row, failureMessage))
+                    imported++;
+                else
+                    failed++;
+            }
+
+            return (imported, failed);
         }
 
         private static bool IsValidForMakeLive(StagingMonthlyTime row)

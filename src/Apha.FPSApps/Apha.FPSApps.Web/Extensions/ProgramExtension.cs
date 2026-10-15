@@ -6,7 +6,6 @@ using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Middleware;
 using Mapster;
 using MapsterMapper;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
