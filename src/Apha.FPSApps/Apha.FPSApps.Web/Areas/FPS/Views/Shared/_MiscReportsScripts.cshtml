@@ -1,0 +1,33 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.MiscReportsViewModel
+@* The extra-filter function (Model.Grid.ExtraFilterMethod) must be global before the _DataGrid grid manager is used *@
+<script>
+    $(function(){
+        $(".sortable-header").removeClass("grid-column-wrap");
+
+        $('#SelectedProfitCentre').on('change', function() {
+            setTimeout(function() {
+                $('.sortable-header').removeClass('grid-column-wrap');
+            }, 0);
+        });
+    })
+
+    window['@Model.Grid.ExtraFilterMethod'] = function () {
+        return {
+            profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '',
+            report: '@Model.SelectedReport',
+            FPSYear: '@Model.FpsYear'
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var pc = document.getElementById('SelectedProfitCentre');
+        if (!pc) return;
+
+        pc.addEventListener('change', function () {
+            var gm = window['gridManager_@Model.Grid.GridId'];
+            if (gm) {
+                gm.reloadGrid({ filter: '{}', sortBy: '', descending: false, page: 1 });
+            }
+        });
+    });
+</script>

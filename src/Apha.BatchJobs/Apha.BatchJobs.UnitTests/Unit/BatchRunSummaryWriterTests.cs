@@ -58,7 +58,7 @@ public sealed class BatchRunSummaryWriterTests
     {
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
-        var classification = new BatchFailureClassification(20, BatchFailureCategory.Sql, "FPSBatchJobs.SQL_EXCEPTION");
+        var classification = new BatchFailureClassification(20, BatchFailureCategory.Sql, "FPSAPPS.EXCEPTION.BATCHJOBS.DB");
         var result = BatchExecutionResult.Failure(request: null, classification, new InvalidOperationException("db down"));
 
         writer.WriteSummary(result, TimeSpan.FromSeconds(2));
@@ -73,7 +73,7 @@ public sealed class BatchRunSummaryWriterTests
     {
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
-        var classification = new BatchFailureClassification(40, BatchFailureCategory.Configuration, "FPSBatchJobs.VALIDATION_EXCEPTION");
+        var classification = new BatchFailureClassification(40, BatchFailureCategory.Configuration, "FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL");
         var result = BatchExecutionResult.Failure(request: null, classification, new InvalidOperationException("bad config"));
 
         writer.WriteSummary(result, TimeSpan.FromMilliseconds(50));
@@ -83,13 +83,56 @@ public sealed class BatchRunSummaryWriterTests
         Assert.Contains("configuration or validation error", entry.Message);
     }
 
+    [Theory]
+    [InlineData(BatchFailureCategory.Sql, "FPSAPPS.EXCEPTION.BATCHJOBS.DB")]
+    [InlineData(BatchFailureCategory.Business, "FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL")]
+    public void WriteSummary_OnFailure_PrefixesLineWithErrorTypeMarker(BatchFailureCategory category, string errorType)
+    {
+        var logger = new RecordingLogger();
+        var writer = new BatchRunSummaryWriter(logger);
+        var classification = new BatchFailureClassification(99, category, errorType);
+        var result = BatchExecutionResult.Failure(request: null, classification, new InvalidOperationException("boom"));
+
+        writer.WriteSummary(result, TimeSpan.FromSeconds(1));
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.StartsWith($"[{errorType}] Run completed", entry.Message);
+    }
+
+    [Fact]
+    public void WriteSummary_OnFailureWithoutErrorType_FallsBackToGeneralMarker()
+    {
+        var logger = new RecordingLogger();
+        var writer = new BatchRunSummaryWriter(logger);
+        var result = new BatchExecutionResult { Outcome = BatchRunOutcome.Failure, ExitCode = 99 };
+
+        writer.WriteSummary(result, TimeSpan.FromSeconds(1));
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.StartsWith("[FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL] Run completed", entry.Message);
+    }
+
+    [Fact]
+    public void WriteSummary_OnSuccess_HasNoErrorTypeMarker()
+    {
+        var logger = new RecordingLogger();
+        var writer = new BatchRunSummaryWriter(logger);
+        var request = new BatchExecutionRequest("RecreateSummary", Apha.BatchJobs.Domain.Enums.RunMode.Manual, Guid.NewGuid(), "arihant", null, null);
+        var jobResult = new Apha.BatchJobs.Application.Interfaces.JobExecutionResult(Guid.NewGuid(), "RecreateSummary", Apha.BatchJobs.Domain.Enums.JobStatus.Completed, TimeSpan.FromSeconds(1), 42);
+
+        writer.WriteSummary(BatchExecutionResult.Success(request, jobResult), TimeSpan.FromSeconds(1));
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.StartsWith("Run completed", entry.Message);
+    }
+
     [Fact]
     public void WriteSummary_NeverIncludesExceptionObjectOnLogEntry()
     {
         var logger = new RecordingLogger();
         var writer = new BatchRunSummaryWriter(logger);
         var exception = new InvalidOperationException("should not be re-logged here");
-        var classification = new BatchFailureClassification(99, BatchFailureCategory.Business, "FPSBatchJobs.GENERAL_EXCEPTION");
+        var classification = new BatchFailureClassification(99, BatchFailureCategory.Business, "FPSAPPS.EXCEPTION.BATCHJOBS.GENERAL");
         var result = BatchExecutionResult.Failure(request: null, classification, exception);
 
         writer.WriteSummary(result, TimeSpan.FromSeconds(1));

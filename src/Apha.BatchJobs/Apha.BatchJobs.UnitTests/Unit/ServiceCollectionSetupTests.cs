@@ -34,7 +34,14 @@ public sealed class ServiceCollectionSetupTests
     {
         var environment = Apha.BatchJobs.Domain.EnvironmentResolver.GetEnvironmentName("Development");
 
+        // appsettings.json carries no connection string; supply a lowest-precedence one so
+        // registration's "not found" guard passes without appsettings.Local.json (CI).
         var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:FPSConnectionString"] =
+                    "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
+            })
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)

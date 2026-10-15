@@ -582,6 +582,94 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<StaleDispatchedExecution>> FailStaleDispatchedExecutionsAsync(
+        string jobName,
+        JobStatus pickupStatus,
+        DispatchClock clock,
+        int minimumTimeToLiveMinutes,
+        string errorMessage,
+        string diagnosticSummary,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(jobName))
+            throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
+
+        // Fixed SQL fragments chosen by enum, never caller text. The approval columns are not
+        // mapped in EF, so this runs as raw SQL like GetApprovalMetadataAsync.
+        var dispatchedAt = clock switch
+        {
+            DispatchClock.ApprovedAt => "COALESCE(q.approved_at_utc, q.triggered_at_utc, q.updated_at)",
+            DispatchClock.RequestedAt => "COALESCE(q.requested_at_utc, q.created_at)",
+            _ => throw new ArgumentOutOfRangeException(nameof(clock), clock, null)
+        };
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        var now = DateTime.UtcNow;
+
+        // One statement, so the status, age and lock conditions are re-checked at the moment of
+        // the write: a worker that claims or locks the row first leaves it untouched.
+        await using var command = connection.CreateCommand();
+        command.CommandText = $@"
+            WITH cfg AS (
+                SELECT m.jobid,
+                       GREATEST(m.timetolive, @minimumminutes) AS ttl,
+                       (SELECT s.statusid FROM fps.job_status s WHERE s.jobid = m.jobid AND s.status = @pickupstatus) AS pickupid,
+                       (SELECT s.statusid FROM fps.job_status s WHERE s.jobid = m.jobid AND s.status = 'Failed') AS failedid
+                FROM fps.job_master m
+                WHERE m.jobname = @jobname
+            ),
+            failed AS (
+                UPDATE fps.job_queue q
+                   SET statusid = cfg.failedid,
+                       errormessage = @errormessage,
+                       enddatetime = @now,
+                       updated_at = @now
+                  FROM cfg
+                 WHERE q.jobid = cfg.jobid
+                   AND q.statusid = cfg.pickupid
+                   AND cfg.failedid IS NOT NULL
+                   AND {dispatchedAt} < @now - make_interval(mins => cfg.ttl)
+                   AND NOT EXISTS (SELECT 1 FROM fps.job_lock l WHERE l.jobqueueid = q.jobqueueid)
+                RETURNING q.jobqueueid, q.jobexecutionid, q.requestedby, q.fpsyear,
+                          {dispatchedAt} AS dispatchedat, cfg.ttl, cfg.failedid
+            ),
+            logged AS (
+                INSERT INTO fps.job_queue_log (jobqueueid, statusid, performedby, logtime, note, fpsyear)
+                SELECT f.jobqueueid, f.failedid, f.requestedby, @now, @note, COALESCE(f.fpsyear, @fallbackfpsyear)
+                FROM failed f
+                RETURNING jobqueueid
+            )
+            SELECT f.jobqueueid, f.jobexecutionid, f.dispatchedat, f.ttl
+            FROM failed f
+            JOIN logged l ON l.jobqueueid = f.jobqueueid;";
+        AddParameter(command, "jobname", jobName);
+        AddParameter(command, "pickupstatus", pickupStatus.ToString());
+        AddParameter(command, "minimumminutes", minimumTimeToLiveMinutes);
+        AddParameter(command, "errormessage", errorMessage);
+        AddParameter(command, "note", diagnosticSummary);
+        AddParameter(command, "now", now);
+        AddParameter(command, "fallbackfpsyear", FpsYearResolver.ResolveFpsYear(null, now));
+
+        var results = new List<StaleDispatchedExecution>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            results.Add(new StaleDispatchedExecution(
+                reader.GetGuid(0),
+                reader.GetGuid(1),
+                reader.IsDBNull(2) ? null : reader.GetDateTime(2),
+                reader.GetInt32(3)));
+        }
+
+        return results;
+    }
+
+    /// <inheritdoc />
     public async Task<bool> MarkFailedIfNonTerminalAsync(Guid jobQueueId, string errorMessage, string diagnosticSummary, CancellationToken cancellationToken = default)
     {
         if (jobQueueId == Guid.Empty)

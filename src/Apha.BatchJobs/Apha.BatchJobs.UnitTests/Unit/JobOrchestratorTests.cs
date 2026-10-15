@@ -34,7 +34,9 @@ public sealed class JobOrchestratorTests
     // never survives past its first Task.Delay tick — it never actually calls these repos, only
     // needs a non-null scope to dispose cleanly. Tests that specifically exercise heartbeat
     // renewal behaviour build their own factory with a short interval and configured repos.
-    private readonly IHeartbeatRepositoryScopeFactory _heartbeatRepositoryScopeFactory = CreateNoOpHeartbeatRepositoryScopeFactory();
+    // The final status write also goes through this scope (a fresh context), so it shares
+    // _execRepo: the tests below assert UpdateExecutionRecordAsync on _execRepo.
+    private readonly IHeartbeatRepositoryScopeFactory _heartbeatRepositoryScopeFactory;
     private readonly ICorrelationContextAccessor _correlationService = Substitute.For<ICorrelationContextAccessor>();
     private readonly ICurrentJobExecutionContext _currentExecutionContext = Substitute.For<ICurrentJobExecutionContext>();
     private readonly IEmailNotificationService _notificationService = Substitute.For<IEmailNotificationService>();
@@ -51,6 +53,7 @@ public sealed class JobOrchestratorTests
 
     public JobOrchestratorTests()
     {
+        _heartbeatRepositoryScopeFactory = CreateNoOpHeartbeatRepositoryScopeFactory(executionRepository: _execRepo);
         _orchestrator = new JobOrchestrator(
             _factory,
             _lockRepo,
@@ -118,6 +121,48 @@ public sealed class JobOrchestratorTests
         Assert.Equal("TestJob", result.JobName);
         Assert.NotEqual(Guid.Empty, result.JobQueueId);
         Assert.Equal(42, result.ExecutionId);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenClaimFails_DoesNotRunJobOrWriteStatus_AndReleasesLock()
+    {
+        // Simulates a row that is no longer Initiated when the worker claims it, e.g. already
+        // failed as never picked up.
+        SetupInitiatedExecution("ClaimConflictJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("ClaimConflictJob");
+        _factory.Create("ClaimConflictJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("ClaimConflictJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns<int>(_ => throw new InvalidOperationException("Expected status 'Initiated' but found 'Failed'."));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("ClaimConflictJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        Assert.Contains("found 'Failed'", ex.Message);
+        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
+        await _execRepo.DidNotReceive().UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("ClaimConflictJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenClaimCancelled_ReleasesLockAndPropagatesCancellation()
+    {
+        SetupInitiatedExecution("ClaimCancelledJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("ClaimCancelledJob");
+        _factory.Create("ClaimCancelledJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("ClaimCancelledJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns<int>(_ => throw new OperationCanceledException());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _orchestrator.RunAsync("ClaimCancelledJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("ClaimCancelledJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     /// <summary>
@@ -298,7 +343,7 @@ public sealed class JobOrchestratorTests
         _lockRepo.TryAcquireLockAsync("RecreateSummary", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(false);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<JobLockException>(
             () => _orchestrator.RunAsync("RecreateSummary", RunMode.Manual, Guid.NewGuid(), "test-user"));
 
         await _reconciliationService.Received(1).ReconcileAsync(unexpiredLock, Arg.Any<CancellationToken>());
@@ -585,7 +630,7 @@ public sealed class JobOrchestratorTests
 
         // Act / Assert
         var jobExecutionId = Guid.NewGuid();
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<JobLockException>(
             () => _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, "test-user"));
 
         // Assert — job factory was never called
@@ -1244,7 +1289,7 @@ public sealed class JobOrchestratorTests
         {
             await Task.WhenAll(task1, task2);
         }
-        catch (InvalidOperationException)
+        catch (JobLockException)
         {
             // Expected: one concurrent call fails lock acquisition.
         }
@@ -1253,7 +1298,7 @@ public sealed class JobOrchestratorTests
         Assert.Equal(1, new[] { task1, task2 }.Count(t => t.Status == TaskStatus.RanToCompletion));
         Assert.Equal(1, new[] { task1, task2 }.Count(t => t.IsFaulted));
         Assert.Contains(new[] { task1, task2 }.First(t => t.IsFaulted).Exception!.Flatten().InnerExceptions,
-            ex => ex is InvalidOperationException);
+            ex => ex is JobLockException);
 
         // Assert — job executed exactly once
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
@@ -1612,11 +1657,14 @@ public sealed class JobOrchestratorTests
     // and a failing notifier must not alter the Completed lifecycle outcome
     // ─────────────────────────────────────────────────────────────
 
-    private JobOrchestrator CreateOrchestratorWithNotifier(IPostCompletionNotifier notifier)
+    private JobOrchestrator CreateOrchestratorWithNotifier(IPostCompletionNotifier notifier, bool noRetryDelay = false)
         => new(
             _factory, _lockRepo, _execRepo, _reconciliationService, _heartbeatRepositoryScopeFactory, _correlationService, _currentExecutionContext,
             _notificationService, [notifier], _alertingSettings, _settings,
-            _failureClassifier, NullLogger<JobOrchestrator>.Instance);
+            _failureClassifier, NullLogger<JobOrchestrator>.Instance)
+        {
+            FinalStatusRetryDelay = noRetryDelay ? TimeSpan.Zero : TimeSpan.FromSeconds(2)
+        };
 
     private void SetupSuccessJob(string jobName)
     {
@@ -1707,9 +1755,11 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
-    public async Task RunAsync_WhenCompletionPersistenceFails_DoesNotInvokePostCompletionNotifier()
+    public async Task RunAsync_WhenFinalStatusCannotBeSaved_KeepsLockFailsTheRunAndSendsNoSuccessNotification()
     {
-        // Mark-failed throws → notifier must not fire (job state is uncertain).
+        // The job's work finished but its outcome is unrecorded and will be reconciled to Failed:
+        // the lock must be kept (to expire and be reconciled), the run must not report success,
+        // and no "completed" notification may go out.
         SetupInitiatedExecution("PersistFailJob");
         var notifier = Substitute.For<IPostCompletionNotifier>();
         var job = Substitute.For<IBatchJob>();
@@ -1719,25 +1769,65 @@ public sealed class JobOrchestratorTests
                  .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(44);
-        // UpdateExecutionRecordAsync throws — MarkFailedSafelyAsync swallows, but jobException is null
-        // so this tests that even after a persistence failure on a nominally successful job,
-        // the notifier still fires (MarkFailedSafelyAsync swallows its own exception, jobException stays null).
-        // What we actually want: if the JOB succeeded (jobException==null) and persistence swallowed its
-        // error, notifier DOES fire (because from the orchestrator's perspective the job succeeded).
-        // Re-purpose this test: persistence swallows, notifier fires.
         _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
                  .Returns(Task.FromException(new InvalidOperationException("DB down")));
 
-        var orchestrator = CreateOrchestratorWithNotifier(notifier);
+        var orchestrator = CreateOrchestratorWithNotifier(notifier, noRetryDelay: true);
 
-        // Job succeeded (no throw from RunAsync because MarkFailedSafelyAsync swallows).
-        var result = await orchestrator.RunAsync("PersistFailJob", RunMode.Manual, Guid.NewGuid(), "test-user");
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => orchestrator.RunAsync("PersistFailJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        Assert.Contains("final status could not be saved", ex.Message);
+        await _execRepo.Received(3).UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await _lockRepo.DidNotReceive().ReleaseLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await notifier.DidNotReceiveWithAnyArgs().NotifyAsync(default!, default);
+        await _notificationService.DidNotReceiveWithAnyArgs().SendExecutionNotificationAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobFailsAndItsStatusCannotBeSaved_KeepsLockAndSurfacesTheJobFailure()
+    {
+        SetupInitiatedExecution("PoisonedContextJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("PoisonedContextJob");
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+           .Returns(Task.FromException(new InvalidOperationException("entity cannot be tracked")));
+        _factory.Create("PoisonedContextJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("PoisonedContextJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>()).Returns(45);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.FromException(new InvalidOperationException("DB down")));
+
+        var orchestrator = CreateOrchestratorWithNotifier(Substitute.For<IPostCompletionNotifier>(), noRetryDelay: true);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => orchestrator.RunAsync("PoisonedContextJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        Assert.Equal("entity cannot be tracked", ex.Message);
+        await _lockRepo.DidNotReceive().ReleaseLockAsync(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenFinalStatusSaveFailsOnceThenSucceeds_ReleasesLock()
+    {
+        SetupInitiatedExecution("TransientSaveJob");
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("TransientSaveJob");
+        _factory.Create("TransientSaveJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("TransientSaveJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>()).Returns(46);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.FromException(new InvalidOperationException("blip")), Task.CompletedTask);
+
+        var orchestrator = CreateOrchestratorWithNotifier(Substitute.For<IPostCompletionNotifier>(), noRetryDelay: true);
+
+        var result = await orchestrator.RunAsync("TransientSaveJob", RunMode.Manual, Guid.NewGuid(), "test-user");
 
         Assert.Equal(JobStatus.Completed, result.Status);
-        // Notifier fires because jobException is null.
-        await notifier.Received(1).NotifyAsync(
-            Arg.Is<BatchJobCompletionContext>(c => c.JobName == "PersistFailJob"),
-            Arg.Any<CancellationToken>());
+        await _execRepo.Received(2).UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync("TransientSaveJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -1,0 +1,58 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.MiscReportsViewModel
+@* Shared body for Misc Reports pages. ViewData["Title"] = page heading, ViewData["MiscReportsController"] = controller used by the side nav. *@
+
+<div class="govuk-grid-row sup_margin_left_right_0 isMiscReportPage">
+    <div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-2">
+        <div class="govuk-grid-column-one-half isFloatLeft">
+            <h1 class="govuk-heading-s sup_margin_bottom_0 govuk-!-margin-top-3 govuk-!-margin-left-3">@ViewData["Title"]</h1>
+        </div>
+        <div class="govuk-grid-column-one-half isFloatRight isMiscReport">
+            <table class="govuk-table govuk-!-margin-bottom-2">
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <th scope="row" class="govuk-table__header govuk-!-padding-bottom-0 govuk-!-padding-right-0 isNoBottomBorder">
+                            <label class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold govuk-!-margin-bottom-0" for="SelectedProfitCentre">
+                                Resource Centre:
+                            </label>
+                        </th>
+                        <td class="govuk-table__cell govuk-!-padding-bottom-0 govuk-!-padding-right-1 isNoBottomBorder">
+                            <select class="govuk-select govuk-!-font-size-16"
+                                    id="SelectedProfitCentre"
+                                    name="SelectedProfitCentre">
+                                <option value="">--Select Resource Centre--</option>
+                                @foreach (var pc in Model.ProfitCentreOptions)
+                                {
+                                    if (Model.SelectedProfitCentre == pc.Value)
+                                    {
+                                        <option value="@pc.Value" selected>@pc.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@pc.Value">@pc.Text</option>
+                                    }
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full govuk-!-padding-left-0 govuk-!-padding-right-2">
+        <div class="cc-container-fluid">
+            <div class="cc-layout-row">
+
+                @await Html.PartialAsync("_MiscReportsSideNav", Model.SelectedReport, ViewData)
+
+                <div class="cc-content-column">
+                    <div id="gridContainer_@Model.Grid.GridId">
+                        @await Html.PartialAsync("_DataGrid", Model.Grid)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

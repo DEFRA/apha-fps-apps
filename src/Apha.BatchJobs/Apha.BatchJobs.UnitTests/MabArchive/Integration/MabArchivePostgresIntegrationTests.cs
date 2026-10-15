@@ -21,9 +21,15 @@ public sealed class MyTlkpTestReqmtLoaderTests
         var buyer1 = harness.Id("B1");
         var buyer2 = harness.Id("B2");
 
+        // The job deletes the whole year's archive rows before loading (DeleteYearDataAsync); mirror that
+        // inside the harness transaction so existing archived rows cannot collide with the reload.
         await harness.ExecuteSqlAsync($@"
             DELETE FROM mabarchive.my_tlkptestreqmt
-            WHERE year = {year} AND testcode = '{testCode}';
+            WHERE year = {year};
+
+            -- Parent row required by fk_tlkptestreqmt_testcode (testcode, fpsyear) -> fps.testorproduct.
+            INSERT INTO fps.testorproduct (itemcode, owner, fpsyear)
+            VALUES ('{testCode}', 'PT', {year});
 
             INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, active, fpsyear)
             VALUES
@@ -31,10 +37,11 @@ public sealed class MyTlkpTestReqmtLoaderTests
                 ('{testCode}', '{buyer2}', 15::money, 2, '{projectBuyerCode}', 1, {year});
         ");
 
+        // The loader archives every source row for the year, so only this test's rows are asserted.
         var loader = new MyTlkpTestReqmtLoader(db);
         var inserted = await loader.LoadAsync(year, CancellationToken.None);
 
-        Assert.Equal(2, inserted);
+        Assert.True(inserted >= 2);
 
         var archived = await db.MaDstMyTlkpTestReqmt
             .AsNoTracking()
@@ -47,8 +54,9 @@ public sealed class MyTlkpTestReqmtLoaderTests
     }
 
     // Regression: same Year+TestCode+Buyer is a genuine PK collision and must not be inserted twice.
+    // EF rejects the second entity at Add (identity conflict), before SaveChanges is reached.
     [SkippableFact]
-    public async Task LoadAsync_SameYearTestCodeBuyer_DuplicateSourceRow_ThrowsOnSave()
+    public async Task AddRange_SameYearTestCodeBuyer_DuplicateKey_IsRejectedByChangeTracker()
     {
         await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
         var db = harness.DbContext;
@@ -64,8 +72,6 @@ public sealed class MyTlkpTestReqmtLoaderTests
             new Apha.BatchJobs.Infrastructure.Data.MaDstMyTlkpTestReqmt { Year = year, TestCode = testCode, Buyer = buyer, UnitPrice = 20m },
         };
 
-        await db.MaDstMyTlkpTestReqmt.AddRangeAsync(duplicate);
-
-        await Assert.ThrowsAnyAsync<Exception>(() => db.SaveChangesAsync());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => db.MaDstMyTlkpTestReqmt.AddRangeAsync(duplicate));
     }
 }
