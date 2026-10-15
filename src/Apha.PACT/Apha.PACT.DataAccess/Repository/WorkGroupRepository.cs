@@ -114,7 +114,6 @@ namespace Apha.PACT.DataAccess.Repository
             existing.WorkGroupName   = workGroup.WorkGroupName;
             existing.ProfitCentre    = workGroup.ProfitCentre;
             existing.CostCentre      = workGroup.CostCentre;
-            existing.CostCentreOld   = workGroup.CostCentreOld;
             existing.Owner           = workGroup.Owner;
             existing.Description     = workGroup.Description;
             existing.CentralOverhead = workGroup.CentralOverhead;
