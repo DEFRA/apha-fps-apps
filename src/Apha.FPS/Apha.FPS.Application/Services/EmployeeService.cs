@@ -70,7 +70,7 @@ namespace Apha.FPS.Application.Services
             }
 
             var employee = await _employeeRepository.GetEmployeeByIdAsync(spNumber);
-            return _mapper.Map<EmployeeDto>(employee);
+            return employee is null ? null : _mapper.Map<EmployeeDto>(employee);
         }
 
         public async Task<EmployeeDto> AddEmployeeAsync(EmployeeDto employeeDto)

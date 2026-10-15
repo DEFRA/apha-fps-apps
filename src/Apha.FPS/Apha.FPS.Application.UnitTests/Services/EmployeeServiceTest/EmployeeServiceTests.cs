@@ -493,7 +493,6 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             var spNumber = "SP999";
 
             _mockRepository.GetEmployeeByIdAsync(spNumber).Returns((Employee?)null);
-            _mockMapper.Map<EmployeeDto>((Employee?)null).Returns((EmployeeDto?)null);
 
             // Act
             var result = await _sut.GetEmployeeByIdAsync(spNumber);
@@ -502,6 +501,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             result.Should().BeNull();
 
             await _mockRepository.Received(1).GetEmployeeByIdAsync(spNumber);
+            _mockMapper.DidNotReceive().Map<EmployeeDto>(Arg.Any<object>());
         }
 
         [Theory]
