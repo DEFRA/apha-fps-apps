@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -606,7 +607,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         }
 
         [Fact]
-        public async Task AddEmployeeAsync_WhenSpNumberAlreadyExists_ThrowsInvalidOperationException()
+        public async Task AddEmployeeAsync_WhenSpNumberAlreadyExists_ThrowsBusinessValidationErrorException()
         {
             // Arrange
             var inputDto = new EmployeeDto { SPNumber = "SP001" };
@@ -614,11 +615,13 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
                 .Returns(new Employee { SPNumber = "SP001" });
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
                 async () => await _sut.AddEmployeeAsync(inputDto)
             );
 
-            exception.Message.Should().Be("Staff with SPNumber SP001 already exists.");
+            exception.Errors.Should().ContainSingle();
+            exception.Errors[0].Code.Should().Be("SPNUMBER_ALREADY_EXISTS");
+            exception.Message.Should().Contain("Staff with SPNumber 'SP001' already exists.");
             await _mockRepository.DidNotReceive().AddEmployeeAsync(Arg.Any<Employee>());
         }
 

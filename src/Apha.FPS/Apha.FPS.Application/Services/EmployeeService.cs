@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -82,8 +83,12 @@ namespace Apha.FPS.Application.Services
             var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(employeeDto.SPNumber);
             if (existingEmployee is not null)
             {
-                throw new InvalidOperationException(
-                    $"Staff with SPNumber {employeeDto.SPNumber} already exists.");
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Staff with SPNumber '{employeeDto.SPNumber}' already exists.",
+                        "SPNUMBER_ALREADY_EXISTS")
+                ]);
             }
 
             var employee = _mapper.Map<Employee>(employeeDto);
