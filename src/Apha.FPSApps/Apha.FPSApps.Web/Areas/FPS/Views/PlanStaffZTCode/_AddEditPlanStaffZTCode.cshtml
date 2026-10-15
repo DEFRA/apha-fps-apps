@@ -34,7 +34,7 @@
                 <label class="govuk-label" for="JobCode">ZT Code <span class="sup_color_red">*</span></label>
                 <div class="tableselectdropdown">
                     <input type="text" id="JobCode" name="JobCode" class="govuk-input down-arrow-img"
-                           value="Select ZT Code" readonly required>
+                           value="@Model.JobCode" placeholder="Select ZT Code" readonly required>
                     <div class="multicolumn-dropdown-panel" id="modal-zt-code-panel" style="display:none;">
                         <div class="search-box-wrapper">
                             <label class="govuk-visually-hidden" for="modal-zt-code-search">Search ZT Code</label>
@@ -145,10 +145,10 @@
 
             // Sync description for the already-selected code (edit mode)
             var jobCodeInput = document.getElementById('JobCode');
-            var currentCode = jobCodeInput ? jobCodeInput.value : '';
+            var currentCode = jobCodeInput ? jobCodeInput.value.trim() : '';
             if (currentCode) {
                 var match = ztCodeOptions.find(function (opt) {
-                    return opt.code === currentCode;
+                    return String(opt.code).trim() === currentCode;
                 });
                 if (match) {
                     document.getElementById('ZtDescription').value = match.description;

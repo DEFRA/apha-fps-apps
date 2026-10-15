@@ -21,6 +21,10 @@
         @if (isEdit)
         {
             <input type="hidden" name="OriginalWorkGroup" value="@Model.WorkGroup" />
+            @if (Model.PredOutturn.HasValue)
+            {
+                <input type="hidden" name="PredOutturn" value="@Model.PredOutturn.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+            }
         }
 
         <!-- Validation error summary -->
