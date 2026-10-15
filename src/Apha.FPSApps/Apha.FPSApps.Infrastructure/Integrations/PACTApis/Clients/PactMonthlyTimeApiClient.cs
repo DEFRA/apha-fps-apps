@@ -217,11 +217,33 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<MonthlyTimeMakeLiveResultDto>> MakeLiveAsync()
         {
-            var response = await _http.PostAsync<object, MonthlyTimeMakeLiveRes>(PactApiEndpoints.MakeLiveMonthlyTime, new { });
+            Console.WriteLine($"[MakeLive][Client] Calling PACT endpoint {PactApiEndpoints.MakeLiveMonthlyTime} at {DateTime.UtcNow:O}.");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            Apha.Common.Contracts.ApiResponse<MonthlyTimeMakeLiveRes> response;
+            try
+            {
+                response = await _http.PostAsync<object, MonthlyTimeMakeLiveRes>(PactApiEndpoints.MakeLiveMonthlyTime, new { });
+            }
+            catch (TaskCanceledException ex)
+            {
+                Console.WriteLine($"[MakeLive][Client] HTTPCLIENT TIMEOUT after {stopwatch.ElapsedMilliseconds} ms at {DateTime.UtcNow:O}. Message: {ex.Message}, Inner: {ex.InnerException?.GetType().FullName}.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MakeLive][Client] EXCEPTION after {stopwatch.ElapsedMilliseconds} ms at {DateTime.UtcNow:O}. Type: {ex.GetType().FullName}, Message: {ex.Message}, Inner: {ex.InnerException?.GetType().FullName}: {ex.InnerException?.Message}.");
+                throw;
+            }
+
+            Console.WriteLine($"[MakeLive][Client] PACT endpoint responded after {stopwatch.ElapsedMilliseconds} ms. Success: {response.Success}.");
+
             if (response.Success)
             {
                 var dto = _mapper.Map<MonthlyTimeMakeLiveResultDto>(response.Data);
                 var result = ApiResponseDto<MonthlyTimeMakeLiveResultDto>.SuccessResponse(dto);
+
+                Console.WriteLine($"[MakeLive][Client] PACT endpoint returned success at {DateTime.UtcNow:O}. ProcessedCount: {dto.ProcessedCount}, ImportedCount: {dto.ImportedCount}, FailedCount: {dto.FailedCount}.");
 
                 // If there are failed records, add a specific message
                 if (dto.FailedCount > 0)
@@ -236,6 +258,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             }
 
             var failDto = _mapper.Map<ApiResponseDto<MonthlyTimeMakeLiveResultDto>>(response);
+            Console.WriteLine($"[MakeLive][Client] PACT endpoint returned failure at {DateTime.UtcNow:O}. Errors: {string.Join(" | ", response.Errors?.Select(e => $"{e.Code}: {e.Message}") ?? [])}.");
             return ApiResponseDto<MonthlyTimeMakeLiveResultDto>.FailureResponse(failDto.Errors, failDto.Meta ?? new ApiMetaDto());
         }
 

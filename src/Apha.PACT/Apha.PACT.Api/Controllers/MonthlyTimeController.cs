@@ -217,7 +217,12 @@ namespace Apha.PACT.Api.Controllers
         public async Task<IActionResult> MakeLive()
         {
             var importedBy = _currentUserContext.UserId;
+            Console.WriteLine($"[MakeLive][Api] Request started for importedBy {importedBy} at {DateTime.UtcNow:O}.");
+
             var result = await _service.MakeLiveAsync(importedBy);
+
+            Console.WriteLine($"[MakeLive][Api] Request completed for importedBy {importedBy} at {DateTime.UtcNow:O}. ProcessedCount: {result.ProcessedCount}, ImportedCount: {result.ImportedCount}, FailedCount: {result.FailedCount}.");
+
             return Ok(_mapper.Map<MonthlyTimeMakeLiveRes>(result));
         }
 

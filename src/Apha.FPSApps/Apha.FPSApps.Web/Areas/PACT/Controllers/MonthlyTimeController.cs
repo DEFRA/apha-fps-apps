@@ -481,9 +481,35 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> MakeLive()
         {
-            var response = await _monthlyTimeService.MakeLiveAsync();
+            var userName = HttpContext?.User?.Identity?.Name ?? "Anonymous";
+            var requestAborted = HttpContext?.RequestAborted ?? CancellationToken.None;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            requestAborted.Register(() =>
+                Console.WriteLine($"[MakeLive][Web] CLIENT CONNECTION ABORTED (browser/load balancer closed the connection) for user {userName} after {stopwatch.ElapsedMilliseconds} ms at {DateTime.UtcNow:O}."));
+
+            Console.WriteLine($"[MakeLive][Web] Request started for user {userName} at {DateTime.UtcNow:O}.");
+
+            ApiResponseDto<MonthlyTimeMakeLiveResultDto> response;
+            try
+            {
+                response = await _monthlyTimeService.MakeLiveAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MakeLive][Web] EXCEPTION after {stopwatch.ElapsedMilliseconds} ms at {DateTime.UtcNow:O}. Type: {ex.GetType().FullName}, Message: {ex.Message}, Inner: {ex.InnerException?.GetType().FullName}: {ex.InnerException?.Message}, RequestAborted: {requestAborted.IsCancellationRequested}.");
+                throw;
+            }
+
+            Console.WriteLine($"[MakeLive][Web] Service call returned after {stopwatch.ElapsedMilliseconds} ms. RequestAborted: {requestAborted.IsCancellationRequested}.");
+            if (requestAborted.IsCancellationRequested)
+            {
+                Console.WriteLine($"[MakeLive][Web] TIMEOUT CONFIRMED: work completed but the client connection was already closed, so the response cannot reach the browser. Elapsed: {stopwatch.ElapsedMilliseconds} ms.");
+            }
+
             if (response.Success && response.Data != null)
             {
+                Console.WriteLine($"[MakeLive][Web] Completed successfully for user {userName} at {DateTime.UtcNow:O}. Elapsed: {stopwatch.ElapsedMilliseconds} ms. ProcessedCount: {response.Data.ProcessedCount}, ImportedCount: {response.Data.ImportedCount}, FailedCount: {response.Data.FailedCount}.");
+
                 return Json(new
                 {
                     success = true,
@@ -493,6 +519,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     message = response.Data.Message
                 });
             }
+
+            Console.WriteLine($"[MakeLive][Web] Failure response for user {userName} at {DateTime.UtcNow:O}. Errors: {string.Join(" | ", response.Errors?.Select(e => e.Message) ?? [])}.");
 
             return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Make live failed.", errors = response.Errors });
         }

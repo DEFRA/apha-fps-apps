@@ -628,8 +628,12 @@ namespace Apha.PACT.Application.Services
 
         public async Task<MonthlyTimeMakeLiveResultDto> MakeLiveAsync(string importedBy)
         {
+            Console.WriteLine($"[MakeLive][Service] Started for importedBy {importedBy} at {DateTime.UtcNow:O}.");
+
             if (await _repository.HasFailedStagingAsync(importedBy))
             {
+                Console.WriteLine($"[MakeLive][Service] Blocked for importedBy {importedBy}: failed staging records exist.");
+
                 throw new BusinessValidationErrorException([
                     new BusinessValidationError(
                         "All records have to have passed before you can run the import. Either delete or correct those that have failed first.",
@@ -638,9 +642,12 @@ namespace Apha.PACT.Application.Services
             }
 
             var result = await _repository.MakeLiveAsync(importedBy);
+            Console.WriteLine($"[MakeLive][Service] Repository call completed for importedBy {importedBy} at {DateTime.UtcNow:O}. ProcessedCount: {result.ProcessedCount}, ImportedCount: {result.ImportedCount}, FailedCount: {result.FailedCount}.");
 
             if (result.ProcessedCount == 0)
             {
+                Console.WriteLine($"[MakeLive][Service] No staging records found for importedBy {importedBy}.");
+
                 throw new BusinessValidationErrorException([
                     new BusinessValidationError(
                         "No staging records found to make live.",
@@ -653,6 +660,8 @@ namespace Apha.PACT.Application.Services
             {
                 message += $"{Environment.NewLine}The remaining {result.FailedCount} records require revalidation.";
             }
+
+            Console.WriteLine($"[MakeLive][Service] Completed for importedBy {importedBy} at {DateTime.UtcNow:O}.");
 
             return new MonthlyTimeMakeLiveResultDto
             {
