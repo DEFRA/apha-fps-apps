@@ -562,7 +562,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     entry.Property(p => p.ProjectParent).IsModified = false;
                     entry.Property(p => p.CaseWorkSub).IsModified = false;
                     entry.Property(p => p.Finished).IsModified = false;
-                   // entry.Property(p => p.OracleProjectCode).IsModified = false;
+
                     // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();
