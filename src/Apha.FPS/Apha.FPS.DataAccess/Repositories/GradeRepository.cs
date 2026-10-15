@@ -84,6 +84,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw new InvalidOperationException($"Grade '{originalCode}' not found.");
                 }
 
+                grade.PactCode = existing.PactCode;
+
                 _context.Grades.Remove(existing);
                 await _context.SaveChangesAsync();
 
@@ -102,9 +104,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw new InvalidOperationException($"Grade '{originalCode}' not found.");
                 }
 
-                existing.DescLong   = grade.DescLong;
-                existing.AvSalary   = grade.AvSalary;
-                existing.PactCode   = grade.PactCode;
+                existing.DescLong = grade.DescLong;
+                existing.AvSalary = grade.AvSalary;
 
                 await _context.SaveChangesAsync();
                 return existing;
