@@ -606,6 +606,23 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         }
 
         [Fact]
+        public async Task AddEmployeeAsync_WhenSpNumberAlreadyExists_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var inputDto = new EmployeeDto { SPNumber = "SP001" };
+            _mockRepository.GetEmployeeByIdAsync("SP001")
+                .Returns(new Employee { SPNumber = "SP001" });
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _sut.AddEmployeeAsync(inputDto)
+            );
+
+            exception.Message.Should().Be("Staff with SPNumber SP001 already exists.");
+            await _mockRepository.DidNotReceive().AddEmployeeAsync(Arg.Any<Employee>());
+        }
+
+        [Fact]
         public async Task AddEmployeeAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange

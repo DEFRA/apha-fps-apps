@@ -79,6 +79,13 @@ namespace Apha.FPS.Application.Services
                 throw new ArgumentException("EmployeeDto cannot be null or empty.", nameof(employeeDto));
             }
 
+            var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(employeeDto.SPNumber);
+            if (existingEmployee is not null)
+            {
+                throw new InvalidOperationException(
+                    $"Staff with SPNumber {employeeDto.SPNumber} already exists.");
+            }
+
             var employee = _mapper.Map<Employee>(employeeDto);
             var addedEmployee = await _employeeRepository.AddEmployeeAsync(employee);
             return _mapper.Map<EmployeeDto>(addedEmployee);
