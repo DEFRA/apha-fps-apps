@@ -323,7 +323,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
         public async Task UpdateAsync_UpdatesFieldsInPlace_WhenCodeIsUnchanged()
         {
             var existing = BuildGrade("A", descLong: "Original Desc", avSalary: 50000m,
-                avLeaveHrs: 8.0, avSickHrs: 4.0);
+                pactCode: "PC00", avLeaveHrs: 8.0, avSickHrs: 4.0);
             var (repo, dbSet, context) = CreateRepositoryWithMocks([existing]);
 
             var updated = BuildGrade("A", descLong: "Updated Desc", avSalary: 60000m,
@@ -334,7 +334,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
             Assert.Equal("A", result.GradeCode);
             Assert.Equal("Updated Desc", result.DescLong);
             Assert.Equal(60000m, result.AvSalary);
-            Assert.Equal("PC01", result.PactCode);
+            Assert.Equal("PC00", result.PactCode);
             Assert.Equal(8.0, result.AvLeaveHrs);
             Assert.Equal(4.0, result.AvSickHrs);
             Assert.Equal(2025, result.FpsYear);
@@ -344,16 +344,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
         [Fact]
         public async Task UpdateAsync_DeletesAndReinserts_WhenCodeChanges()
         {
-            var existing = BuildGrade("A");
+            var existing = BuildGrade("A", pactCode: "PC00");
             var (repo, dbSet, context) = CreateRepositoryWithMocks([existing]);
             dbSet.Setup(x => x.Remove(It.IsAny<Grade>()));
             dbSet.Setup(x => x.Add(It.IsAny<Grade>()));
 
-            var updated = BuildGrade("B", descLong: "Updated", avSalary: 60000m);
+            var updated = BuildGrade("B", descLong: "Updated", avSalary: 60000m, pactCode: "PC99");
 
             var result = await repo.UpdateAsync("A", updated);
 
             Assert.Equal("B", result.GradeCode);
+            Assert.Equal("PC00", result.PactCode);
             Assert.Equal(2025, result.FpsYear);
             dbSet.Verify(x => x.Remove(It.Is<Grade>(g => g.GradeCode == "A")), Times.Once);
             dbSet.Verify(x => x.Add(It.Is<Grade>(g => g.GradeCode == "B")), Times.Once);
