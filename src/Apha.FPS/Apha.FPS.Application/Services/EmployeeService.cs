@@ -83,7 +83,7 @@ namespace Apha.FPS.Application.Services
             if (existingEmployee is not null)
             {
                 throw new InvalidOperationException(
-                    $"Staff with SPNumber {employeeDto.SPNumber} already exists. ");
+                    $"Staff with SPNumber {employeeDto.SPNumber} already exists.");
             }
 
             var employee = _mapper.Map<Employee>(employeeDto);
