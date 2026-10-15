@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -492,7 +493,6 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             var spNumber = "SP999";
 
             _mockRepository.GetEmployeeByIdAsync(spNumber).Returns((Employee?)null);
-            _mockMapper.Map<EmployeeDto>((Employee?)null).Returns((EmployeeDto?)null);
 
             // Act
             var result = await _sut.GetEmployeeByIdAsync(spNumber);
@@ -501,6 +501,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             result.Should().BeNull();
 
             await _mockRepository.Received(1).GetEmployeeByIdAsync(spNumber);
+            _mockMapper.DidNotReceive().Map<EmployeeDto>(Arg.Any<object>());
         }
 
         [Theory]
@@ -602,6 +603,25 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             exception.ParamName.Should().Be("employeeDto");
             exception.Message.Should().Contain("EmployeeDto cannot be null or empty.");
 
+            await _mockRepository.DidNotReceive().AddEmployeeAsync(Arg.Any<Employee>());
+        }
+
+        [Fact]
+        public async Task AddEmployeeAsync_WhenSpNumberAlreadyExists_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var inputDto = new EmployeeDto { SPNumber = "SP001" };
+            _mockRepository.GetEmployeeByIdAsync("SP001")
+                .Returns(new Employee { SPNumber = "SP001" });
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.AddEmployeeAsync(inputDto)
+            );
+
+            exception.Errors.Should().ContainSingle();
+            exception.Errors[0].Code.Should().Be("SPNUMBER_ALREADY_EXISTS");
+            exception.Message.Should().Contain("Staff with SPNumber 'SP001' already exists.");
             await _mockRepository.DidNotReceive().AddEmployeeAsync(Arg.Any<Employee>());
         }
 

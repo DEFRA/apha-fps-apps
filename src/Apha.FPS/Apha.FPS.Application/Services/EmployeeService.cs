@@ -1,6 +1,7 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
+using Apha.FPS.Application.Validation;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -69,7 +70,7 @@ namespace Apha.FPS.Application.Services
             }
 
             var employee = await _employeeRepository.GetEmployeeByIdAsync(spNumber);
-            return _mapper.Map<EmployeeDto>(employee);
+            return employee is null ? null : _mapper.Map<EmployeeDto>(employee);
         }
 
         public async Task<EmployeeDto> AddEmployeeAsync(EmployeeDto employeeDto)
@@ -77,6 +78,17 @@ namespace Apha.FPS.Application.Services
             if (employeeDto == null)
             {
                 throw new ArgumentException("EmployeeDto cannot be null or empty.", nameof(employeeDto));
+            }
+
+            var existingEmployee = await _employeeRepository.GetEmployeeByIdAsync(employeeDto.SPNumber);
+            if (existingEmployee is not null)
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Staff with SPNumber '{employeeDto.SPNumber}' already exists.",
+                        "SPNUMBER_ALREADY_EXISTS")
+                ]);
             }
 
             var employee = _mapper.Map<Employee>(employeeDto);
