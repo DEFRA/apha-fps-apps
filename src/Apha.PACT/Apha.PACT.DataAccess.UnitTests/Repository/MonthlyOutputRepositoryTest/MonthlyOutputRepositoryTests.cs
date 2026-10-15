@@ -1442,6 +1442,21 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
 
         #region MakeLiveAsync
 
+        private static async Task<(FpsDbContext Context, MonthlyOutputRepository Repo)> CreateInMemoryMakeLiveRepositoryAsync(
+            IEnumerable<StagingMonthlyOutput> staging,
+            IEnumerable<MonthlyOutput>? outputs = null)
+        {
+            // MakeLiveAsync uses ChangeTracker/AddRange/RemoveRange, which a mocked DbContext cannot support.
+            var (context, repo) = CreateInMemoryContext();
+            context.StagingMonthlyOutputs.AddRange(staging);
+            if (outputs != null)
+                context.MonthlyOutputs.AddRange(outputs);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            return (context, repo);
+        }
+
         [Fact]
         public async Task MakeLiveAsync_NoPassedRows_ReturnsZeroCounts()
         {
@@ -1449,7 +1464,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
             {
                 new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = false, ImportedBy = "user1" },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
@@ -1465,7 +1480,26 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
             {
                 new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1", Volume = 10 },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (context, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
+
+            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
+
+            Assert.Equal(1, processedCount);
+            Assert.Equal(1, importedCount);
+            Assert.Equal(0, failedCount);
+            Assert.Single(await context.MonthlyOutputs.ToListAsync());
+            Assert.Single(await context.MonthlyOutputLogs.ToListAsync());
+            Assert.Empty(await context.StagingMonthlyOutputs.ToListAsync());
+        }
+
+        [Fact]
+        public async Task MakeLiveAsync_BlankTestCode_IsImported_AsMakeLiveValidationDisabled()
+        {
+            var staging = new List<StagingMonthlyOutput>
+            {
+                new() { Id = 1, TestCode = "", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1" },
+            };
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
@@ -1475,67 +1509,51 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
         }
 
         [Fact]
-        public async Task MakeLiveAsync_InvalidRow_BlankTestCode_IncrementsFailedCount()
-        {
-            var staging = new List<StagingMonthlyOutput>
-            {
-                new() { Id = 1, TestCode = "", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1" },
-            };
-            var repo = CreateRepositoryWithAll([], staging, []);
-
-            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
-
-            Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
-        }
-
-        [Fact]
-        public async Task MakeLiveAsync_InvalidRow_BlankBuyer_IncrementsFailedCount()
+        public async Task MakeLiveAsync_BlankBuyer_IsImported_AsMakeLiveValidationDisabled()
         {
             var staging = new List<StagingMonthlyOutput>
             {
                 new() { Id = 1, TestCode = "TC1", Buyer = " ", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1" },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
             Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
+            Assert.Equal(1, importedCount);
+            Assert.Equal(0, failedCount);
         }
 
         [Fact]
-        public async Task MakeLiveAsync_InvalidRow_ZeroMonth_IncrementsFailedCount()
+        public async Task MakeLiveAsync_ZeroMonth_IsImported_AsMakeLiveValidationDisabled()
         {
             var staging = new List<StagingMonthlyOutput>
             {
                 new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 0, WorkGroup = "WG1", Passed = true, ImportedBy = "user1" },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
             Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
+            Assert.Equal(1, importedCount);
+            Assert.Equal(0, failedCount);
         }
 
         [Fact]
-        public async Task MakeLiveAsync_InvalidRow_BlankWorkGroup_IncrementsFailedCount()
+        public async Task MakeLiveAsync_BlankWorkGroup_IsImported_AsMakeLiveValidationDisabled()
         {
             var staging = new List<StagingMonthlyOutput>
             {
                 new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "", Passed = true, ImportedBy = "user1" },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
             Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
+            Assert.Equal(1, importedCount);
+            Assert.Equal(0, failedCount);
         }
 
         [Fact]
@@ -1547,13 +1565,55 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
                 new() { Id = 2, TestCode = "", Buyer = "B2", Month = 2, WorkGroup = "WG2", Passed = true, ImportedBy = "user1" },
                 new() { Id = 3, TestCode = "TC3", Buyer = "B3", Month = 3, WorkGroup = "WG3", Passed = false, ImportedBy = "user1" },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
+
+            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
+
+            Assert.Equal(2, processedCount);
+            Assert.Equal(2, importedCount);
+            Assert.Equal(1, failedCount);
+        }
+
+        [Fact]
+        public async Task MakeLiveAsync_RowAlreadyLive_MarksRowFailed()
+        {
+            var staging = new List<StagingMonthlyOutput>
+            {
+                new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1", Volume = 10 },
+            };
+            var outputs = new List<MonthlyOutput>
+            {
+                new() { TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", FpsYear = DefaultFpsYear },
+            };
+            var (context, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging, outputs);
+
+            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
+
+            Assert.Equal(1, processedCount);
+            Assert.Equal(0, importedCount);
+            Assert.Equal(1, failedCount);
+            var row = await context.StagingMonthlyOutputs.SingleAsync();
+            Assert.False(row.Passed);
+            Assert.Equal("This record is no longer valid. Needs re-validating", row.FailureComments);
+        }
+
+        [Fact]
+        public async Task MakeLiveAsync_DuplicateKeysInBatch_ImportsFirstAndFailsDuplicate()
+        {
+            var staging = new List<StagingMonthlyOutput>
+            {
+                new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1", Volume = 10 },
+                new() { Id = 2, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1", Volume = 20 },
+            };
+            var (context, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
             Assert.Equal(2, processedCount);
             Assert.Equal(1, importedCount);
-            Assert.True(failedCount >= 1);
+            Assert.Equal(1, failedCount);
+            Assert.Equal(10, (await context.MonthlyOutputs.SingleAsync()).Volume);
+            Assert.Equal(2, (await context.StagingMonthlyOutputs.SingleAsync()).Id);
         }
 
         #endregion
@@ -1818,55 +1878,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
 
         #endregion
 
-        #region MakeLiveAsync — additional IsValidForMakeLive branches
-
-        [Fact]
-        public async Task MakeLiveAsync_InvalidRow_NullTestCode_IncrementsFailedCount()
-        {
-            var staging = new List<StagingMonthlyOutput>
-            {
-                new() { Id = 1, TestCode = null!, Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1" },
-            };
-            var repo = CreateRepositoryWithAll([], staging, []);
-
-            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
-
-            Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
-        }
-
-        [Fact]
-        public async Task MakeLiveAsync_InvalidRow_NullBuyer_IncrementsFailedCount()
-        {
-            var staging = new List<StagingMonthlyOutput>
-            {
-                new() { Id = 1, TestCode = "TC1", Buyer = null!, Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1" },
-            };
-            var repo = CreateRepositoryWithAll([], staging, []);
-
-            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
-
-            Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
-        }
-
-        [Fact]
-        public async Task MakeLiveAsync_InvalidRow_NullWorkGroup_IncrementsFailedCount()
-        {
-            var staging = new List<StagingMonthlyOutput>
-            {
-                new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = null!, Passed = true, ImportedBy = "user1" },
-            };
-            var repo = CreateRepositoryWithAll([], staging, []);
-
-            var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
-
-            Assert.Equal(1, processedCount);
-            Assert.Equal(0, importedCount);
-            Assert.Equal(1, failedCount);
-        }
+        #region MakeLiveAsync — additional branches
 
         [Fact]
         public async Task MakeLiveAsync_NoRowsForUser_ReturnsZeroCounts()
@@ -1892,7 +1904,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyOutputRepositoryTest
                 new() { Id = 1, TestCode = "TC1", Buyer = "B1", Month = 1, WorkGroup = "WG1", Passed = true, ImportedBy = "user1", Volume = 10 },
                 new() { Id = 2, TestCode = "TC2", Buyer = "B2", Month = 2, WorkGroup = "WG2", Passed = false, ImportedBy = "user1" },
             };
-            var repo = CreateRepositoryWithAll([], staging, []);
+            var (_, repo) = await CreateInMemoryMakeLiveRepositoryAsync(staging);
 
             var (processedCount, importedCount, failedCount) = await repo.MakeLiveAsync("user1");
 
