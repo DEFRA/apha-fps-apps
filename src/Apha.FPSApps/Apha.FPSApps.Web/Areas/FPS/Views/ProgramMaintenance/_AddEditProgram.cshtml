@@ -25,6 +25,8 @@
     <div class="row g-3">
         <form id="@formId">
             <input type="hidden" asp-for="SectorName" />
+            <input type="hidden" asp-for="Minim" />
+            <input type="hidden" asp-for="Customer" />
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="ProgramNo">Program <span class="sup_color_red">*</span> </label>
                 <input type="text" asp-for="ProgramNo" required maxlength="10" class="govuk-input" readonly="@isEditMode">
