@@ -45,6 +45,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(IsVisible = false)]
         public List<SelectListItem>  ManagerList { get; set; }
 
+        [GridColumn(IsVisible = false)]
+        public string? Minim { get; set; }
+
+        [GridColumn(IsVisible = false)]
+        public string? Customer { get; set; }
+
         public ProgramViewModel()
         {
             ProgramNo = string.Empty;

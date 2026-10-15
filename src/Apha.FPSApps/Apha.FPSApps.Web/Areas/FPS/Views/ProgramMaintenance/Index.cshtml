@@ -127,7 +127,9 @@
                 // Parse to number so decimal? model binding succeeds
                 Target: rawTarget !== '' ? parseFloat(rawTarget) : null,
                 Manager: form.find('[name="Manager"]').val(),
-                SectorName: form.find('[name="SectorName"]').val() || null
+                SectorName: form.find('[name="SectorName"]').val() || null,
+                Minim: form.find('[name="Minim"]').val() || null,
+                Customer: form.find('[name="Customer"]').val() || null
             };
 
             $.ajax({
