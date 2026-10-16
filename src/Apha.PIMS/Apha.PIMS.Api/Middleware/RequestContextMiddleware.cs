@@ -34,7 +34,7 @@ namespace Apha.PIMS.Api.Middleware
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FPSYearContext)yearContext).FPSYear = 2025;
+            ((FPSYearContext)yearContext).FPSYear = 2025; //In PIMS we are not using the year context
 
             await _next(context);
         }

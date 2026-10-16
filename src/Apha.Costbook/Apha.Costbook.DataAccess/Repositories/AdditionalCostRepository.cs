@@ -92,10 +92,12 @@ public class AdditionalCostRepository : RepositoryBase, IAdditionalCostRepositor
         var results=(await _context.FpsAccountCategories
                     .AsNoTracking()
                     .Where(static ac => ac.ProjectSpecific == -1)
-                    .Join(
-                        _context.AccountGroups.AsNoTracking(),
-                        ac => ac.Csg7Group,
-                        ag => ag.Csg7group,
+                    .SelectMany(
+                        ac => _context.AccountGroups
+                            .AsNoTracking()
+                            .Where(ag => ac.Csg7Group != null
+                                && ag.Csg7group != null
+                                && ac.Csg7Group.ToLower() == ag.Csg7group.ToLower()),
                         (ac, ag) => new { ac.AccShortName, UseInflation = ag.Useinflation == true })
                     .OrderBy(x => x.AccShortName)
                     .ToListAsync())
