@@ -82,8 +82,8 @@ function reloadSubContractsGrid() {
     var postData = {
         Page: 1,
         PageSize: 10,
-        SortBy: 'Month',
-        Descending: false,
+        SortBy: 'SubContCounter',
+        Descending: true,
         Filter: '{}',
         parentProject: currentParentProject || ''
     };

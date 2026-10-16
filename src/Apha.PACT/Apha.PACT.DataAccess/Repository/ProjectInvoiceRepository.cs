@@ -99,7 +99,7 @@ namespace Apha.PACT.DataAccess.Repository
         private static IQueryable ApplySorting(IQueryable<ProjectInvoice> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
-                return query.OrderBy(e => e.InvoiceCounter);
+                return query.OrderByDescending(e => e.InvoiceCounter);
 
             return ApplySortingByProperty(query, sortBy.ToLower(), descending);
         }
@@ -116,7 +116,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "profitloss" => ApplyOrder(query, i => i.ProfitLoss, descending),
                 "detail" => ApplyOrder(query, i => i.Detail, descending),
                 "invoicecounter" => ApplyOrder(query, i => i.InvoiceCounter, descending),
-                _ => query.OrderBy(e => e.InvoiceCounter)
+                _ => query.OrderByDescending(e => e.InvoiceCounter)
             };
         }
 

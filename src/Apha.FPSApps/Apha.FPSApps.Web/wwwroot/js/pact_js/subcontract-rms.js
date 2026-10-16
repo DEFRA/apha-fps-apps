@@ -23,8 +23,8 @@ function reloadRmsGrid() {
     if (gridManager) {
         gridManager.reloadGrid({
             page: 1,
-            sortBy: 'Project',
-            descending: false
+            sortBy: 'SubContCounter',
+            descending: true
         });
     }
 }
