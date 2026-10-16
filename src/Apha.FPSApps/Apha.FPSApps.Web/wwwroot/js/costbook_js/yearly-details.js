@@ -1078,6 +1078,9 @@ function clearNonActiveGridContainers(activeTabId) {
 })();
 
 function onYearRowKeyDown(event, row) {
+    // Ignore keydown events bubbling up from interactive descendants (e.g. the delete button)
+    if (event.target !== row) return;
+
     if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
         event.preventDefault();
         onYearRowClick(row);
