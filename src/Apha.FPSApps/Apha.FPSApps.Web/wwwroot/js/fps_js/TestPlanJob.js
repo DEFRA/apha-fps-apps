@@ -126,7 +126,8 @@ function updateTestPlan() {
         ProjectBuyerCode: form.find('[name="ProjectBuyerCode"]').val(),
         NoRequired: parseFloat($('#NoRequired').val()) || 0,
         UnitPrice: $('#UnitPrice').val() || 0,
-        Active: parseInt(form.find('[name="Active"]').val()) || 1
+        Active: parseInt(form.find('[name="Active"]').val()) || 1,
+        TestBuyerCode: $('#TestBuyerCode').val()
     };
     $.ajax({
         url: '/FPS/TestPlanJob/Edit',

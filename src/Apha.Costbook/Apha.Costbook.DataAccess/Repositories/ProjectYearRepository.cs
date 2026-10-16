@@ -303,7 +303,7 @@ public class ProjectYearRepository : IProjectYearRepository
                     .ToListAsync();
 
                 var testData = await _context.FpsTestorProducts
-                    .ToDictionaryAsync(t => t.ItemCode);
+                    .ToDictionaryAsync(t => t.ItemCode, StringComparer.OrdinalIgnoreCase);
 
                 foreach (var rec in testRecords)
                 {
@@ -327,7 +327,7 @@ public class ProjectYearRepository : IProjectYearRepository
                     .ToListAsync();
 
                 var animalData = await _context.FpsAnimals
-                    .ToDictionaryAsync(a => a.AnimalType);
+                    .ToDictionaryAsync(a => a.AnimalType, StringComparer.OrdinalIgnoreCase);
 
                 foreach (var rec in animalRecords)
                 {
@@ -391,7 +391,7 @@ public class ProjectYearRepository : IProjectYearRepository
 
                 payRatesQuery = payRatesQuery.Where(x => x.ChargeRate != null && x.ChargeRate != 0);
 
-                var payRatesData = await payRatesQuery.ToDictionaryAsync(x => x.WgGrade);
+                var payRatesData = await payRatesQuery.ToDictionaryAsync(x => x.WgGrade, StringComparer.OrdinalIgnoreCase);
 
                 foreach (var rec in staffRecords)
                 {

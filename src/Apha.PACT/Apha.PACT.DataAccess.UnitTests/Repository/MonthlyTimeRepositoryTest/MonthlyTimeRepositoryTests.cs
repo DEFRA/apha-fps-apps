@@ -48,6 +48,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             return (context, repo);
         }
 
+        // A pre-existing failed staging row keeps MakeLiveAsync off the DeleteAllStagingByUserAsync
+        // cleanup branch, which uses ExecuteDeleteAsync and isn't supported by InMemory.
+        private static StagingMonthlyTime PreExistingFailedRow(string importedBy) => new()
+        {
+            Id = 999, ImportedBy = importedBy, Passed = false, PactStaffId = "S_FAIL",
+            TimeCode = "TC_FAIL", Month = 9, ParentProject = "PP_FAIL", WorkGroup = "WG_FAIL"
+        };
+
         // Shared log data used across SearchAsync tests
         private static readonly DateTime BaseDate = new(2024, 6, 15, 10, 0, 0);
 
@@ -557,13 +565,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
         }
 
         [Fact]
-        public async Task MakeLiveAsync_WhenRowIsNoLongerValid_MarksFailedAndImportsRemainingRows()
+        public async Task MakeLiveAsync_WhenPactIdIsNull_ImportsAllPassedRows()
         {
             const string importedBy = "tester";
-            const string failureMessage = "This record is no longer valid. Needs re-validating";
 
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.AddRange(
                 new StagingMonthlyTime
                 {
@@ -595,14 +603,12 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(2, result.ProcessedCount);
-            Assert.Equal(1, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(2, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
 
-            var failedRow = await context.StagingMonthlyTimes.SingleAsync(x => x.Id == 10);
-            Assert.False(failedRow.Passed);
-            Assert.Equal(failureMessage, failedRow.FailureComments);
-
+            Assert.False(await context.StagingMonthlyTimes.AnyAsync(x => x.Id == 10));
             Assert.False(await context.StagingMonthlyTimes.AnyAsync(x => x.Id == 11));
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == string.Empty && x.TimeCode == "TC1"));
             Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S2"
                 && x.TimeCode == "TC2"
                 && x.Month == 2
@@ -1062,6 +1068,38 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
         #region MakeLiveAsync — additional scenarios
 
         [Fact]
+        public async Task MakeLiveAsync_DuplicateKeyWithinBatch_ImportsFirstAndMarksSecondFailed()
+        {
+            const string importedBy = "tester";
+            const string failureMessage = "This record is no longer valid. Needs re-validating";
+            var (context, repo) = CreateInMemoryContext();
+
+            context.StagingMonthlyTimes.AddRange(
+                new StagingMonthlyTime
+                {
+                    Id = 1, ImportedBy = importedBy, Passed = true, PactId = "S1",
+                    TimeCode = "TC1", Month = 1, ParentProject = "PP1", WorkGroup = "WG1", Hours = 5
+                },
+                new StagingMonthlyTime
+                {
+                    Id = 2, ImportedBy = importedBy, Passed = true, PactId = "S1",
+                    TimeCode = "TC1", Month = 1, ParentProject = "PP1", WorkGroup = "WG2", Hours = 7
+                });
+            await context.SaveChangesAsync();
+
+            var result = await repo.MakeLiveAsync(importedBy);
+
+            Assert.Equal(2, result.ProcessedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount);
+            Assert.False(await context.StagingMonthlyTimes.AnyAsync(x => x.Id == 1));
+            var failedRow = await context.StagingMonthlyTimes.SingleAsync(x => x.Id == 2);
+            Assert.False(failedRow.Passed);
+            Assert.Equal(failureMessage, failedRow.FailureComments);
+            Assert.Equal(1, await context.MonthlyTimes.CountAsync());
+        }
+
+        [Fact]
         public async Task MakeLiveAsync_NoPassedRows_ReturnsZeros()
         {
             var (context, repo) = CreateInMemoryContext();
@@ -1118,11 +1156,12 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
         }
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_NullTimeCode_MarksInvalid()
+        public async Task MakeLiveAsync_NullTimeCode_ImportsWithEmptyTimeCode()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true, PactId = "S1",
@@ -1133,12 +1172,13 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S1" && x.TimeCode == string.Empty));
         }
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_NullMonth_MarksInvalid()
+        public async Task MakeLiveAsync_NullMonth_ThrowsAndImportsNothing()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
@@ -1150,19 +1190,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             });
             await context.SaveChangesAsync();
 
-            var result = await repo.MakeLiveAsync(importedBy);
-
-            Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.MakeLiveAsync(importedBy));
+            Assert.False(await context.MonthlyTimes.AnyAsync());
         }
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_NullParentProject_MarksInvalid()
+        public async Task MakeLiveAsync_NullParentProject_ImportsWithEmptyParentProject()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true, PactId = "S1",
@@ -1173,8 +1211,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S1" && x.ParentProject == string.Empty));
         }
 
         [Fact]
@@ -1649,11 +1688,12 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
         #region MakeLiveAsync — IsValidForMakeLive additional branches
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_NullPactId_MarksInvalid()
+        public async Task MakeLiveAsync_NullPactId_ImportsWithEmptyPactStaffId()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true, PactId = null,
@@ -1664,16 +1704,18 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == string.Empty && x.TimeCode == "TC1"));
         }
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_WhitespacePactId_MarksInvalid()
+        public async Task MakeLiveAsync_WhitespacePactId_ImportsRowAsIs()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true, PactId = "   ",
@@ -1684,16 +1726,18 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "   "));
         }
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_WhitespaceTimeCode_MarksInvalid()
+        public async Task MakeLiveAsync_WhitespaceTimeCode_ImportsRowAsIs()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true, PactId = "S1",
@@ -1704,16 +1748,18 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S1" && x.TimeCode == "  "));
         }
 
         [Fact]
-        public async Task MakeLiveAsync_IsValidForMakeLive_WhitespaceParentProject_MarksInvalid()
+        public async Task MakeLiveAsync_WhitespaceParentProject_ImportsRowAsIs()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true, PactId = "S1",
@@ -1724,8 +1770,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var result = await repo.MakeLiveAsync(importedBy);
 
             Assert.Equal(1, result.ProcessedCount);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == "S1" && x.ParentProject == "   "));
         }
 
         [Fact]
@@ -1845,6 +1892,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true,
@@ -1853,10 +1901,15 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             });
             await context.SaveChangesAsync();
 
-            // TimeCode is null so IsValidForMakeLive returns false — row marked invalid
             var result = await repo.MakeLiveAsync(importedBy);
-            Assert.Equal(0, result.ImportedCount);
-            Assert.Equal(1, result.FailedCount);
+            Assert.Equal(1, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+
+            var live = await context.MonthlyTimes.SingleAsync(x => x.PactStaffId == "S1");
+            Assert.Equal(string.Empty, live.TimeCode);
+            Assert.Equal(string.Empty, live.ParentProject);
+            Assert.Equal(string.Empty, live.WorkGroup);
+            Assert.Null(live.Hours);
         }
 
         [Fact]
@@ -2196,10 +2249,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
         [Fact]
         public async Task MakeLiveAsync_StagingRowWithNullPactId_MapsToEmptyString()
         {
-            // PactId null means IsValidForMakeLive returns false
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true,
@@ -2210,16 +2263,18 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var result = await repo.MakeLiveAsync(importedBy);
 
-            Assert.Equal(1, result.FailedCount);
-            Assert.Equal(0, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.Equal(1, result.ImportedCount);
+            Assert.True(await context.MonthlyTimes.AnyAsync(x => x.PactStaffId == string.Empty && x.Hours == 5));
         }
 
         [Fact]
-        public async Task MakeLiveAsync_StagingRowWithWhitespaceTimeCode_MarksInvalid()
+        public async Task MakeLiveAsync_StagingRowWithWhitespaceTimeCode_ImportsRow()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true,
@@ -2230,16 +2285,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var result = await repo.MakeLiveAsync(importedBy);
 
-            Assert.Equal(1, result.FailedCount);
-            Assert.Equal(0, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.Equal(1, result.ImportedCount);
         }
 
         [Fact]
-        public async Task MakeLiveAsync_StagingRowWithWhitespaceParentProject_MarksInvalid()
+        public async Task MakeLiveAsync_StagingRowWithWhitespaceParentProject_ImportsRow()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true,
@@ -2250,16 +2306,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var result = await repo.MakeLiveAsync(importedBy);
 
-            Assert.Equal(1, result.FailedCount);
-            Assert.Equal(0, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.Equal(1, result.ImportedCount);
         }
 
         [Fact]
-        public async Task MakeLiveAsync_StagingRowWithWhitespacePactId_MarksInvalid()
+        public async Task MakeLiveAsync_StagingRowWithWhitespacePactId_ImportsRow()
         {
             const string importedBy = "tester";
             var (context, repo) = CreateInMemoryContext();
 
+            context.StagingMonthlyTimes.Add(PreExistingFailedRow(importedBy));
             context.StagingMonthlyTimes.Add(new StagingMonthlyTime
             {
                 Id = 1, ImportedBy = importedBy, Passed = true,
@@ -2270,8 +2327,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
 
             var result = await repo.MakeLiveAsync(importedBy);
 
-            Assert.Equal(1, result.FailedCount);
-            Assert.Equal(0, result.ImportedCount);
+            Assert.Equal(1, result.FailedCount); // pre-existing failed row
+            Assert.Equal(1, result.ImportedCount);
         }
 
         #endregion

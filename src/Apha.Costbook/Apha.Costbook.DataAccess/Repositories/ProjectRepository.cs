@@ -367,7 +367,7 @@ namespace Apha.Costbook.DataAccess.Repositories
 
             // Step 3: Preload test data (avoid repeated DB calls like DLookup)
             var testData = await _context.FpsTestorProducts
-                .ToDictionaryAsync(t => t.ItemCode);
+                .ToDictionaryAsync(t => t.ItemCode, StringComparer.OrdinalIgnoreCase);
 
             // Step 4: Loop and update
             foreach (var rec in records)
@@ -397,7 +397,7 @@ namespace Apha.Costbook.DataAccess.Repositories
 
             // Preload animal data (avoid repeated DB calls like DLookup)
             var animalData = await _context.FpsAnimals
-                .ToDictionaryAsync(a => a.AnimalType);
+                .ToDictionaryAsync(a => a.AnimalType, StringComparer.OrdinalIgnoreCase);
 
             // Loop and update
             foreach (var rec in animalRecords)
@@ -473,7 +473,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             // Filter out zero charge rates (applies to both DEFRA and non-DEFRA)
             payRatesQuery = payRatesQuery.Where(x => x.ChargeRate != null && x.ChargeRate != 0);
 
-            var payRatesData = await payRatesQuery.ToDictionaryAsync(x => x.WgGrade);
+            var payRatesData = await payRatesQuery.ToDictionaryAsync(x => x.WgGrade, StringComparer.OrdinalIgnoreCase);
 
             // Loop and update
             foreach (var rec in staffRecords)
@@ -965,11 +965,14 @@ namespace Apha.Costbook.DataAccess.Repositories
 
         internal async Task<bool> fnUseInflation(string accountCat)
         {
+            var normalizedAccountCat = accountCat?.ToLower();
 
             var useInflation = await (from ac in _context.FpsAccountCategories
                                        join ag in _context.AccountGroups 
                                        on ac.Csg7Group equals ag.Csg7group
-                                       where ac.AccShortName == accountCat
+                                       where ac.AccShortName != null
+                                          && normalizedAccountCat != null
+                                          && ac.AccShortName.ToLower() == normalizedAccountCat
                                        select ag.Useinflation)
                                       .FirstOrDefaultAsync();
 

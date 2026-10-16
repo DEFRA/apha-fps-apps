@@ -51,6 +51,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public short? Active { get; set; }
 
         [GridColumn(IsVisible = false)]
+        public string? TestBuyerCode { get; set; }
+
+        [GridColumn(IsVisible = false)]
         public List<SelectListItem> TestCodeOptions { get; set; } = new();
     }
 }

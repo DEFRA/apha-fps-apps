@@ -551,7 +551,18 @@ namespace Apha.FPS.DataAccess.Repositories
                     project.FpsYear = _requestContext.FpsYear;
                     NormalizeDateTimesToUnspecified(project);
                     _dbContext.Entry(project).State = EntityState.Modified;
-                    _dbContext.Entry(project).Property(p => p.IncomeAccountCode).IsModified = false;
+                    var entry = _dbContext.Entry(project);
+                    entry.Property(p => p.IncomeAccountCode).IsModified = false;
+                    entry.Property(p => p.WipEoy).IsModified = false;
+                    entry.Property(p => p.WipLimit).IsModified = false;
+                    entry.Property(p => p.WipCurrent).IsModified = false;
+                    entry.Property(p => p.DateCreated).IsModified = false;
+                    entry.Property(p => p.FecCost).IsModified = false;
+                    entry.Property(p => p.DateCosted).IsModified = false;
+                    entry.Property(p => p.ProjectParent).IsModified = false;
+                    entry.Property(p => p.CaseWorkSub).IsModified = false;
+                    entry.Property(p => p.Finished).IsModified = false;
+
                     // Converted trigger logic — UITrig_tlkpProject FOR UPDATE: stage audit log in same unit of work
                     _dbContext.ProjectLogs.Add(MapProjectToLog(project, "I", _requestContext.UserEmailId));
                     await _dbContext.SaveChangesAsync();

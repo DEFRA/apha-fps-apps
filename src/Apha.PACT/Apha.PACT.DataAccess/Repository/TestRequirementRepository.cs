@@ -396,6 +396,7 @@ namespace Apha.PACT.DataAccess.Repository
             entity.FpsYear = _fpsRequestContext.FpsYear;
             entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             _context.Entry(entity).State = EntityState.Modified;
+            _context.Entry(entity).Property(e => e.DateCreated).IsModified = false;
             await _context.SaveChangesAsync();
             await WriteAuditLogAsync(entity, "U");
             return entity;
