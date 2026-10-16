@@ -1073,15 +1073,16 @@ function clearNonActiveGridContainers(activeTabId) {
 
         document.querySelectorAll('.project-year-row').forEach(function (row) {
             row.addEventListener('click', function () { onYearRowClick(row); });
-            row.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-                    e.preventDefault();
-                    onYearRowClick(row);
-                }
-            });
         });
     });
 })();
+
+function onYearRowKeyDown(event, row) {
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        onYearRowClick(row);
+    }
+}
 
 function allGridExtraFilters() {
     return { year: selectedYear };
