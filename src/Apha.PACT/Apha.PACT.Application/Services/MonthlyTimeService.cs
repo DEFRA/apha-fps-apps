@@ -632,7 +632,7 @@ namespace Apha.PACT.Application.Services
             {
                 throw new BusinessValidationErrorException([
                     new BusinessValidationError(
-                        "All records have to have passed before you can run the import. Either delete or correct those that have failed first.",
+                        "All records have to have passed before you can run the make live. Either delete or correct those that have failed first.",
                         "FAILED_STAGING_EXISTS")
                 ]);
             }
