@@ -394,6 +394,7 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<TestRequirement> UpdateAsync(TestRequirement entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
+            entity.DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             _context.Entry(entity).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             await WriteAuditLogAsync(entity, "U");

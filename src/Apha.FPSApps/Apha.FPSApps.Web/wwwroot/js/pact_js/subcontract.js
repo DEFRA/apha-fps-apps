@@ -198,6 +198,20 @@ function saveSubContract() {
         data['SupplierNumber'] = isNaN(parsedInt) ? null : parsedInt;
     }
 
+    if (data['DailyRate'] === '' || data['DailyRate'] === undefined) {
+        data['DailyRate'] = null;
+    } else if (typeof data['DailyRate'] === 'string') {
+        var parsedRate = parseFloat(data['DailyRate']);
+        data['DailyRate'] = isNaN(parsedRate) ? null : parsedRate;
+    }
+
+    if (data['AnimalDays'] === '' || data['AnimalDays'] === undefined) {
+        data['AnimalDays'] = null;
+    } else if (typeof data['AnimalDays'] === 'string') {
+        var parsedDays = parseInt(data['AnimalDays'], 10);
+        data['AnimalDays'] = isNaN(parsedDays) ? null : parsedDays;
+    }
+
 
 
     $.ajax({

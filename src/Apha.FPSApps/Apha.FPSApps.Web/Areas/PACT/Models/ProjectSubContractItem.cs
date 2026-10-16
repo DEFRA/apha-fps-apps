@@ -32,5 +32,30 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Display(Name = "Counter")]
         [GridColumn(Order = 6, Width = 119, Type = GridColumnType.Number)]
         public int SubContCounter { get; set; }
+
+        [Display(Name = "Work Group")]
+        [GridColumn(Order = 7, Type = GridColumnType.Text, IsVisible = false)]
+        public string? WorkGroup { get; set; }
+
+        [Display(Name = "Supplier")]
+        [GridColumn(Order = 8, Type = GridColumnType.Text, IsVisible = false)]
+        public string? Supplier { get; set; }
+
+
+        [Display(Name = "Supplier Number")]
+        [GridColumn(Order = 9, Type = GridColumnType.Number, IsVisible = false)]
+        public int? SupplierNumber { get; set; }
+
+        [Display(Name = "Description")]
+        [GridColumn(Order = 10, Type = GridColumnType.Text, IsVisible = false)]
+        public string? Description { get; set; }
+
+        [Display(Name = "Daily Rate")]
+        [GridColumn(Order = 11, Type = GridColumnType.Number, IsVisible = false)]
+        public decimal? DailyRate { get; set; }
+
+        [Display(Name = "Animal Days")]
+        [GridColumn(Order = 12, Type = GridColumnType.Number, IsVisible = false)]
+        public int? AnimalDays { get; set; }
     }
 }

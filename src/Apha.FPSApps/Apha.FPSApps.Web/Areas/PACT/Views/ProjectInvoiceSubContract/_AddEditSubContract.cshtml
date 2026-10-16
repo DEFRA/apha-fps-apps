@@ -17,6 +17,14 @@
         <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
         <input type="hidden" asp-for="SubContCounter" />
 
+        <!-- Hidden fields preserved from the entity so their values round-trip on update -->
+        <input type="hidden" asp-for="WorkGroup" />
+        <input type="hidden" asp-for="Supplier" />
+        <input type="hidden" asp-for="SupplierNumber" />
+        <input type="hidden" asp-for="Description" />
+        <input type="hidden" asp-for="DailyRate" />
+        <input type="hidden" asp-for="AnimalDays" />
+
         <!-- Validation error summary -->
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
