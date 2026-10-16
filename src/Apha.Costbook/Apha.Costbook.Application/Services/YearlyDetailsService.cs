@@ -452,13 +452,6 @@ public class YearlyDetailsService : IYearlyDetailsService
                 "STAFF_NOHOURS_INVALID"));
         }
 
-        if (dto.Chargerate.HasValue && dto.Chargerate.Value < 0)
-        {
-            errors.Add(new BusinessValidationError(
-                "Charge rate cannot be negative.",
-                "STAFF_CHARGERATE_INVALID"));
-        }
-
         if (errors.Count > 0)
         {
             throw new BusinessValidationErrorException(errors);
@@ -487,20 +480,6 @@ public class YearlyDetailsService : IYearlyDetailsService
             errors.Add(new BusinessValidationError(
                 "Test Code is required.",
                 "TEST_TESTCODE_REQUIRED"));
-        }
-
-        if (dto.NumberOfTests.HasValue && dto.NumberOfTests.Value < 0)
-        {
-            errors.Add(new BusinessValidationError(
-                "Number of Tests cannot be negative.",
-                "TEST_NUMBEROFTESTS_INVALID"));
-        }
-
-        if (dto.UnitPrice.HasValue && dto.UnitPrice.Value < 0)
-        {
-            errors.Add(new BusinessValidationError(
-                "Unit Price cannot be negative.",
-                "TEST_UNITPRICE_INVALID"));
         }
 
         if (errors.Count > 0)
@@ -533,25 +512,11 @@ public class YearlyDetailsService : IYearlyDetailsService
                 "ANIMAL_ANIMALTYPE_REQUIRED"));
         }
 
-        if (dto.NumberOfAnimals.HasValue && dto.NumberOfAnimals.Value < 0)
-        {
-            errors.Add(new BusinessValidationError(
-                "Number of Animals cannot be negative.",
-                "ANIMAL_NUMBEROFANIMALS_INVALID"));
-        }
-
         if (dto.NumberOfDays.HasValue && dto.NumberOfDays.Value < 0)
         {
             errors.Add(new BusinessValidationError(
                 "Number of Days cannot be negative.",
                 "ANIMAL_NUMBEROFDAYS_INVALID"));
-        }
-
-        if (dto.DailyRate.HasValue && dto.DailyRate.Value < 0)
-        {
-            errors.Add(new BusinessValidationError(
-                "Daily Rate cannot be negative.",
-                "ANIMAL_DAILYRATE_INVALID"));
         }
 
         if (errors.Count > 0)
@@ -589,13 +554,6 @@ public class YearlyDetailsService : IYearlyDetailsService
             errors.Add(new BusinessValidationError(
                 "Description is required.",
                 "ADDITIONALCOST_DESCRIPTION_REQUIRED"));
-        }
-
-        if (dto.CostEntered < 0)
-        {
-            errors.Add(new BusinessValidationError(
-                "Cost cannot be negative.",
-                "ADDITIONALCOST_COSTENTERED_INVALID"));
         }
 
         if (errors.Count > 0)

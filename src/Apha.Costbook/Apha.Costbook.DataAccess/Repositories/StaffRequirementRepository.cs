@@ -175,6 +175,8 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
             .Select(p => (int?)p.IsDefraProject)
             .FirstOrDefaultAsync() ?? 0) != 0;
 
+        var normalizedWgGrade = staffRequirement.WgGrade?.ToLower();
+
         // Retrieve pay rate data for the specific WgGrade
         var payRateRow = await _context.WorkGroupGrades
             .AsNoTracking()
@@ -183,7 +185,9 @@ public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepos
                 wg => new { ProfitCentreGrade = wg.ProfitCentreGrade, FpsYear = wg.FpsYear },
                 pc => new { ProfitCentreGrade = pc.PcGrade, FpsYear = (int?)pc.FpsYear },
                 (wg, pc) => new { wg.WgGrade, pc.PayRate, pc.Npr, pc.Ohr })
-            .Where(x => x.WgGrade == staffRequirement.WgGrade)
+            .Where(x => x.WgGrade != null
+                && normalizedWgGrade != null
+                && x.WgGrade.ToLower() == normalizedWgGrade)
             .FirstOrDefaultAsync();
         double inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationStaff", decodedId, staffRequirement.Year ?? 0, fyear);
 

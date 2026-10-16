@@ -761,12 +761,19 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddStaffRequirementAsync_ThrowsValidation_WhenChargerateIsNegative()
+    public async Task AddStaffRequirementAsync_AllowsNegativeChargerate()
     {
         var dto = new StaffRequirementDto { WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = -50, StaffCost = 500 };
+        var entity = new StaffRequirement { WgGrade = "HEO", Nohours = 10, Chargerate = -50 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddStaffRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "STAFF_CHARGERATE_INVALID");
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.AddStaffRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddStaffRequirementAsync(dto);
+
+        Assert.Equal(-50, result.Chargerate);
+        Assert.Equal(-500, result.StaffCost);
+        await _staffRepo.Received(1).AddStaffRequirementAsync(entity);
     }
 
     [Fact]
@@ -801,21 +808,37 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddTestRequirementAsync_ThrowsValidation_WhenNumberOfTestsIsNegative()
+    public async Task AddTestRequirementAsync_AllowsNegativeNumberOfTests()
     {
         var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = -1, UnitPrice = 100, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001", NumberOfTests = -1, UnitPrice = 100 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "TEST_NUMBEROFTESTS_INVALID");
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(false);
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.AddTestRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddTestRequirementAsync(dto);
+
+        Assert.Equal(-1, result.NumberOfTests);
+        Assert.Equal(-100, result.TestCost);
+        await _testRepo.Received(1).AddTestRequirementAsync(entity);
     }
 
     [Fact]
-    public async Task AddTestRequirementAsync_ThrowsValidation_WhenUnitPriceIsNegative()
+    public async Task AddTestRequirementAsync_AllowsNegativeUnitPrice()
     {
         var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = 5, UnitPrice = -100, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001", NumberOfTests = 5, UnitPrice = -100 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddTestRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "TEST_UNITPRICE_INVALID");
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(false);
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.AddTestRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddTestRequirementAsync(dto);
+
+        Assert.Equal(-100, result.UnitPrice);
+        Assert.Equal(-500, result.TestCost);
+        await _testRepo.Received(1).AddTestRequirementAsync(entity);
     }
 
     [Fact]
@@ -872,12 +895,19 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenNumberOfAnimalsIsNegative()
+    public async Task AddAnimalRequirementAsync_AllowsNegativeNumberOfAnimals()
     {
         var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = -1, NumberOfDays = 5, DailyRate = 10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { AnimalType = "CAT", NumberOfAnimals = -1, NumberOfDays = 5, DailyRate = 10 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_NUMBEROFANIMALS_INVALID");
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.AddAnimalRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddAnimalRequirementAsync(dto);
+
+        Assert.Equal(-1, result.NumberOfAnimals);
+        Assert.Equal(-50, result.AnimalCost);
+        await _animalRepo.Received(1).AddAnimalRequirementAsync(entity);
     }
 
     [Fact]
@@ -890,12 +920,19 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenDailyRateIsNegative()
+    public async Task AddAnimalRequirementAsync_AllowsNegativeDailyRate()
     {
         var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = -10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { AnimalType = "CAT", NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = -10 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_DAILYRATE_INVALID");
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.AddAnimalRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.AddAnimalRequirementAsync(dto);
+
+        Assert.Equal(-10, result.DailyRate);
+        Assert.Equal(-150, result.AnimalCost);
+        await _animalRepo.Received(1).AddAnimalRequirementAsync(entity);
     }
 
     [Fact]
@@ -939,12 +976,20 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddAdditionalCostAsync_ThrowsValidation_WhenCostEnteredIsNegative()
+    public async Task AddAdditionalCostAsync_AllowsNegativeCostEntered()
     {
         var dto = new AdditionalCostDto { AccountCat = "TRAVEL", Description = "Test", Project = "P1", Year = 1, CostEntered = -100 };
+        var entity = new AdditionalCost { Description = "Test" };
+        var resultDto = new AdditionalCostDto { Description = "Test", CostEntered = -100 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAdditionalCostAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_COSTENTERED_INVALID");
+        _mapper.Map<AdditionalCost>(dto).Returns(entity);
+        _additionalCostRepo.AddAdditionalCostAsync(entity).Returns(entity);
+        _mapper.Map<AdditionalCostDto>(entity).Returns(resultDto);
+
+        var result = await _sut.AddAdditionalCostAsync(dto);
+
+        Assert.Equal(-100, result.CostEntered);
+        await _additionalCostRepo.Received(1).AddAdditionalCostAsync(entity);
     }
 
     [Fact]
@@ -1029,39 +1074,69 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task UpdateStaffRequirementAsync_ThrowsValidation_WhenChargerateIsNegative()
+    public async Task UpdateStaffRequirementAsync_AllowsNegativeChargerate()
     {
         var dto = new StaffRequirementDto { SrIdentity = 1, WgGrade = "HEO", Project = "P1", Year = 1, Name = "Test", Nohours = 10, Nodays = 1, Chargerate = -50, StaffCost = 500 };
+        var entity = new StaffRequirement { SrIdentity = 1, WgGrade = "HEO", Nohours = 10, Chargerate = -50 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateStaffRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "STAFF_CHARGERATE_INVALID");
+        _mapper.Map<StaffRequirement>(dto).Returns(entity);
+        _staffRepo.UpdateStaffRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.UpdateStaffRequirementAsync(dto);
+
+        Assert.Equal(-50, result.Chargerate);
+        Assert.Equal(-500, result.StaffCost);
+        await _staffRepo.Received(1).UpdateStaffRequirementAsync(entity);
     }
 
     [Fact]
-    public async Task UpdateTestRequirementAsync_ThrowsValidation_WhenNumberOfTestsIsNegative()
+    public async Task UpdateTestRequirementAsync_AllowsNegativeNumberOfTests()
     {
         var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = -1, UnitPrice = 100, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001", NumberOfTests = -1, UnitPrice = 100 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateTestRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "TEST_NUMBEROFTESTS_INVALID");
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(true);
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.UpdateTestRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.UpdateTestRequirementAsync(dto);
+
+        Assert.Equal(-1, result.NumberOfTests);
+        Assert.Equal(-100, result.TestCost);
+        await _testRepo.Received(1).UpdateTestRequirementAsync(entity);
     }
 
     [Fact]
-    public async Task UpdateTestRequirementAsync_ThrowsValidation_WhenUnitPriceIsNegative()
+    public async Task UpdateTestRequirementAsync_AllowsNegativeUnitPrice()
     {
         var dto = new TestRequirementDto { TestCode = "TC001", Project = "P1", Year = 1, NumberOfTests = 5, UnitPrice = -100, TestCost = 500 };
+        var entity = new TestRequirement { TestCode = "TC001", NumberOfTests = 5, UnitPrice = -100 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateTestRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "TEST_UNITPRICE_INVALID");
+        _testRepo.ExistsAsync("P1", 1, "TC001").Returns(true);
+        _mapper.Map<TestRequirement>(dto).Returns(entity);
+        _testRepo.UpdateTestRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.UpdateTestRequirementAsync(dto);
+
+        Assert.Equal(-100, result.UnitPrice);
+        Assert.Equal(-500, result.TestCost);
+        await _testRepo.Received(1).UpdateTestRequirementAsync(entity);
     }
 
     [Fact]
-    public async Task UpdateAnimalRequirementAsync_ThrowsValidation_WhenNumberOfAnimalsIsNegative()
+    public async Task UpdateAnimalRequirementAsync_AllowsNegativeNumberOfAnimals()
     {
         var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = -1, NumberOfDays = 5, DailyRate = 10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { ArIdentity = 1, AnimalType = "CAT", NumberOfAnimals = -1, NumberOfDays = 5, DailyRate = 10 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_NUMBEROFANIMALS_INVALID");
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.UpdateAnimalRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.UpdateAnimalRequirementAsync(dto);
+
+        Assert.Equal(-1, result.NumberOfAnimals);
+        Assert.Equal(-50, result.AnimalCost);
+        await _animalRepo.Received(1).UpdateAnimalRequirementAsync(entity);
     }
 
     [Fact]
@@ -1074,12 +1149,19 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task UpdateAnimalRequirementAsync_ThrowsValidation_WhenDailyRateIsNegative()
+    public async Task UpdateAnimalRequirementAsync_AllowsNegativeDailyRate()
     {
         var dto = new AnimalRequirementDto { ArIdentity = 1, AnimalType = "CAT", Project = "P1", Year = 1, NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = -10, AnimalCost = 150 };
+        var entity = new AnimalRequirement { ArIdentity = 1, AnimalType = "CAT", NumberOfAnimals = 3, NumberOfDays = 5, DailyRate = -10 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAnimalRequirementAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "ANIMAL_DAILYRATE_INVALID");
+        _mapper.Map<AnimalRequirement>(dto).Returns(entity);
+        _animalRepo.UpdateAnimalRequirementAsync(entity).Returns(entity);
+
+        var result = await _sut.UpdateAnimalRequirementAsync(dto);
+
+        Assert.Equal(-10, result.DailyRate);
+        Assert.Equal(-150, result.AnimalCost);
+        await _animalRepo.Received(1).UpdateAnimalRequirementAsync(entity);
     }
 
     [Fact]
@@ -1092,12 +1174,20 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task UpdateAdditionalCostAsync_ThrowsValidation_WhenCostEnteredIsNegative()
+    public async Task UpdateAdditionalCostAsync_AllowsNegativeCostEntered()
     {
         var dto = new AdditionalCostDto { AcIdentity = 1, AccountCat = "TRAVEL", Description = "Test", Project = "P1", Year = 1, CostEntered = -100 };
+        var entity = new AdditionalCost { AcIdentity = 1, Description = "Test" };
+        var resultDto = new AdditionalCostDto { AcIdentity = 1, Description = "Test", CostEntered = -100 };
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateAdditionalCostAsync(dto));
-        Assert.Contains(ex.Errors, e => e.Code == "ADDITIONALCOST_COSTENTERED_INVALID");
+        _mapper.Map<AdditionalCost>(dto).Returns(entity);
+        _additionalCostRepo.UpdateAdditionalCostAsync(entity).Returns(entity);
+        _mapper.Map<AdditionalCostDto>(entity).Returns(resultDto);
+
+        var result = await _sut.UpdateAdditionalCostAsync(dto);
+
+        Assert.Equal(-100, result.CostEntered);
+        await _additionalCostRepo.Received(1).UpdateAdditionalCostAsync(entity);
     }
 
     #endregion
