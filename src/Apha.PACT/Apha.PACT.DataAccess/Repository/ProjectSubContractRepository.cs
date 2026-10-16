@@ -366,7 +366,7 @@ namespace Apha.PACT.DataAccess.Repository
         private static IQueryable ApplySorting(IQueryable<ProjectSubContract> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrWhiteSpace(sortBy))
-                return query.OrderBy(e => e.SubContCounter);
+                return query.OrderByDescending(e => e.SubContCounter);
 
             return ApplySortingByProperty(query, NormalizeSortProperty(sortBy), descending);
         }
@@ -391,7 +391,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "suppliernumber" => ApplyOrder(query, s => s.SupplierNumber, descending),
                 "dailyrate" => ApplyOrder(query, s => s.DailyRate, descending),
                 "animaldays" => ApplyOrder(query, s => s.AnimalDays, descending),
-                _ => query.OrderBy(e => e.SubContCounter)
+                _ => query.OrderByDescending(e => e.SubContCounter)
             };
         }
 
