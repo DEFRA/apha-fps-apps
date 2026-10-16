@@ -24,8 +24,8 @@ FROM (
         (2022,'2022-23','Closed','year 2022',true,now(),'SP'),
         (2023,'2023-24','Closed','year 2023',true,now(),'SP'),
         (2024,'2024-25','Closed','year 2024',true,now(),'SP'),
-        (2025,'2025-26','Open','year 2025',true,now(),'SP'),
-        (2026,'2026-27','Planned','year 2026',true,now(),'SP')
+        (2025,'2025-26','Closed','year 2025',true,now(),'SP'),
+        (2026,'2026-27','Open','year 2026',true,now(),'SP')
 ) AS v
 (
     fpsyear,

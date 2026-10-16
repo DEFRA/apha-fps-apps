@@ -67,6 +67,9 @@ publish/
 *.log
 *.tlog
 
+# Liquibase offline tracking
+databasechangelog.csv
+
 # Test results
 TestResults/
 *.trx
