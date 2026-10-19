@@ -1209,7 +1209,8 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaSrcTblEmployee>(entity =>
         {
             entity.ToView("tblemployee", schema: "fps");
-            entity.HasKey(e => e.SpNumber);
+            entity.HasKey(e => new { e.FpsYear, e.SpNumber });
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.SpNumber).HasColumnName("spnumber");
             entity.Property(e => e.LastName).HasColumnName("lastname");
             entity.Property(e => e.FirstName).HasColumnName("firstname");
