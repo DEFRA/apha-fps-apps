@@ -40,7 +40,7 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
         var query =
             from wge in context.MaSrcTblWgEmployee.AsNoTracking()
             join e in context.MaSrcTblEmployee.AsNoTracking()
-                on wge.SpNumber equals e.SpNumber
+                on new { wge.SpNumber, wge.FpsYear } equals new { e.SpNumber, e.FpsYear }
             where wge.FpsYear == year
             select new { wge, e };
 
@@ -124,6 +124,7 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
             where u.UserName == userName
             join upc in context.MaSrcTblUserProfitCentre.AsNoTracking()
                 on u.UserId equals upc.UserId
+            where upc.FpsYear == year
             select upc.ProfitCentre)
             .Distinct()
             .ToListAsync(cancellationToken);

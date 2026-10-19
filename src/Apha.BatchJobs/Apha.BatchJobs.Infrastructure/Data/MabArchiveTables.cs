@@ -621,6 +621,7 @@ internal sealed class MaSrcTblWgEmployee
 
 internal sealed class MaSrcTblEmployee
 {
+    public int FpsYear { get; set; }
     public required string SpNumber { get; set; }
     public string? LastName { get; set; }
     public string? FirstName { get; set; }
