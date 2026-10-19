@@ -101,11 +101,6 @@ public sealed class FpsTotalsRepository : IFpsTotalsRepository
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            // Deduplicate by primary key before transforms to avoid EF tracker conflicts
-            rawRows = rawRows
-                .DistinctBy(r => new { r.ParentProject, r.FpsYear })
-                .ToList();
-
             var totalsRows = rawRows
                 .Select(r => new
                 {
