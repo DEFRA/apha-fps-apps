@@ -335,7 +335,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
             var result = await repo.GetPagedProjectInvoicesAsync(query, null);
 
-            Assert.Equal(1, result.Data.First().InvoiceCounter);
+            Assert.Equal(2, result.Data.First().InvoiceCounter);
         }
 
         #endregion

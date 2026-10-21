@@ -56,5 +56,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Range(-2147483648, 2147483647, ErrorMessage = "Animal Days must be a valid integer.")]
         [GridColumn(Order = 10, Width = 110, Type = GridColumnType.Number)]
         public int? AnimalDays { get; set; }
+
+        [Display(Name = "Work Group")]
+        [GridColumn(Order = 11, Type = GridColumnType.Text, IsVisible = false)]
+        public string? WorkGroup { get; set; }
     }
 }

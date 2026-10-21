@@ -347,7 +347,7 @@
             }
             var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
-            ['Month', 'Amount'].forEach(function (f) {
+            ['Month', 'Amount', 'SupplierNumber', 'DailyRate', 'AnimalDays'].forEach(function (f) {
                 if (data[f] === '' || data[f] === undefined) data[f] = null;
             });
 

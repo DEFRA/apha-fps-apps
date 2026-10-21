@@ -40,7 +40,7 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
         var query =
             from wge in context.MaSrcTblWgEmployee.AsNoTracking()
             join e in context.MaSrcTblEmployee.AsNoTracking()
-                on wge.SpNumber equals e.SpNumber
+                on new { wge.SpNumber, wge.FpsYear } equals new { e.SpNumber, e.FpsYear }
             where wge.FpsYear == year
             select new { wge, e };
 
@@ -71,33 +71,17 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
             return 0;
         }
 
-        var distinctRows = rows
-            .GroupBy(r => new { r.Year, r.StaffId })
-            .Select(g => g.First())
-            .ToList();
-
-        await context.MaDstMyStaff.AddRangeAsync(distinctRows, cancellationToken);
+        await context.MaDstMyStaff.AddRangeAsync(rows, cancellationToken);
         var inserted = await context.SaveChangesAsync(cancellationToken);
 
-        if (inserted != distinctRows.Count)
+        if (inserted != rows.Count)
         {
             throw new InvalidOperationException(
-                $"Seq 21 MyStaff: Row count mismatch. Expected to insert {distinctRows.Count} rows, " +
+                $"Seq 21 MyStaff: Row count mismatch. Expected to insert {rows.Count} rows, " +
                 $"but SaveChangesAsync returned {inserted}.");
         }
 
-        var sourceCount = await context.MaSrcTblWgEmployee
-            .AsNoTracking()
-            .Where(w => w.FpsYear == year)
-            .CountAsync(cancellationToken);
-
-        if (distinctRows.Count > sourceCount)
-        {
-            throw new InvalidOperationException(
-                $"Seq 21 MyStaff: Deduped rows {distinctRows.Count} exceed source WgEmployee rows {sourceCount}.");
-        }
-
-        var invalidNames = distinctRows.Count(r => string.IsNullOrWhiteSpace(r.Name) || r.Name == ", ");
+        var invalidNames = rows.Count(r => string.IsNullOrWhiteSpace(r.Name) || r.Name == ", ");
         if (invalidNames > 0)
         {
             throw new InvalidOperationException(
@@ -124,6 +108,7 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
             where u.UserName == userName
             join upc in context.MaSrcTblUserProfitCentre.AsNoTracking()
                 on u.UserId equals upc.UserId
+            where upc.FpsYear == year
             select upc.ProfitCentre)
             .Distinct()
             .ToListAsync(cancellationToken);

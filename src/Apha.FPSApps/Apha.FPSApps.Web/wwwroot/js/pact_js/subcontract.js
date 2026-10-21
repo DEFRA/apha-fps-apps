@@ -82,8 +82,8 @@ function reloadSubContractsGrid() {
     var postData = {
         Page: 1,
         PageSize: 10,
-        SortBy: 'Month',
-        Descending: false,
+        SortBy: 'SubContCounter',
+        Descending: true,
         Filter: '{}',
         parentProject: currentParentProject || ''
     };
@@ -196,6 +196,20 @@ function saveSubContract() {
     } else if (typeof data['SupplierNumber'] === 'string') {
         var parsedInt = parseInt(data['SupplierNumber'], 10);
         data['SupplierNumber'] = isNaN(parsedInt) ? null : parsedInt;
+    }
+
+    if (data['DailyRate'] === '' || data['DailyRate'] === undefined) {
+        data['DailyRate'] = null;
+    } else if (typeof data['DailyRate'] === 'string') {
+        var parsedRate = parseFloat(data['DailyRate']);
+        data['DailyRate'] = isNaN(parsedRate) ? null : parsedRate;
+    }
+
+    if (data['AnimalDays'] === '' || data['AnimalDays'] === undefined) {
+        data['AnimalDays'] = null;
+    } else if (typeof data['AnimalDays'] === 'string') {
+        var parsedDays = parseInt(data['AnimalDays'], 10);
+        data['AnimalDays'] = isNaN(parsedDays) ? null : parsedDays;
     }
 
 

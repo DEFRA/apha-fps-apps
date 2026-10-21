@@ -84,8 +84,8 @@ function reloadInvoicesGrid() {
         data: {
             Page: 1,
             PageSize: 10,
-            SortBy: 'Month',
-            Descending: false,
+            SortBy: 'InvoiceCounter',
+            Descending: true,
             Filter: '{}',
             parentProject: currentParentProject || '',
             month: currentMonth || ''
