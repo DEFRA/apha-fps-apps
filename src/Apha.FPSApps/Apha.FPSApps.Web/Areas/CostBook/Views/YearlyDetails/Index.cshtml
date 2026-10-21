@@ -130,7 +130,7 @@
                                                     <tbody id="userTableBody">
                                                         @foreach (var year in Model?.ProjectYears ?? Enumerable.Empty<int>())
                                                         {
-                                                            <tr class="project-year-row @(year == Model?.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;" tabindex="0" role="button">
+                                                            <tr class="project-year-row @(year == Model?.SelectedYear ? "selected-table-rowbg" : "")" data-year="@year" style="cursor:pointer;" tabindex="0" role="button" onkeydown="onYearRowKeyDown(event, this)">
                                                                     <td>@year</td>
                                                                     <td>
                                                                         <button type="button" class="btn btn-sm delete-row-btn" data-year="@year" onclick="deletetblProjectYear(this)">

@@ -54,5 +54,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Range(-2147483648, 2147483647, ErrorMessage = "Supplier Number must be between -2,147,483,648 and 2,147,483,647.")]
         [GridColumn(Order = 10, Width = 150, Type = GridColumnType.Number, IsFilterable=true)]
         public int? SupplierNumber { get; set; }
+
+        [Display(Name = "Daily Rate")]
+        [GridColumn(Order = 11, Type = GridColumnType.GbpValue, IsVisible = false)]
+        public decimal? DailyRate { get; set; }
+
+        [Display(Name = "Animal Days")]
+        [GridColumn(Order = 12, Type = GridColumnType.Number, IsVisible = false)]
+        public int? AnimalDays { get; set; }
     }
 }

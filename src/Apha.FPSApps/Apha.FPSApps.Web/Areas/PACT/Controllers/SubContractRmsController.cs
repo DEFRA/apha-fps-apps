@@ -52,9 +52,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var defaultRequest = new PaginationFilter<string>
             {
                 Page = 1,
-                PageSize = 10,
-                SortBy = "Project",
-                Descending = false
+                PageSize = 10
             };
 
             if (month.HasValue)

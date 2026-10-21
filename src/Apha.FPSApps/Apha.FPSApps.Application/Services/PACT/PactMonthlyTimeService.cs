@@ -27,8 +27,8 @@ namespace Apha.FPSApps.Application.Services.PACT
         private static readonly string[] CrossTabRequiredHeaders = ["Time Code", "Parent Project"];
         private static readonly string[] CrossTabDisallowedHeaders = ["Hours", "Month", "Work Group", "Name", "StagingId", "Pact Staff Id", "Employee/Supplier Number", "Employee/Supplier", "Task Number", "Project Code", "Period", "Sum of Quantity"];
         private static readonly string[] StagingIdHeader = ["StagingId"];
-
-        [GeneratedRegex("^(?<workGroup>[A-Za-z0-9]+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase)]
+        
+        [GeneratedRegex("^(?<workGroup>.+?)(?<month>\\d{2})TS", RegexOptions.IgnoreCase)]
         private static partial Regex TimeFileMetadataRegex();
 
         public PactMonthlyTimeService(

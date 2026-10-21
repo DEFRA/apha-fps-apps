@@ -394,7 +394,22 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<TestRequirement> UpdateAsync(TestRequirement entity)
         {
             entity.FpsYear = _fpsRequestContext.FpsYear;
+
+            // Read the existing DateCreated from the database by primary key
+            // instead of overwriting it with a new date.
+            var existingDateCreated = await _context.TestRequirements
+                .AsNoTracking()
+                .Where(t =>
+                    t.TestCode == entity.TestCode &&
+                    t.Buyer == entity.Buyer &&
+                    t.FpsYear == _fpsRequestContext.FpsYear)
+                .Select(t => t.DateCreated)
+                .FirstOrDefaultAsync();
+
+            entity.DateCreated = existingDateCreated;
+
             _context.Entry(entity).State = EntityState.Modified;
+            _context.Entry(entity).Property(e => e.DateCreated).IsModified = false;
             await _context.SaveChangesAsync();
             await WriteAuditLogAsync(entity, "U");
             return entity;

@@ -53,6 +53,7 @@
                         @if (isEditMode)
                         {
                             <input type="hidden" name="OriginalParentProject" value="@Model.ParentProject" />
+                            <input type="hidden" asp-for="OracleProjectCode" />
                         }
 
                         <div class="row d-flex align-items-center mt-2 mb-2">
@@ -517,6 +518,7 @@
                 if (data[field] === null || data[field] === undefined) data[field] = 0;
             });
             if (data['ProjectGroup'] === '' || data['ProjectGroup'] === undefined) data['ProjectGroup'] = null;
+            if (data['OracleProjectCode'] === '') data['OracleProjectCode'] = null;
 
             var url = isEdit
                 ? '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject)

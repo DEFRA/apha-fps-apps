@@ -26,9 +26,7 @@ namespace Apha.FPSApps.Web.Mappings
             config.NewConfig<InvoiceItem, ProjectInvoiceDto>().TwoWays();
             config.NewConfig<ProjectSubContractItem, ProjectSubContractDto>().TwoWays();
             // Mapping for standalone SubContract page
-            config.NewConfig<SubContractItem, ProjectSubContractDto>()
-                .Ignore(dest => dest.DailyRate)
-                .Ignore(dest => dest.AnimalDays);
+            config.NewConfig<SubContractItem, ProjectSubContractDto>();
             config.NewConfig<ProjectSubContractDto, SubContractItem>()
                 .Map(dest => dest.Counter, src => src.SubContCounter);
 

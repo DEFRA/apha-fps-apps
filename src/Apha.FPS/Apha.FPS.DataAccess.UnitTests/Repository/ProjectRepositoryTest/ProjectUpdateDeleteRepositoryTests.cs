@@ -65,16 +65,36 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var (ctx, req) = MakeContext();
             SetupSet(ctx, new[] { MakeProject("PP001") }, x => x.Projects);
             SetupSet(ctx, Enumerable.Empty<ProjectLog>(), x => x.ProjectLogs);
-            RepositoryTestHelper.SetupEntityEntry<FpsDbContext, Project>(ctx);
+            RepositoryTestHelper.SetupSaveChanges(ctx);
+
+            // Entry() returns a real EntityEntry from an InMemory context so the
+            // State/IsModified assignments execute.
+            var options = new DbContextOptionsBuilder<FpsDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+            using var entryContext = new FpsDbContext(options, req);
+            ctx.Setup(c => c.Entry(It.IsAny<Project>()))
+                .Returns((Project p) => entryContext.Entry(p));
 
             var repo  = CreateRepository(ctx, req);
-            var input = MakeProject("PP001");
+            var input = MakeProject("PP001", year: 1999);
 
-            // The code sets project.FpsYear and calls NormalizeDateTimesToUnspecified before
-            // Entry() — all of which execute. The mock then throws because EntityEntry<T>
-            // cannot be proxied by Moq.
-            await Assert.ThrowsAnyAsync<Exception>(
-                () => repo.UpdateProjectAsync(input));
+            var result = await repo.UpdateProjectAsync(input);
+
+            Assert.Equal(2024, result.FpsYear);
+
+            var entry = entryContext.Entry(input);
+            Assert.Equal(EntityState.Modified, entry.State);
+            Assert.False(entry.Property(p => p.IncomeAccountCode).IsModified);
+            Assert.False(entry.Property(p => p.WipEoy).IsModified);
+            Assert.False(entry.Property(p => p.WipLimit).IsModified);
+            Assert.False(entry.Property(p => p.WipCurrent).IsModified);
+            Assert.False(entry.Property(p => p.DateCreated).IsModified);
+            Assert.False(entry.Property(p => p.FecCost).IsModified);
+            Assert.False(entry.Property(p => p.DateCosted).IsModified);
+            Assert.False(entry.Property(p => p.ProjectParent).IsModified);
+            Assert.False(entry.Property(p => p.CaseWorkSub).IsModified);
+            Assert.False(entry.Property(p => p.Finished).IsModified);
         }
 
         [Fact]
