@@ -128,8 +128,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = $"Project '{item.ParentProject}' not found." });
 
             var projectDto = getResult.Data;
-            projectDto.Program = item.Program;
-            projectDto.CostCentre = item.CostCentre;
             projectDto.OracleProjectCode = item.OracleProjectCode;
             projectDto.SubAccountCode = item.SubAccountCode;
 
