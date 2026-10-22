@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -6,7 +7,6 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using Apha.Common.Utilities.StateManagement;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +33,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IProjectSubContractService _projectSubContractService;
         private readonly IAppStateService _appStateService;
 
+        private readonly ICostCentreService _costCentreService;
+
         public ProjectPlanViewerController(
             IMapper mapper,
             IProjectService projectService,
@@ -44,6 +46,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             ITimeCostCalcsService timeCostCalcsService,
             IMonthlyOutputService monthlyOutputService,
             IProjectSubContractService projectSubContractService,
+            ICostCentreService costCentreService,
             IAppStateService appStateService)
         {
             _mapper = mapper;
@@ -56,6 +59,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _timeCostCalcsService = timeCostCalcsService;
             _monthlyOutputService = monthlyOutputService;
             _projectSubContractService = projectSubContractService;
+            _costCentreService = costCentreService;
             _appStateService = appStateService;
         }
 
@@ -125,6 +129,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
+            var lstcostCentre = await _costCentreService.GetAllCostCentresAsync();
+            var profitCentre = lstcostCentre.Success && lstcostCentre.Data != null
+                ? lstcostCentre.Data.FirstOrDefault(cc => cc.CostCentre == result.Data.CostCentre)?.ProfitCentre ?? string.Empty
+                : string.Empty;
+
             var p = result.Data;
             return Json(new
             {
@@ -144,7 +153,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 contract = p.Contract,
                 isDefraProject = p.IsDefraProject,
                 costCentre = p.CostCentre,
-                owningRc = p.OwningRc,
+                owningRc = profitCentre,
                 projectGroup = p.ProjectGroup,
                 incomeAccountCode = p.IncomeAccountCode,
                 subAccountCode = p.SubAccountCode,
