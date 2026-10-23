@@ -69,7 +69,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 .Join(_dbContext.ProjectLatestDetails,
                       g => g.Parentproject,
                       v => v.ParentProject,
-                      (g, v) => v.Program)
+                      (g, v) => v.ProjectGroup)
                 .FirstOrDefaultAsync();
 
             return program ?? string.Empty;

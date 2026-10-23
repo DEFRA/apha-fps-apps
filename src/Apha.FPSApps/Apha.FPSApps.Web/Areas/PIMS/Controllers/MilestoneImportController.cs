@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             var matchedProject = allProjects.Data?.FirstOrDefault(p => p.Parentproject == selectedProject);
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
-            viewModel.TypeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
+            viewModel.TypeLookUp = matchedProject?.ProjectGroup?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
             await PopulateDropdownsAsync(viewModel);
             viewModel.ImportGrid = await BuildImportGridAsync(selectedProject, defaultRequest);
             viewModel.Year=  DateTime.Now.Year.ToString();
@@ -169,7 +169,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             ApiResponseDto<ProjectDetailsMilestoneDto> allProjects =
                 await _projectListService.GetProjectsDetailsForMilestoneAsync(parentproject);
             var matchedProject = allProjects.Data;
-            char typeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
+            char typeLookUp = matchedProject?.ProjectGroup?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
 
             var milestoneTypes = await _milestoneService.GetMilestoneTypesAsync(typeLookUp.ToString());
             var milestoneTypeOptions = milestoneTypes.Data?

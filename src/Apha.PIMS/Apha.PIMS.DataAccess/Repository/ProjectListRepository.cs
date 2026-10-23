@@ -160,7 +160,7 @@ namespace Apha.PIMS.DataAccess.Repository
                           Customer = v.Customer,
                           ProjectGroup = v.ProjectGroup,
                           Formrequired = g.Formrequired,
-                          TypeLookUp = v.Program != null && v.Program.ToLower().EndsWith("surv") ? 'D' : 'M'
+                          TypeLookUp = v.ProjectGroup != null && v.ProjectGroup.ToLower().EndsWith("surv") ? 'D' : 'M'
                       })
                 .FirstOrDefaultAsync();
         }
