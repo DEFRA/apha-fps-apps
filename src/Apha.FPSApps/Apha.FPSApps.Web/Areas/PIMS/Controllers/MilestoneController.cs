@@ -62,7 +62,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             var matchedProject = allProjects.Data?.FirstOrDefault(p => string.Equals(p.Parentproject, resolvedProject, StringComparison.OrdinalIgnoreCase));
             viewModel.FormRequired = matchedProject?.Formrequired ?? false;
-            viewModel.TypeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
+            viewModel.TypeLookUp = matchedProject?.ProjectGroup?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(resolvedProject, defaultRequest);
@@ -400,7 +400,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 await _projectListService.GetProjectsDetailsForMilestoneAsync(parentproject);
             var matchedProject = allProjects.Data;
             bool formRequired = matchedProject?.Formrequired ?? false;
-            char typeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
+            char typeLookUp = matchedProject?.ProjectGroup?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
             return Json(new { formRequired, typeLookUp });
         }
 

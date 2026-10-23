@@ -940,7 +940,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
                     {
                         Parentproject = "PP001",
                         Formrequired = true,
-                        Program = "animalsurv"
+                        ProjectGroup = "animalsurv"
                     }
                 });
 
