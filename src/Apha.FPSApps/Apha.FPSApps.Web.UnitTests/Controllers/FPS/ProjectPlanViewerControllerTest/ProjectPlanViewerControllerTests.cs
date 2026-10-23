@@ -32,6 +32,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         private readonly IMonthlyOutputService _monthlyOutputService;
         private readonly IProjectSubContractService _projectSubContractService;
         private readonly IAppStateService _appStateService;
+        private readonly ICostCentreService _costCentreService;
         private readonly ProjectPlanViewerController _controller;
 
         public ProjectPlanViewerControllerTests()
@@ -47,6 +48,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
             _monthlyOutputService = Substitute.For<IMonthlyOutputService>();
             _projectSubContractService = Substitute.For<IProjectSubContractService>();
             _appStateService = Substitute.For<IAppStateService>();
+            _costCentreService = Substitute.For<ICostCentreService>();
+            _costCentreService.GetAllCostCentresAsync()
+                .Returns(new ApiResponseDto<List<CostCentreWorkgroupDto>> { Success = true, Data = new List<CostCentreWorkgroupDto>() });
 
             _controller = new ProjectPlanViewerController(
                 _mapper,
@@ -59,6 +63,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
                 _timeCostCalcsService,
                 _monthlyOutputService,
                 _projectSubContractService,
+                _costCentreService,
                 _appStateService);
         }
 

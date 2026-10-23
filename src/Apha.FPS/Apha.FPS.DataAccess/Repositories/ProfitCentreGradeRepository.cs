@@ -63,9 +63,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<ProfitCentreGrade?> GetByIdAsync(string pcGrade)
         {
+            if (string.IsNullOrWhiteSpace(pcGrade))
+            {
+                return null;
+            }
+
+            var normalizedPcGrade = pcGrade.Trim().ToLower();
+
             return await _dbContext.ProfitCentreGrades
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.PcGrade == pcGrade);
+                .FirstOrDefaultAsync(x => x.PcGrade != null
+                    && x.PcGrade.Trim().ToLower() == normalizedPcGrade);
         }
 
         public async Task<ProfitCentreGrade> CreateAsync(ProfitCentreGrade entity)

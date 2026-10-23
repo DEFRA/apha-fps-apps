@@ -59,9 +59,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Employee?> GetEmployeeByIdAsync(string spNumber)
         {
+            var normalizedSpNumber = spNumber?.ToUpper();
             return await _dbContext.Employees
                 .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.SPNumber == spNumber);
+                .FirstOrDefaultAsync(e => e.SPNumber.ToUpper() == normalizedSpNumber);
         }
 
         public async Task<Employee> AddEmployeeAsync(Employee employee)

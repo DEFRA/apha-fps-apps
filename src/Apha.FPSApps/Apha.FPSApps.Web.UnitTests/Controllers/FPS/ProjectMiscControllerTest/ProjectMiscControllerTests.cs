@@ -499,7 +499,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectMiscControllerTest
                 OracleProjectCode = "OPC-NEW",
                 SubAccountCode = "1020403"
             };
-            var projectDto = new ProjectDto { ParentProject = "P001", Program = "OLD_PROG" };
+            var projectDto = new ProjectDto { ParentProject = "P001", Program = "OLD_PROG", CostCentre = 1234 };
 
             ProjectDto? capturedDto = null;
 
@@ -512,8 +512,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectMiscControllerTest
 
             // Assert
             Assert.NotNull(capturedDto);
-            Assert.Equal("PROG99", capturedDto!.Program);
-            Assert.Equal(9999.5, capturedDto.CostCentre);
+            Assert.Equal("OLD_PROG", capturedDto!.Program);
+            Assert.Equal(1234, capturedDto.CostCentre);
             Assert.Equal("OPC-NEW", capturedDto.OracleProjectCode);
             Assert.Equal("1020403", capturedDto.SubAccountCode);
         }

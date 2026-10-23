@@ -52,7 +52,7 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(
                 [
                     new BusinessValidationError(
-                        $"Cannot add ProfitCentreGrade because RC Grade '{dto.PcGrade}' already exists.",
+                        $"Cannot add RC Grade because RC Grade '{dto.PcGrade}' already exists.",
                         "PROFITCENTREGRADE_ALREADY_EXISTS")
                 ]);
             }
