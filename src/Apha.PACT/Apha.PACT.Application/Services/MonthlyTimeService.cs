@@ -265,14 +265,18 @@ namespace Apha.PACT.Application.Services
         private async Task<ValidationContext> LoadValidationContextAsync(string importedBy)
         {
             var calenderMonths = await _calenderMonthRepository.GetCalenderMonthsAsync();
+            var staffByWorkGroup = await _workGroupRepository.GetStaffByWorkGroupAsync();
+            var timeCodeRows = await _timeCodeValidRepository.GetTimeCodeValidsAsync();
             return new ValidationContext
             {
                 ValidWorkGroups = new HashSet<string>(
                     await _workGroupRepository.GetAllWorkGroupNamesAsync(),
                     StringComparer.OrdinalIgnoreCase),
                 ValidMonths = new HashSet<double>(calenderMonths.Select(c => (double)(c.MonthNumber ?? 0))),
-                StaffByWorkGroup = await _workGroupRepository.GetStaffByWorkGroupAsync(),
-                TimeCodeRows = await _timeCodeValidRepository.GetTimeCodeValidsAsync(),
+                StaffByWorkGroup = staffByWorkGroup,
+                TimeCodeRows = timeCodeRows,
+                StaffIndexByWorkGroup = staffByWorkGroup.ToLookup(x => x.WorkGroup, StringComparer.OrdinalIgnoreCase),
+                TimeCodeIndexByWorkGroup = timeCodeRows.ToLookup(x => x.WorkGroup, StringComparer.OrdinalIgnoreCase),
                 ExistingLiveKeys = new HashSet<string>(
                     await _repository.GetExistingLiveKeysAsync(),
                     StringComparer.OrdinalIgnoreCase),
@@ -334,17 +338,17 @@ namespace Apha.PACT.Application.Services
             ValidateWorkGroup(ref workGroup, context.ValidWorkGroups, failures);
             var isWorkGroupValid = failures.Count == failureCount;
 
-            ValidateStaff(staffId, name, workGroup, record, context.StaffByWorkGroup, failures);
+            ValidateStaff(staffId, name, workGroup, record, context.StaffIndexByWorkGroup[workGroup!], failures);
 
             staffId = string.IsNullOrWhiteSpace(record.PactStaffId) ? staffId : record.PactStaffId.Trim();
             name = string.IsNullOrWhiteSpace(record.Name) ? name : record.Name.Trim();
 
             failureCount = failures.Count;
-            ValidateTimeCode(ref timeCode, ref workGroup, context.TimeCodeRows, failures);
+            ValidateTimeCode(ref timeCode, ref workGroup, context.TimeCodeIndexByWorkGroup[workGroup!], failures);
             var isTimeCodeValid = failures.Count == failureCount;
 
             failureCount = failures.Count;
-            ValidateParentProject(ref parentProject, ref workGroup, ref timeCode, context.TimeCodeRows, failures);
+            ValidateParentProject(ref parentProject, ref workGroup, ref timeCode, context.TimeCodeIndexByWorkGroup[workGroup!], failures);
             var isParentProjectValid = failures.Count == failureCount;
 
             failureCount = failures.Count;
@@ -410,10 +414,7 @@ namespace Apha.PACT.Application.Services
                 return;
             }
 
-            var match = validWorkGroups
-                .FirstOrDefault(x => string.Equals(x, workGroupValue, StringComparison.OrdinalIgnoreCase));
-
-            if (string.IsNullOrWhiteSpace(match))
+            if (!validWorkGroups.TryGetValue(workGroupValue, out var match) || string.IsNullOrWhiteSpace(match))
             {
                 failures.Add($"The work group name is invalid: {workGroupValue}");
                 return;
@@ -427,7 +428,7 @@ namespace Apha.PACT.Application.Services
             string? name,
             string? workGroup,
             StagingMonthlyTime record,
-            List<WorkGroupStaffItem> staffByWorkGroup,
+            IEnumerable<WorkGroupStaffItem> staffByWorkGroup,
             List<string> failures)
         {
             if (string.IsNullOrWhiteSpace(staffId) && string.IsNullOrWhiteSpace(name))
@@ -449,7 +450,7 @@ namespace Apha.PACT.Application.Services
             string staffId,
             string? workGroup,
             StagingMonthlyTime record,
-            List<WorkGroupStaffItem> staffByWorkGroup,
+            IEnumerable<WorkGroupStaffItem> staffByWorkGroup,
             List<string> failures)
         {
             var matchBySpNumber = staffByWorkGroup
@@ -465,7 +466,7 @@ namespace Apha.PACT.Application.Services
             string? name,
             string? workGroup,
             StagingMonthlyTime record,
-            List<WorkGroupStaffItem> staffByWorkGroup,
+            IEnumerable<WorkGroupStaffItem> staffByWorkGroup,
             List<string> failures)
         {
             var matchByName = staffByWorkGroup
@@ -516,7 +517,7 @@ namespace Apha.PACT.Application.Services
         private static void ValidateTimeCode(
             ref string? timeCode,
             ref string? workGroup,
-            List<TimeCodeValid> timeCodeRows,
+            IEnumerable<TimeCodeValid> timeCodeRows,
             List<string> failures)
         {
             var timeCodeValue = timeCode;
@@ -553,7 +554,7 @@ namespace Apha.PACT.Application.Services
             ref string? parentProject,
             ref string? workGroup,
             ref string? timeCode,
-            List<TimeCodeValid> timeCodeRows,
+            IEnumerable<TimeCodeValid> timeCodeRows,
             List<string> failures)
         {
             var parentProjectValue = parentProject;
@@ -684,6 +685,8 @@ namespace Apha.PACT.Application.Services
         public required HashSet<double> ValidMonths { get; init; }
         public required List<WorkGroupStaffItem> StaffByWorkGroup { get; init; }
         public required List<TimeCodeValid> TimeCodeRows { get; init; }
+        public required ILookup<string, WorkGroupStaffItem> StaffIndexByWorkGroup { get; init; }
+        public required ILookup<string, TimeCodeValid> TimeCodeIndexByWorkGroup { get; init; }
         public required HashSet<string> ExistingLiveKeys { get; init; }
         public required HashSet<string> PassedStagingKeys { get; init; }
     }

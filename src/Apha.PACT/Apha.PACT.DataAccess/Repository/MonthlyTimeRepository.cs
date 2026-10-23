@@ -310,7 +310,6 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.StagingMonthlyTimes
                 .Where(x => x.ImportedBy == importedBy && x.Passed == false)
                 .OrderBy(x => x.Id)
-                .Distinct()
                 .ToListAsync();
         }
 
@@ -329,7 +328,9 @@ namespace Apha.PACT.DataAccess.Repository
         {
             foreach (var record in records)
             {
-                _context.Entry(record).State = EntityState.Modified;
+                var entry = _context.Entry(record);
+                if (entry.State == EntityState.Detached)
+                    entry.State = EntityState.Modified;
             }
             await _context.SaveChangesAsync();
         }
