@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
             // Arrange
             var projects = new List<ProjectListMilestoneDto>
             {
-                new() { Parentproject = "PP001", Program = "TestSurv" }
+                new() { Parentproject = "PP001", ProjectGroup = "TestSurv" }
             };
             var apiResult = ApiResponseDto<List<ProjectListMilestoneDto>>.SuccessResponse(projects);
             var milestoneTypes = ApiResponseDto<List<MilestoneTypeDto>>.SuccessResponse(new List<MilestoneTypeDto>());
@@ -359,7 +359,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneImpor
             var projectDetails = new ProjectDetailsMilestoneDto
             {
                 Parentproject = parentProject,
-                Program = "TestSurv"
+                ProjectGroup = "TestSurv"
             };
             var projectApiResult = ApiResponseDto<ProjectDetailsMilestoneDto>.SuccessResponse(projectDetails);
             var milestoneTypes = new List<MilestoneTypeDto>
