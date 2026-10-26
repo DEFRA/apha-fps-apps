@@ -64,7 +64,7 @@
                                         Financial Year End Process For
                                     </label>
                                     <input class="govuk-input govuk-input--width-5" id="displayYearEndProcessYear" type="text" 
-                                           value="@(Model.PlannedYear > 0 ? $"{Model.PlannedYear}-{(Model.PlannedYear + 1) % 100:D2}" : "")" 
+                                           value="@(Model.PlannedYear > 0 ? $"{Model.PlannedYear - 1}-{(Model.PlannedYear) % 100:D2}" : "")" 
                                            autocomplete="off" disabled>
                                     <input class="govuk-input govuk-input--width-5" id="yearEndProcessYear"
                                            type="text" value="@Model.PlannedYear" autocomplete="off" aria-label="Year End Process Year" style="display:none;">
