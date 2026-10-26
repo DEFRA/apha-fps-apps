@@ -174,7 +174,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.MaintenanceSettingsServic
                     d.ContainsKey("CurrentYear") &&
                     d.ContainsKey("HoursInDay") &&
                     d.ContainsKey("DaysInYear") &&
-                    d.ContainsKey("Profitanimals") &&   // service uses this exact key string
+                    d.ContainsKey("ProfitAnimals") &&   // service uses this exact key string
                     d.ContainsKey("ProfitExceptional") &&
                     d.ContainsKey("Profitstaff") &&     // service uses this exact key string
                     d.ContainsKey("Profittests")));    // service uses this exact key string
