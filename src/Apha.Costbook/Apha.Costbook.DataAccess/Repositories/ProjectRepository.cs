@@ -1145,7 +1145,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             double profitStaff       = await GetProfitFactorAsync("Profitstaff");
             double profitTests       = await GetProfitFactorAsync("Profittests");
             double profitExceptional = await GetProfitFactorAsync("ProfitExceptional");
-            double profitAnimals     = await GetProfitFactorAsync("Profitanimals");            
+            double profitAnimals     = await GetProfitFactorAsync("ProfitAnimals");            
 
             return (staffCostTotal      * profitStaff)       +
                    (testCostTotal       * profitTests)       +

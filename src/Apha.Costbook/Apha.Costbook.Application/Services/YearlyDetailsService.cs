@@ -31,7 +31,7 @@ public class YearlyDetailsService : IYearlyDetailsService
     private const string IdCurrentYear = "CurrentYear";
     private const string IdWorkingHoursInDay = "HoursInDay";
     private const string IdWorkingDaysInYear = "DaysInYear";
-    private const string IdProfitAnimals = "Profitanimals";
+    private const string IdProfitAnimals = "ProfitAnimals";
     private const string IdProfitExceptional = "ProfitExceptional";
     private const string IdProfitStaff = "Profitstaff";
     private const string IdProfitTests = "Profittests";
