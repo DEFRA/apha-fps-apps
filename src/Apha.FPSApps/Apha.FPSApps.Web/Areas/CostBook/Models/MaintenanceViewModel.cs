@@ -58,4 +58,5 @@ public class MaintenanceViewModel
 
     // ── Tab 5: CAPS Staff DataGrid ────────────────────────────────────────────
     public DataGridConfig<CapsStaffItem> CapsStaffGrid { get; set; } = new();
+
 }
