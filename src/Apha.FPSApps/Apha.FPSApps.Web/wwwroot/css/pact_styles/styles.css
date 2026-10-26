@@ -4149,3 +4149,15 @@ table#tblMonthPeriod > tbody > tr:hover {
     overflow: visible !important;
     display: flow-root;
 }
+
+.make-live-button-timeoutput {
+    background-color: #3f2577;
+}
+
+.delete-all-button-timeoutput {
+    background-color: #f47738;
+}
+
+.validate-button-timeoutput {
+    background-color: #1a65a6;
+}

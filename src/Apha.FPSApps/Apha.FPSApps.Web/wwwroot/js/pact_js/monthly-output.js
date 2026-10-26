@@ -910,6 +910,37 @@ function filterStagingAll() {
     reloadStagingGrid();
 }
 
+function downloadLimsTemplate() {
+    const downloadUrl = '/PACT/MonthlyOutput/DownloadLimsTemplate';
+
+    $.ajax({
+        url: downloadUrl,
+        type: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (blob, status, xhr) {
+            const disposition = xhr.getResponseHeader('Content-Disposition') || '';
+            const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+            const fileName = decodeURIComponent(fileNameMatch?.[1] || fileNameMatch?.[2] || 'LIMS-Template.xlsx');
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showAlertMessage('Template downloaded successfully. Please use the template to import LIMS data.', AlertType.INFO);
+        },
+        error: function () {
+            showAlertMessage('Template download failed. Please try again.', AlertType.ERROR);
+        }
+    });
+}
+
 // ── Page init ─────────────────────────────────────────────────────────────────
 
 $(document).ready(function () {
@@ -935,6 +966,11 @@ $(document).ready(function () {
     $('#btnClearLiveSearch').on('click', function () {
         clearLiveSearch();
         reloadLiveGrid();
+    });
+
+    // LIMS template download
+    $('#limsTemplateExcel').on('click', function () {
+        downloadLimsTemplate();
     });
 
     // Import — show import type selection modal

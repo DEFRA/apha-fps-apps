@@ -1289,5 +1289,63 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputControllerTes
         }
 
         #endregion
+
+        #region DownloadLimsTemplate
+
+        [Fact]
+        public void DownloadLimsTemplate_FileExists_ReturnsFileResult()
+        {
+            // Arrange
+            var templateDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT");
+            Directory.CreateDirectory(templateDir);
+            var templatePath = Path.Combine(templateDir, "LIMS-Template.xlsx");
+            var created = !File.Exists(templatePath);
+            if (created)
+                File.WriteAllBytes(templatePath, [0x50, 0x4B, 0x03, 0x04]); // minimal bytes
+
+            try
+            {
+                // Act
+                var result = _controller.DownloadLimsTemplate();
+
+                // Assert
+                var fileResult = Assert.IsType<FileContentResult>(result);
+                Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
+                Assert.StartsWith("LIMS_", fileResult.FileDownloadName);
+                Assert.EndsWith(".xlsx", fileResult.FileDownloadName);
+            }
+            finally
+            {
+                if (created)
+                    File.Delete(templatePath);
+            }
+        }
+
+        [Fact]
+        public void DownloadLimsTemplate_FileNotExists_ReturnsNotFound()
+        {
+            // Arrange — ensure template file does not exist
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "LIMS-Template.xlsx");
+            var backupPath = templatePath + ".bak";
+            var existed = File.Exists(templatePath);
+            if (existed)
+                File.Move(templatePath, backupPath);
+
+            try
+            {
+                // Act
+                var result = _controller.DownloadLimsTemplate();
+
+                // Assert
+                Assert.IsType<NotFoundResult>(result);
+            }
+            finally
+            {
+                if (existed)
+                    File.Move(backupPath, templatePath);
+            }
+        }
+
+        #endregion
     }
 }

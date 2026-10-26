@@ -619,5 +619,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 .ToList();
         }
 
+        /// <summary>
+        /// Downloads the LIMS import template spreadsheet.
+        /// </summary>
+        [HttpGet]
+        public IActionResult DownloadLimsTemplate()
+        {
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "LIMS-Template.xlsx");
+            if (!System.IO.File.Exists(templatePath))
+                return NotFound();
+
+            var bytes = System.IO.File.ReadAllBytes(templatePath);
+            var fileName = $"LIMS_{DateTime.Now:yyyyMMdd}.xlsx";
+            return File(bytes, ExcelContentType, fileName);
+        }
+
     }
 }

@@ -93,6 +93,10 @@
 
         <div class="time_record_div_wrapper govuk-!-margin-top-2 buttons-side-wrapper">
             <div class="time_record_btn_wrapper">
+                <button type="button" id="limsTemplateExcel" class="govuk-button sup_margin_0 sup_gov_blue_bg sup_flex sup_width_140" allow-edit="false">
+                    <img src="~/images/file-export-solid-full.svg" width="16" alt="Download LIMS import template excel file" />&nbsp;Template
+                </button>
+
                 <div class="upload-container sup_width_140">
                     <input type="file" id="csvInput" class="file-input" accept=".xlsx,.xls" aria-label="Import File" hidden>
                     <button type="button" id="importBtn" class="govuk-button sup_width_140 sup_margin_0 sup_flex" allow-edit="false">
@@ -104,7 +108,7 @@
                     <img src="~/images/file-import-solid-full.svg" width="16" alt="Import exported excel file" />&nbsp;Reimport
                 </button>
 
-                <button type="button" id="validateBtn" class="govuk-button sup_margin_0 govuk-button--warning sup_flex sup_width_140" allow-edit="false">
+                <button type="button" id="validateBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140 validate-button-timeoutput" allow-edit="false">
                     <img src="~/images/triangle-exclamation-solid-full.svg" width="16" alt="Validate records" />&nbsp;Validate
                 </button>
 
@@ -120,20 +124,20 @@
                     <img src="~/images/magnifying-glass-chart-solid-full.svg" width="16" alt="All records" />&nbsp;All
                 </button>
 
-                <button type="button" id="moveBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140 make-live-button" allow-edit="false">
+                <button type="button" id="exportExcel" class="govuk-button sup_margin_0 sup_flex sup_width_140" allow-edit="false">
+                    <img src="~/images/file-export-solid-full.svg" width="16" alt="Export excel" />&nbsp;Export Excel
+                </button>
+
+                <button type="button" id="moveBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140 make-live-button make-live-button-timeoutput" allow-edit="false">
                     <img src="~/images/arrow-up-from-bracket-solid-full.svg" width="16" alt="Make live" />&nbsp;Make Live
                 </button>
 
-                <button type="button" id="deleteAllWGBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140" allow-edit="false">
-                    <img src="~/images/trash-can-regular-full-white.svg" width="16" alt="Delete all" />&nbsp;Delete All
-                </button>
-
-                <button type="button" id="deleteFailedWGBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140" allow-edit="false">
+                <button type="button" id="deleteFailedWGBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140 govuk-button--warning" allow-edit="false">
                     <img src="~/images/trash-can-regular-full-white.svg" width="16" alt="Delete Failed" />&nbsp;Delete Failed
                 </button>
 
-                <button type="button" id="exportExcel" class="govuk-button sup_margin_0 sup_flex sup_width_140" allow-edit="false">
-                    <img src="~/images/file-export-solid-full.svg" width="16" alt="Export excel" />&nbsp;Export Excel
+                <button type="button" id="deleteAllWGBtn" class="govuk-button sup_margin_0 sup_flex sup_width_140 delete-all-button-timeoutput" allow-edit="false">
+                    <img src="~/images/trash-can-regular-full-white.svg" width="16" alt="Delete all" />&nbsp;Delete All
                 </button>
             </div>
         </div>

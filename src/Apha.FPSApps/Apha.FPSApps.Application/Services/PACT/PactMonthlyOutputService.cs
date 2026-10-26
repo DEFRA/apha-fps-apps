@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         private static readonly string[] RequiredHeaders =
             ["Work Group", "Test Code", "Buyer", "Month", "Volume"];
         private static readonly string[] LimsRequiredHeaders =
-            ["Group", "Test", "Project", "Month", "SumOfCountTotal"];
+            ["WorkGroup", "TestCode", "Buyer", "Period", "Volume"];
         private static readonly string[] DisallowedHeadersForFreshImport =
             ["Passed", "Failure Comments", "Filename", "StagingId"];
 
@@ -371,11 +371,11 @@ namespace Apha.FPSApps.Application.Services.PACT
         {
             return new MonthlyOutputImportRowDto
             {
-                WorkGroup       = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Group")])),
-                TestCode        = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Test")])),
-                Buyer           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Project")])),
-                Month           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])),
-                Volume          = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("SumOfCountTotal")]))
+                WorkGroup       = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("WorkGroup")])),
+                TestCode        = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("TestCode")])),
+                Buyer           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Buyer")])),
+                Month           = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Period")])),
+                Volume          = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Volume")]))
             };
         }
 

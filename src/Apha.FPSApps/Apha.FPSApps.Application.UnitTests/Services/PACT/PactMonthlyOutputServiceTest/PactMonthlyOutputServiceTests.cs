@@ -936,7 +936,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         [Fact]
         public async Task ImportMonthlyOutputAsync_LimsData_DisallowedHeaders_ReturnsInvalidTemplate()
         {
-            var headers = new[] { "Group", "Test", "Project", "Month", "SumOfCountTotal" };
+            var headers = new[] { "WorkGroup", "TestCode", "Buyer", "Period", "Volume" };
             var data = new[] { new[] { "WG1", "TC1", "Buyer1", "6", "100" } };
             var file = CreateMockFormFile("test.xlsx", headers, data);
 
@@ -957,7 +957,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         [Fact]
         public async Task ImportMonthlyOutputAsync_LimsData_ReadExcelFails_MissingHeaders_ReturnsInvalidTemplate()
         {
-            var headers = new[] { "Group", "Test", "Project", "Month", "SumOfCountTotal" };
+            var headers = new[] { "WorkGroup", "TestCode", "Buyer", "Period", "Volume" };
             var data = new[] { new[] { "WG1", "TC1", "Buyer1", "6", "100" } };
             var file = CreateMockFormFile("test.xlsx", headers, data);
 
@@ -971,7 +971,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
                 .Returns(new ExcelImportResult<MonthlyOutputImportRowDto>
                 {
                     IsSuccess = false,
-                    MissingHeaders = ["SumOfCountTotal"],
+                    MissingHeaders = ["Volume"],
                     ErrorMessage = "Missing columns"
                 });
 
@@ -985,7 +985,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         [Fact]
         public async Task ImportMonthlyOutputAsync_LimsData_ReadExcelFails_EmptyFile_ReturnsEmptyFileError()
         {
-            var headers = new[] { "Group", "Test", "Project", "Month", "SumOfCountTotal" };
+            var headers = new[] { "WorkGroup", "TestCode", "Buyer", "Period", "Volume" };
             var data = new[] { new[] { "WG1", "TC1", "Buyer1", "6", "100" } };
             var file = CreateMockFormFile("test.xlsx", headers, data);
 
@@ -1012,7 +1012,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServ
         [Fact]
         public async Task ImportMonthlyOutputAsync_LimsData_Success_DelegatesToApiClient()
         {
-            var headers = new[] { "Group", "Test", "Project", "Month", "SumOfCountTotal" };
+            var headers = new[] { "WorkGroup", "TestCode", "Buyer", "Period", "Volume" };
             var data = new[] { new[] { "WG1", "TC1", "Buyer1", "6", "100" } };
             var file = CreateMockFormFile("test.xlsx", headers, data);
 
