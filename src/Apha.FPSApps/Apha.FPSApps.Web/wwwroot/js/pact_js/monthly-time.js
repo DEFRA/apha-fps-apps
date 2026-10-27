@@ -1228,6 +1228,37 @@ function getExportedMonthlyTimeFileName() {
     return `ExportedTS_${dd}${mm}${yyyy}.xlsx`;
 }
 
+function downloadOtlTemplate() {
+    const downloadUrl = '/PACT/MonthlyTime/DownloadOtlTemplate';
+
+    $.ajax({
+        url: downloadUrl,
+        type: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (blob, status, xhr) {
+            const disposition = xhr.getResponseHeader('Content-Disposition') || '';
+            const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+            const fileName = decodeURIComponent(fileNameMatch?.[1] || fileNameMatch?.[2] || 'OTL-Template.xlsx');
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showAlertMessage('Template downloaded successfully. Please use the template to import OTL data.', AlertType.INFO);
+        },
+        error: function () {
+            showAlertMessage('Template download failed. Please try again.', AlertType.ERROR);
+        }
+    });
+}
+
 $(function () {
     window.monthlyTimePassedFilter = null;
 
@@ -1260,6 +1291,9 @@ $(function () {
         e.preventDefault();
         e.stopPropagation();
         openImportTypeModal();
+    });
+    $('#otlTemplateExcel').on('click', function () {
+        downloadOtlTemplate();
     });
     $('#csvInput').on('change', function () {
         const file = this.files && this.files[0];

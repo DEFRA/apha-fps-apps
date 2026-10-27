@@ -680,5 +680,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ? response.Data.OrderBy(x => x.Monthnumber).Select(x => new SelectListItem(x.Monthnumber.ToString(), x.Monthnumber.ToString())).ToList()
                 : [];
         }
+
+        /// <summary>
+        /// Downloads the OTL import template spreadsheet.
+        /// </summary>
+        [HttpGet]
+        public IActionResult DownloadOtlTemplate()
+        {
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "OTL Template.xlsx");
+            if (!System.IO.File.Exists(templatePath))
+                return NotFound();
+
+            var bytes = System.IO.File.ReadAllBytes(templatePath);
+            var fileName = $"OTL_{DateTime.Now:yyyyMMdd}.xlsx";
+            return File(bytes, ExcelContentType, fileName);
+        }
     }
 }
