@@ -11,15 +11,10 @@ WITH stale_jobs AS (
     INNER JOIN fps.job_status js
         ON js.statusid = jq.statusid
     WHERE js.status IN ('Running', 'Initiated')
-      AND COALESCE(jq.heartbeat_at_utc, jq.startdatetime)
-            < NOW() - INTERVAL '15 minutes'
+            AND jq.startdatetime < NOW() - INTERVAL '15 minutes'
 )
 UPDATE fps.job_queue q
 SET statusid = failed_status.statusid,
-    failure_reason = COALESCE(
-        q.failure_reason,
-        'Stale in-progress record recovered by can-run reconciliation'
-    ),
     enddatetime = COALESCE(q.enddatetime, NOW()),
     updated_at = NOW()
 FROM stale_jobs s
