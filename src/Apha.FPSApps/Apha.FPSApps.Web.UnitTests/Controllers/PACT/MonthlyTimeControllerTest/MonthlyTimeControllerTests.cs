@@ -1627,7 +1627,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
             // Arrange
             var templateDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT");
             Directory.CreateDirectory(templateDir);
-            var templatePath = Path.Combine(templateDir, "OTL Template.xlsx");
+            var templatePath = Path.Combine(templateDir, "OTL-Template.xlsx");
             var created = !File.Exists(templatePath);
             if (created)
                 File.WriteAllBytes(templatePath, [0x50, 0x4B, 0x03, 0x04]); // minimal bytes
@@ -1654,7 +1654,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeControllerTest
         public void DownloadOtlTemplate_FileNotExists_ReturnsNotFound()
         {
             // Arrange — ensure template file does not exist
-            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "OTL Template.xlsx");
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "OTL-Template.xlsx");
             var backupPath = templatePath + ".bak";
             var existed = File.Exists(templatePath);
             if (existed)

@@ -678,7 +678,11 @@ a {
 }
 
 .sup_width_140 {
-    width: 144px !important;
+    width: 140px !important;
+}
+
+.sup_width_145 {
+    width: 145px !important;
 }
 
 .sup_width_175 {

@@ -687,7 +687,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public IActionResult DownloadOtlTemplate()
         {
-            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "OTL Template.xlsx");
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "OTL-Template.xlsx");
             if (!System.IO.File.Exists(templatePath))
                 return NotFound();
 
