@@ -1,0 +1,843 @@
+--liquibase formatted sql
+
+--changeset repo-admin:CR089_cutover labels:ddl context:all splitStatements:false
+--comment: Cutover half of CR089 (changesets/cr089_add_fpsyear_to_tblkpprofitcentre.sql). Runs after the fpsyear data-migration program has replaced the -1 sentinel rows in fps.tblkpprofitcentre. Adds the fpsyear FK, re-adds the affected foreign keys, and recreates dependent views.
+
+BEGIN;
+
+-- ============================================================================
+-- CR089_cutover
+--
+-- Purpose:
+--   Complete the FPS-year scoping of fps.tblkpprofitcentre started by the
+--   CR089 DDL script (cr089_add_fpsyear_to_tblkpprofitcentre.sql). That script
+--   already added the composite primary key (profitcentre, fpsyear) and
+--   dropped the five old inbound foreign keys, using a -1 sentinel value so
+--   the primary key could be created immediately (no interim/temporary
+--   key). This script runs after the data-migration program has replaced
+--   every sentinel row with real per-year rows, so it can safely add the
+--   FK to fps.tblyearmaster, re-add the foreign keys, and recreate the
+--   dependent views.
+--
+-- Design:
+--   - Confirm no -1 sentinel rows remain and every fpsyear value exists in
+--     fps.tblyearmaster.
+--   - Confirm every (profitcentre, fpsyear) row already used by the five
+--     dependent tables (and tbluser_profitcentre) exists in
+--     fps.tblkpprofitcentre, so the FK additions below don't fail with a
+--     low-level Postgres error against an incomplete migration.
+--   - Add the FK from fpsyear to fps.tblyearmaster.
+--   - Replace the five existing inbound foreign keys with composite
+--     (profitcentre, fpsyear) foreign keys, and add the missing FK from
+--     fps.tbluser_profitcentre on the same pair.
+--   - Recreate the dependent views that join to fps.tblkpprofitcentre so the
+--     join includes fpsyear, preventing cross-year row multiplication.
+--
+-- Out of scope:
+--   - Yearly partition conversion (PARTITION BY LIST (fpsyear)) for
+--     fps.tblkpprofitcentre remains a separate later change, consistent
+--     with the shadow-table pattern used for other partitioned tables in
+--     this repository.
+-- ============================================================================
+
+
+-- ============================================================================
+-- 0. Preconditions
+-- ============================================================================
+
+DO $$
+BEGIN
+
+	IF EXISTS (
+		SELECT 1
+		FROM pg_constraint
+		WHERE conname = 'fk_tblkpprofitcentre_fpsyear'
+		  AND conrelid = 'fps.tblkpprofitcentre'::regclass
+	) THEN
+
+		RAISE EXCEPTION
+			'CR089_cutover precondition failed: fps.tblkpprofitcentre already has the fpsyear foreign key. CR089_cutover appears to have already run.';
+
+	END IF;
+
+	IF NOT EXISTS (
+		SELECT 1
+		FROM pg_constraint
+		WHERE conname = 'pk_tblkpprofitcentre'
+		  AND conrelid = 'fps.tblkpprofitcentre'::regclass
+	) THEN
+
+		RAISE EXCEPTION
+			'CR089_cutover precondition failed: the composite primary key is missing. Run changesets/cr089_add_fpsyear_to_tblkpprofitcentre.sql before this script.';
+
+	END IF;
+
+END
+$$;
+
+
+-- ============================================================================
+-- 1. Require the data-migration program's output before proceeding
+-- ============================================================================
+
+DO $$
+BEGIN
+	IF EXISTS (
+		SELECT 1
+		FROM fps.tblkpprofitcentre
+		WHERE fpsyear = -1
+	) THEN
+
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.tblkpprofitcentre still has -1 sentinel rows. Run the fpsyear data-migration program before applying the CR089 FK/view changes.';
+
+	END IF;
+
+	IF EXISTS (
+		SELECT 1
+		FROM fps.tblkpprofitcentre pc
+		WHERE NOT EXISTS (
+			SELECT 1
+			FROM fps.tblyearmaster ym
+			WHERE ym.fpsyear = pc.fpsyear
+		)
+	) THEN
+
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.tblkpprofitcentre contains fpsyear values not present in fps.tblyearmaster.';
+
+	END IF;
+END
+$$;
+
+
+-- ============================================================================
+-- 2. Remove orphaned tbluser_profitcentre rows
+-- ============================================================================
+-- Delete user assignments pointing at a profitcentre that no longer exists
+-- in fps.tblkpprofitcentre. These stale rows would otherwise fail the
+-- section 3 completeness check and block the section 5 composite FK.
+
+DELETE FROM fps.tbluser_profitcentre
+WHERE profitcentre NOT IN (
+	SELECT profitcentre FROM fps.tblkpprofitcentre
+);
+
+
+-- ============================================================================
+-- 3. Verify referential completeness against the dependent tables
+-- ============================================================================
+-- The FK additions in section 5 fail with a low-level Postgres error if a
+-- dependent table has a (profitcentre, fpsyear) combination the
+-- data-migration program hasn't created a matching row for yet (e.g. an
+-- older fpsyear that a child table still has rows for). Check this up
+-- front, table by table, so the failure names the exact table and row
+-- count instead.
+
+DO $$
+DECLARE
+	v_missing_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_missing_count
+	FROM fps.costcentre c
+	WHERE NOT EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre pc
+		WHERE pc.profitcentre = c.profitcentre AND pc.fpsyear = c.fpsyear
+	);
+	IF v_missing_count > 0 THEN
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.costcentre has % row(s) whose (profitcentre, fpsyear) is missing from fps.tblkpprofitcentre. Extend the data-migration program to cover them first.',
+			v_missing_count;
+	END IF;
+END
+$$;
+
+DO $$
+DECLARE
+	v_missing_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_missing_count
+	FROM fps.profitcentregrade c
+	WHERE NOT EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre pc
+		WHERE pc.profitcentre = c.profitcentre AND pc.fpsyear = c.fpsyear
+	);
+	IF v_missing_count > 0 THEN
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.profitcentregrade has % row(s) whose (profitcentre, fpsyear) is missing from fps.tblkpprofitcentre. Extend the data-migration program to cover them first.',
+			v_missing_count;
+	END IF;
+END
+$$;
+
+DO $$
+DECLARE
+	v_missing_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_missing_count
+	FROM fps.profitcentregrade_nondefra c
+	WHERE NOT EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre pc
+		WHERE pc.profitcentre = c.profitcentre AND pc.fpsyear = c.fpsyear
+	);
+	IF v_missing_count > 0 THEN
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.profitcentregrade_nondefra has % row(s) whose (profitcentre, fpsyear) is missing from fps.tblkpprofitcentre. Extend the data-migration program to cover them first.',
+			v_missing_count;
+	END IF;
+END
+$$;
+
+DO $$
+DECLARE
+	v_missing_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_missing_count
+	FROM fps.tbltestrccost c
+	WHERE NOT EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre pc
+		WHERE pc.profitcentre = c.profitcentre AND pc.fpsyear = c.fpsyear
+	);
+	IF v_missing_count > 0 THEN
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.tbltestrccost has % row(s) whose (profitcentre, fpsyear) is missing from fps.tblkpprofitcentre. Extend the data-migration program to cover them first.',
+			v_missing_count;
+	END IF;
+END
+$$;
+
+DO $$
+DECLARE
+	v_missing_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_missing_count
+	FROM fps.workgroup c
+	WHERE NOT EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre pc
+		WHERE pc.profitcentre = c.profitcentre AND pc.fpsyear = c.fpsyear
+	);
+	IF v_missing_count > 0 THEN
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.workgroup has % row(s) whose (profitcentre, fpsyear) is missing from fps.tblkpprofitcentre. Extend the data-migration program to cover them first.',
+			v_missing_count;
+	END IF;
+END
+$$;
+
+DO $$
+DECLARE
+	v_missing_count bigint;
+BEGIN
+	SELECT COUNT(*) INTO v_missing_count
+	FROM fps.tbluser_profitcentre c
+	WHERE NOT EXISTS (
+		SELECT 1 FROM fps.tblkpprofitcentre pc
+		WHERE pc.profitcentre = c.profitcentre AND pc.fpsyear = c.fpsyear
+	);
+	IF v_missing_count > 0 THEN
+		RAISE EXCEPTION
+			'CR089_cutover blocked: fps.tbluser_profitcentre has % row(s) whose (profitcentre, fpsyear) is missing from fps.tblkpprofitcentre. Extend the data-migration program to cover them first.',
+			v_missing_count;
+	END IF;
+END
+$$;
+
+
+-- ============================================================================
+-- 4. Add the FPS-year FK
+-- ============================================================================
+
+ALTER TABLE fps.tblkpprofitcentre
+	ADD CONSTRAINT fk_tblkpprofitcentre_fpsyear
+		FOREIGN KEY (fpsyear) REFERENCES fps.tblyearmaster (fpsyear);
+
+
+-- ============================================================================
+-- 5. Add composite (profitcentre, fpsyear) foreign keys
+-- ============================================================================
+
+-- fps.costcentre
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'fk_costcentre_profitcentre_fpsyear'
+		  AND conrelid = 'fps.costcentre'::regclass
+	) THEN
+		ALTER TABLE fps.costcentre
+			ADD CONSTRAINT fk_costcentre_profitcentre_fpsyear
+				FOREIGN KEY (profitcentre, fpsyear) REFERENCES fps.tblkpprofitcentre (profitcentre, fpsyear);
+	END IF;
+END
+$$;
+
+-- fps.profitcentregrade
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'fk_profitcentregrade_profitcentre_fpsyear'
+		  AND conrelid = 'fps.profitcentregrade'::regclass
+	) THEN
+		ALTER TABLE fps.profitcentregrade
+			ADD CONSTRAINT fk_profitcentregrade_profitcentre_fpsyear
+				FOREIGN KEY (profitcentre, fpsyear) REFERENCES fps.tblkpprofitcentre (profitcentre, fpsyear);
+	END IF;
+END
+$$;
+
+-- fps.profitcentregrade_nondefra
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'fk_profitcentregrade_nondefra_profitcentre_fpsyear'
+		  AND conrelid = 'fps.profitcentregrade_nondefra'::regclass
+	) THEN
+		ALTER TABLE fps.profitcentregrade_nondefra
+			ADD CONSTRAINT fk_profitcentregrade_nondefra_profitcentre_fpsyear
+				FOREIGN KEY (profitcentre, fpsyear) REFERENCES fps.tblkpprofitcentre (profitcentre, fpsyear);
+	END IF;
+END
+$$;
+
+-- fps.tbltestrccost
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'fk_tbltestrccost_profitcentre_fpsyear'
+		  AND conrelid = 'fps.tbltestrccost'::regclass
+	) THEN
+		ALTER TABLE fps.tbltestrccost
+			ADD CONSTRAINT fk_tbltestrccost_profitcentre_fpsyear
+				FOREIGN KEY (profitcentre, fpsyear) REFERENCES fps.tblkpprofitcentre (profitcentre, fpsyear);
+	END IF;
+END
+$$;
+
+-- fps.workgroup
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'fk_workgroup_profitcentre_fpsyear'
+		  AND conrelid = 'fps.workgroup'::regclass
+	) THEN
+		ALTER TABLE fps.workgroup
+			ADD CONSTRAINT fk_workgroup_profitcentre_fpsyear
+				FOREIGN KEY (profitcentre, fpsyear) REFERENCES fps.tblkpprofitcentre (profitcentre, fpsyear);
+	END IF;
+END
+$$;
+
+-- fps.tbluser_profitcentre (new FK; none existed against the parent before)
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM pg_constraint
+		WHERE conname = 'fk_tbluser_profitcentre_profitcentre_fpsyear'
+		  AND conrelid = 'fps.tbluser_profitcentre'::regclass
+	) THEN
+		ALTER TABLE fps.tbluser_profitcentre
+			ADD CONSTRAINT fk_tbluser_profitcentre_profitcentre_fpsyear
+				FOREIGN KEY (profitcentre, fpsyear) REFERENCES fps.tblkpprofitcentre (profitcentre, fpsyear);
+	END IF;
+END
+$$;
+
+
+-- ============================================================================
+-- 6. Recreate dependent views with fpsyear-aware joins
+-- ============================================================================
+-- Only the join/select changes needed because fps.tblkpprofitcentre is now
+-- year-scoped are made here. Column lists for existing views are preserved
+-- (fpsyear is appended where it was previously absent) so consumers relying
+-- on the current output contract are not broken.
+
+-- View: fps.vtblkpprofitcentre (originally created by CR024)
+CREATE OR REPLACE VIEW fps.vtblkpprofitcentre
+AS
+SELECT DISTINCT
+    pc.profitcentre,
+    pc.profitcentrename,
+    pc.division,
+    pc.conttarget,
+    pc.profitcentrehead,
+    pc.divisionid,
+    pc.email_recipient,
+    pc.highlevelsummary,
+    u.user_id,
+    u.dt2username,
+    u.useremail,
+    upc.fpsyear
+FROM fps.tblkpprofitcentre pc
+INNER JOIN fps.tbluser_profitcentre upc
+    ON pc.profitcentre::text = upc.profitcentre::text
+   AND pc.fpsyear = upc.fpsyear
+INNER JOIN fps.tblusers u
+    ON upc.user_id = u.user_id;
+
+-- View: fps.vpacttblkpprofitcentre
+CREATE OR REPLACE VIEW fps.vpacttblkpprofitcentre AS
+SELECT
+    profitcentre,
+    profitcentrename,
+    division,
+    conttarget,
+    profitcentrehead,
+    divisionid,
+    email_recipient,
+    pactcoordinatoremailname,
+    timesheet,
+    outputsheet,
+    timesheetlayout,
+    fpsyear
+FROM fps.tblkpprofitcentre;
+
+-- View: fps.vtblkpprofitcentre_general
+CREATE OR REPLACE VIEW fps.vtblkpprofitcentre_general AS
+SELECT
+    profitcentre,
+    profitcentrename,
+    fpsyear
+FROM fps.tblkpprofitcentre;
+
+-- View: fps.vqrytbidsum
+CREATE OR REPLACE VIEW fps.vqrytbidsum AS
+SELECT
+    pc.profitcentre,
+    b.fpsyear,
+    sum(b.genbid) AS sumofgenbid,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+FROM fps.tblkpprofitcentre pc
+JOIN fps.workgroup w
+    ON pc.profitcentre::text = w.profitcentre::text
+   AND pc.fpsyear = w.fpsyear
+JOIN fps.tblbid b
+    ON w.workgroup::text = b.workgroup::text
+   AND w.fpsyear = b.fpsyear
+JOIN fps.tbluser_profitcentre upc
+    ON pc.profitcentre::text = upc.profitcentre::text
+   AND pc.fpsyear = upc.fpsyear
+JOIN fps.tblusers u
+    ON upc.user_id = u.user_id
+GROUP BY pc.profitcentre, b.fpsyear, u.user_id, u.dt2username, u.useremail;
+
+-- View: fps.vprofitcentregrade
+CREATE OR REPLACE VIEW fps.vprofitcentregrade AS
+SELECT DISTINCT
+    pcg.pcgrade,
+    pcg.divisiongrade,
+    pcg.gradecode,
+    pcg.profitcentre,
+    pcg.chargerate,
+    pcg.directrate,
+    pcg.payrate,
+    pcg.npr,
+    pcg.ohr,
+    pcg.hrsavailable,
+    pcg.oldchargerate,
+    pcg.defrachargerate,
+    pcg.fpsyear,
+    vpc.user_id,
+    vpc.dt2username,
+    vpc.useremail
+FROM fps.profitcentregrade pcg
+JOIN fps.vtblkpprofitcentre vpc
+    ON pcg.profitcentre::text = vpc.profitcentre::text
+   AND pcg.fpsyear = vpc.fpsyear;
+
+-- View: fps.vtblpurchase
+CREATE OR REPLACE VIEW fps.vtblpurchase AS
+SELECT DISTINCT
+    tp.workgroup,
+    tp.account,
+    tp.itemdescription,
+    tp.amount,
+    tp.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+FROM fps.tblpurchase tp
+JOIN fps.tblbid b
+    ON tp.workgroup::text = b.workgroup::text
+JOIN fps.workgroup w
+    ON b.workgroup::text = w.workgroup::text
+JOIN fps.tblkpprofitcentre pc
+    ON w.profitcentre::text = pc.profitcentre::text
+   AND w.fpsyear = pc.fpsyear
+JOIN fps.tbluser_profitcentre upc
+    ON pc.profitcentre::text = upc.profitcentre::text
+   AND pc.fpsyear = upc.fpsyear
+JOIN fps.tblusers u
+    ON upc.user_id = u.user_id
+WHERE tp.account::text IN (
+    SELECT b2.account
+    FROM fps.tblbid b2
+    JOIN fps.workgroup w2
+        ON b2.workgroup::text = w2.workgroup::text
+    JOIN fps.tblkpprofitcentre pc2
+        ON w2.profitcentre::text = pc2.profitcentre::text
+       AND w2.fpsyear = pc2.fpsyear
+    JOIN fps.tbluser_profitcentre upc2
+        ON pc2.profitcentre::text = upc2.profitcentre::text
+       AND pc2.fpsyear = upc2.fpsyear
+    WHERE upc2.user_id = u.user_id
+);
+
+-- View: fps.qryfrmtimesellerpc_map (originally modified by CR040)
+DROP VIEW IF EXISTS fps.qryfrmtimesellerpc_map;
+CREATE OR REPLACE VIEW fps.qryfrmtimesellerpc_map AS
+SELECT tblkpprofitcentre.conttarget,
+    profitcentregrade.profitcentre AS sellingpc,
+    profitcentregrade.chargerate,
+    profitcentregrade.ohr,
+    vqrytbidsum.sumofgenbid,
+    workgroupgrade.workgroup,
+    workgroupgrade.profitcentregrade AS profitcentregrade_col,
+    workgroupgrade.wggrade,
+    vapphours.sumofplannedhours AS apphours,
+    sum(vstaffjobhours.plannedhours) AS hrs,
+    sum(tblwgemployee.hrsavail) AS avhrs,
+    sum(vstaffjobhours.plannedhours) * profitcentregrade.chargerate AS fec,
+    vapphours.sumofplannedhours * profitcentregrade.chargerate AS appfec,
+    profitcentregrade.ohr * sum(vstaffjobhours.plannedhours) AS contribution
+FROM fps.vapphours
+    RIGHT JOIN (
+        fps.tblkpprofitcentre
+        JOIN (
+            fps.profitcentregrade
+            LEFT JOIN fps.vqrytbidsum ON profitcentregrade.profitcentre::text = vqrytbidsum.profitcentre::text
+        ) ON tblkpprofitcentre.profitcentre::text = profitcentregrade.profitcentre::text
+        AND tblkpprofitcentre.fpsyear = profitcentregrade.fpsyear
+        JOIN fps.workgroupgrade ON profitcentregrade.pcgrade::text = workgroupgrade.profitcentregrade::text
+        JOIN fps.tblwgemployee ON workgroupgrade.wggrade::text = tblwgemployee.workgroupgrade::text
+    ) ON vapphours.workgroupgrade::text = workgroupgrade.wggrade::text
+    LEFT JOIN fps.vstaffjobhours ON tblwgemployee.pactid::text = vstaffjobhours.staffid::text
+GROUP BY tblkpprofitcentre.conttarget,
+    profitcentregrade.profitcentre,
+    profitcentregrade.chargerate,
+    profitcentregrade.ohr,
+    vqrytbidsum.sumofgenbid,
+    workgroupgrade.workgroup,
+    workgroupgrade.profitcentregrade,
+    workgroupgrade.wggrade,
+    vapphours.sumofplannedhours;
+
+-- View: fps.vqryfrmtimesellerpc (originally modified by CR040)
+DROP VIEW IF EXISTS fps.vqryfrmtimesellerpc;
+CREATE OR REPLACE VIEW fps.vqryfrmtimesellerpc AS
+SELECT pc.conttarget,
+    pcg.profitcentre AS sellingpc,
+    pcg.chargerate,
+    pcg.ohr,
+    bsum.sumofgenbid,
+    wgg.workgroup,
+    wgg.profitcentregrade,
+    wgg.wggrade,
+    ah.sumofplannedhours AS apphours,
+    sum(sjh.plannedhours) AS hrs,
+    sum(we.hrsavail) AS avhrs,
+    (sum(sjh.plannedhours) * pcg.chargerate)::numeric AS fec,
+    (ah.sumofplannedhours * pcg.chargerate)::numeric AS appfec,
+    (pcg.ohr * sum(sjh.plannedhours))::numeric AS contribution,
+    we.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+FROM fps.tblkpprofitcentre pc
+    JOIN fps.tbluser_profitcentre upc ON pc.profitcentre::text = upc.profitcentre::text
+    AND pc.fpsyear = upc.fpsyear
+    JOIN fps.tblusers u ON upc.user_id = u.user_id
+    JOIN fps.profitcentregrade pcg ON pc.profitcentre::text = pcg.profitcentre::text
+    AND pc.fpsyear = pcg.fpsyear
+    LEFT JOIN fps.vqrytbidsum bsum ON pcg.profitcentre::text = bsum.profitcentre::text
+    AND pcg.fpsyear = bsum.fpsyear
+    AND u.user_id = bsum.user_id
+    JOIN fps.workgroupgrade wgg ON pcg.pcgrade::text = wgg.profitcentregrade::text
+    AND pcg.fpsyear = wgg.fpsyear
+    JOIN fps.tblwgemployee we ON wgg.wggrade::text = we.workgroupgrade::text
+    AND wgg.fpsyear = we.fpsyear
+    LEFT JOIN fps.vapphours ah ON wgg.wggrade::text = ah.workgroupgrade::text
+    AND wgg.fpsyear = ah.fpsyear
+    LEFT JOIN fps.vstaffjobhours sjh ON we.pactid::text = sjh.staffid::text
+    AND we.fpsyear = sjh.fpsyear
+GROUP BY pc.conttarget,
+    pcg.profitcentre,
+    pcg.chargerate,
+    pcg.ohr,
+    bsum.sumofgenbid,
+    wgg.workgroup,
+    wgg.profitcentregrade,
+    wgg.wggrade,
+    ah.sumofplannedhours,
+    we.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail;
+
+-- View: fps.vtblcontract
+-- Both fps.tblcontract and fps.tbluser_category are partitioned by fpsyear,
+-- so the category join must also match fpsyear to avoid associating a
+-- contract with user-category assignments from other FPS years.
+CREATE OR REPLACE VIEW fps.vtblcontract AS
+SELECT DISTINCT
+    c.contractno,
+    c.category,
+    c.manager,
+    c.customer,
+    c.title,
+    c.registereddate,
+    c.startdate,
+    c.enddate,
+    c.contractdoc,
+    c.duration,
+    c.fpsyear,
+    u.user_id,
+    u.dt2username,
+    u.useremail
+FROM fps.tblcontract c
+JOIN fps.tbluser_category uc
+    ON c.category::text = uc.category::text
+   AND c.fpsyear = uc.fpsyear
+JOIN fps.tblusers u
+    ON uc.user_id = u.user_id;
+
+-- View: fps.vtblstaff
+-- fps.tblemployee is partitioned by fpsyear, so the spnumber join must also
+-- match fpsyear; otherwise a staff member surfaces once per FPS year the
+-- employee row exists in.
+CREATE OR REPLACE VIEW fps.vtblstaff AS
+SELECT
+    tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text || COALESCE(tblemployee.firstname, ''::character varying)::text) AS name,
+    tblwgemployee.workgroupgrade,
+    tblemployee.title,
+    tblwgemployee.personstatus,
+    tblwgemployee.personclass,
+    tblwgemployee.hrspaid,
+    tblwgemployee.leave,
+    tblwgemployee.sickspecial,
+    tblwgemployee.hrsavail,
+    tblwgemployee.makeavailable,
+    tblwgemployee.fpsyear,
+    wgg.user_id,
+    wgg.dt2username,
+    wgg.useremail
+FROM fps.tblwgemployee
+JOIN fps.tblemployee
+    ON tblemployee.spnumber::text = tblwgemployee.spnumber::text
+   AND tblemployee.fpsyear = tblwgemployee.fpsyear
+JOIN fps.vworkgroupgrade wgg
+    ON wgg.wggrade::text = tblwgemployee.workgroupgrade::text
+   AND wgg.fpsyear = tblwgemployee.fpsyear;
+
+-- View: fps.vtblstaff_general
+-- fps.tblemployee is partitioned by fpsyear, so the spnumber match must also
+-- match fpsyear; otherwise a staff member surfaces once per FPS year the
+-- employee row exists in.
+CREATE OR REPLACE VIEW fps.vtblstaff_general AS
+SELECT
+    tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text || COALESCE(tblemployee.firstname, ''::character varying)::text) AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+FROM fps.tblwgemployee
+JOIN fps.tblemployee
+    ON tblwgemployee.spnumber::text = tblemployee.spnumber::text
+   AND tblwgemployee.fpsyear = tblemployee.fpsyear;
+
+-- View: fps.vtblstaff_pick
+-- fps.tblemployee is partitioned by fpsyear, so the spnumber match must also
+-- match fpsyear; otherwise a staff member surfaces once per FPS year the
+-- employee row exists in.
+CREATE OR REPLACE VIEW fps.vtblstaff_pick AS
+SELECT
+    tblwgemployee.pactid AS staffid,
+    (COALESCE(tblemployee.lastname, ''::character varying)::text || ', '::text || COALESCE(tblemployee.firstname, ''::character varying)::text) AS name,
+    tblwgemployee.workgroupgrade,
+    tblwgemployee.fpsyear
+FROM fps.tblwgemployee
+JOIN fps.tblemployee
+    ON tblwgemployee.spnumber::text = tblemployee.spnumber::text
+   AND tblwgemployee.fpsyear = tblemployee.fpsyear
+WHERE tblwgemployee.makeavailable = '-1'::integer;
+
+-- View: fps.vtlkpprojectgroup
+-- Both tables are partitioned by fpsyear; without the year match a user
+-- assigned to a group in any year was granted that group in every year.
+CREATE OR REPLACE VIEW fps.vtlkpprojectgroup AS
+SELECT DISTINCT
+    pg.projectgroup,
+    u.user_id,
+    u.dt2username,
+    u.useremail,
+    pg.fpsyear
+FROM fps.tlkpprojectgroup pg
+JOIN fps.tbluser_projectgroup upg
+    ON pg.projectgroup::text = upg.projectgroup::text
+   AND pg.fpsyear = upg.fpsyear
+JOIN fps.tblusers u
+    ON upg.user_id = u.user_id;
+
+-- View: fps.vtlkpproject_bygroup
+CREATE OR REPLACE VIEW fps.vtlkpproject_bygroup AS
+SELECT DISTINCT
+    p.parentproject,
+    p.projecttitle,
+    p.program,
+    p.customer,
+    p.manager,
+    p.transferincome,
+    p.custincome,
+    p.wip_eoy,
+    p.wip_limit,
+    p.wip_current,
+    p.projectstatus,
+    p.costbookno,
+    p.datecreated,
+    p.feccost,
+    p.profit,
+    p.budget_cvl,
+    p.datecosted,
+    p.disease,
+    p.contract,
+    p.projectparent,
+    p.shorttitle,
+    p.caseworksub,
+    p.pvsincome,
+    p.plancaseworkdebit,
+    p.finished,
+    p.owningrc,
+    p.comments,
+    p.carryover,
+    p.carryoverseed,
+    p.isdefraproject,
+    p.costcentre,
+    p.oracleprojectcode,
+    p.subaccountcode,
+    p.projectgroup,
+    p.incomeaccountcode,
+    p.fpsyear,
+    vpg.user_id,
+    vpg.dt2username,
+    vpg.useremail
+FROM fps.tlkpproject p
+JOIN fps.vtlkpprojectgroup vpg
+    ON p.projectgroup::text = vpg.projectgroup::text
+   AND p.fpsyear = vpg.fpsyear;
+
+-- View: fps.vtbltestrequ_bygroup
+CREATE OR REPLACE VIEW fps.vtbltestrequ_bygroup AS
+SELECT DISTINCT
+    tr.buyer AS jobcode,
+    tr.testcode,
+    tr.norequired AS notests,
+    tr.unitprice AS testprice,
+    tr.datecreated,
+    tr.projectbuyercode,
+    tr.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+FROM fps.tlkptestreqmt tr
+JOIN fps.vtlkpproject_bygroup p
+    ON tr.buyer::text = p.parentproject::text
+   AND tr.fpsyear = p.fpsyear;
+
+-- View: fps.vtestreqbreakdown (originally modified by CR040)
+-- Lookups previously took the latest year's row per key; they are now matched
+-- on the requirement's own fpsyear.
+CREATE OR REPLACE VIEW fps.vtestreqbreakdown AS
+WITH
+default_workgroup AS (
+    SELECT tc.testcode,
+           tc.fpsyear,
+           MIN(tc.workgroup::text) AS wg
+    FROM   fps.tlkptestcapability tc
+    GROUP  BY tc.testcode, tc.fpsyear
+),
+project_lookup AS (
+    SELECT DISTINCT ON (pr.parentproject, pr.fpsyear)
+           pr.parentproject,
+           pr.program,
+           pr.fpsyear
+    FROM   fps.tlkpproject pr
+    ORDER  BY pr.parentproject, pr.fpsyear
+),
+test_description_lookup AS (
+    SELECT DISTINCT ON (tp.itemcode, tp.fpsyear)
+           tp.itemcode,
+           tp.shortdescription,
+           tp.fpsyear
+    FROM   fps.testorproduct tp
+    ORDER  BY tp.itemcode, tp.fpsyear
+),
+testrccost_lookup AS (
+    SELECT DISTINCT ON (rc.testcode, rc.profitcentre, rc.fpsyear)
+           rc.testcode,
+           rc.profitcentre,
+           rc.price,
+           rc.fpsyear
+    FROM   fps.tbltestrccost rc
+    ORDER  BY rc.testcode, rc.profitcentre, rc.fpsyear
+),
+workgroup_lookup AS (
+    SELECT DISTINCT ON (w.workgroup, w.fpsyear)
+           w.workgroup,
+           w.profitcentre,
+           w.fpsyear
+    FROM   fps.workgroup w
+    ORDER  BY w.workgroup, w.fpsyear
+),
+qry_test_req_breakdown AS (
+    SELECT tr.testcode,
+           td.shortdescription,
+           p.program,
+           tr.buyer                                                   AS jobcode,
+           COALESCE(trwg.workgroup, dw.wg::character varying)         AS workg,
+           trc.profitcentre,
+           COALESCE(trc.price, tr.unitprice)                          AS wgprice,
+           COALESCE(trwg.amount::double precision, tr.norequired)     AS noreq,
+           tr.fpsyear
+    FROM   fps.tlkptestreqmt tr
+    JOIN   project_lookup p
+           ON  p.parentproject::text = tr.buyer::text
+           AND p.fpsyear             = tr.fpsyear
+    JOIN   default_workgroup dw
+           ON  dw.testcode::text     = tr.testcode::text
+           AND dw.fpsyear            = tr.fpsyear
+    LEFT JOIN fps.tbltestreqwg trwg
+           ON  trwg.testcode::text   = tr.testcode::text
+           AND trwg.buyer::text      = tr.buyer::text
+           AND trwg.fpsyear          = tr.fpsyear
+    LEFT JOIN testrccost_lookup trc
+           ON  trc.testcode::text    = tr.testcode::text
+           AND trc.fpsyear           = tr.fpsyear
+    JOIN   test_description_lookup td
+           ON  td.itemcode::text     = tr.testcode::text
+           AND td.fpsyear            = tr.fpsyear
+)
+SELECT q.testcode,
+       q.shortdescription,
+       q.program,
+       q.jobcode                                       AS project,
+       COALESCE(q.profitcentre, wg.profitcentre)       AS pc,
+       q.workg,
+       q.wgprice,
+       q.noreq::numeric * q.wgprice::numeric           AS totalcost,
+       q.fpsyear
+FROM   qry_test_req_breakdown q
+LEFT JOIN workgroup_lookup wg
+       ON  wg.workgroup::text = q.workg::text
+       AND wg.fpsyear         = q.fpsyear;
+
+-- fps.vworkgroup (CR025) already matches on w.fpsyear = vpc.fpsyear and
+-- requires no change now that vtblkpprofitcentre is fixed above.
+
+COMMIT;
+
+--rollback empty ;
