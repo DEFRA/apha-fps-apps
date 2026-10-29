@@ -193,8 +193,8 @@ public class ProjectSummaryService : IProjectSummaryService
             rowNum++;
         }
 
-        ws.Column(3).Style.NumberFormat.Format = "$#,##0.00";
-        ws.Column(6).Style.NumberFormat.Format = "$#,##0.00";
+        ws.Column(3).Style.NumberFormat.Format = "£#,##0.00";
+        ws.Column(6).Style.NumberFormat.Format = "£#,##0.00";
         ws.Columns().AdjustToContents();
 
         using var stream = new MemoryStream();

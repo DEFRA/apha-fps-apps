@@ -3,6 +3,14 @@
 
 @{
     ViewData["Title"] = "PIMS : Yearly Financial Details";
+      static string FormatDisplayDate(string value)
+    {
+        return DateTime.TryParseExact(value, "MM/dd/yyyy",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var date)
+            ? date.ToString("dd/MM/yyyy")
+            : value;
+    }
 }
 
 <div class="govuk-grid-row sup_border-bottom" style="padding: 0">
@@ -39,7 +47,7 @@
                            id="yfdStartDate"
                            name="yfdStartDate"
                            type="text"
-                           value="@Model.StartDate"
+                            value="@FormatDisplayDate(Model.StartDate)"
                            readonly
                            aria-readonly="true" />
                 </div>
@@ -50,7 +58,7 @@
                            id="yfdEndDate"
                            name="yfdEndDate"
                            type="text"
-                           value="@Model.EndDate"
+                          value="@FormatDisplayDate(Model.EndDate)"
                            readonly
                            aria-readonly="true" />
                 </div>
@@ -322,8 +330,8 @@
             reloadYearlyFinancialDataGrid();
             // Fetch project dates directly from the dedicated JSON endpoint
             $.get('/PIMS/YearlyFinancialData/GetProjectDates', { project: selectedYfdProjectValue }, function (data) {
-                document.getElementById('yfdStartDate').value = (data && data.startDate) ? data.startDate : '';
-                document.getElementById('yfdEndDate').value = (data && data.endDate) ? data.endDate : '';
+                document.getElementById('yfdStartDate').value = (data && data.startDate) ? toDisplayDate(data.startDate) : '';
+                document.getElementById('yfdEndDate').value = (data && data.endDate) ? toDisplayDate(data.endDate) : '';
             }).fail(function () {
                 document.getElementById('yfdStartDate').value = '';
                 document.getElementById('yfdEndDate').value = '';
@@ -484,6 +492,15 @@
 
         function getCurrentYfdProject() {
             return (($('#hdnYfdProject').val() || getSelectedYfdProjectValue() || '') + '').trim();
+        }
+
+         // Convert an MM/dd/yyyy value from the server into dd/MM/yyyy for display
+        function toDisplayDate(value) {
+        var txt = (value || '').toString().trim();
+        if (!txt) return '';
+        var parts = txt.split('/');
+        if (parts.length !== 3) return txt;
+        return parts[1] + '/' + parts[0] + '/' + parts[2];
         }
 
         function getYearFromDisplayDate(value) {
@@ -775,7 +792,7 @@
                 }
 
                 var year = parseInt(yearText, 10);
-                if (!year || !validateYfdYearWithinProjectRange(year, false)) {
+                 if (!year) {
                     yfdPactCosts = null;
                     clearYfdPactDetailsPanel();
                     return;
@@ -862,10 +879,7 @@
                 showYfdFormError('Please select a project.');
                 return;
             }
-
-            if (!isEdit && !validateYfdYearWithinProjectRange(year, true)) {
-                return;
-            }
+           
 
             var adjustment = parseDecimalOrNull($('#yfdModalAdjustment').val());
             var adjustmentComment = ($('#yfdModalAdjComment').val() || '').trim();
