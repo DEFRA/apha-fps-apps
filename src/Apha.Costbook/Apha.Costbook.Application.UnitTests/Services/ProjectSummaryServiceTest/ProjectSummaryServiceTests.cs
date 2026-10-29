@@ -741,6 +741,26 @@ public class ProjectSummaryServiceTests
     }
 
     [Fact]
+    public async Task ExportProjectSummaryToExcelAsync_AppliesPoundCurrencyFormatToAmountColumns()
+    {
+        // Arrange
+        var projectId = "P001";
+        _mockRepository.GetProjectSummaryExportDataAsync(projectId)
+            .Returns(BuildExportData(projectId));
+
+        // Act
+        var result = await _service.ExportProjectSummaryToExcelAsync(projectId);
+
+        // Assert
+        using var stream = new MemoryStream(result);
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet("Project Summary");
+
+        Assert.Equal("£#,##0.00", ws.Column(3).Style.NumberFormat.Format);
+        Assert.Equal("£#,##0.00", ws.Column(6).Style.NumberFormat.Format);
+    }
+
+    [Fact]
     public async Task ExportProjectSummaryToExcelAsync_WithNullProject_FallsBackToProjectIdInCell()
     {
         // Arrange
