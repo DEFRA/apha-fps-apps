@@ -913,7 +913,7 @@
                 manYears: parseFloatOrNull($('#yfdModalManYears').val()),
                 adjustment: adjustment,
                 adjustmentComment: adjustmentComment || null,
-                locked: $('#yfdModalFixed').is(':checked') ? 1 : 0,
+                locked: $('#yfdModalFixed').is(':checked') ? -1 : 0,
                 dateCosted: parseIsoDateOrNull($('#hdnYfdDateCosted').val()),
                 costedBy: ($('#yfdModalFixedBy').val() || '').trim() || null,
                 actualExpenditure: parseDecimalOrNull($('#hdnYfdActualExpenditure').val()),
