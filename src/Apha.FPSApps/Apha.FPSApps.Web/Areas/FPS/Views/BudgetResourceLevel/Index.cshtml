@@ -143,9 +143,9 @@
 <script src="~/js/ajax-form-validation.js"></script>
 <script>
     // ─── Server-rendered state ───────────────────────────────────────────────
-    var currentWorkgroup    = '@Html.Raw(Model.SelectedWorkgroup ?? "")';
-    var currentAccount      = '@Html.Raw(Model.SelectedAccount ?? "")';
-    var currentProfitCentre = '@Html.Raw(Model.SelectedProfitCentre ?? "")';
+    var currentWorkgroup    = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedWorkgroup ?? ""));
+    var currentAccount      = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedAccount ?? ""));
+    var currentProfitCentre = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProfitCentre ?? ""));
     var currentYear         = @FpsYearContext.Year;
 </script>
 <script src="~/js/fps_js/budget-resource-level.js" asp-append-version="true"></script>
