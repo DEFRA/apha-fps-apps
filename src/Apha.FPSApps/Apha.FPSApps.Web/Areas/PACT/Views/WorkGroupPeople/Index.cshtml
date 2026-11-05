@@ -104,6 +104,6 @@
     <script src="~/js/pact_js/work-group-people.js"></script>
     <script>
         peopleGridId = '@Model.PeopleGrid.GridId';
-        preselectedWorkGroup = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
+        preselectedWorkGroup = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedWorkGroup ?? ""));
     </script>
 }
