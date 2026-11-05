@@ -107,9 +107,9 @@ jobs:
             secrets.AWS_ENV_ROLE }}
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@03f1aad4c46fa2d2a4413df45d477cb36ec27242 # v2.1.7
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c182247fb4268e64c39f03d526fa48cfd2 # v3.12.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       
       - name: Extract Docker metadata
         id: meta
