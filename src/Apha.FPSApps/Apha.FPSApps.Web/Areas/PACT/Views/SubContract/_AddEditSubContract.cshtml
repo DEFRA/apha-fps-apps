@@ -151,7 +151,7 @@
 <script>
     $(document).ready(function () {
         var projectsData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Projects ?? new List<object>()));
-        var selectedProject = '@Html.Raw(Model.Project ?? "")';
+        var selectedProject = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Project ?? ""));
 
         initializeSubContractProjectDropdown({
             projectsData: projectsData,

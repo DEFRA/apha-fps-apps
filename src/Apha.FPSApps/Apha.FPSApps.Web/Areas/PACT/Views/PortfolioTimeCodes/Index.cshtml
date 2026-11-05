@@ -85,7 +85,7 @@
 @section Scripts {
     <script>
         const portfolioOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
-        const selectedPortfolioValue = '@Html.Raw(Model.SelectedPortfolio ?? "")';
+        const selectedPortfolioValue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedPortfolio ?? ""));
     </script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script src="~/js/pact_js/portfolio-timecodes.js"></script>
