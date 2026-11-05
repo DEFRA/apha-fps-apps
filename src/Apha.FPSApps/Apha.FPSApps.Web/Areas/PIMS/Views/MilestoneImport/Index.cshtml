@@ -175,7 +175,7 @@
 <script src="~/js/ajax-form-validation.js"></script>
 @section Scripts {
 <script>
-    var currentProject = '@Html.Raw(parentproject)';
+    var currentProject = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(parentproject ?? ""));
 
     function disableImportButton() {
         var btnImport = document.getElementById('btnImport');
