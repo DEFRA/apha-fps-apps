@@ -322,9 +322,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// POST: saves the selected project code to session (called client-side via AJAX).
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> SaveProjectSession([FromBody] string projectCode)
+        public async Task<IActionResult> SaveProjectSession([FromBody] string? projectCode)
         {
-            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, projectCode);
+            if (string.IsNullOrWhiteSpace(projectCode))
+            {
+                await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, string.Empty);
+                return Ok();
+            }
+
+            var projects = await _projectService.GetAllProjectsAsync();
+            var match = projects.Success && projects.Data != null
+                ? projects.Data.FirstOrDefault(p => string.Equals(p.ParentProject, projectCode, StringComparison.Ordinal))
+                : null;
+
+            if (match == null)
+                return BadRequest();
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectCode, match.ParentProject);
             return Ok();
         }
 

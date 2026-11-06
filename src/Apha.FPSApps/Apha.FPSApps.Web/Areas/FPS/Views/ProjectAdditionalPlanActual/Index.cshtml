@@ -113,7 +113,7 @@
                                 };
                             </script>
                             <script>
-                                var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
+                                var currentProjectCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProjectCode ?? string.Empty));
                                 var _loaderPendingGrids = 0;
 
                                 $(document).ready(function () {
