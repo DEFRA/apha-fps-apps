@@ -47,16 +47,16 @@ $(document).ready(function () {
         searchPlaceholder: 'Type to search project',
         labelText: '',
         columns: [
-            { field: 'ParentProject', header: 'Parent Project', width: '150px' },
-            { field: 'Manager', header: 'Manager', width: '150px' }
+            { field: 'Value', header: 'Parent Project', width: '150px' },
+            { field: 'Text', header: 'Manager', width: '150px' }
         ],
         data: projectOptionsListData,
-        displayField: 'ParentProject',
-        valueField: 'ParentProject',
+        displayField: 'Value',
+        valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                selectedProjectValue = selectedItem.ParentProject;
+                selectedProjectValue = selectedItem.Value;
             },
             onClear: function (dropdown) {
                 selectedProjectValue = null;
@@ -74,16 +74,16 @@ $(document).ready(function () {
         searchPlaceholder: 'Type to search profit centre',
         labelText: '',
         columns: [
-            { field: 'ProfitCentreId', header: 'Profit Centre', width: '150px' },
-            { field: 'Division', header: 'Division', width: '150px' }
+            { field: 'Value', header: 'Profit Centre', width: '150px' },
+            { field: 'Text', header: 'Division', width: '150px' }
         ],
         data: profitCentreOptionsListData,
-        displayField: 'ProfitCentreId',
-        valueField: 'ProfitCentreId',
+        displayField: 'Value',
+        valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                selectedProfitCentreValue = selectedItem.ProfitCentreId;
+                selectedProfitCentreValue = selectedItem.Value;
                 if (!isClearingTimeSale) {
                     isClearingTimeSale = true;
                     selectWorkGroupDropdown.clear();
@@ -109,16 +109,16 @@ $(document).ready(function () {
         searchPlaceholder: 'Type to search work group',
         labelText: '',
         columns: [
-            { field: 'WorkGroupName', header: 'Work Group', width: '150px' },
-            { field: 'ProfitCentre', header: 'Profit Centre', width: '150px' }
+            { field: 'Value', header: 'Work Group', width: '150px' },
+            { field: 'Text', header: 'Profit Centre', width: '150px' }
         ],
         data: workGroupOptionsListData,
-        displayField: 'WorkGroupName',
-        valueField: 'WorkGroupName',
+        displayField: 'Value',
+        valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                selectedWorkGroupValue = selectedItem.WorkGroupName;
+                selectedWorkGroupValue = selectedItem.Value;
                 if (!isClearingTimeSale) {
                     isClearingTimeSale = true;
                     selectProfitCentreDropdown.clear();
@@ -146,16 +146,16 @@ $(document).ready(function () {
         searchPlaceholder: 'Type to search selling workgroup',
         labelText: '',
         columns: [
-            { field: 'WorkGroupName', header: 'Work Group', width: '150px' },
-            { field: 'ProfitCentre', header: 'Profit Centre', width: '150px' }
+            { field: 'Value', header: 'Work Group', width: '150px' },
+            { field: 'Text', header: 'Profit Centre', width: '150px' }
         ],
         data: workGroupOptionsListData,
-        displayField: 'WorkGroupName',
-        valueField: 'WorkGroupName',
+        displayField: 'Value',
+        valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                selectedSellingWorkGroupValue = selectedItem.WorkGroupName;
+                selectedSellingWorkGroupValue = selectedItem.Value;
                 if (!isClearing) {
                     isClearing = true;
                     selectBuyingProjectDropdown.clear();
@@ -181,16 +181,16 @@ $(document).ready(function () {
         searchPlaceholder: 'Type to search buying project',
         labelText: '',
         columns: [
-            { field: 'ParentProject', header: 'Parent Project', width: '150px' },
-            { field: 'Manager', header: 'Manager', width: '150px' }
+            { field: 'Value', header: 'Parent Project', width: '150px' },
+            { field: 'Text', header: 'Manager', width: '150px' }
         ],
         data: projectOptionsListData,
-        displayField: 'ParentProject',
-        valueField: 'ParentProject',
+        displayField: 'Value',
+        valueField: 'Value',
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                selectedBuyingProjectValue = selectedItem.ParentProject;
+                selectedBuyingProjectValue = selectedItem.Value;
                 if (!isClearing) {
                     isClearing = true;
                     selectSellingWorkGroupDropdown.clear();
