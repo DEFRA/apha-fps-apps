@@ -2184,6 +2184,23 @@ function deleteOtherReportGroup(btn) {
 // ════════════════════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', function () {
+    // When any AJAX call is denied access (403 with a redirect URL), navigate the whole
+    // browser to the Access Denied page instead of injecting its HTML into a tab/grid.
+    $(document).ajaxError(function (event, jqXHR) {
+        if (!jqXHR || jqXHR.status !== 403) {
+            return;
+        }
+        var redirectUrl = (jqXHR.responseJSON && jqXHR.responseJSON.redirect) || null;
+        if (!redirectUrl && jqXHR.responseText) {
+            try {
+                redirectUrl = JSON.parse(jqXHR.responseText).redirect;
+            } catch (e) { /* not JSON */ }
+        }
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        }
+    });
+
     initializeTimeTabState();
     autoSelectFirstGridRow('#gridContainer_reportsGrid');
     wireProgrammeGridHandlers();
