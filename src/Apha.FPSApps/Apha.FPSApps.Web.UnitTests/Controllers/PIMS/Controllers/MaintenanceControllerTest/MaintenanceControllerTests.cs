@@ -5,6 +5,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Controllers;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.StateManagement;
 using MapsterMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,13 +21,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MaintenanceCon
     {
         private readonly IMapper _mapper;
         private readonly IMaintenanceService _service;
+        private readonly IAppStateService _appStateService;
         private readonly MaintenanceController _controller;
 
         public MaintenanceControllerTests()
         {
             _mapper     = Substitute.For<IMapper>();
             _service    = Substitute.For<IMaintenanceService>();
-            _controller = new MaintenanceController(_mapper, _service);
+            _appStateService = Substitute.For<IAppStateService>();
+            _appStateService.GetSessionAsync<bool>(Arg.Any<string>()).Returns(true);
+            _controller = new MaintenanceController(_mapper, _service, _appStateService);
             SetCurrentUserEmail("user@apha.gov.uk");
         }
 

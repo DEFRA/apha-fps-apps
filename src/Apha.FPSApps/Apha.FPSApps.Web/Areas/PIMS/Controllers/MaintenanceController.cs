@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Interfaces.PIMS;
@@ -6,7 +7,9 @@ using Apha.FPSApps.Web.Areas.PIMS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
@@ -21,12 +24,57 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IMaintenanceService _service;
+        private readonly IAppStateService _appStateService;
 
-        public MaintenanceController(IMapper mapper, IMaintenanceService service)
+        // Session key that holds whether the current user has PIMS maintenance access.
+        private const string IsPimsAdminSessionKey = "ispimsdmin";
+
+        public MaintenanceController(IMapper mapper, IMaintenanceService service, IAppStateService appStateService)
         {
             _mapper = mapper;
             _service = service;
+            _appStateService = appStateService;
         }
+
+        // Guards every action except Index. Index is the only entry point that evaluates
+        // maintenance access and stores the result in session; all other GET/POST actions
+        // rely on that session value. A missing/false value means no access.
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            var actionName = context.ActionDescriptor.RouteValues.TryGetValue("action", out var name) ? name : null;
+
+            if (!string.Equals(actionName, nameof(Index), StringComparison.OrdinalIgnoreCase))
+            {
+                var isPimsAdmin = await _appStateService.GetSessionAsync<bool>(IsPimsAdminSessionKey);
+                
+                if (!isPimsAdmin)
+                {
+                    // Most maintenance actions are called via AJAX. A normal redirect (302) would be
+                    // transparently followed by the browser and the Access Denied HTML injected into
+                    // the current tab. For AJAX we instead return 403 with the target URL so the client
+                    // can perform a full-page redirect; non-AJAX requests get a standard redirect.
+                    if (IsAjaxRequest(context.HttpContext.Request))
+                    {
+                        var accessDeniedUrl = Url.Action("AccessDenied", "Account", new { area = string.Empty })
+                            ?? "/Account/AccessDenied";
+                        context.Result = new JsonResult(new { redirect = accessDeniedUrl })
+                        {
+                            StatusCode = StatusCodes.Status403Forbidden
+                        };
+                    }
+                    else
+                    {
+                        context.Result = RedirectToAction("AccessDenied", "Account", new { area = string.Empty });
+                    }
+                    return;
+                }
+            }
+
+            await next();
+        }
+
+        private static bool IsAjaxRequest(HttpRequest request) =>
+            string.Equals(request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
         private JsonResult BadModelStateResult() =>
             Json(new
@@ -38,7 +86,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (!await CurrentUserHasMaintenanceAccessAsync())
+            var isPimsAdmin = await CurrentUserHasMaintenanceAccessAsync();
+            await _appStateService.SetSessionAsync(IsPimsAdminSessionKey, isPimsAdmin);
+
+            if (!isPimsAdmin)
             {
                 return RedirectToAction("AccessDenied", "Account", new { area = string.Empty });
             }
@@ -50,7 +101,6 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             // Load Time tab settings on page load
             var settingsResult = await _service.GetAllSettingsAsync();
-            System.Diagnostics.Debug.WriteLine($"GetAllSettingsAsync Success: {settingsResult.Success}, Data Count: {settingsResult.Data?.Count ?? 0}");
 
             if (settingsResult.Success && settingsResult.Data != null)
             {
@@ -59,18 +109,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 var daysInYear = settingsResult.Data.FirstOrDefault(s =>
                     s.Id != null && s.Id.Equals("DaysInYear", StringComparison.OrdinalIgnoreCase));
 
-                System.Diagnostics.Debug.WriteLine($"HoursInDay found: {hoursInDay != null}, Value: {hoursInDay?.SettingValue}");
-                System.Diagnostics.Debug.WriteLine($"DaysInYear found: {daysInYear != null}, Value: {daysInYear?.SettingValue}");
-
                 if (hoursInDay != null)
                 {
                     viewModel.WorkingHoursSettingItem = _mapper.Map<SettingItem>(hoursInDay);
-                    System.Diagnostics.Debug.WriteLine($"Mapped WorkingHoursSettingItem: {viewModel.WorkingHoursSettingItem?.SettingValue}");
                 }
                 if (daysInYear != null)
                 {
                     viewModel.WorkingDaysSettingItem = _mapper.Map<SettingItem>(daysInYear);
-                    System.Diagnostics.Debug.WriteLine($"Mapped WorkingDaysSettingItem: {viewModel.WorkingDaysSettingItem?.SettingValue}");
                 }
             }
 
