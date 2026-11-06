@@ -98,6 +98,13 @@
     function onProjectSelected(projectCode, projectTitle) {
         currentProjectCode = projectCode;
         document.getElementById('projectNameInput').value = projectCode;
+       // Persist selection to session so the Back link retains the selected project.
+        $.ajax({
+            url: '@Url.Action("SaveProjectSession", "ProgramProject", new { area = "FPS" })',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(projectCode || '')
+        });
         $('#summary-project-code').val(currentProjectCode);
         ['summary-project-description','summary-program','summary-contract'].forEach(function(id){ $('#'+id).val(''); });
         $('#planned-total-cost').val('0.00'); $('#project-total-cost').val('0'); $('#project-percent-plan').val('0%');
