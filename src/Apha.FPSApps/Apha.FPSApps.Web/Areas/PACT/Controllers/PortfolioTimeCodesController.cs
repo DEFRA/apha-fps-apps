@@ -441,7 +441,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> EditTimeCode(string? workGroup, string timeCode, string? jobCodeId, string parentProject)
         {
             try
-            {
+            {                
                 if (string.IsNullOrEmpty(timeCode))
                     return BadRequest("Time code is required");
 
@@ -481,9 +481,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
                 return PartialView("_AddEditTimeCode", model);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, $"Something went wrong, Please try again later.");
             }
         }
 
