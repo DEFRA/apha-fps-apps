@@ -481,9 +481,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
                 return PartialView("_AddEditTimeCode", model);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, $"Something went wrong, please try again later");
             }
         }
 
