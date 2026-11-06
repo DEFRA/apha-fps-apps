@@ -78,11 +78,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         }
 
         [Fact]
-        public async Task Index_WithInvalidProjectCode_FallsBackToFirstProject()
+        public async Task Index_WithInvalidProjectCode_RedirectsToErrorPage()
         {
             SetupProjectList(); SetupProjectById("AH0033"); SetupTestReqmts("AH0033");
-            var model = Assert.IsType<ProjectTestPlanActualViewModel>(Assert.IsType<ViewResult>(await _controller.Index("INVALID")).Model);
-            Assert.Equal("AH0033", model.SelectedProjectCode);
+            var redirect = Assert.IsType<RedirectToActionResult>(await _controller.Index("INVALID"));
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Error", redirect.ControllerName);
         }
 
         [Fact]

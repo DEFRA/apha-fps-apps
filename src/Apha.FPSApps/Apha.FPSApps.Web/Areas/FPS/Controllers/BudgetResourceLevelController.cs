@@ -55,6 +55,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             await PopulateProfitCentresAsync(viewModel);
 
+            // Server-side allowlist: only accept profit centres returned by the API.
+            var matched = viewModel.ProfitCentreList
+                .FirstOrDefault(p => string.Equals(p.Value, profitCentre, StringComparison.OrdinalIgnoreCase));
+            profitCentre = matched?.Value;
+            viewModel.SelectedProfitCentre = profitCentre ?? string.Empty;
+
             var defaultRequest     = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
             var workGroupRequest   = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
 

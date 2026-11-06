@@ -166,9 +166,9 @@
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var isProjectGroupMode = @Html.Raw(Model.IsProjectGroupMode ? "true" : "false");
-        var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
-        var currentProjectGroup = '@Html.Raw(Model.SelectedProjectGroup)';
-        var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
+        var currentProgramNo = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProgramNo ?? string.Empty));
+        var currentProjectGroup = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProjectGroup ?? string.Empty));
+        var currentProjectCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProjectCode ?? string.Empty));
         var fpsYear = '@FyContext.Year';
 
         // Disable nav links until a project is selected
@@ -191,9 +191,7 @@
 
         function updateNavLinks(programNo) {
             document.querySelectorAll('a.nav-updatable').forEach(function (link) {
-                var qs = programNo
-                    ? '?programNo=' + encodeURIComponent(programNo) + '&fpsContextYear=' + encodeURIComponent(fpsYear)
-                    : '?fpsContextYear=' + encodeURIComponent(fpsYear);
+                var qs = '?fpsContextYear=' + encodeURIComponent(fpsYear);
                 link.href = link.pathname + qs;
             });
         }

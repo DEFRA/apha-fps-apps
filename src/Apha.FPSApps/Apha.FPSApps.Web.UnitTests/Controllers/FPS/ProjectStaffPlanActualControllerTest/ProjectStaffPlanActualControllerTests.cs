@@ -125,7 +125,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
         }
 
         [Fact]
-        public async Task Index_WithUnrecognisedProjectCode_FallsBackToFirstInList()
+        public async Task Index_WithUnrecognisedProjectCode_RedirectsToErrorPage()
         {
             // Arrange
             var projects = new List<ProjectDto>
@@ -140,9 +140,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectStaffPlanActualContr
             var result = await _controller.Index("UNKNOWN");
 
             // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjectStaffPlanActualViewModel>(viewResult.Model);
-            Assert.Equal("AH0001", model.SelectedProjectCode);
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Error", redirect.ControllerName);
         }
 
         [Fact]
