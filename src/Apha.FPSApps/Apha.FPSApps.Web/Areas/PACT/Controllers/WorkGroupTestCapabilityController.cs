@@ -80,14 +80,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 var gridConfig = await BuildTestCapabilityGridAsync(request, workGroup);
                 return PartialView("_DataGrid", gridConfig);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log the exception here if logging is available
                 return Json(new
                 {
                     success = false,
                     message = "An error occurred while loading the grid",
-                    errors = new[] { ex.Message }
+                    errors = new[] { "An error occurred while loading the grid" }
                 });
             }
         }

@@ -460,7 +460,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             Assert.NotNull(errorsProperty);
             var errors = errorsProperty.GetValue(value) as string[];
             Assert.NotNull(errors);
-            Assert.Contains("Service unavailable", errors);
+            Assert.Contains("An error occurred while loading the grid", errors);
         }
 
         [Fact]
