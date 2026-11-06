@@ -182,9 +182,9 @@
 }
 @section Scripts {
     <script>
-        const projectOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProjectOptions));
-        const profitCentreOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProfitCentreOptions));
-        const workGroupOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.WorkGroupOptions));
+        const projectOptionsListData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProjectOptions));
+        const profitCentreOptionsListData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProfitCentreOptions));
+        const workGroupOptionsListData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.WorkGroupOptions));
         const exportUrls = {
             timePurchaseProject:  '@Url.Action("GenerateTimePurchaseProjectReport", "BosworthInterface", new { area = "PACT" })',
             timeSaleProfitCentre: '@Url.Action("GenerateTimeSaleProfitCentreReport", "BosworthInterface", new { area = "PACT" })',

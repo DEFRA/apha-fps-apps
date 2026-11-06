@@ -186,8 +186,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<BosworthInterfaceViewModel>(viewResult.Model);
-            Assert.Equal("A1", model.ProjectOptions[0].ParentProject);
-            Assert.Equal("B1", model.ProjectOptions[1].ParentProject);
+            Assert.Equal("A1", model.ProjectOptions[0].Value);
+            Assert.Equal("B1", model.ProjectOptions[1].Value);
         }
 
         [Fact]
@@ -219,8 +219,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<BosworthInterfaceViewModel>(viewResult.Model);
-            Assert.Equal("A", model.ProfitCentreOptions[0].Division);
-            Assert.Equal("Z", model.ProfitCentreOptions[1].Division);
+            Assert.Equal("A", model.ProfitCentreOptions[0].Text);
+            Assert.Equal("Z", model.ProfitCentreOptions[1].Text);
         }
 
         [Fact]
@@ -249,8 +249,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<BosworthInterfaceViewModel>(viewResult.Model);
-            Assert.Equal("WG-A", model.WorkGroupOptions[0].WorkGroupName);
-            Assert.Equal("WG-Z", model.WorkGroupOptions[1].WorkGroupName);
+            Assert.Equal("WG-A", model.WorkGroupOptions[0].Value);
+            Assert.Equal("WG-Z", model.WorkGroupOptions[1].Value);
         }
 
         #endregion

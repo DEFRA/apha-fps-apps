@@ -7,6 +7,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
@@ -197,22 +198,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var workGroupsResponse = await _workGroupService.GetAllWorkGroupsAsync();
 
             viewModel.ProjectOptions = projectsResponse.Success && projectsResponse.Data != null
-                ? _mapper.Map<List<Project>>(projectsResponse.Data)
+                ? projectsResponse.Data
                     .OrderBy(p => p.ParentProject)
+                    .Select(p => new SelectListItem { Value = p.ParentProject, Text = p.Manager })
                     .ToList()
-                : [];
+                : new List<SelectListItem>();
 
             viewModel.ProfitCentreOptions = profitCentresResponse.Success && profitCentresResponse.Data != null
-                ? _mapper.Map<List<ProfitCentre>>(profitCentresResponse.Data)
+                ? profitCentresResponse.Data
                     .OrderBy(pc => pc.Division)
+                    .Select(pc => new SelectListItem { Value = pc.ProfitCentreId, Text = pc.Division })
                     .ToList()
-                : [];
+                : new List<SelectListItem>();
 
             viewModel.WorkGroupOptions = workGroupsResponse.Success && workGroupsResponse.Data != null
-                ? _mapper.Map<List<WorkGroup>>(workGroupsResponse.Data)
+                ? workGroupsResponse.Data
                     .OrderBy(w => w.WorkGroupName)
+                    .Select(w => new SelectListItem { Value = w.WorkGroupName, Text = w.ProfitCentre })
                     .ToList()
-                : [];
+                : new List<SelectListItem>();
         }
     }
 }
