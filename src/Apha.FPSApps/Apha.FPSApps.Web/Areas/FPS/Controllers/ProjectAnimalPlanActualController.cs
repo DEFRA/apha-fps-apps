@@ -36,6 +36,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             List<SelectListItem> projectList = await GetProjectListAsync();
 
+            if (!string.IsNullOrWhiteSpace(projectCode) && !projectList.Any(p => p.Value == projectCode))
+                return RedirectToAction("Index", "Error", new { area = "" });
+
             if (string.IsNullOrWhiteSpace(projectCode))
                 projectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode);
 

@@ -102,7 +102,7 @@
     <script src="~/js/fps_js/StaffJob.js"></script>
     <script src="~/js/fps_js/project-dropdown.js" asp-append-version="true"></script>
     <script>
-        var currentProjectCode = '@Html.Raw(Model.SelectedProjectCode)';
+        var currentProjectCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedProjectCode ?? string.Empty));
 
         StaffJobConfig.getJobCode = function () { return currentProjectCode; };
         StaffJobConfig.requireJobCodeForAdd = true;

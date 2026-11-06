@@ -88,24 +88,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectAnimalPlanActualCont
         }
 
         [Fact]
-        public async Task Index_WithNonMatchingProjectCode_FallsBackToFirstProject()
+        public async Task Index_WithNonMatchingProjectCode_RedirectsToErrorPage()
         {
             // Arrange
             var projects = new List<ProjectDto> { new() { ParentProject = "PROJ001" } };
             _projectService.GetAllProjectsAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects));
-            _projectService.GetProjectByIdAsync("PROJ001")
-                .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(new ProjectDto { ParentProject = "PROJ001", ProjectTitle = "Project One" }));
-            _animalPlanService.GetTotalAnimalCostAsync("PROJ001")
-                .Returns(ApiResponseDto<decimal>.SuccessResponse(100m));
 
             // Act
             var result = await _controller.Index("UNKNOWN");
 
             // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProjectAnimalPlanActualViewModel>(viewResult.Model);
-            Assert.Equal("PROJ001", model.SelectedProjectCode);
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Error", redirect.ControllerName);
         }
 
         [Fact]
