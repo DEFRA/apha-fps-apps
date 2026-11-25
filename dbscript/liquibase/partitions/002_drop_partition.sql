@@ -30,7 +30,7 @@ BEGIN
         JOIN pg_namespace nm ON nm.oid = c.relnamespace
         WHERE nm.nspname = p_schema
           --AND pg_get_expr(c.relpartbound, c.oid) ~ ('(^|[^0-9])' || p_value || '([^0-9]|$)')
-        AND c.relname like '%' || p_value
+        AND c.relname like '%y' || p_value
     LOOP
         RAISE NOTICE 'Dropping partition table: %.%', p_schema, r.part_name;
         
